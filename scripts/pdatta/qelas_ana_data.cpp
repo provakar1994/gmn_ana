@@ -36,7 +36,8 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   TChain *C = new TChain("T");
   if (nruns < 1 || nruns > runnums.size()) nruns = runnums.size();
   for (int i=0; i<nruns; i++) {
-    std::string rfname = rootfile_dir + Form("/*%d*",runnums[i]);
+    std::string rfname = rootfile_dir + Form("/*%d_1000k*",runnums[i]);
+    // std::string rfname = rootfile_dir + Form("/*%d*",runnums[i]);
     C->Add(rfname.c_str());
   }
 

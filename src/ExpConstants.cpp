@@ -1,5 +1,7 @@
 #include "../include/ExpConstants.h"
 
+// Config 143 => GEN3
+
 namespace expconst {
 
   double ebeam(int config){
@@ -15,6 +17,8 @@ namespace expconst {
       return 5.965;
     else if(config==9)
       return 4.013;
+    else if(config==143)
+      return 6.373;
     else{
       std::cerr << "Enter a valid SBS configuration!" << std::endl;
       return -1;
@@ -36,6 +40,8 @@ namespace expconst {
       return 26.5;
     else if(config==9)
       return 49.0;
+    else if(config==143)
+      return 36.5;
     else{
       std::cerr << "Enter a valid SBS configuration!" << std::endl;
       return -1;
@@ -57,6 +63,8 @@ namespace expconst {
       return 1.97473;
     else if(config==9)
       return 1.550;
+    else if(config==143)
+      return 1.63;
     else{
       std::cerr << "Enter a valid SBS configuration!" << std::endl;
       return -1;
@@ -78,6 +86,8 @@ namespace expconst {
       return 29.9;
     else if(config==9)
       return 22.5;
+    else if(config==143)
+      return 22.1;
     else{
       std::cerr << "Enter a valid SBS configuration!" << std::endl;
       return -1;
@@ -88,6 +98,8 @@ namespace expconst {
     if(config==1||config==4||config==7||config==11
        ||config==14||config==8||config==9)
       return 2.25;
+    else if(config==143)
+      return 2.8;
     else{
       std::cerr << "Enter a valid SBS configuration!" << std::endl;
       return -1;
@@ -103,6 +115,8 @@ namespace expconst {
       return 14.0;
     else if(config==11)
       return 14.5;
+    else if(config==143)
+      return 17.0;
     else{
       std::cerr << "Enter a valid SBS configuration!" << std::endl;
       return -1;
@@ -124,6 +138,8 @@ namespace expconst {
       return 29.4;
     else if(config==9)
       return 22.0;
+    else if(config==143)
+      return 21.6; 
     else{
       std::cerr << "Enter a valid SBS configuration!" << std::endl;
       return -1;
