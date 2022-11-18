@@ -1,6 +1,6 @@
 #include "../include/ExpConstants.h"
 
-// Config 4363 => GEN3
+/* 436 => GEN 8-) */
 
 namespace expconst {
 
