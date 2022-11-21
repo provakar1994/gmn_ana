@@ -33,6 +33,7 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
   std::string rootfile_dir = jmgr->GetValueFromKey_str("rootfile_dir");
   TChain *C = new TChain("T");
   C->Add(rootfile_dir.c_str());
+  if (C->GetEntries()==0) {std::cerr << "*!* No ROOT file!" << std::endl; throw;}
  
   // seting up the desired SBS configuration
   int conf = jmgr->GetValueFromKey<int>("SBS_config");
