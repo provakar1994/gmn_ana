@@ -138,6 +138,7 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   double T_nu;          Tout->Branch("nu", &T_nu, "nu/D");
   double T_Q2;          Tout->Branch("Q2", &T_Q2, "Q2/D");
   double T_W2;          Tout->Branch("W2", &T_W2, "W2/D");
+  double T_W;          Tout->Branch("W", &T_W, "W/D");
   double T_dpel;        Tout->Branch("dpel", &T_dpel, "dpel/D");
   double T_ephi;        Tout->Branch("ephi", &T_ephi, "ephi/D");
   double T_etheta;      Tout->Branch("etheta", &T_etheta, "etheta/D");
@@ -277,6 +278,7 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
     T_nu = nu;
     T_Q2 = Q2recon;
     T_W2 = W2recon;
+    T_W = Wrecon;
     T_dpel = dpel;
     T_ephi = ephi;
     T_etheta = etheta;
