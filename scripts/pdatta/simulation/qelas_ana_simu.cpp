@@ -91,9 +91,9 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
   setrootvar::setbranch(C,"bb.tr",trvar,trvar_mem);
 
   //MC variables
-  double mc_sigma, mc_omega;
-  std::vector<std::string> mc = {"mc_sigma","mc_omega"};
-  std::vector<void*> mc_mem = {&mc_sigma,&mc_omega};
+  double mc_sigma, mc_omega, mc_fnucl;
+  std::vector<std::string> mc = {"mc_sigma","mc_omega","mc_fnucl"};
+  std::vector<void*> mc_mem = {&mc_sigma,&mc_omega,&mc_fnucl};
   setrootvar::setbranch(C,"MC",mc,mc_mem);
 
   // turning on the remaining branches we use for the globalcut
@@ -116,6 +116,8 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
   vector<double> hdy_lim; jmgr->GetVectorFromKey<double>("h_dyHCAL_lims", hdy_lim);
   TH1F *h_dxHCAL = new TH1F("h_dxHCAL","; x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
   TH1F *h_dyHCAL = new TH1F("h_dyHCAL","; y_{HCAL} - y_{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
+  TH1F *h_dxHCAL_n = new TH1F("h_dxHCAL_n","mc_fnucl = n; x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
+  TH1F *h_dxHCAL_p = new TH1F("h_dxHCAL_p","mc_fnucl = p; x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
 
   TH2F *h2_rcHCAL = util_pd::TH2FHCALface_rc("h2_rcHCAL");
   TH2F *h2_dxdyHCAL = util_pd::TH2FdxdyHCAL("h2_dxdyHCAL");
@@ -129,12 +131,16 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
   bool pCut;            Tout->Branch("pCut", &pCut, "pCut/B");
   bool nCut;            Tout->Branch("nCut", &nCut, "nCut/B");
   bool fiduCut;         Tout->Branch("fiduCut", &fiduCut, "fiduCut/B");
+  //MC related
+  double weight;        Tout->Branch("weight", &weight, "weight/D");  
+  int T_mc_fnucl;       Tout->Branch("mc_fnucl", &T_mc_fnucl, "mc_fnucl/I");
   //
   double T_ebeam;       Tout->Branch("ebeam", &T_ebeam, "ebeam/D");
   //kine
   double T_nu;          Tout->Branch("nu", &T_nu, "nu/D");
   double T_Q2;          Tout->Branch("Q2", &T_Q2, "Q2/D");
   double T_W2;          Tout->Branch("W2", &T_W2, "W2/D");
+  double T_W;           Tout->Branch("W", &T_W, "W/D");
   double T_dpel;        Tout->Branch("dpel", &T_dpel, "dpel/D");
   double T_ephi;        Tout->Branch("ephi", &T_ephi, "ephi/D");
   double T_etheta;      Tout->Branch("etheta", &T_etheta, "etheta/D");
@@ -156,7 +162,7 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
   double T_xHCAL_exp;   Tout->Branch("xHCAL_exp", &T_xHCAL_exp, "xHCAL_exp/D"); 
   double T_yHCAL_exp;   Tout->Branch("yHCAL_exp", &T_yHCAL_exp, "yHCAL_exp/D"); 
   double T_dx;          Tout->Branch("dx", &T_dx, "dx/D"); 
-  double T_dy;          Tout->Branch("dy", &T_dy, "dy/D");
+  double T_dy;          Tout->Branch("dy", &T_dy, "dy/D");  
 
   // Do the energy loss calculation here ...........
 
@@ -203,7 +209,7 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
     if (!passedgCut) continue;
 
     // cross section weighted normalization factor
-    double weight = mc_sigma*mc_omega*lumi / ngen_total;
+    weight = mc_sigma*mc_omega*lumi / ngen_total;
 
     // kinematic parameters
     double ebeam = sbsconf.GetEbeam();       // Expected beam energy (GeV) [Get it from EPICS, eventually]
@@ -266,6 +272,7 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
     T_nu = nu;
     T_Q2 = Q2recon;
     T_W2 = W2recon;
+    T_W = Wrecon;
     T_dpel = dpel;
     T_ephi = ephi;
     T_etheta = etheta;
@@ -284,6 +291,8 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
     T_eHCAL = eHCAL;
     T_xHCAL = xHCAL;
     T_yHCAL = yHCAL;
+
+    T_mc_fnucl = int(mc_fnucl);
 
     // Expected position of the q vector at HCAL
     vector<double> xyHCAL_exp; // xyHCAL_exp[0] = xHCAL_exp & xyHCAL_exp[1] = yHCAL_exp
@@ -313,9 +322,21 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
       if (fiduCut) {
 	h_dxHCAL->Fill(dx, weight);
 	h_dyHCAL->Fill(dy, weight);
+	// dx dist. for p & n separately using MC info
+	if (int(mc_fnucl)==0) {
+	  h_dxHCAL_n->Fill(dx, weight);
+	} else if (int(mc_fnucl)==1) {
+	  h_dxHCAL_p->Fill(dx, weight);
+	} else {
+	  std::cerr << "*!* Invalid final state nuclei!" << std::endl; 
+	  throw;
+	}
+
 	h2_rcHCAL->Fill(cblkHCAL, rblkHCAL);
+	// p & n spots
 	h2_dxdyHCAL->Fill(dy, dx);
 
+	// hit map to show p & n in fiducial region
 	if (pCut) h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick);
 	if (nCut) h2_xyHCAL_n->Fill(xyHCAL_exp[1], xyHCAL_exp[0]);
       }
