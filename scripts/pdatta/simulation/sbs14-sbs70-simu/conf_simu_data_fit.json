@@ -1,0 +1,14 @@
+{
+    "SBS_config"         : 14,
+    "SBS_magnet_percent" : 70,
+    "model"              : 2,
+    "fit_range"          : [-3.5, 2.5],
+    "R_lims"             : [12, 1, 1.6]
+}
+
+"
+## This is a config file for qelas_ana_data.cpp script. 
+# README:
+fit_range : fit_range[0] => low range, fit_range[1] => high range
+R_lims : fit param R. R_lims[0] => nR, R_lims[1] => Rmin, R_lims[2] => Rmax
+"
