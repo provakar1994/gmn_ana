@@ -41,8 +41,8 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/simu_
   TH1F *h_dxHCAL_data; fdata->GetObject("h_dxHCAL_data",h_dxHCAL_data);
   TH1F *h_dxHCAL_bg; fdata->GetObject("h_dxHCAL_bg",h_dxHCAL_bg);
   TH1F *h_dxHCAL_simu; fsimu->GetObject("h_dxHCAL_simu",h_dxHCAL_simu);
-  TH1F *h_dxHCAL_simu_p; fsimu->GetObject("h_dxHCAL_simu_p",h_dxHCAL_simu_p); h_dxHCAL_simu_p->Write();
-  TH1F *h_dxHCAL_simu_n; fsimu->GetObject("h_dxHCAL_simu_n",h_dxHCAL_simu_n); h_dxHCAL_simu_n->Write();
+  TH1F *h_dxHCAL_simu_p; fsimu->GetObject("h_dxHCAL_simu_p",h_dxHCAL_simu_p); 
+  TH1F *h_dxHCAL_simu_n; fsimu->GetObject("h_dxHCAL_simu_n",h_dxHCAL_simu_n); 
 
   // sanity checks (nbin & ranges of histos need to be same for comparison)
   int nbin = h_dxHCAL_data->GetNbinsX();
@@ -57,12 +57,15 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/simu_
   h_dxHCAL_data->Scale(1./h_dxHCAL_data->Integral()); h_dxHCAL_data->Write();
   h_dxHCAL_bg->Scale(1./h_dxHCAL_bg->Integral()); h_dxHCAL_bg->Write();
   h_dxHCAL_simu->Scale(1./h_dxHCAL_simu->Integral()); h_dxHCAL_simu->Write();
+  h_dxHCAL_simu_p->Write();
+  h_dxHCAL_simu_n->Write();
 
   // define fit range
   // (E.g. leave the tails out. Need to implement radiative correction first.)
   vector<double> fit_range; jmgr->GetVectorFromKey<double>("fit_range", fit_range);
   int lbin = h_dxHCAL_data->FindBin(fit_range[0]);
   int hbin = h_dxHCAL_data->FindBin(fit_range[1]);
+  std::cout << Form("\nFit range: (%.2f,%.2f) | Corr. bins: (%d,%d)",fit_range[0],fit_range[1],lbin,hbin) << std::endl; 
 
   // read in ranges to vary parameter R
   double R = 0;
@@ -71,7 +74,9 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/simu_
   TH1F *h_p[int(R_lims[0])];
   TH1F *h_comb_MC[int(R_lims[0])];
 
-  vector<pair<double,double>> Rchi2;
+  std::cout << Form("\nVarying parameter R... [Range: (%.2f,%.2f)]",R_lims[1],R_lims[2]) << std::endl;
+  // varying R
+  double arrayR[int(R_lims[0])], arrayChi2[int(R_lims[0])];
   for (int iR=0; iR<int(R_lims[0]); iR++) {
     // construct R
     double Rwidth = (R_lims[2] - R_lims[1]) / R_lims[0];
@@ -102,44 +107,35 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/simu_
       }
     }
 
-    Rchi2.push_back(make_pair(R, chi2));
-    // print out useful info
-    cout << "R = " << R << " chi2 = " << chi2 << " lbin = " << lbin << " hbin = " << hbin << endl;
+    // report R vs chi2
+    arrayR[iR] = R; arrayChi2[iR] = chi2;
+    std::cout << Form("R = %.2f,  chi2 = %.2f",R,chi2) << std::endl;
   }
+  std::cout << std::endl;
 
+  // let's plot chi2 vs R
+  TGraph *gchi2R = new TGraph(int(R_lims[0]), arrayR, arrayChi2);
+  gchi2R->SetMarkerStyle(20); gchi2R->SetMarkerColor(4);
+  
   // canvas
   TCanvas *c1 = new TCanvas("c1","c1",1600,1200);
   c1->Divide(2,1);
   c1->cd(1);
-  h_comb_MC[0]->Draw("p"); h_comb_MC[0]->SetMarkerStyle(20); h_comb_MC[0]->SetMarkerColor(2);
-  // h_n->Draw("same p"); h_n->SetMarkerStyle(20); h_n->SetMarkerColor(4);
-  // h_p->Draw("same p"); h_p->SetMarkerStyle(20); h_p->SetMarkerColor(8);
-  h_dxHCAL_data->Draw("same");
+  gchi2R->Draw("AP");
+  // h_comb_MC[0]->Draw("p"); h_comb_MC[0]->SetMarkerStyle(20); h_comb_MC[0]->SetMarkerColor(2);
+  // // h_n[0]->Draw("same p"); h_n->SetMarkerStyle(20); h_n->SetMarkerColor(4);
+  // // h_p[0]->Draw("same p"); h_p->SetMarkerStyle(20); h_p->SetMarkerColor(8);
+  // h_dxHCAL_data->Draw("same");
 
-  c1->cd(2);
-  h_dxHCAL_simu->Draw(); h_dxHCAL_simu->SetMarkerStyle(20); h_dxHCAL_simu->SetMarkerColor(2);
-  h_dxHCAL_data->Draw("same");
+  // c1->cd(2);
+  // h_dxHCAL_simu->Draw(); h_dxHCAL_simu->SetMarkerStyle(20); h_dxHCAL_simu->SetMarkerColor(2);
+  // h_dxHCAL_data->Draw("same");
 
 
   // ofstream datafile1("chi2_vs_R_sbs50_.82T.csv", ios_base::app | ios_base::out);
   // datafile1 << R << "," << chi2 << endl;
   // ofstream datafile2("chi2_vs_R_sbs50_.82T_ap.csv", ios_base::app | ios_base::out);
   // datafile2 << R << "," << chi2_ap << endl;
-
-  // h_dxHCAL_n->Scale(1./h_dxHCAL_n->Integral());
-  // h_dxHCAL_p->Scale(1./h_dxHCAL_p->Integral());
-  // c1->cd(2);
-  // h_dxHCAL_data->Draw();
-  // h_comb_MC_ap->Draw("same");
-  // h_n->Draw("same");
-  // h_p->Draw("same");
-
-  // TString plotsfilename = outputfilename;
-  // plotsfilename.ReplaceAll(".root",".pdf");
-  
-  // c1->Print(plotsfilename.Data(),"pdf");
-  // plotsfilename.ReplaceAll(".pdf",".png");
-  // c1->Print(plotsfilename.Data(),"png");
 
   fout->Write(); //fout->Close(); 
   delete jmgr;

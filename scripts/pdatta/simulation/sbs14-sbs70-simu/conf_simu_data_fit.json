@@ -3,7 +3,7 @@
     "SBS_magnet_percent" : 70,
     "model"              : 2,
     "fit_range"          : [-3.5, 2.5],
-    "R_lims"             : [12, 1, 1.6]
+    "R_lims"             : [48, 1.06, 1.55]
 }
 
 "
