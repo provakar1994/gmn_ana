@@ -1,7 +1,7 @@
 /* 
    This macro uses single parameter R to fit simulation dxHCAL plot to data.
    -----
-   P. Datta  Created  08-15-2022
+   P. Datta  Created  08-15-2022 [Newer version: simu_data_fit.cpp]
 */
 
 #include "TChain.h"
@@ -47,7 +47,7 @@ double Mn = constant::Mn;
 
 int SBSM=30;
 
-void simu_data_fit( const char *configfilename,
+void old_simu_data_fit( const char *configfilename,
 		    double R=1.,
 		    const char *outputfilename="simu_data_fit_SBS50.root" )
 {
