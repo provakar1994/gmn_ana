@@ -3,8 +3,9 @@
     "SBS_magnet_percent" : 70,
     "model"              : 2,
     "fit_range"          : [-3.5, 2.5],
-    "R_lims"             : [48, 1.06, 1.55],
-    "B_lims"             : [50, 0.021, 0.045]
+    "fit_RB_simul"       : 1,
+    "R_lims"             : [48, 0.86, 1.40],
+    "B_lims"             : [40, 0.0250, 0.037]
 }
 
 "
@@ -12,4 +13,5 @@
 # README:
 fit_range : fit_range[0] => low range, fit_range[1] => high range
 R_lims : fit param R. R_lims[0] => nR, R_lims[1] => Rmin, R_lims[2] => Rmax
+fit_RB_simul : 1 => Simulataneous fit, 0 => Independent fit (i.e. fit B given Rmin)
 "
