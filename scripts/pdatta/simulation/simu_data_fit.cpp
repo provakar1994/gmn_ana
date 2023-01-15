@@ -7,6 +7,7 @@
 
 #include "TH1F.h"
 #include "TFile.h"
+#include "TLatex.h"
 
 #include <vector>
 #include <sstream>
@@ -115,13 +116,16 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/simu_
     // report R vs chi2
     arrayR[iR] = R; arrayChi2[iR] = chi2;
     // std::cout << Form("R = %.2f,  chi2 = %.2f",R,chi2) << std::endl;
-    // std::cout << Form("%.2f,%.2f",R,chi2) << std::endl;
+    std::cout << Form("%.2f,%.2f",R,chi2) << std::endl;
   }
   std::cout << std::endl;
 
   // let's plot chi2 vs R
   TGraph *gchi2R = new TGraph(int(R_lims[0]), arrayR, arrayChi2);
   gchi2R->SetMarkerStyle(20); gchi2R->SetMarkerColor(4);
+  gchi2R->SetTitle("#chi^{2} vs R");
+  gchi2R->GetXaxis()->SetTitle("R");
+  gchi2R->GetYaxis()->SetTitle("#chi^{2}");  gchi2R->GetYaxis()->SetMaxDigits(3);
 
   // let's fit chi2 vs R
   TF1 *chi2Rfn = new TF1("chi2Rfn",fit_parabola,R_lims[1],R_lims[2],3);
@@ -211,6 +215,9 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/simu_
   // let's plot chi2 vs B
   TGraph *gchi2B = new TGraph(int(B_lims[0]), arrayB, arrayRBChi2);
   gchi2B->SetMarkerStyle(20); gchi2B->SetMarkerColor(4);
+  gchi2B->SetTitle("#chi^{2} vs B");
+  gchi2B->GetXaxis()->SetTitle("B");
+  gchi2B->GetYaxis()->SetTitle("#chi^{2}");  gchi2B->GetYaxis()->SetMaxDigits(3);
 
   // let's fit chi2 vs B
   TF1 *chi2Bfn = new TF1("chi2Bfn",fit_parabola,B_lims[1],B_lims[2],3);
@@ -223,12 +230,34 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/simu_
   chi2Bfn->SetParameters(884,5000,0.032);
   gchi2B->Fit("chi2Bfn","QRV+","ep");
 
+  c1->cd(2);
+  gchi2B->Draw("AP");
+
   // getting Bmin
   double Bmin = chi2Bfn->GetParameter(2);
   std::cout << " Bmin = " << Bmin << std::endl;
 
-  c1->cd(2);
-  gchi2B->Draw("AP");
+  // **** Now that we have both Rmin and Bmin, it's time to draw the best fit histogram ****
+  TH1F *h_comb_MC_RB_bfit = new TH1F("h_comb_MC_RB_bfit", Form("Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), nbin, hmin, hmax);
+  TH1F *h_n_RB_bfit = new TH1F("h_n_RB_bfit", Form("n | Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), nbin, hmin, hmax);
+  TH1F *h_p_RB_bfit = new TH1F("h_p_RB_bfit", Form("p | Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), nbin, hmin, hmax);
+  TH1F *h_bg_bfit = new TH1F("h_bg_bfit", Form("bg | Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), nbin, hmin, hmax);
+
+  double norm = 1. / (h_dxHCAL_simu_p->Integral() + Rmin*h_dxHCAL_simu_n->Integral() + Bmin*h_dxHCAL_bg->Integral());
+  // Looping over bins to create combined simulation histo using AJRP method
+  for (int ibin=lbin; ibin<hbin; ibin++) {
+    double simu = norm*(h_dxHCAL_simu_p->GetBinContent(ibin) + Rmin*h_dxHCAL_simu_n->GetBinContent(ibin) + Bmin*h_dxHCAL_bg->GetBinContent(ibin));
+    h_comb_MC_RB_bfit->SetBinContent(ibin, simu);
+    h_n_RB_bfit->SetBinContent(ibin, norm*(Rmin*h_dxHCAL_simu_n->GetBinContent(ibin)));
+    h_p_RB_bfit->SetBinContent(ibin, norm*(h_dxHCAL_simu_p->GetBinContent(ibin)));
+    h_bg_bfit->SetBinContent(ibin, norm*(Bmin*h_dxHCAL_bg->GetBinContent(ibin)));
+  }
+  
+  // setting histogram styles
+  h_comb_MC_RB_bfit->SetLineColor(kRed);
+  h_n_RB_bfit->SetLineColor(kGreen);
+  h_p_RB_bfit->SetLineColor(kBlue);
+  h_bg_bfit->SetLineColor(kMagenta);
 
   fout->Write(); //fout->Close(); 
   delete jmgr;
