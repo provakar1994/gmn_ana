@@ -51,7 +51,8 @@ namespace expconst {
   static const double ld2tarrho = 0.169;      //g/cc, target density
 
   // magnet
-  static const double dipolegap = 1.22;  //m
+  static const double sbsdipolegap = 1.22;  //m
+  static const double sbsmaxfield = 1.23; //tesla (?)
 
   // shieldling
   static const double Alrho = 2.7; //g/cc

@@ -45,6 +45,7 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   // seting up the desired SBS configuration
   int conf = jmgr->GetValueFromKey<int>("SBS_config");
   int sbsmag = jmgr->GetValueFromKey<int>("SBS_magnet_percent");
+  double sbsfieldfrac = sbsmag / 100.;
   SBSconfig sbsconf(conf, sbsmag);
   sbsconf.Print();
 
@@ -138,11 +139,13 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   double T_nu;          Tout->Branch("nu", &T_nu, "nu/D");
   double T_Q2;          Tout->Branch("Q2", &T_Q2, "Q2/D");
   double T_W2;          Tout->Branch("W2", &T_W2, "W2/D");
-  double T_W;          Tout->Branch("W", &T_W, "W/D");
+  double T_W;           Tout->Branch("W", &T_W, "W/D");
   double T_dpel;        Tout->Branch("dpel", &T_dpel, "dpel/D");
   double T_ephi;        Tout->Branch("ephi", &T_ephi, "ephi/D");
   double T_etheta;      Tout->Branch("etheta", &T_etheta, "etheta/D");
   double T_pcentral;    Tout->Branch("pcentral", &T_pcentral, "pcentral/D");
+  double T_thetapq_p;   Tout->Branch("thetapq_p", &T_thetapq_p, "thetapq_p/D");
+  double T_thetapq_n;   Tout->Branch("thetapq_n", &T_thetapq_n, "thetapq_n/D");
   //track
   double T_vz;          Tout->Branch("vz", &T_vz, "vz/D");
   double T_trP;         Tout->Branch("trP", &T_trP, "trP/D");
@@ -226,13 +229,15 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
     /* Reaction    : e + e' -> N + N'
        Conservation: Pe + Peprime = PN + PNprime */
     TVector3 vertex(0, 0, vz[0]);
-    TLorentzVector Pe(0,0,ebeam_corr,ebeam_corr);   // incoming e-
-    TLorentzVector Peprime(px[0] * (precon/p[0]),   // scattered e-
+    TLorentzVector Pe(0,0,ebeam_corr,ebeam_corr);   // incoming e- 4-vector
+    TLorentzVector Peprime(px[0] * (precon/p[0]),   // scattered e- 4-vector
 			   py[0] * (precon/p[0]),
 			   pz[0] * (precon/p[0]),
 			   precon);                 
-    TLorentzVector PN;                              // target nucleon [Ntype ??]
+    TLorentzVector PN;                              // target nucleon 4-vector
     kine::SetPN(Ntype, PN);
+    TLorentzVector PNprime;                         // Recoil nucleon 4-vector
+    TLorentzVector q = Pe - Peprime;                // 4-momentum of virtual photon
 
     double etheta = kine::etheta(Peprime);
     double ephi = kine::ephi(Peprime);
@@ -253,6 +258,7 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
       pN_expect = kine::pN_expect(nu, Ntype);
       thetaN_expect = acos((Pe.E() - Peprime.Pz()) / pN_expect);
       pNhat = kine::qVect_unit(thetaN_expect, phiN_expect);
+      PNprime.SetPxPyPzE(pN_expect*pNhat.X(), pN_expect*pNhat.Y(), pN_expect*pNhat.Z(), nu+PN.E());
       Q2recon = kine::Q2(Pe.E(), Peprime.E(), etheta);
       W2recon = kine::W2(Pe.E(), Peprime.E(), Q2recon, Ntype);
     } else if (model == 1) {
@@ -260,14 +266,15 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
       pN_expect = kine::pN_expect(nu, Ntype);
       thetaN_expect = acos((Pe.E() - pcentral*cos(etheta)) / pN_expect);
       pNhat = kine::qVect_unit(thetaN_expect, phiN_expect);
+      PNprime.SetPxPyPzE(pN_expect*pNhat.X(), pN_expect*pNhat.Y(), pN_expect*pNhat.Z(), nu+PN.E());
       Q2recon = kine::Q2(Pe.E(), Peprime.E(), etheta);
       W2recon = kine::W2(Pe.E(), Peprime.E(), Q2recon, Ntype);
     } else if (model == 2) {
-      TLorentzVector q = Pe - Peprime; // 4-momentum of virtual photon
       nu = q.E();
-      pNhat = q.Vect().Unit();
+      PNprime = q + PN;
+      pNhat = PNprime.Vect().Unit();
       Q2recon = -q.M2();
-      W2recon = (PN + q).M2();
+      W2recon = PNprime.M2();
     }
     h_Q2->Fill(Q2recon); 
     double Wrecon = sqrt(max(0., W2recon));
@@ -308,6 +315,18 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
     T_yHCAL_exp = xyHCAL_exp[1];
     T_dx = dx;
     T_dy = dy;
+
+    // Calculating thetapq (both p & n hypothesis)
+    // n (no deflection)
+    TVector3 HCAL_pos = HCAL_origin + xHCAL*HCAL_axes[0] + yHCAL*HCAL_axes[2];
+    TVector3 n_dir = (HCAL_pos - vertex).Unit();
+    T_thetapq_n = acos(n_dir.Dot(pNhat));
+    // p 
+    double BdL = sbsfieldfrac * expconst::sbsmaxfield * expconst::sbsdipolegap;
+    double proton_thetabend = 0.3 * BdL / PNprime.Vect().Mag();  // p*theta = 0.3*BdL
+    double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist() - (sbsconf.GetSBSdist() + expconst::sbsdipolegap/2.0));
+    TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex).Unit();
+    T_thetapq_p = acos(p_dir.Dot(pNhat));
 
     // HCAL active area and safety margin cuts [Fiducial region]
     bool AR_cut = cut::inHCAL_activeA(xHCAL, yHCAL, hcal_active_area);
