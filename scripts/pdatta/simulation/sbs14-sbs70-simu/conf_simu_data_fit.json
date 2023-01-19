@@ -2,6 +2,7 @@
     "SBS_config"         : 14,
     "SBS_magnet_percent" : 70,
     "model"              : 2,
+    "pass"               : 1,
     "fit_range"          : [-3.5, 2.5],
     "fit_RB_simul"       : 1,
     "R_lims"             : [48, 0.86, 1.40],

@@ -104,8 +104,9 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   C->SetBranchStatus("bb.etot_over_p", 1);
 
   // defining the outputfile
-  TString outFile = Form("%s_sbs%d_sbs%dp_model%d_data.root", 
-			 filebase.c_str(), sbsconf.GetSBSconf(), sbsconf.GetSBSmag(), model);
+  int pass = jmgr->GetValueFromKey<int>("replay_pass"); 
+  TString outFile = Form("%s_sbs%d_sbs%dp_model%d_pass%d.root", 
+			 filebase.c_str(), sbsconf.GetSBSconf(), sbsconf.GetSBSmag(), model, pass);
   TFile *fout = new TFile(outFile.Data(), "RECREATE");
 
   // defining histograms

@@ -40,7 +40,8 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/simu_
   int conf = jmgr->GetValueFromKey<int>("SBS_config");
   int sbsmag = jmgr->GetValueFromKey<int>("SBS_magnet_percent");
   int model = jmgr->GetValueFromKey<int>("model");
-  TFile *fdata = new TFile(Form("../pdout/qelas_ana_data_sbs%d_sbs%dp_model%d_data.root", conf, sbsmag, model));
+  int pass = jmgr->GetValueFromKey<int>("pass");
+  TFile *fdata = new TFile(Form("../pdout/qelas_ana_data_sbs%d_sbs%dp_model%d_pass%d.root", conf, sbsmag, model, pass));
   TFile *fsimu = new TFile(Form("siout/qelas_ana_simu_sbs%d_sbs%dp_model%d_simu.root", conf, sbsmag, model));
 
   // reading in mode of analysis and then defining the outputfile names
