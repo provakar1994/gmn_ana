@@ -79,10 +79,17 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   double ePS; setrootvar::setbranch(C,"bb.ps","e",&ePS);
   
   // hcal clus var
-  double eHCAL, xHCAL, yHCAL, rblkHCAL, cblkHCAL, idblkHCAL;
-  std::vector<std::string> hcalclvar = {"e","x","y","rowblk","colblk","idblk"};
-  std::vector<void*> hcalclvar_mem = {&eHCAL,&xHCAL,&yHCAL,&rblkHCAL,&cblkHCAL,&idblkHCAL};
+  double eHCAL, xHCAL, yHCAL, rblkHCAL, cblkHCAL, idblkHCAL, tdctblkHCAL;
+  std::vector<std::string> hcalclvar = {"e","x","y","rowblk","colblk","idblk","tdctimeblk"};
+  std::vector<void*> hcalclvar_mem = {&eHCAL,&xHCAL,&yHCAL,&rblkHCAL,&cblkHCAL,&idblkHCAL,&tdctblkHCAL};
   setrootvar::setbranch(C, "sbs.hcal", hcalclvar, hcalclvar_mem);
+
+  // bbhodo clus var
+  int ncltmeanHODO; 
+  double cltmeanHODO[maxNtr];
+  std::vector<std::string> hodoclvar = {"clus.tmean","clus.tmean"};
+  std::vector<void*> hodoclvar_mem = {&ncltmeanHODO,&cltmeanHODO};
+  setrootvar::setbranch(C, "bb.hodotdc", hodoclvar, hodoclvar_mem, 0);  
 
   // track var
   double ntrack, p[maxNtr],px[maxNtr],py[maxNtr],pz[maxNtr],xTr[maxNtr],yTr[maxNtr],thTr[maxNtr],phTr[maxNtr];
@@ -154,6 +161,10 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   double T_trY;         Tout->Branch("trY", &T_trY, "trY/D");
   double T_trTh;        Tout->Branch("trTh", &T_trTh, "trTh/D");
   double T_trPh;        Tout->Branch("trPh", &T_trPh, "trPh/D");
+  double T_tgX;         Tout->Branch("tgX", &T_tgX, "tgX/D");
+  double T_tgY;         Tout->Branch("tgY", &T_tgY, "tgY/D");
+  double T_tgTh;        Tout->Branch("tgTh", &T_tgTh, "tgTh/D");
+  double T_tgPh;        Tout->Branch("tgPh", &T_tgPh, "tgPh/D");
   //BBCAL
   double T_ePS;         Tout->Branch("ePS", &T_ePS, "ePS/D"); 
   double T_eSH;         Tout->Branch("eSH", &T_eSH, "eSH/D"); 
@@ -161,10 +172,14 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   double T_eHCAL;       Tout->Branch("eHCAL", &T_eHCAL, "eHCAL/D"); 
   double T_xHCAL;       Tout->Branch("xHCAL", &T_xHCAL, "xHCAL/D"); 
   double T_yHCAL;       Tout->Branch("yHCAL", &T_yHCAL, "yHCAL/D"); 
+  double T_tdctblkHCAL; Tout->Branch("tdctblkHCAL", &T_tdctblkHCAL, "tdctblkHCAL/D"); 
   double T_xHCAL_exp;   Tout->Branch("xHCAL_exp", &T_xHCAL_exp, "xHCAL_exp/D"); 
   double T_yHCAL_exp;   Tout->Branch("yHCAL_exp", &T_yHCAL_exp, "yHCAL_exp/D"); 
   double T_dx;          Tout->Branch("dx", &T_dx, "dx/D"); 
   double T_dy;          Tout->Branch("dy", &T_dy, "dy/D");
+  //HODO
+  int T_ncltmeanHODO;   Tout->Branch("ncltmeanHODO", &T_ncltmeanHODO, "ncltmeanHODO/I"); 
+  double T_cltmeanHODO; Tout->Branch("cltmeanHODO", &T_cltmeanHODO, "cltmeanHODO/D"); 
   //coin time trigger
   double T_coinT_trig;  Tout->Branch("coinT_trig", &T_coinT_trig, "coinT_trig/D");
 
@@ -299,12 +314,22 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
     T_trTh = thTr[0];
     T_trPh = phTr[0];
 
+    T_tgX = xtgt[0];
+    T_tgY = ytgt[0];
+    T_tgTh = thtgt[0];
+    T_tgPh = phtgt[0];
+
     T_ePS = ePS;
     T_eSH = eSH;
 
     T_eHCAL = eHCAL;
     T_xHCAL = xHCAL;
     T_yHCAL = yHCAL;
+    T_tdctblkHCAL = tdctblkHCAL;
+
+    //for (int ihit=0; ihit<ncltmeanHODO; ihit++)
+    T_ncltmeanHODO = ncltmeanHODO;
+    T_cltmeanHODO = cltmeanHODO[0];
 
     // Expected position of the q vector at HCAL
     vector<double> xyHCAL_exp; // xyHCAL_exp[0] = xHCAL_exp & xyHCAL_exp[1] = yHCAL_exp

@@ -87,6 +87,9 @@ int plot_gcuts_data (const char *configfilename, std::string filebase="pdout/tes
   std::vector<void*> tdcvar_mem = {&tdcElem,&tdcElemN,&tdcTrig};
   setrootvar::setbranch(C,"bb.tdctrig",tdcvar,tdcvar_mem,1);
 
+  // BBGEM 
+  double gem_tr_nhits; setrootvar::setbranch(C,"bb.gem","track.nhits",&gem_tr_nhits);
+
   // Other branches
   double e_ov_p;    setrootvar::setbranch(C,"bb","etot_over_p",&e_ov_p);
   double W2;        setrootvar::setbranch(C,"e.kine","W2",&W2);
@@ -104,11 +107,16 @@ int plot_gcuts_data (const char *configfilename, std::string filebase="pdout/tes
   double T_W2;          Tout->Branch("W2", &T_W2, "W2/D");
   //track
   double T_vz;          Tout->Branch("vz", &T_vz, "vz/D");
+  double T_trn;            Tout->Branch("trn", &T_trn, "trn/D");
   double T_trP;         Tout->Branch("trP", &T_trP, "trP/D");
   double T_trX;         Tout->Branch("trX", &T_trX, "trX/D");
   double T_trY;         Tout->Branch("trY", &T_trY, "trY/D");
   double T_trTh;        Tout->Branch("trTh", &T_trTh, "trTh/D");
   double T_trPh;        Tout->Branch("trPh", &T_trPh, "trPh/D");
+  double T_tgX;         Tout->Branch("tgX", &T_tgX, "tgX/D");
+  double T_tgY;         Tout->Branch("tgY", &T_tgY, "tgY/D");
+  double T_tgTh;        Tout->Branch("tgTh", &T_tgTh, "tgTh/D");
+  double T_tgPh;        Tout->Branch("tgPh", &T_tgPh, "tgPh/D");
   //BBCAL
   double T_ePS;         Tout->Branch("ePS", &T_ePS, "ePS/D"); 
   double T_eSH;         Tout->Branch("eSH", &T_eSH, "eSH/D"); 
@@ -117,6 +125,8 @@ int plot_gcuts_data (const char *configfilename, std::string filebase="pdout/tes
   double T_eHCAL;       Tout->Branch("eHCAL", &T_eHCAL, "eHCAL/D"); 
   //coin time trigger
   double T_coinT_trig;  Tout->Branch("coinT_trig", &T_coinT_trig, "coinT_trig/D");
+  //BBGEM
+  double T_gem_tr_nhits; Tout->Branch("gemNhits", &T_gem_tr_nhits, "gemNhits/D");
 
   // looping through the tree ---------------------------------------
   std::cout << std::endl;
@@ -140,17 +150,25 @@ int plot_gcuts_data (const char *configfilename, std::string filebase="pdout/tes
     T_W2 = W2;
     
     T_vz = vz[0];
+    T_trn = ntrack;
     T_trP = p[0];
     T_trX = xTr[0];
     T_trY = yTr[0];
     T_trTh = thTr[0];
     T_trPh = phTr[0];
 
+    T_tgX = xtgt[0];
+    T_tgY = ytgt[0];
+    T_tgTh = thtgt[0];
+    T_tgPh = phtgt[0];
+
     T_ePS = ePS;
     T_eSH = eSH;
     T_EovP = e_ov_p; 
 
     T_eHCAL = eHCAL;
+
+    T_gem_tr_nhits = gem_tr_nhits;
     
     Tout->Fill();
   } // event loop

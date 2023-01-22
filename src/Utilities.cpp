@@ -79,6 +79,7 @@ namespace util_pd {
     int nbin=0; double hmin=-100, hmax=-100;
     if (conf==4) { nbin=100; hmin=1.; hmax=4.; } 
     else if (conf==14) { nbin=100; hmin=5.; hmax=10.; }
+    else if (conf==7) { nbin=120; hmin=6.; hmax=12.; }
     else cerr << "[Utilities::TH1FhQ2] Enter valid SBS config!!" << endl;
     TH1F *h = new TH1F(name.c_str(), "Q^{2} Distribution (GeV^{2})", 
 		       nbin, hmin, hmax);
