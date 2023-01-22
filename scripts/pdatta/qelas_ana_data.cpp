@@ -35,6 +35,7 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   int nruns = jmgr->GetValueFromKey<int>("Nruns_to_ana"); // # runs to analyze
   TChain *C = new TChain("T");
   if (nruns < 1 || nruns > runnums.size()) nruns = runnums.size();
+  std::cout << "Parsing ROOT files from " << nruns << " runs.." << std::endl;
   for (int i=0; i<nruns; i++) {
     //std::string rfname = rootfile_dir + Form("/*%d_1000k*",runnums[i]);
     std::string rfname = rootfile_dir + Form("/*%d*",runnums[i]);
