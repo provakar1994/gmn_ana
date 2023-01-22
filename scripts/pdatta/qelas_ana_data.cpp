@@ -344,7 +344,7 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
 
     // Calculating thetapq (both p & n hypothesis)
     // n (no deflection)
-    TVector3 HCAL_pos = HCAL_origin + xHCAL*HCAL_axes[0] + yHCAL*HCAL_axes[2];
+    TVector3 HCAL_pos = HCAL_origin + xHCAL*HCAL_axes[0] + yHCAL*HCAL_axes[1];
     TVector3 n_dir = (HCAL_pos - vertex).Unit();
     T_thetapq_n = acos(n_dir.Dot(pNhat));
     // p 
