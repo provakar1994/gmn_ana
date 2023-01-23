@@ -1,0 +1,23 @@
+{
+    "SBS_config"         : 14,
+    "SBS_magnet_percent" : 70,
+    "model"              : 2,
+    "replay_pass"        : 1,
+    "W2_cut"             : [0.38,1.38],
+    "dy_cut"             : [-0.3,0.3],
+    "thetapq_n_min_rad"  : 0.02,
+    "thetapq_p_min_rad"  : 0.02,
+    "h_W2_lims"          : [200,-1.0,3.0],
+    "h_dxHCAL_lims"      : [150,-2.0,1.0],
+    "h_dyHCAL_lims"      : [150,-1.5,1.5],
+    "initial_fit_parmas" : [2691,-0.82,0.14,1154,-0.019,0.15,100,-100,-100,100,100],
+    "rootfile_dir"       : "/w/halla-scshelf2102/sbs/pdbforce/gmn-ana/scripts/pdatta/pdout"
+}
+
+"
+## This is a config file for qelas_ana_data.cpp script. 
+# README:
+W2cut => [W2min, W2max]
+dycut => [dymin, dymax]
+thetapq_n(p)_min_rad => thetapq cut in radian
+"

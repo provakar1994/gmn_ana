@@ -1,0 +1,286 @@
+/* 
+   ...
+   E.g. Config. File: ...
+   -----
+   P. Datta  Created  01-23-2023 
+*/
+#include <iostream>
+
+#include "TH1F.h"
+#include "TLatex.h"
+#include "TChain.h"
+
+#include "../../include/gmn-ana.h"
+#include "../../dflay/src/JSONManager.cxx"
+
+/* <============ Defining fit fuctions ============> */
+//gaussian signal peak
+double psignal_fit (double *x, double *par) {
+  return par[0]*exp(-0.5*pow((x[0]-par[1])/par[2],2.));
+}
+double nsignal_fit (double *x, double *par) {
+  return par[0]*exp(-0.5*pow((x[0]-par[1])/par[2],2.));
+}
+//poly for background
+double bg_fit (double *x, double *par) {
+  return par[0] + par[1]*x[0] + par[2]*pow(x[0],2) + par[3]*pow(x[0],3) + par[4]*pow(x[0],4);
+}
+//global fit function
+double total_fit (double *x, double *par) {
+  return psignal_fit(x,&par[0]) + nsignal_fit(x,&par[3]) + bg_fit(x,&par[6]);
+}
+/* <====^^^^==== Defining fit fuctions ====^^^^====> */
+
+int fit_qelas_data (const char *configfilename, std::string filebase="pdout/fit_qelas_data")
+{
+  gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
+
+  // reading input config file ---------------------------------------
+  JSONManager *jmgr = new JSONManager(configfilename);
+
+  // seting up the desired SBS configuration
+  int conf = jmgr->GetValueFromKey<int>("SBS_config");
+  int sbsmag = jmgr->GetValueFromKey<int>("SBS_magnet_percent");
+  SBSconfig sbsconf(conf, sbsmag);
+  sbsconf.Print();
+
+  // creating the name of input file
+  int model = jmgr->GetValueFromKey<int>("model");
+  int pass = jmgr->GetValueFromKey<int>("replay_pass"); 
+  std::string rootfile_dir = jmgr->GetValueFromKey_str("rootfile_dir");
+  std::string rfname = Form("%s/qelas_ana_data_sbs%d_sbs%dp_model%d_pass%d*.root", 
+			    rootfile_dir.c_str(), sbsconf.GetSBSconf(), sbsconf.GetSBSmag(), model, pass);
+
+  // parsing trees
+  TChain *C = new TChain("Tout");
+  C->Add(rfname.c_str());
+  if (C->GetEntries()==0) {std::cerr << "*!* No ROOT file!" << std::endl; throw;}
+  
+  // getting useful tree branches
+  bool WCut;              C->SetBranchAddress("WCut", &WCut);
+  bool pCut;              C->SetBranchAddress("pCut", &pCut);
+  bool nCut;              C->SetBranchAddress("nCut", &nCut);
+  bool fiduCut;           C->SetBranchAddress("fiduCut", &fiduCut);
+  double W;               C->SetBranchAddress("W", &W);
+  double W2;              C->SetBranchAddress("W2", &W2);
+  double thetapq_p;       C->SetBranchAddress("thetapq_p", &thetapq_p);
+  double thetapq_n;       C->SetBranchAddress("thetapq_n", &thetapq_n);
+  double xHCAL;           C->SetBranchAddress("xHCAL", &xHCAL);
+  double yHCAL;           C->SetBranchAddress("yHCAL", &yHCAL);
+  double xHCAL_exp;       C->SetBranchAddress("xHCAL_exp", &xHCAL_exp);
+  double yHCAL_exp;       C->SetBranchAddress("yHCAL_exp", &yHCAL_exp);
+  double dx;              C->SetBranchAddress("dx", &dx);
+  double dy;              C->SetBranchAddress("dy", &dy);
+
+  // defining the oitput root file
+  TString outFile = Form("%s_sbs%d_sbs%dp_model%d_pass%d.root", 
+			 filebase.c_str(), sbsconf.GetSBSconf(), sbsconf.GetSBSmag(), model, pass);
+  TFile *fout = new TFile(outFile.Data(), "RECREATE");
+
+  // defining interesting histograms
+  vector<double> hW2_lim; jmgr->GetVectorFromKey<double>("h_W2_lims", hW2_lim);
+  TH1F *h_W2 = new TH1F("h_W2",";W^{2} (GeV^{2})",int(hW2_lim[0]),hW2_lim[1],hW2_lim[2]);
+  TH1F *h_W2_nofCut = new TH1F("h_W2_nofCut",";W^{2} (GeV^{2})",int(hW2_lim[0]),hW2_lim[1],hW2_lim[2]);
+  TH1F *h_W2_n = new TH1F("h_W2_n",";W^{2} (GeV^{2})",int(hW2_lim[0]),hW2_lim[1],hW2_lim[2]);
+  TH1F *h_W2_p = new TH1F("h_W2_p",";W^{2} (GeV^{2})",int(hW2_lim[0]),hW2_lim[1],hW2_lim[2]);
+  vector<double> hdx_lim; jmgr->GetVectorFromKey<double>("h_dxHCAL_lims", hdx_lim);
+  TH1F *h_dxHCAL = new TH1F("h_dxHCAL","; xHCAL_{obs} - xHCAL_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);  
+  TH1F *h_dxHCAL_nofCut = new TH1F("h_dxHCAL_nofCut","; xHCAL_{obs} - xHCAL_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);  
+  vector<double> hdy_lim; jmgr->GetVectorFromKey<double>("h_dyHCAL_lims", hdy_lim);
+  TH1F *h_dyHCAL = new TH1F("h_dyHCAL","; yHCAL_{obs} - yHCAL_{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
+  TH1F *h_dyHCAL_nofCut = new TH1F("h_dyHCAL_nofCut","; yHCAL_{obs} - yHCAL_{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
+
+  // reading Cuts
+  vector<double> W2cut; jmgr->GetVectorFromKey<double>("W2_cut", W2cut);
+  vector<double> dycut; jmgr->GetVectorFromKey<double>("dy_cut", dycut);
+  double thetapq_n_min = jmgr->GetValueFromKey<double>("thetapq_n_min_rad");
+  double thetapq_p_min = jmgr->GetValueFromKey<double>("thetapq_p_min_rad");
+
+  // looping through the tree ---------------------------------------
+  std::cout << std::endl;
+  long nevent = 0, nevents = C->GetEntries(); 
+  int treenum = 0, currenttreenum = 0;
+  while (C->GetEntry(nevent++)) {
+   
+    // print progress 
+    if( nevent % 1000 == 0 ) std::cout << nevent << "/" << nevents << "\r";
+    std::cout.flush();
+
+    // filling dx histos
+    bool W2Cut = W2 > W2cut[0] && W2 < W2cut[1];
+    bool dyCut = dy > dycut[0] && dy < dycut[1];
+    // W2 cut
+    if (W2Cut) {
+      // dy cut
+      if (dyCut) {
+	// fiducial cut
+	if (fiduCut) {
+	  h_dxHCAL->Fill(dx);
+	} 
+	h_dxHCAL_nofCut->Fill(dx);
+      }
+      // fiducial cut
+      if (fiduCut) {
+	h_dyHCAL->Fill(dy);
+      }
+      h_dyHCAL_nofCut->Fill(dy);
+    }
+
+    // filling W2 histos
+    bool thetapq_pCut = thetapq_p < thetapq_p_min;
+    bool thetapq_nCut = thetapq_n < thetapq_n_min;
+
+    // fiducial cut
+    if (fiduCut) {
+      h_W2->Fill(W2);
+      // thetapq_p cut
+      if (thetapq_pCut) {
+	h_W2_p->Fill(W2);
+      } 
+      // thetapq_n cut
+      if (thetapq_nCut) {
+	h_W2_n->Fill(W2);
+      }
+    }
+    h_W2_nofCut->Fill(W2);
+    
+  } // event loop
+  std::cout << std::endl << std::endl;
+
+  TCanvas *cdx = new TCanvas("cdx", "cdx", 1200, 600);
+  cdx->Divide(2,1);
+  
+  cdx->cd(1);
+  h_dxHCAL->SetLineColor(kBlack); h_dxHCAL->SetLineWidth(2);
+  h_dxHCAL->SetLineStyle(9); h_dxHCAL->SetFillColor(18);
+  h_dxHCAL->Draw();
+
+  // let's try fitting =========== ******* =========
+  double par[11], parf[11];
+  vector<double> parGuess; jmgr->GetVectorFromKey<double>("initial_fit_parmas", parGuess);
+  TF1* total = new TF1("total", total_fit, hdx_lim[1], hdx_lim[2], 11);
+  total->SetNpx(500);
+  total->SetLineColor(kRed);
+  total->SetParameters(&parGuess[0]);
+  h_dxHCAL->Fit("total", "RV+", "ep");
+  total->GetParameters(parf);
+
+  // plotting the weighted signal peaks and bg peak
+  TF1* psignal = new TF1("psignal", psignal_fit, hdx_lim[1], hdx_lim[2], 3);
+  psignal->SetNpx(500);
+  psignal->SetParameters(&parf[0]);
+  psignal->SetLineColor(kBlue); psignal->SetFillColorAlpha(kBlue, 0.35);
+  double pCount = (int)psignal->Integral(hdx_lim[1],hdx_lim[2])/h_dxHCAL->GetBinWidth(1);
+  TF1* nsignal = new TF1("nsignal", nsignal_fit, hdx_lim[1], hdx_lim[2], 3);
+  nsignal->SetNpx(500);
+  nsignal->SetParameters(&parf[3]);
+  nsignal->SetLineColor(kGreen);
+  double nCount = (int)nsignal->Integral(hdx_lim[1],hdx_lim[2])/h_dxHCAL->GetBinWidth(1);
+  TF1* bg = new TF1("bg", bg_fit, hdx_lim[1], hdx_lim[2], 5);
+  bg->SetNpx(500);
+  bg->SetParameters(&parf[6]);
+  bg->SetLineColor(kMagenta);
+  double tot_elas = nCount + pCount;
+
+  // draw the legend
+  TLegend *legend=new TLegend(0.60,0.66,0.88,0.85);
+  legend->SetTextFont(42);
+  //legend->SetTextSize(0.02);
+  legend->AddEntry(h_dxHCAL,"Data","lf");
+  legend->AddEntry(total,"Global Fit","l");
+  legend->AddEntry(psignal,"p Signal Fit","l");
+  legend->AddEntry(nsignal,"n Signal Fit","l");
+  legend->AddEntry(bg,"Background fit","l");
+
+  cdx->cd(2);
+  gPad->SetTickx(); gPad->SetTicky(); 
+  h_dxHCAL->Draw();
+  psignal->Draw("same");
+  nsignal->Draw("same");
+  bg->Draw("same");
+  legend->Draw();
+
+  // ********* === No fiducial cut
+  TCanvas *cdx_nf = new TCanvas("cdx_nf", "cdx_nf", 1200, 600);
+  cdx_nf->Divide(2,1);
+  
+  cdx_nf->cd(1);
+  h_dxHCAL_nofCut->SetLineColor(kBlack); h_dxHCAL_nofCut->SetLineWidth(2);
+  h_dxHCAL_nofCut->Draw();
+
+  // let's try fitting =========== ******* =========
+  TF1* total_nf = new TF1("total_nf", total_fit, hdx_lim[1], hdx_lim[2], 11);
+  total_nf->SetNpx(500);
+  total_nf->SetLineColor(kRed);
+  total_nf->SetParameters(&parGuess[0]);
+  h_dxHCAL_nofCut->Fit("total_nf", "RV+", "ep");
+  total_nf->GetParameters(parf);
+
+  // plotting the weighted signal peaks and bg peak
+  TF1* psignal_nf = new TF1("psignal_nf", psignal_fit, hdx_lim[1], hdx_lim[2], 3);
+  psignal_nf->SetNpx(500);
+  psignal_nf->SetParameters(&parf[0]);
+  psignal_nf->SetLineColor(kBlue);
+  double pCount_nf = (int)psignal_nf->Integral(hdx_lim[1],hdx_lim[2])/h_dxHCAL_nofCut->GetBinWidth(1);
+  TF1* nsignal_nf = new TF1("nsignal_nf", nsignal_fit, hdx_lim[1], hdx_lim[2], 3);
+  nsignal_nf->SetNpx(500);
+  nsignal_nf->SetParameters(&parf[3]);
+  nsignal_nf->SetLineColor(kGreen);
+  double nCount_nf = (int)nsignal_nf->Integral(hdx_lim[1],hdx_lim[2])/h_dxHCAL_nofCut->GetBinWidth(1);
+  TF1* bg_nf = new TF1("bg_nf", bg_fit, hdx_lim[1], hdx_lim[2], 5);
+  bg_nf->SetNpx(500);
+  bg_nf->SetParameters(&parf[6]);
+  bg_nf->SetLineColor(kMagenta);
+  double tot_elas_nf = nCount_nf + pCount_nf;
+
+  // draw the legend
+  TLegend *legend_nf=new TLegend(0.60,0.66,0.88,0.85);
+  legend_nf->SetTextFont(42);
+  //legend_nf->SetTextSize(0.02);
+  legend_nf->AddEntry(h_dxHCAL_nofCut,"Data","l");
+  legend_nf->AddEntry(total_nf,"Global Fit","l");
+  legend_nf->AddEntry(psignal_nf,"p Signal Fit","l");
+  legend_nf->AddEntry(nsignal_nf,"n Signal Fit","l");
+  legend_nf->AddEntry(bg_nf,"Background fit","l");
+
+  cdx_nf->cd(2);
+  gPad->SetTickx(); gPad->SetTicky(); 
+  h_dxHCAL_nofCut->Draw();
+  psignal_nf->Draw("same");
+  nsignal_nf->Draw("same");
+  bg_nf->Draw("same");
+  legend_nf->Draw();
+
+  // ********* === Let's plot W2 now
+  TCanvas *cW2 = new TCanvas("cW2", "cW2", 1200, 600);
+  cW2->Divide(2,1);
+  
+  cW2->cd(1);
+  h_W2->Draw();
+  h_W2_p->Draw("same"); h_W2_n->Draw("same");
+
+  cW2->cd(2);
+  h_W2_p->SetLineColor(kGreen); h_W2_p->SetFillColorAlpha(30, 0.1);
+  h_W2_p->Draw();
+  h_W2_n->SetLineColor(kRed); h_W2_n->SetFillColorAlpha(46, 0.1);
+  h_W2_n->Draw("same");
+
+  cout << endl << "------" << endl;
+  cout << " SBS-" << sbsconf.GetSBSconf() << " SBS " << sbsmag << "% data.." << endl;
+  cout << " n count = " << nCount << endl;
+  cout << " p count = " << pCount << endl;
+  cout << " n count (no fiducial cut) = " << nCount_nf << endl;
+  cout << " p count (no fiducial cut) = " << pCount_nf << endl;
+  cout << " % loss (n events) = " << (nCount_nf-nCount)*100.0 / nCount_nf << endl;
+  cout << " % loss (p events) = " << (pCount_nf-pCount)*100.0 / pCount_nf << endl;
+  cout << " % loss (total elastics) = " << (tot_elas_nf-tot_elas)*100.0 / tot_elas_nf << endl;
+  cout << " Output file : " << outFile << endl;
+  cout << "------" << endl << endl;
+
+  cdx->Write();
+  cdx_nf->Write();
+  cW2->Write();
+  fout->Write();
+  delete jmgr;
+  return 0;
+}
