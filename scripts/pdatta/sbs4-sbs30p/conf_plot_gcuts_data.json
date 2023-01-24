@@ -1,0 +1,11 @@
+{
+    "SBS_config"         : 4,
+    "SBS_magnet_percent" : 30,
+    "target"             : "ld2",
+    "replay_pass"        : 0, 
+    "Nruns_to_ana"       : 2,
+    "rootfile_dir_lh2"   : "/w/halla-scshelf2102/sbs/sbs-gmn/pass0/SBS4/LH2/rootfiles",
+    "runnums_lh2"        : [11436, 11500, 11547, 11548, 11616],
+    "rootfile_dir_ld2"   : "/w/halla-scshelf2102/sbs/sbs-gmn/pass0/SBS4/LD2/rootfiles",
+    "runnums_ld2"        : [11449, 11451, 11452, 11456, 11493, 11494, 11495, 11496, 11551, 11554, 11562, 11563, 11564, 11565, 11568, 11570, 11571]
+}

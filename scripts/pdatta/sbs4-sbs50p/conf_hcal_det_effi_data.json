@@ -1,0 +1,15 @@
+{
+    "Ntype"              : "p",
+    "SBS_config"         : 4,
+    "SBS_magnet_percent" : 50,
+    "HCALheight_offset"  : -0.38,
+    "model"              : 1,
+    "rootfile_dir"       : "/w/halla-scshelf2102/sbs/sbs-gmn/pass0/SBS4/LD2/rootfiles/*11593*",
+    "global_cut"         : "bb.tr.n==1&&abs(bb.tr.vz[0])<0.08&&abs(bb.tr.tg_th[0])<0.15&&abs(bb.tr.tg_ph[0])<0.3&&bb.gem.track.nhits>3&&bb.ps.e>0.2",
+    "dxsigma"            : 0,
+    "dysigma"            : 0,
+    "Wmin"               : 0.7,
+    "Wmax"               : 1.12
+}
+
+# This is a config file for hcal_det_effi_data.cpp script. 
