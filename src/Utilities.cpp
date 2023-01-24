@@ -23,7 +23,7 @@ namespace util_pd {
     double y_max = expconst::yHCAL_l_DB + expconst::hcalblk_w/2.;
     double x_min = expconst::xHCAL_t_DB - expconst::hcalblk_h/2.;
     double x_max = expconst::xHCAL_b_DB + expconst::hcalblk_h/2.;
-    TH2F *h = new TH2F(name.c_str(), ";y_{HCAL} (m);x_{HCAL} (m)",
+    TH2F *h = new TH2F(name.c_str(), ";yHCAL_{exp} (m);xHCAL_{exp} (m)",
 		       expconst::hcalcol, y_min, y_max,
 		       expconst::hcalrow, x_min, x_max);
     return h;
@@ -35,7 +35,7 @@ namespace util_pd {
     double y_max = expconst::yHCAL_l_DB_MC + expconst::hcalblk_w/2.;
     double x_min = expconst::xHCAL_t_DB_MC - expconst::hcalblk_h/2.;
     double x_max = expconst::xHCAL_b_DB_MC + expconst::hcalblk_h/2.;
-    TH2F *h = new TH2F(name.c_str(), ";y_{HCAL} (m);x_{HCAL} (m)",
+    TH2F *h = new TH2F(name.c_str(), ";yHCAL_{exp} (m);xHCAL_{exp} (m)",
 		       expconst::hcalcol, y_min, y_max,
 		       expconst::hcalrow, x_min, x_max);
     return h;
@@ -43,7 +43,7 @@ namespace util_pd {
   //_____________________________________
   TH2F *TH2FdxdyHCAL(std::string name) {
     // returns TH2F for dxdyHCAL
-    TH2F *h = new TH2F(name.c_str(), "; y_{HCAL} - y_{exp} (m); x_{HCAL} - x_{exp} (m)",
+    TH2F *h = new TH2F(name.c_str(), "; yHCAL_{obs} - yHCAL_{exp} (m); xHCAL_{obs} - xHCAL_{exp} (m)",
 		       250, -1.25, 1.25, 250, -3.5, 2);
     return h;
   }

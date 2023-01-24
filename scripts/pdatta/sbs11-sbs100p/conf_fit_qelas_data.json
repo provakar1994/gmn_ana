@@ -11,7 +11,13 @@
     "h_dxHCAL_lims"      : [150,-2.0,1.0],
     "h_dyHCAL_lims"      : [150,-1.5,1.5],
     "initial_fit_parmas" : [1206,-0.72,0.12,598,-0.005,0.13,100,-100,-100,100,100],
-    "rootfile_dir"       : "/w/halla-scshelf2102/sbs/pdbforce/gmn-ana/scripts/pdatta/pdout"
+    "rootfile_dir"       : "/w/halla-scshelf2102/sbs/pdbforce/gmn-ana/scripts/pdatta/pdout",
+    "*!* Attention"      : "Paramaters below should match with conf_qelas_ana_data.json",
+    "sbs_kick"           : 0.7199,
+    "dx_p"               : [-0.7199, 0.18],
+    "dy_p"               : [-0.0049, 0.17],
+    "dx_n"               : [-0.0077, 0.136],
+    "dy_n"               : [-0.0049, 0.17]
 }
 
 "

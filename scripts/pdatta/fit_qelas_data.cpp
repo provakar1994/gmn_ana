@@ -89,12 +89,25 @@ int fit_qelas_data (const char *configfilename, std::string filebase="pdout/fit_
   vector<double> hdy_lim; jmgr->GetVectorFromKey<double>("h_dyHCAL_lims", hdy_lim);
   TH1F *h_dyHCAL = new TH1F("h_dyHCAL","; yHCAL_{obs} - yHCAL_{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
   TH1F *h_dyHCAL_nofCut = new TH1F("h_dyHCAL_nofCut","; yHCAL_{obs} - yHCAL_{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
+  TH2F *h2_xyHCAL_p = util_pd::TH2FHCALface_xy_data("h2_xyHCAL_p");
+  TH2F *h2_xyHCAL_n = util_pd::TH2FHCALface_xy_data("h2_xyHCAL_n");
+  TH2F *h2_xyHCAL_p_nf = util_pd::TH2FHCALface_xy_data("h2_xyHCAL_p_nf");
+  TH2F *h2_xyHCAL_n_nf = util_pd::TH2FHCALface_xy_data("h2_xyHCAL_n_nf");
 
   // reading Cuts
   vector<double> W2cut; jmgr->GetVectorFromKey<double>("W2_cut", W2cut);
   vector<double> dycut; jmgr->GetVectorFromKey<double>("dy_cut", dycut);
   double thetapq_n_min = jmgr->GetValueFromKey<double>("thetapq_n_min_rad");
   double thetapq_p_min = jmgr->GetValueFromKey<double>("thetapq_p_min_rad");
+
+  // defining HCAL cuts
+  double sbs_kick = jmgr->GetValueFromKey<double>("sbs_kick");
+  vector<double> dx_p; jmgr->GetVectorFromKey<double>("dx_p", dx_p);
+  vector<double> dy_p; jmgr->GetVectorFromKey<double>("dy_p", dy_p);
+  vector<double> dx_n; jmgr->GetVectorFromKey<double>("dx_n", dx_n);
+  vector<double> dy_n; jmgr->GetVectorFromKey<double>("dy_n", dy_n);
+  vector<double> hcal_active_area = cut::hcal_active_area_data(); // Exc. 1 blk from all 4 sides
+  vector<double> hcal_safety_margin = cut::hcal_safety_margin(dx_p[1], dx_n[1], dy_p[1], hcal_active_area);
 
   // looping through the tree ---------------------------------------
   std::cout << std::endl;
@@ -122,14 +135,17 @@ int fit_qelas_data (const char *configfilename, std::string filebase="pdout/fit_
       // fiducial cut
       if (fiduCut) {
 	h_dyHCAL->Fill(dy);
+	if (pCut) h2_xyHCAL_p->Fill(yHCAL_exp, xHCAL_exp - sbs_kick);
+	if (nCut) h2_xyHCAL_n->Fill(yHCAL_exp, xHCAL_exp);
       }
       h_dyHCAL_nofCut->Fill(dy);
+      if (pCut) h2_xyHCAL_p_nf->Fill(yHCAL_exp, xHCAL_exp - sbs_kick);
+      if (nCut) h2_xyHCAL_n_nf->Fill(yHCAL_exp, xHCAL_exp);
     }
 
     // filling W2 histos
     bool thetapq_pCut = thetapq_p < thetapq_p_min;
     bool thetapq_nCut = thetapq_n < thetapq_n_min;
-
     // fiducial cut
     if (fiduCut) {
       h_W2->Fill(W2);
@@ -151,6 +167,7 @@ int fit_qelas_data (const char *configfilename, std::string filebase="pdout/fit_
   cdx->Divide(2,1);
   
   cdx->cd(1);
+  h_dxHCAL->SetTitle(Form("SBS-%d",sbsconf.GetSBSconf()));
   h_dxHCAL->SetLineColor(kBlack); h_dxHCAL->SetLineWidth(2);
   h_dxHCAL->SetLineStyle(9); h_dxHCAL->SetFillColor(18);
   h_dxHCAL->Draw();
@@ -205,6 +222,7 @@ int fit_qelas_data (const char *configfilename, std::string filebase="pdout/fit_
   cdx_nf->Divide(2,1);
   
   cdx_nf->cd(1);
+  h_dxHCAL_nofCut->SetTitle(Form("SBS-%d (No Fiducial Cut)",sbsconf.GetSBSconf()));
   h_dxHCAL_nofCut->SetLineColor(kBlack); h_dxHCAL_nofCut->SetLineWidth(2);
   h_dxHCAL_nofCut->Draw();
 
@@ -256,14 +274,44 @@ int fit_qelas_data (const char *configfilename, std::string filebase="pdout/fit_
   cW2->Divide(2,1);
   
   cW2->cd(1);
+  h_W2->SetTitle(Form("SBS-%d",sbsconf.GetSBSconf()));
   h_W2->Draw();
   h_W2_p->Draw("same"); h_W2_n->Draw("same");
 
   cW2->cd(2);
+  h_W2_p->SetTitle(Form("SBS-%d",sbsconf.GetSBSconf()));
   h_W2_p->SetLineColor(kGreen); h_W2_p->SetFillColorAlpha(30, 0.1);
   h_W2_p->Draw();
   h_W2_n->SetLineColor(kRed); h_W2_n->SetFillColorAlpha(46, 0.1);
   h_W2_n->Draw("same");
+
+  // ******** === let's plot elastic envelope at the face of HCAL
+  TCanvas *cxyHCAL = new TCanvas("cxyHCAL", "cxyHCAL", 1200, 1000);
+  cxyHCAL->Divide(2,2);
+
+  cxyHCAL->cd(1);
+  h2_xyHCAL_p->SetTitle(Form("p | SBS-%d",sbsconf.GetSBSconf()));
+  h2_xyHCAL_p->Draw("colz");
+  util_pd::DrawArea(hcal_active_area);
+  util_pd::DrawArea(hcal_safety_margin,4);
+
+  cxyHCAL->cd(2);
+  h2_xyHCAL_n->SetTitle(Form("n | SBS-%d",sbsconf.GetSBSconf()));
+  h2_xyHCAL_n->Draw("colz");
+  util_pd::DrawArea(hcal_active_area);
+  util_pd::DrawArea(hcal_safety_margin,4);
+
+  cxyHCAL->cd(3);
+  h2_xyHCAL_p_nf->SetTitle(Form("p | SBS-%d (No Fiducial Cut)",sbsconf.GetSBSconf()));
+  h2_xyHCAL_p_nf->Draw("colz");
+  util_pd::DrawArea(hcal_active_area);
+  util_pd::DrawArea(hcal_safety_margin,4);
+
+  cxyHCAL->cd(4);
+  h2_xyHCAL_n_nf->SetTitle(Form("n | SBS-%d (No Fiducial Cut)",sbsconf.GetSBSconf()));
+  h2_xyHCAL_n_nf->Draw("colz");
+  util_pd::DrawArea(hcal_active_area);
+  util_pd::DrawArea(hcal_safety_margin,4);
 
   cout << endl << "------" << endl;
   cout << " SBS-" << sbsconf.GetSBSconf() << " SBS " << sbsmag << "% data.." << endl;
@@ -280,6 +328,7 @@ int fit_qelas_data (const char *configfilename, std::string filebase="pdout/fit_
   cdx->Write();
   cdx_nf->Write();
   cW2->Write();
+  cxyHCAL->Write();
   fout->Write();
   delete jmgr;
   return 0;
