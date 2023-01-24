@@ -16,8 +16,12 @@
     "sbs_kick"           : 0.644,
     "dx_p"               : [-0.644, 0.19],
     "dy_p"               : [-0.004, 0.24],
+    "Nsigma_cut_dx_p"    : 1,
+    "Nsigma_cut_dy_p"    : 1,
     "dx_n"               : [0.016, 0.2],
-    "dy_n"               : [-0.004, 0.24]
+    "dy_n"               : [-0.004, 0.24],
+    "Nsigma_cut_dx_n"    : 1,
+    "Nsigma_cut_dy_n"    : 1
 }
 
 "

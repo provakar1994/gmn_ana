@@ -89,6 +89,7 @@ int fit_qelas_data (const char *configfilename, std::string filebase="pdout/fit_
   vector<double> hdy_lim; jmgr->GetVectorFromKey<double>("h_dyHCAL_lims", hdy_lim);
   TH1F *h_dyHCAL = new TH1F("h_dyHCAL","; yHCAL_{obs} - yHCAL_{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
   TH1F *h_dyHCAL_nofCut = new TH1F("h_dyHCAL_nofCut","; yHCAL_{obs} - yHCAL_{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
+  TH2F *h2_dxdyHCAL = util_pd::TH2FdxdyHCAL("h2_dxdyHCAL");
   TH2F *h2_xyHCAL_p = util_pd::TH2FHCALface_xy_data("h2_xyHCAL_p");
   TH2F *h2_xyHCAL_n = util_pd::TH2FHCALface_xy_data("h2_xyHCAL_n");
   TH2F *h2_xyHCAL_p_nf = util_pd::TH2FHCALface_xy_data("h2_xyHCAL_p_nf");
@@ -104,8 +105,12 @@ int fit_qelas_data (const char *configfilename, std::string filebase="pdout/fit_
   double sbs_kick = jmgr->GetValueFromKey<double>("sbs_kick");
   vector<double> dx_p; jmgr->GetVectorFromKey<double>("dx_p", dx_p);
   vector<double> dy_p; jmgr->GetVectorFromKey<double>("dy_p", dy_p);
+  double Nsigma_cut_dx_p = jmgr->GetValueFromKey<double>("Nsigma_cut_dx_p");
+  double Nsigma_cut_dy_p = jmgr->GetValueFromKey<double>("Nsigma_cut_dy_p");
   vector<double> dx_n; jmgr->GetVectorFromKey<double>("dx_n", dx_n);
   vector<double> dy_n; jmgr->GetVectorFromKey<double>("dy_n", dy_n);
+  double Nsigma_cut_dx_n = jmgr->GetValueFromKey<double>("Nsigma_cut_dx_n");
+  double Nsigma_cut_dy_n = jmgr->GetValueFromKey<double>("Nsigma_cut_dy_n");
   vector<double> hcal_active_area = cut::hcal_active_area_data(); // Exc. 1 blk from all 4 sides
   vector<double> hcal_safety_margin = cut::hcal_safety_margin(dx_p[1], dx_n[1], dy_p[1], hcal_active_area);
 
@@ -135,6 +140,7 @@ int fit_qelas_data (const char *configfilename, std::string filebase="pdout/fit_
       // fiducial cut
       if (fiduCut) {
 	h_dyHCAL->Fill(dy);
+	h2_dxdyHCAL->Fill(dy, dx);
 	if (pCut) h2_xyHCAL_p->Fill(yHCAL_exp, xHCAL_exp - sbs_kick);
 	if (nCut) h2_xyHCAL_n->Fill(yHCAL_exp, xHCAL_exp);
       }
@@ -187,12 +193,12 @@ int fit_qelas_data (const char *configfilename, std::string filebase="pdout/fit_
   psignal->SetNpx(500);
   psignal->SetParameters(&parf[0]);
   psignal->SetLineColor(kBlue); psignal->SetFillColorAlpha(kBlue, 0.35);
-  double pCount = (int)psignal->Integral(hdx_lim[1],hdx_lim[2])/h_dxHCAL->GetBinWidth(1);
+  int pCount = (int)psignal->Integral(hdx_lim[1],hdx_lim[2])/h_dxHCAL->GetBinWidth(1);
   TF1* nsignal = new TF1("nsignal", nsignal_fit, hdx_lim[1], hdx_lim[2], 3);
   nsignal->SetNpx(500);
   nsignal->SetParameters(&parf[3]);
   nsignal->SetLineColor(kGreen);
-  double nCount = (int)nsignal->Integral(hdx_lim[1],hdx_lim[2])/h_dxHCAL->GetBinWidth(1);
+  int nCount = (int)nsignal->Integral(hdx_lim[1],hdx_lim[2])/h_dxHCAL->GetBinWidth(1);
   TF1* bg = new TF1("bg", bg_fit, hdx_lim[1], hdx_lim[2], 5);
   bg->SetNpx(500);
   bg->SetParameters(&parf[6]);
@@ -239,12 +245,12 @@ int fit_qelas_data (const char *configfilename, std::string filebase="pdout/fit_
   psignal_nf->SetNpx(500);
   psignal_nf->SetParameters(&parf[0]);
   psignal_nf->SetLineColor(kBlue);
-  double pCount_nf = (int)psignal_nf->Integral(hdx_lim[1],hdx_lim[2])/h_dxHCAL_nofCut->GetBinWidth(1);
+  int pCount_nf = (int)psignal_nf->Integral(hdx_lim[1],hdx_lim[2])/h_dxHCAL_nofCut->GetBinWidth(1);
   TF1* nsignal_nf = new TF1("nsignal_nf", nsignal_fit, hdx_lim[1], hdx_lim[2], 3);
   nsignal_nf->SetNpx(500);
   nsignal_nf->SetParameters(&parf[3]);
   nsignal_nf->SetLineColor(kGreen);
-  double nCount_nf = (int)nsignal_nf->Integral(hdx_lim[1],hdx_lim[2])/h_dxHCAL_nofCut->GetBinWidth(1);
+  int nCount_nf = (int)nsignal_nf->Integral(hdx_lim[1],hdx_lim[2])/h_dxHCAL_nofCut->GetBinWidth(1);
   TF1* bg_nf = new TF1("bg_nf", bg_fit, hdx_lim[1], hdx_lim[2], 5);
   bg_nf->SetNpx(500);
   bg_nf->SetParameters(&parf[6]);
@@ -274,44 +280,88 @@ int fit_qelas_data (const char *configfilename, std::string filebase="pdout/fit_
   cW2->Divide(2,1);
   
   cW2->cd(1);
+  gPad->SetTickx(); gPad->SetTicky();
   h_W2->SetTitle(Form("SBS-%d",sbsconf.GetSBSconf()));
+  h_W2->SetLineColor(kBlack);
   h_W2->Draw();
   h_W2_p->Draw("same"); h_W2_n->Draw("same");
 
   cW2->cd(2);
+  gPad->SetTickx(); gPad->SetTicky();
   h_W2_p->SetTitle(Form("SBS-%d",sbsconf.GetSBSconf()));
   h_W2_p->SetLineColor(kGreen); h_W2_p->SetFillColorAlpha(30, 0.1);
   h_W2_p->Draw();
   h_W2_n->SetLineColor(kRed); h_W2_n->SetFillColorAlpha(46, 0.1);
   h_W2_n->Draw("same");
 
-  // ******** === let's plot elastic envelope at the face of HCAL
-  TCanvas *cxyHCAL = new TCanvas("cxyHCAL", "cxyHCAL", 1200, 1000);
-  cxyHCAL->Divide(2,2);
-
+  // plotting p and n spots at the face of HCAL
+  TCanvas *cxyHCAL = new TCanvas("cxyHCAL", "cxyHCAL", 1200, 600);
+  cxyHCAL->Divide(2,1);
+  
   cxyHCAL->cd(1);
+  gPad->SetTickx(); gPad->SetTicky();
+  h2_dxdyHCAL->SetTitle(Form("SBS-%d",sbsconf.GetSBSconf()));
+  h2_dxdyHCAL->Draw("colz");
+
+  cxyHCAL->cd(2);
+  gPad->SetTickx(); gPad->SetTicky();
+  h2_dxdyHCAL->Draw("colz");
+  TEllipse Ep_p;
+  Ep_p.SetFillStyle(0); Ep_p.SetLineColor(2); Ep_p.SetLineWidth(2);
+  Ep_p.DrawEllipse(dy_p[0], dx_p[0], Nsigma_cut_dy_p*dy_p[1], Nsigma_cut_dx_p*dx_p[1], 0,360,0);
+  TEllipse Ep_n;
+  Ep_n.SetFillStyle(0); Ep_n.SetLineColor(3); Ep_n.SetLineWidth(2);
+  Ep_n.DrawEllipse(dy_n[0], dx_n[0], Nsigma_cut_dy_n*dy_n[1], Nsigma_cut_dx_n*dx_n[1], 0,360,0);
+
+
+  // ******** === let's plot elastic envelopes at the face of HCAL
+  TCanvas *celEnv = new TCanvas("celEnv", "celEnv", 1200, 1000);
+  celEnv->Divide(2,2);
+
+  celEnv->cd(1);
   h2_xyHCAL_p->SetTitle(Form("p | SBS-%d",sbsconf.GetSBSconf()));
   h2_xyHCAL_p->Draw("colz");
   util_pd::DrawArea(hcal_active_area);
   util_pd::DrawArea(hcal_safety_margin,4);
 
-  cxyHCAL->cd(2);
+  celEnv->cd(2);
   h2_xyHCAL_n->SetTitle(Form("n | SBS-%d",sbsconf.GetSBSconf()));
   h2_xyHCAL_n->Draw("colz");
   util_pd::DrawArea(hcal_active_area);
   util_pd::DrawArea(hcal_safety_margin,4);
 
-  cxyHCAL->cd(3);
+  celEnv->cd(3);
   h2_xyHCAL_p_nf->SetTitle(Form("p | SBS-%d (No Fiducial Cut)",sbsconf.GetSBSconf()));
   h2_xyHCAL_p_nf->Draw("colz");
   util_pd::DrawArea(hcal_active_area);
   util_pd::DrawArea(hcal_safety_margin,4);
 
-  cxyHCAL->cd(4);
+  celEnv->cd(4);
   h2_xyHCAL_n_nf->SetTitle(Form("n | SBS-%d (No Fiducial Cut)",sbsconf.GetSBSconf()));
   h2_xyHCAL_n_nf->Draw("colz");
   util_pd::DrawArea(hcal_active_area);
   util_pd::DrawArea(hcal_safety_margin,4);
+
+  // time to summarize the findings
+  double nCount_ploss = (nCount_nf-nCount)*100.0 / nCount_nf;
+  double pCount_ploss = (pCount_nf-pCount)*100.0 / pCount_nf;
+  double total_ploss = (tot_elas_nf-tot_elas)*100.0 / tot_elas_nf;
+
+  TCanvas *cgist = new TCanvas("cgist");
+  cgist->cd();
+
+  TPaveText *pt = new TPaveText(.05,.1,.95,.8);
+  pt->AddText(Form("SBS-%d SBS %dp Field Data",sbsconf.GetSBSconf(),sbsmag));
+  pt->AddText(Form(" n count = %d",nCount));
+  pt->AddText(Form(" p count = %d",pCount));
+  pt->AddText(Form(" n count (no fiducial cut) = %d",nCount_nf));
+  pt->AddText(Form(" p count (no fiducial cut) = %d",pCount_nf));
+  pt->AddText(Form(" loss of n events = %.1fp",nCount_ploss));
+  pt->AddText(Form(" loss of p events = %.1fp",pCount_ploss));
+  pt->AddText(Form(" loss of total elastics = %.1fp",total_ploss));
+  TText *t1 = pt->GetLineWith("SBS");
+  t1->SetTextColor(kBlue);
+  pt->Draw();
 
   cout << endl << "------" << endl;
   cout << " SBS-" << sbsconf.GetSBSconf() << " SBS " << sbsmag << "% data.." << endl;
@@ -319,9 +369,9 @@ int fit_qelas_data (const char *configfilename, std::string filebase="pdout/fit_
   cout << " p count = " << pCount << endl;
   cout << " n count (no fiducial cut) = " << nCount_nf << endl;
   cout << " p count (no fiducial cut) = " << pCount_nf << endl;
-  cout << " % loss (n events) = " << (nCount_nf-nCount)*100.0 / nCount_nf << endl;
-  cout << " % loss (p events) = " << (pCount_nf-pCount)*100.0 / pCount_nf << endl;
-  cout << " % loss (total elastics) = " << (tot_elas_nf-tot_elas)*100.0 / tot_elas_nf << endl;
+  cout << " % loss (n events) = " << nCount_ploss << endl;
+  cout << " % loss (p events) = " << pCount_ploss << endl;
+  cout << " % loss (total elastics) = " << total_ploss << endl;
   cout << " Output file : " << outFile << endl;
   cout << "------" << endl << endl;
 
@@ -329,6 +379,8 @@ int fit_qelas_data (const char *configfilename, std::string filebase="pdout/fit_
   cdx_nf->Write();
   cW2->Write();
   cxyHCAL->Write();
+  celEnv->Write();
+  cgist->Write();
   fout->Write();
   delete jmgr;
   return 0;
