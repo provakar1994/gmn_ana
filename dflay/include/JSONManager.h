@@ -11,7 +11,8 @@
 #include <fstream>
 #include <string>
 
-#include "/u/site/12gev_phys/2.5/Linux_CentOS7.7.1908-gcc9.2.0/root/6.24.06/include/nlohmann/json.hpp"
+//#include "/u/site/12gev_phys/2.5/Linux_CentOS7.7.1908-gcc9.2.0/root/6.24.06/include/nlohmann/json.hpp"
+#include "json.hpp"
 
 enum dataType{ 
    kINT,
