@@ -358,13 +358,12 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
     // HCAL active area and safety margin cuts [Fiducial region]
     bool AR_cut = cut::inHCAL_activeA(xHCAL, yHCAL, hcal_active_area);
     bool FR_cut = cut::inHCAL_fiducial(xyHCAL_exp[0], xyHCAL_exp[1], sbs_kick, hcal_safety_margin);
-
+    fiduCut = AR_cut && FR_cut;
     // HCAL cuts
     pCut = pow((dx-dx_p[0]) / (dx_p[1]*Nsigma_cut_dx_p), 2) + pow((dy-dy_p[0]) / (dy_p[1]*Nsigma_cut_dy_p), 2) <= 1.;
     nCut = pow((dx-dx_n[0]) / (dx_n[1]*Nsigma_cut_dx_n), 2) + pow((dy-dy_n[0]) / (dy_n[1]*Nsigma_cut_dy_n), 2) <= 1.;
 
-    fiduCut = AR_cut && FR_cut;
-    WCut = Wrecon > Wmin && Wrecon < Wmax;
+    WCut = Wrecon >= Wmin && Wrecon <= Wmax;
 
     // W cut
     if (WCut) {
