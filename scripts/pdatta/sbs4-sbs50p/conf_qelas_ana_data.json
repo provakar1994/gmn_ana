@@ -5,7 +5,7 @@
     "model"              : 2,
     "replay_pass"        : 0,
     "Nruns_to_ana"       : -1,
-    "global_cut"         : "bb.tr.n>0&&bb.gem.track.nhits>2&&abs(bb.tr.vz[0])<0.08&&bb.tr.p[0]>1.6&&bb.ps.e>0.15",
+    "global_cut"         : "bb.tr.n>0&&bb.gem.track.nhits>2&&abs(bb.tr.vz[0])<0.08&&bb.tr.p[0]>1.6&&bb.ps.e>0.15&&sbs.hcal.e>0.0",
     "hcal_voffset"       : -0.2897,
     "hcal_hoffset"       : 0.1289,
     "sbs_kick"           : 1.086,
