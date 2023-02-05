@@ -71,9 +71,10 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   // setting up ROOT tree branch addresses ---------------------------------------
   int maxNtr=1000;
   C->SetBranchStatus("*",0);
-  // beam energy - Probably we should take an average over 100 events
-  // double HALLA_p;
-  // setrootvar::setbranch(C, "HALLA_p", "", &HALLA_p);
+  // beam energy 
+  /* Reading from tree. For events that are missing data we will use the value
+     we got in the events that came before them. */
+  double HALLA_p; setrootvar::setbranch(C, "HALLA_p", "", &HALLA_p);
 
   // bbcal clus var
   double eSH; setrootvar::setbranch(C,"bb.sh","e",&eSH);
@@ -213,7 +214,11 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   std::cout << std::endl;
   long nevent = 0, nevents = C->GetEntries(); 
   int treenum = 0, currenttreenum = 0;
+  double ebeam = sbsconf.GetEbeam();           // Expected beam energy (GeV)
   while (C->GetEntry(nevent++)) {
+
+    // reading beam energy from tree
+    if (HALLA_p > 0.) ebeam = HALLA_p / 1000.; // GeV
    
     // print progress 
     if( nevent % 1000 == 0 ) std::cout << nevent << "/" << nevents << "\r";
@@ -237,14 +242,11 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
     double coin_time = hcal_time - bbcal_time;  
     T_coinT_trig = coin_time; h_coin_time->Fill(coin_time);
 
-    // kinematic parameters
-    double ebeam = sbsconf.GetEbeam();       // Expected beam energy (GeV) [Get it from EPICS, eventually]
-    double ebeam_corr = ebeam; //- MeanEloss;
-    double precon = p[0]; //+ MeanEloss_outgoing
-
     // constructing the 4 vectors
     /* Reaction    : e + e' -> N + N'
        Conservation: Pe + Peprime = PN + PNprime */
+    double ebeam_corr = ebeam; //- MeanEloss;
+    double precon = p[0]; //+ MeanEloss_outgoing;
     TVector3 vertex(0, 0, vz[0]);
     TLorentzVector Pe(0,0,ebeam_corr,ebeam_corr);   // incoming e- 4-vector
     TLorentzVector Peprime(px[0] * (precon/p[0]),   // scattered e- 4-vector
