@@ -16,8 +16,8 @@
 #include "TTreeFormula.h"
 #include "TLorentzVector.h"
 
-#include "../../include/gmn-ana.h"
-#include "../../dflay/src/JSONManager.cxx"
+#include "../include/gmn-ana.h"
+#include "../dflay/src/JSONManager.cxx"
 
 int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test_qelas_ana_data")
 {
@@ -433,7 +433,19 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   cout << "CPU time elapsed = " << sw->CpuTime() << " s. Real time = " << sw->RealTime() << " s. " << endl << endl;
 
   c1->Write();
-  fout->Write();
+  h_W->Write();
+  h_W_cut->Write();
+  h_W_acut->Write();
+  h_dpel->Write();
+  h_Q2->Write();
+  h_dxHCAL->Write();
+  h_dyHCAL->Write();
+  h2_rcHCAL->Write();
+  h2_dxdyHCAL->Write();
+  h2_xyHCAL_p->Write();
+  h2_xyHCAL_n->Write();
+  h_coin_time->Write();
+  //fout->Write();
   sw->Delete();
   delete jmgr;
   return 0;
