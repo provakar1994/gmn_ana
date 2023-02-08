@@ -1,7 +1,7 @@
 {
     "SBS_config"         : 4,
     "SBS_magnet_percent" : 50,
-    "target"             : "ld2",
+    "target"             : "LD2",
     "replay_pass"        : 0, 
     "Nruns_to_ana"       : 2,
     "rootfile_dir_lh2"   : "/w/halla-scshelf2102/sbs/sbs-gmn/pass0/SBS4/LH2/rootfiles",

@@ -11,7 +11,7 @@
 #include "../../include/gmn-ana.h"
 #include "../../dflay/src/JSONManager.cxx"
 
-int get_HALLA_p_prun (const char *configfilename) 
+int get_avgHALLA_p_prun (const char *configfilename) 
 {
   gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
   

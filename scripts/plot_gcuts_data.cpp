@@ -32,10 +32,10 @@ int plot_gcuts_data (const char *configfilename, std::string filebase="pdout/tes
   std::string target = jmgr->GetValueFromKey_str("target");
   std::string rootfile_dir; //= jmgr->GetValueFromKey_str("rootfile_dir");
   std::vector<int> runnums; //jmgr->GetVectorFromKey<int>("runnums",runnums);
-  if (target.compare("lh2") == 0) {
+  if (target.compare("LH2") == 0) {
     rootfile_dir =  jmgr->GetValueFromKey_str("rootfile_dir_lh2");
     jmgr->GetVectorFromKey<int>("runnums_lh2",runnums);
-  } else if (target.compare("ld2") == 0) {
+  } else if (target.compare("LD2") == 0) {
     rootfile_dir =  jmgr->GetValueFromKey_str("rootfile_dir_ld2");
     jmgr->GetVectorFromKey<int>("runnums_ld2",runnums);
   } else {

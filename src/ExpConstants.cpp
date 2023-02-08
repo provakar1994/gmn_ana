@@ -8,11 +8,13 @@ namespace expconst {
     if(config==1)
       return 1.916;
     else if(config==4)
-      return 3.7278;
+      //return 3.7278;
+      return 3.72825;
     else if(config==7)
       return 7.906;
     else if(config==11)
-      return 9.91;
+      //return 9.91;
+      return 9.8594; // mean of all entries in DB/avg_ebeam_prun_sbs11_LD2.csv
     else if(config==14 || config==8)
       return 5.965;
     else if(config==9)
