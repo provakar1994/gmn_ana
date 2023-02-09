@@ -179,6 +179,7 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   double T_yHCAL_exp;   Tout->Branch("yHCAL_exp", &T_yHCAL_exp, "yHCAL_exp/D"); 
   double T_dx;          Tout->Branch("dx", &T_dx, "dx/D"); 
   double T_dy;          Tout->Branch("dy", &T_dy, "dy/D");
+  double T_ToF_n;       Tout->Branch("ToF_n", &T_ToF_n, "ToF_n/D");
   //HODO
   int T_ncltmeanHODO;   Tout->Branch("ncltmeanHODO", &T_ncltmeanHODO, "ncltmeanHODO/I"); 
   double T_cltmeanHODO; Tout->Branch("cltmeanHODO", &T_cltmeanHODO, "cltmeanHODO/D"); 
@@ -348,14 +349,18 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
     // Calculating thetapq (both p & n hypothesis)
     // n (no deflection)
     TVector3 HCAL_pos = HCAL_origin + xHCAL*HCAL_axes[0] + yHCAL*HCAL_axes[1];
-    TVector3 n_dir = (HCAL_pos - vertex).Unit();
-    T_thetapq_n = acos(n_dir.Dot(pNhat));
+    TVector3 n_dir = (HCAL_pos - vertex);
+    T_thetapq_n = acos(n_dir.Unit().Dot(pNhat));
     // p 
     double BdL = sbsfieldfrac * expconst::sbsmaxfield * expconst::sbsdipolegap;
     double proton_thetabend = 0.3 * BdL / PNprime.Vect().Mag();  // p*theta = 0.3*BdL
     double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist() - (sbsconf.GetSBSdist() + expconst::sbsdipolegap/2.0));
-    TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex).Unit();
-    T_thetapq_p = acos(p_dir.Dot(pNhat));
+    TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);
+    T_thetapq_p = acos(p_dir.Unit().Dot(pNhat));
+
+   // calculate ToF for neutrons
+    double ToF_n = (n_dir.Mag() / constant::c) * sqrt(1. + pow((constant::Mn/PNprime.Vect().Mag()), 2));
+    T_ToF_n = ToF_n*1e9; //ns
 
     // HCAL active area and safety margin cuts [Fiducial region]
     bool AR_cut = cut::inHCAL_activeA(xHCAL, yHCAL, hcal_active_area);

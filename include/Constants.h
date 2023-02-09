@@ -7,6 +7,9 @@ namespace constant {
 
   // math
   static const double pi = TMath::Pi();
+
+  // light
+  static const double c = 299792458; // m/s
   
   // electron
   static const double qe = 1.602176634E-19; // C

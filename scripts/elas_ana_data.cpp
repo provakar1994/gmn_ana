@@ -16,8 +16,8 @@
 #include "TTreeFormula.h"
 #include "TLorentzVector.h"
 
-#include "../../include/gmn-ana.h"
-#include "../../dflay/src/JSONManager.cxx"
+#include "../include/gmn-ana.h"
+#include "../dflay/src/JSONManager.cxx"
 
 int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_elas_ana_data")
 {
@@ -176,6 +176,7 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
   double T_yHCAL_exp;     Tout->Branch("yHCAL_exp", &T_yHCAL_exp, "yHCAL_exp/D"); 
   double T_dx;            Tout->Branch("dx", &T_dx, "dx/D"); 
   double T_dy;            Tout->Branch("dy", &T_dy, "dy/D");
+  double T_ToF;           Tout->Branch("ToF", &T_ToF, "ToF/D");
   //HODO
   int T_ncltmeanHODO;     Tout->Branch("ncltmeanHODO", &T_ncltmeanHODO, "ncltmeanHODO/I"); 
   double T_cltmeanHODO;   Tout->Branch("cltmeanHODO", &T_cltmeanHODO, "cltmeanHODO/D"); 
@@ -346,8 +347,12 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
     double BdL = sbsfieldfrac * expconst::sbsmaxfield * expconst::sbsdipolegap;
     double proton_thetabend = 0.3 * BdL / PNprime.Vect().Mag();  // p*theta = 0.3*BdL
     double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist() - (sbsconf.GetSBSdist() + expconst::sbsdipolegap/2.0));
-    TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex).Unit();
-    T_thetapq_p = acos(p_dir.Dot(pNhat));
+    TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);
+    T_thetapq_p = acos(p_dir.Unit().Dot(pNhat));
+
+    // calculate ToF
+    double ToF = (p_dir.Mag() / constant::c) * sqrt(1. + pow((constant::Mp/PNprime.Vect().Mag()), 2));
+    T_ToF = ToF*1e9; //ns
 
     // HCAL active area and safety margin cuts [Fiducial region]
     /* Using fiducut for LH2 data doesn't make sense. Still keeping the branch just 
