@@ -1,5 +1,5 @@
 {
-    "target"             : "LH2",
+    "target"             : "LD2",
     "SBS_config"         : 11,
     "replay_pass"        : 1, 
     "Nruns_to_ana"       : -1,

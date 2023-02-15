@@ -29,26 +29,29 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   // reading input config file ---------------------------------------
   JSONManager *jmgr = new JSONManager(configfilename);
 
-  // parsing trees
+  // seting up the desired SBS configuration
+  int conf = jmgr->GetValueFromKey<int>("SBS_config");
+  int sbsmag = jmgr->GetValueFromKey<int>("SBS_magnet_percent"); 
+  std::string target = jmgr->GetValueFromKey_str("target"); 
+  int pass = jmgr->GetValueFromKey<int>("replay_pass"); 
+  SBSconfig sbsconf(conf, sbsmag);
+  sbsconf.Print();
+
+  // reading relevant run info from good runlist spreadsheet
   std::string rootfile_dir = jmgr->GetValueFromKey_str("rootfile_dir");
-  std::vector<int> runnums; jmgr->GetVectorFromKey<int>("runnums",runnums);
+  vector<CodaRun> crun; util_pd::ReadRunList(conf,target,pass,sbsmag,crun);
   int nruns = jmgr->GetValueFromKey<int>("Nruns_to_ana"); // # runs to analyze
+
+  // parsing ROOT trees
   TChain *C = new TChain("T");
-  if (nruns < 1 || nruns > runnums.size()) nruns = runnums.size();
+  if (nruns < 1 || nruns > crun.size()) nruns = crun.size();
   std::cout << "Parsing ROOT files from " << nruns << " runs.." << std::endl;
   for (int i=0; i<nruns; i++) {
-    //std::string rfname = rootfile_dir + Form("/*%d_1000k*",runnums[i]);
-    std::string rfname = rootfile_dir + Form("/*%d*",runnums[i]);
+    std::string rfname = rootfile_dir + Form("/*%d*",crun[i].runnum);
     C->Add(rfname.c_str());
   }
   if (C->GetEntries()==0) {std::cerr << "*!* No ROOT file!" << std::endl; throw;}
 
-  // seting up the desired SBS configuration
-  int conf = jmgr->GetValueFromKey<int>("SBS_config");
-  int sbsmag = jmgr->GetValueFromKey<int>("SBS_magnet_percent");
-  double sbsfieldfrac = sbsmag / 100.;
-  SBSconfig sbsconf(conf, sbsmag);
-  sbsconf.Print();
 
   // Choosing the model of calculation
   // model 0 => uses reconstructed p as independent variable
@@ -77,13 +80,15 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   double HALLA_p; setrootvar::setbranch(C, "HALLA_p", "", &HALLA_p);
 
   // bbcal clus var
-  double eSH; setrootvar::setbranch(C,"bb.sh","e",&eSH);
-  double ePS; setrootvar::setbranch(C,"bb.ps","e",&ePS);
-  
+  double eSH, atimeSH, ePS, atimePS;
+  std::vector<std::string> bbcalclvar = {"sh.e","sh.atimeblk","ps.e","ps.atimeblk"};
+  std::vector<void*> bbcalclvar_mem = {&eSH,&atimeSH,&ePS,&atimePS};
+  setrootvar::setbranch(C, "bb", bbcalclvar, bbcalclvar_mem);
+ 
   // hcal clus var
-  double eHCAL, xHCAL, yHCAL, rblkHCAL, cblkHCAL, idblkHCAL, tdctblkHCAL;
-  std::vector<std::string> hcalclvar = {"e","x","y","rowblk","colblk","idblk","tdctimeblk"};
-  std::vector<void*> hcalclvar_mem = {&eHCAL,&xHCAL,&yHCAL,&rblkHCAL,&cblkHCAL,&idblkHCAL,&tdctblkHCAL};
+  double eHCAL, xHCAL, yHCAL, rblkHCAL, cblkHCAL, idblkHCAL, atimeHCAL, tdcHCAL;
+  std::vector<std::string> hcalclvar = {"e","x","y","rowblk","colblk","idblk","atimeblk","tdctimeblk"};
+  std::vector<void*> hcalclvar_mem = {&eHCAL,&xHCAL,&yHCAL,&rblkHCAL,&cblkHCAL,&idblkHCAL,&atimeHCAL,&tdcHCAL};
   setrootvar::setbranch(C, "sbs.hcal", hcalclvar, hcalclvar_mem);
 
   // bbhodo clus var
@@ -113,7 +118,6 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   C->SetBranchStatus("bb.etot_over_p", 1);
 
   // defining the outputfile
-  int pass = jmgr->GetValueFromKey<int>("replay_pass"); 
   TString outFile = Form("%s_sbs%d_sbs%dp_model%d_pass%d.root", 
 			 filebase.c_str(), sbsconf.GetSBSconf(), sbsconf.GetSBSmag(), model, pass);
   TFile *fout = new TFile(outFile.Data(), "RECREATE");
@@ -139,10 +143,10 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   // Defining interesting ROOT tree branches 
   TTree *Tout = new TTree("Tout", "");
   //cuts
-  bool WCut;            Tout->Branch("WCut", &WCut, "WCut/B");
-  bool pCut;            Tout->Branch("pCut", &pCut, "pCut/B");
-  bool nCut;            Tout->Branch("nCut", &nCut, "nCut/B");
-  bool fiduCut;         Tout->Branch("fiduCut", &fiduCut, "fiduCut/B");
+  bool WCut;            Tout->Branch("WCut", &WCut, "WCut/O");
+  bool pCut;            Tout->Branch("pCut", &pCut, "pCut/O");
+  bool nCut;            Tout->Branch("nCut", &nCut, "nCut/O");
+  bool fiduCut;         Tout->Branch("fiduCut", &fiduCut, "fiduCut/O");
   //
   double T_ebeam;       Tout->Branch("ebeam", &T_ebeam, "ebeam/D");
   //kine
@@ -170,11 +174,14 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   //BBCAL
   double T_ePS;         Tout->Branch("ePS", &T_ePS, "ePS/D"); 
   double T_eSH;         Tout->Branch("eSH", &T_eSH, "eSH/D"); 
+  double T_atimePS;     Tout->Branch("atimePS", &T_atimePS, "atimePS/D"); 
+  double T_atimeSH;     Tout->Branch("atimeSH", &T_atimeSH, "atimeSH/D"); 
   //HCAL
   double T_eHCAL;       Tout->Branch("eHCAL", &T_eHCAL, "eHCAL/D"); 
   double T_xHCAL;       Tout->Branch("xHCAL", &T_xHCAL, "xHCAL/D"); 
   double T_yHCAL;       Tout->Branch("yHCAL", &T_yHCAL, "yHCAL/D"); 
-  double T_tdctblkHCAL; Tout->Branch("tdctblkHCAL", &T_tdctblkHCAL, "tdctblkHCAL/D"); 
+  double T_atimeHCAL;   Tout->Branch("atimeHCAL", &T_atimeHCAL, "atimeHCAL/D"); 
+  double T_tdcHCAL;     Tout->Branch("tdcHCAL", &T_tdcHCAL, "tdcHCAL/D"); 
   double T_xHCAL_exp;   Tout->Branch("xHCAL_exp", &T_xHCAL_exp, "xHCAL_exp/D"); 
   double T_yHCAL_exp;   Tout->Branch("yHCAL_exp", &T_yHCAL_exp, "yHCAL_exp/D"); 
   double T_dx;          Tout->Branch("dx", &T_dx, "dx/D"); 
@@ -325,11 +332,14 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
 
     T_ePS = ePS;
     T_eSH = eSH;
+    T_atimeSH = atimeSH;
+    T_atimePS = atimePS;
 
     T_eHCAL = eHCAL;
     T_xHCAL = xHCAL;
     T_yHCAL = yHCAL;
-    T_tdctblkHCAL = tdctblkHCAL;
+    T_atimeHCAL = atimeHCAL;
+    T_tdcHCAL = tdcHCAL;
 
     //for (int ihit=0; ihit<ncltmeanHODO; ihit++)
     T_ncltmeanHODO = ncltmeanHODO;
@@ -352,7 +362,7 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
     TVector3 n_dir = (HCAL_pos - vertex);
     T_thetapq_n = acos(n_dir.Unit().Dot(pNhat));
     // p 
-    double BdL = sbsfieldfrac * expconst::sbsmaxfield * expconst::sbsdipolegap;
+    double BdL = (sbsmag / 100.) * expconst::sbsmaxfield * expconst::sbsdipolegap;
     double proton_thetabend = 0.3 * BdL / PNprime.Vect().Mag();  // p*theta = 0.3*BdL
     double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist() - (sbsconf.GetSBSdist() + expconst::sbsdipolegap/2.0));
     TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);

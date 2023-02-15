@@ -1,11 +1,18 @@
 #ifndef PD_UTIL_H
 #define PD_UTIL_H
 
+#include <vector>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TLine.h"
 #include "TLatex.h"
+#include "TString.h"
 
+#include "../include/CodaRun.h"
 #include "../include/ExpConstants.h"
 
 namespace util_pd {
@@ -31,6 +38,27 @@ namespace util_pd {
   TH1F *TH1FhW(std::string name);   // returns W histogram
   TH1F *TH1FhQ2(std::string name,   // returns Q2 histogram
 		int conf);   // SBS config
+
+  /* #################################################
+     ##   Function to read CSV file with run info   ##  
+     ################################################# */
+  void ReadRunList(int sbsconf,            // SBS configuration
+		   std::string target,     // target type
+		   int replay_pass,        // replay pass
+		   vector<CodaRun> &crun); // Output: Vector of CodaRun structs
+
+  void ReadRunList(int sbsconf,            // SBS configuration
+		   std::string target,     // target type
+		   int replay_pass,        // replay pass
+		   int sbsmag,             // SBS magnet current (in %)
+		   vector<CodaRun> &crun); // Output: Vector of CodaRun structs
+
+  void ReadRunList(int sbsconf,            // SBS configuration
+		   std::string target,     // target type
+		   int replay_pass,        // replay pass
+		   int sbsmag,             // SBS magnet current (in %)
+		   int bbmag,              // BB magnet current (in %)
+		   vector<CodaRun> &crun); // Output: Vector of CodaRun structs
 }
 
 #endif

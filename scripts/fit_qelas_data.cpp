@@ -10,8 +10,8 @@
 #include "TLatex.h"
 #include "TChain.h"
 
-#include "../../include/gmn-ana.h"
-#include "../../dflay/src/JSONManager.cxx"
+#include "../include/gmn-ana.h"
+#include "../dflay/src/JSONManager.cxx"
 
 /* <============ Defining fit fuctions ============> */
 //gaussian signal peak

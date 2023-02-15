@@ -9,8 +9,8 @@ namespace util_pd {
   TH2F *TH2FHCALface_rc(std::string name) {
     // returns TH2F for HCAL face (row,col)
     /* NOTE: HCAL block id (ibblk) starts from 1 and goes up to 288 but both
-             HCAL row (rowblk) and column starts from 0 and goes up to 23 and 
-             11, respectively. Extremely annoying! */
+       HCAL row (rowblk) and column starts from 0 and goes up to 23 and 
+       11, respectively. Extremely annoying! */
     TH2F *h = new TH2F(name.c_str(), ";HCAL columns;HCAL rows",
 		       expconst::hcalcol, 0, expconst::hcalcol,
 		       expconst::hcalrow, 0, expconst::hcalrow);
@@ -86,4 +86,156 @@ namespace util_pd {
 		       nbin, hmin, hmax);
     return h;
   }
+
+  /* #################################################
+     ##   Function to read CSV file with run info   ##  
+     ################################################# */
+  void ReadRunList(int sbsconf,            // SBS configuration
+		   std::string target,     // target type
+		   int replay_pass,        // replay pass
+		   vector<CodaRun> &crun)  // Output: Vector of CodaRun structs
+  {
+    // Define the name of the relevant run spreadsheet
+    std::string fst = "../DB/good_runList_GMn_nTPE_"; 
+    std::string mid = "_pass_";
+    std::string lst = ".csv";
+    if (replay_pass < 2) replay_pass = 1; // single spreadsheet exists for pass 0 & 1
+    std::string run_spreadsheet = fst + target + mid + std::to_string(replay_pass) + lst;
+
+    // Reading the spreadsheet
+    ifstream run_data; run_data.open(run_spreadsheet);
+    string readline;
+    if(run_data.is_open()){
+      std::cout << std::endl 
+		<< "Reading run info from: "<< run_spreadsheet 
+		<< std::endl << std::endl;
+      string skip_header; getline(run_data, skip_header);  // skipping column header
+      while(getline(run_data,readline)){                   // reading each line
+	istringstream tokenStream(readline);
+	string token;
+	char delimiter = ',';
+	vector<string> temp;
+	while(getline(tokenStream,token,delimiter)){       // reading each element of a line
+	  string temptoken=token;
+	  temp.push_back(temptoken);
+	}
+	// add relevant info to CodaRun objects
+	if (stoi(temp[0]) == sbsconf) {
+	  CodaRun temp_cr;
+	  temp_cr.SetDataRunSheet(temp);
+	  crun.push_back(temp_cr);
+	}
+
+	temp.clear();
+      }
+    }else{
+      std::cerr << " **!**[Utilities::ReadRunList] Error - No file named: " << run_spreadsheet  << std::endl;
+      throw;
+    }
+    run_data.close();
+  }
+  //_____________________________________
+  void ReadRunList(int sbsconf,            // SBS configuration
+		   std::string target,     // target type
+		   int replay_pass,        // replay pass
+		   int sbsmag,             // SBS magnet current (in %)
+		   vector<CodaRun> &crun)  // Output: Vector of CodaRun structs
+  {
+    // Define the name of the relevant run spreadsheet
+    std::string fst = "../DB/good_runList_GMn_nTPE_"; 
+    std::string mid = "_pass_";
+    std::string lst = ".csv";
+    if (replay_pass < 2) replay_pass = 1; // single spreadsheet exists for pass 0 & 1
+    std::string run_spreadsheet = fst + target + mid + std::to_string(replay_pass) + lst;
+
+    // convert magnet field values from % to A
+    sbsmag *= 21;    // 100% SBS magnet current = 2100 A
+
+    // Reading the spreadsheet
+    ifstream run_data; run_data.open(run_spreadsheet);
+    string readline;
+    if(run_data.is_open()){
+      std::cout << std::endl 
+		<< "Reading run info from: "<< run_spreadsheet 
+		<< std::endl << std::endl;
+      string skip_header; getline(run_data, skip_header); // skipping column header
+      while(getline(run_data,readline)){                  // reading each line
+	istringstream tokenStream(readline);
+	string token;
+	char delimiter = ',';
+	vector<string> temp;
+	while(getline(tokenStream,token,delimiter)){      // reading each element of a line
+	  string temptoken=token;
+	  temp.push_back(temptoken);
+	}
+	// add relevant info to CodaRun objects
+	if (stoi(temp[0]) == sbsconf && 
+	    stoi(temp[3]) == sbsmag) {
+	  CodaRun temp_cr;
+	  temp_cr.SetDataRunSheet(temp);
+	  crun.push_back(temp_cr);
+	}
+
+	temp.clear();
+      }
+    }else{
+      std::cerr << " **!**[Utilities::ReadRunList] Error - No file named: " << run_spreadsheet  << std::endl;
+      throw;
+    }
+    run_data.close();
+  }
+  //_____________________________________
+  void ReadRunList(int sbsconf,            // SBS configuration
+		   std::string target,     // target type
+		   int replay_pass,        // replay pass
+		   int sbsmag,             // SBS magnet current (in %)
+		   int bbmag,        // BB magnet current (in %), Default = 100
+		   vector<CodaRun> &crun)  // Output: Vector of CodaRun structs
+  {
+    // Define the name of the relevant run spreadsheet
+    std::string fst = "../DB/good_runList_GMn_nTPE_"; 
+    std::string mid = "_pass_";
+    std::string lst = ".csv";
+    if (replay_pass < 2) replay_pass = 1; // single spreadsheet exists for pass 0 & 1
+    std::string run_spreadsheet = fst + target + mid + std::to_string(replay_pass) + lst;
+
+    // convert magnet field values from % to A
+    sbsmag *= 21;    // 100% SBS magnet current = 2100 A
+    bbmag *= 7.5;    // 100% BB magnet current = 750 A
+
+    // Reading the spreadsheet
+    ifstream run_data; run_data.open(run_spreadsheet);
+    string readline;
+    if(run_data.is_open()){
+      std::cout << std::endl 
+		<< "Reading run info from: "<< run_spreadsheet 
+		<< std::endl << std::endl;     
+      string skip_header; getline(run_data, skip_header); // skipping column header
+      while(getline(run_data,readline)){                  // reading each line
+	istringstream tokenStream(readline);
+	string token;
+	char delimiter = ',';
+	vector<string> temp;
+	while(getline(tokenStream,token,delimiter)){      // reading each element of a line
+	  string temptoken=token;
+	  temp.push_back(temptoken);
+	}
+	// add relevant info to CodaRun objects
+	if (stoi(temp[0]) == sbsconf 
+	    && stoi(temp[3]) == sbsmag 
+	    && stoi(temp[4]) == bbmag) {
+	  CodaRun temp_cr;
+	  temp_cr.SetDataRunSheet(temp);
+	  crun.push_back(temp_cr);
+	}
+
+	temp.clear();
+      }
+    }else{
+      std::cerr << " **!**[Utilities::ReadRunList] Error - No file named: " << run_spreadsheet  << std::endl;
+      throw;
+    }
+    run_data.close();
+  }
+
 }
