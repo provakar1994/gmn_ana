@@ -37,15 +37,15 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   SBSconfig sbsconf(conf, sbsmag);
   sbsconf.Print();
 
-  // reading relevant run info from good runlist spreadsheet
-  std::string rootfile_dir = jmgr->GetValueFromKey_str("rootfile_dir");
-  vector<CodaRun> crun; util_pd::ReadRunList(conf,target,pass,sbsmag,crun);
-  int nruns = jmgr->GetValueFromKey<int>("Nruns_to_ana"); // # runs to analyze
+  // reading run info from relevant good runlist spreadsheet
+  std::string runsheet_dir = jmgr->GetValueFromKey_str("runsheet_dir");
+  int nruns = jmgr->GetValueFromKey<int>("Nruns_to_ana"); // # of runs to analyze
+  vector<CodaRun> crun; util_pd::ReadRunList(runsheet_dir,nruns,conf,target,pass,sbsmag,crun);
 
   // parsing ROOT trees
-  TChain *C = new TChain("T");
-  if (nruns < 1 || nruns > crun.size()) nruns = crun.size();
+  TChain *C = new TChain("T");  
   std::cout << "Parsing ROOT files from " << nruns << " runs.." << std::endl;
+  std::string rootfile_dir = jmgr->GetValueFromKey_str("rootfile_dir");
   for (int i=0; i<nruns; i++) {
     std::string rfname = rootfile_dir + Form("/*%d*",crun[i].runnum);
     C->Add(rfname.c_str());

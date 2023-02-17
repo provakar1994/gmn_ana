@@ -90,19 +90,22 @@ namespace util_pd {
   /* #################################################
      ##   Function to read CSV file with run info   ##  
      ################################################# */
-  void ReadRunList(int sbsconf,            // SBS configuration
-		   std::string target,     // target type
-		   int replay_pass,        // replay pass
-		   vector<CodaRun> &crun)  // Output: Vector of CodaRun structs
+  void ReadRunList(std::string runsheet_dir,  // Dir. path containing CSV files with run info
+		   int &nruns,                // No. of runs to analyze
+		   int sbsconf,               // SBS configuration
+		   std::string target,        // target type
+		   int replay_pass,           // replay pass
+		   vector<CodaRun> &crun)     // Output: Vector of CodaRun structs
   {
     // Define the name of the relevant run spreadsheet
-    std::string fst = "../DB/good_runList_GMn_nTPE_"; 
+    std::string fst = "/good_runList_GMn_nTPE_"; 
     std::string mid = "_pass_";
     std::string lst = ".csv";
     if (replay_pass < 2) replay_pass = 1; // single spreadsheet exists for pass 0 & 1
-    std::string run_spreadsheet = fst + target + mid + std::to_string(replay_pass) + lst;
+    std::string run_spreadsheet = runsheet_dir + fst + target + mid + std::to_string(replay_pass) + lst;
 
     // Reading the spreadsheet
+    if (nruns < 0) nruns = 1e6;         // replay all runs if nruns < 0
     ifstream run_data; run_data.open(run_spreadsheet);
     string readline;
     if(run_data.is_open()){
@@ -110,6 +113,7 @@ namespace util_pd {
 		<< "Reading run info from: "<< run_spreadsheet 
 		<< std::endl << std::endl;
       string skip_header; getline(run_data, skip_header);  // skipping column header
+      crun.clear();
       while(getline(run_data,readline)){                   // reading each line
 	istringstream tokenStream(readline);
 	string token;
@@ -121,13 +125,17 @@ namespace util_pd {
 	}
 	// add relevant info to CodaRun objects
 	if (stoi(temp[0]) == sbsconf) {
+	  if (crun.size() >= nruns) break;
 	  CodaRun temp_cr;
 	  temp_cr.SetDataRunSheet(temp);
 	  crun.push_back(temp_cr);
+
 	}
 
 	temp.clear();
       }
+      // let's update nruns with total no. of runs to analyze
+      nruns = crun.size();
     }else{
       std::cerr << " **!**[Utilities::ReadRunList] Error - No file named: " << run_spreadsheet  << std::endl;
       throw;
@@ -135,23 +143,26 @@ namespace util_pd {
     run_data.close();
   }
   //_____________________________________
-  void ReadRunList(int sbsconf,            // SBS configuration
-		   std::string target,     // target type
-		   int replay_pass,        // replay pass
-		   int sbsmag,             // SBS magnet current (in %)
-		   vector<CodaRun> &crun)  // Output: Vector of CodaRun structs
+  void ReadRunList(std::string runsheet_dir,  // Dir. path containing CSV files with run info
+		   int &nruns,                // No. of runs to analyze
+		   int sbsconf,               // SBS configuration
+		   std::string target,        // target type
+		   int replay_pass,           // replay pass
+		   int sbsmag,                // SBS magnet current (in %)
+		   vector<CodaRun> &crun)     // Output: Vector of CodaRun structs
   {
     // Define the name of the relevant run spreadsheet
-    std::string fst = "../DB/good_runList_GMn_nTPE_"; 
+    std::string fst = "/good_runList_GMn_nTPE_"; 
     std::string mid = "_pass_";
     std::string lst = ".csv";
     if (replay_pass < 2) replay_pass = 1; // single spreadsheet exists for pass 0 & 1
-    std::string run_spreadsheet = fst + target + mid + std::to_string(replay_pass) + lst;
+    std::string run_spreadsheet = runsheet_dir + fst + target + mid + std::to_string(replay_pass) + lst;
 
     // convert magnet field values from % to A
     sbsmag *= 21;    // 100% SBS magnet current = 2100 A
 
     // Reading the spreadsheet
+    if (nruns < 0) nruns = 1e6;         // replay all runs if nruns < 0
     ifstream run_data; run_data.open(run_spreadsheet);
     string readline;
     if(run_data.is_open()){
@@ -171,6 +182,7 @@ namespace util_pd {
 	// add relevant info to CodaRun objects
 	if (stoi(temp[0]) == sbsconf && 
 	    stoi(temp[3]) == sbsmag) {
+	  if (crun.size() >= nruns) break;
 	  CodaRun temp_cr;
 	  temp_cr.SetDataRunSheet(temp);
 	  crun.push_back(temp_cr);
@@ -178,6 +190,8 @@ namespace util_pd {
 
 	temp.clear();
       }
+      // let's update nruns with total no. of runs to analyze
+      nruns = crun.size();
     }else{
       std::cerr << " **!**[Utilities::ReadRunList] Error - No file named: " << run_spreadsheet  << std::endl;
       throw;
@@ -185,25 +199,28 @@ namespace util_pd {
     run_data.close();
   }
   //_____________________________________
-  void ReadRunList(int sbsconf,            // SBS configuration
-		   std::string target,     // target type
-		   int replay_pass,        // replay pass
-		   int sbsmag,             // SBS magnet current (in %)
-		   int bbmag,        // BB magnet current (in %), Default = 100
-		   vector<CodaRun> &crun)  // Output: Vector of CodaRun structs
+  void ReadRunList(std::string runsheet_dir,  // Dir. path containing CSV files with run info
+		   int &nruns,                // No. of runs to analyze
+		   int sbsconf,               // SBS configuration
+		   std::string target,        // target type
+		   int replay_pass,           // replay pass
+		   int sbsmag,                // SBS magnet current (in %)
+		   int bbmag,                 // BB magnet current (in %)
+		   vector<CodaRun> &crun)     // Output: Vector of CodaRun structs
   {
     // Define the name of the relevant run spreadsheet
-    std::string fst = "../DB/good_runList_GMn_nTPE_"; 
+    std::string fst = "/good_runList_GMn_nTPE_"; 
     std::string mid = "_pass_";
     std::string lst = ".csv";
     if (replay_pass < 2) replay_pass = 1; // single spreadsheet exists for pass 0 & 1
-    std::string run_spreadsheet = fst + target + mid + std::to_string(replay_pass) + lst;
+    std::string run_spreadsheet = runsheet_dir + fst + target + mid + std::to_string(replay_pass) + lst;
 
     // convert magnet field values from % to A
     sbsmag *= 21;    // 100% SBS magnet current = 2100 A
     bbmag *= 7.5;    // 100% BB magnet current = 750 A
 
     // Reading the spreadsheet
+    if (nruns < 0) nruns = 1e6;         // replay all runs if nruns < 0
     ifstream run_data; run_data.open(run_spreadsheet);
     string readline;
     if(run_data.is_open()){
@@ -224,6 +241,7 @@ namespace util_pd {
 	if (stoi(temp[0]) == sbsconf 
 	    && stoi(temp[3]) == sbsmag 
 	    && stoi(temp[4]) == bbmag) {
+	  if (crun.size() >= nruns) break;
 	  CodaRun temp_cr;
 	  temp_cr.SetDataRunSheet(temp);
 	  crun.push_back(temp_cr);
@@ -231,6 +249,8 @@ namespace util_pd {
 
 	temp.clear();
       }
+      // let's update nruns with total no. of runs to analyze
+      nruns = crun.size();
     }else{
       std::cerr << " **!**[Utilities::ReadRunList] Error - No file named: " << run_spreadsheet  << std::endl;
       throw;

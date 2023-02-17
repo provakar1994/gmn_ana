@@ -5,7 +5,8 @@
     "SBS_magnet_percent" : 50,
     "model"              : 2,
     "replay_pass"        : 0,
-    "Nruns_to_ana"       : 2,
+    "Nruns_to_ana"       : -1,
+    "runsheet_dir"       : "/w/halla-scshelf2102/sbs/pdbforce/gmn-ana/DB",
     "rootfile_dir"       : "/w/halla-scshelf2102/sbs/sbs-gmn/pass0/SBS4/LD2/rootfiles",
     "global_cut"         : "bb.tr.n>0&&bb.gem.track.nhits>2&&abs(bb.tr.vz[0])<0.08&&bb.tr.p[0]>1.6&&bb.ps.e>0.15&&sbs.hcal.e>0.0",
     "hcal_voffset"       : -0.2897,
@@ -22,13 +23,6 @@
     "h_dxHCAL_lims"      : [260,-3.2,2],
     "h_dyHCAL_lims"      : [200,-1.5,1.5],
     "Wmin"               : 0.7,
-    "Wmax"               : 1.2
+    "Wmax"               : 1.2,
+    "README"             : "dx_p(n) : deltax dist. of p(n). dx_p(n)[0] => Peak position, dx_p(n)[1] => Peak RMS | dy_p(n) : deltay dist. of p(n). dy_p(n)[0] => Peak position, dy_p(n)[1] => Peak RMS | Nsigma_cut_dx(dy)_p(n) : # of sigma to include in the deltax(deltay) cut for p(n)"
 }
-
-"
-## This is a config file for qelas_ana_data.cpp script. 
-# README:
-dx_p(n) : deltax dist. of p(n). dx_p(n)[0] => Peak position, dx_p(n)[1] => Peak RMS
-dy_p(n) : deltay dist. of p(n). dy_p(n)[0] => Peak position, dy_p(n)[1] => Peak RMS
-Nsigma_cut_dx(dy)_p(n) : # of sigma to include in the deltax(deltay) cut for p(n)
-"

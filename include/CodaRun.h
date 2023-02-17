@@ -24,7 +24,7 @@ CodaRun():
     target = data[2];
     sbsmag = stoi(data[3]);
     bbmag = stoi(data[4]);
-    ebeam = stod(data[5]);
+    //ebeam = stod(data[5]);
   }
 
 } CodaRun_t;  

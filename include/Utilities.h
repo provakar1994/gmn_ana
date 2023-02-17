@@ -39,26 +39,32 @@ namespace util_pd {
   TH1F *TH1FhQ2(std::string name,   // returns Q2 histogram
 		int conf);   // SBS config
 
-  /* #################################################
-     ##   Function to read CSV file with run info   ##  
-     ################################################# */
-  void ReadRunList(int sbsconf,            // SBS configuration
-		   std::string target,     // target type
-		   int replay_pass,        // replay pass
-		   vector<CodaRun> &crun); // Output: Vector of CodaRun structs
+  /* ###########################################################
+     ##   Function to standard read CSV files with run info   ##  
+     ########################################################## */
+  void ReadRunList(std::string runsheet_dir,  // Dir. path containing CSV files with run info
+		   int &nruns,                // No. of runs to analyze
+		   int sbsconf,               // SBS configuration
+		   std::string target,        // target type
+		   int replay_pass,           // replay pass
+		   vector<CodaRun> &crun);    // Output: Vector of CodaRun structs
 
-  void ReadRunList(int sbsconf,            // SBS configuration
-		   std::string target,     // target type
-		   int replay_pass,        // replay pass
-		   int sbsmag,             // SBS magnet current (in %)
-		   vector<CodaRun> &crun); // Output: Vector of CodaRun structs
+  void ReadRunList(std::string runsheet_dir,  // Dir. path containing CSV files with run info
+		   int &nruns,                // No. of runs to analyze
+		   int sbsconf,               // SBS configuration
+		   std::string target,        // target type
+		   int replay_pass,           // replay pass
+		   int sbsmag,                // SBS magnet current (in %)
+		   vector<CodaRun> &crun);    // Output: Vector of CodaRun structs
 
-  void ReadRunList(int sbsconf,            // SBS configuration
-		   std::string target,     // target type
-		   int replay_pass,        // replay pass
-		   int sbsmag,             // SBS magnet current (in %)
-		   int bbmag,              // BB magnet current (in %)
-		   vector<CodaRun> &crun); // Output: Vector of CodaRun structs
+  void ReadRunList(std::string runsheet_dir,  // Dir. path containing CSV files with run info
+		   int &nruns,                // No. of runs to analyze
+		   int sbsconf,               // SBS configuration
+		   std::string target,        // target type
+		   int replay_pass,           // replay pass
+		   int sbsmag,                // SBS magnet current (in %)
+		   int bbmag,                 // BB magnet current (in %)
+		   vector<CodaRun> &crun);    // Output: Vector of CodaRun structs
 }
 
 #endif
