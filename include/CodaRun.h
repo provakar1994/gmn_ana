@@ -9,12 +9,13 @@ typedef struct CodaRun {
   int sbsmag;           // SBS magnet current (A)
   int bbmag;            // BB magnet current (A)
   double ebeam;         // GeV, avg. over entire run 
+  double ebeam_std;     // GeV, std. over entire run 
   double charge;        // C, total charge collected by the run
   double DAQltime;      // %
 
   // constructor 
 CodaRun(): 
-  runnum(0),sbsconf(0),target("NONE"),sbsmag(0),bbmag(0),ebeam(0),charge(0),DAQltime(0)
+  runnum(0),sbsconf(0),target("NONE"),sbsmag(0),bbmag(0),ebeam(0),ebeam_std(0),charge(0),DAQltime(0)
   {}
 
   // sets data by reading runsheet (exclusively for util::ReadRunList functions)
@@ -24,7 +25,8 @@ CodaRun():
     target = data[2];
     sbsmag = stoi(data[3]);
     bbmag = stoi(data[4]);
-    //ebeam = stod(data[5]);
+    ebeam = stod(data[5]);
+    ebeam_std = stod(data[6]);
   }
 
 } CodaRun_t;  
