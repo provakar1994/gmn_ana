@@ -8,7 +8,7 @@
     "Nruns_to_ana"       : -1,
     "runsheet_dir"       : "/w/halla-scshelf2102/sbs/pdbforce/gmn-ana/DB",
     "rootfile_dir"       : "/w/halla-scshelf2102/sbs/sbs-gmn/pass0/SBS4/LD2/rootfiles",
-    "global_cut"         : "bb.tr.n>0&&bb.gem.track.nhits>2&&abs(bb.tr.vz[0])<0.08&&bb.tr.p[0]>1.6&&bb.ps.e>0.15&&sbs.hcal.e>0.0",
+    "global_cut"         : "fEvtHdr.fTrigBits==1&&bb.tr.n>0&&bb.gem.track.nhits>2&&abs(bb.tr.vz[0])<0.08&&bb.tr.p[0]>1.6&&bb.ps.e>0.15&&sbs.hcal.e>0.0",
     "hcal_voffset"       : -0.2897,
     "hcal_hoffset"       : 0.1289,
     "sbs_kick"           : 1.086,
