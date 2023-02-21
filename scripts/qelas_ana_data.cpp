@@ -74,9 +74,7 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   int maxNtr=1000;
   C->SetBranchStatus("*",0);
   // beam energy 
-  /* Reading from tree. For events that are missing data we will use the value
-     we got in the events that came before them. */
-  double HALLA_p; setrootvar::setbranch(C, "HALLA_p", "", &HALLA_p);
+  // double HALLA_p; setrootvar::setbranch(C, "HALLA_p", "", &HALLA_p);
 
   // bbcal clus var
   double eSH, xSH, ySH, rblkSH, cblkSH, idblkSH, atimeSH, ePS, rblkPS, cblkPS, idblkPS, atimePS;
@@ -265,7 +263,7 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
 	if (it != crun.end()) {
 	  ebeam = it->ebeam; 
 	  ebeam_std = it->ebeam_std;
-	} else 
+	}else 
 	  std::cerr << "**!** Run " << runnum << " is not in spreadsheet!" << std::endl;
      }
     } 
