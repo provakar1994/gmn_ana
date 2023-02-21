@@ -262,8 +262,11 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
 	//   if (crunel.runnum == runnum) {ebeam = crunel.ebeam; ebeam_std = crunel.ebeam_std; break;}
 	// In search of a faster algorithm
 	auto it = std::find_if(crun.begin(), crun.end(), [=](CodaRun const& cr) {return cr.runnum == runnum;});
-	if (it != crun.end()) {ebeam = it->ebeam; ebeam_std = it->ebeam_std;}
-	else std::cerr << "**!** Run " << runnum << " is not in spreadsheet!" << std::endl;
+	if (it != crun.end()) {
+	  ebeam = it->ebeam; 
+	  ebeam_std = it->ebeam_std;
+	} else 
+	  std::cerr << "**!** Run " << runnum << " is not in spreadsheet!" << std::endl;
      }
     } 
     bool passedgCut = GlobalCut->EvalInstance(0) != 0;   
