@@ -1,6 +1,6 @@
 /* 
    This macro will perform QE analysis for GMn using LD2 data.
-   E.g. Config. File: sbs14-sbs70p/conf_qelas_ana_data.json
+   E.g. config. file: sbs14-sbs70p/conf_qelas_ana_data.json
    -----
    P. Datta  Created  11-02-2022 
 */
@@ -143,7 +143,7 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   TH2F *h2_xyHCAL_p = util_pd::TH2FHCALface_xy_data("h2_xyHCAL_p");
   TH2F *h2_xyHCAL_n = util_pd::TH2FHCALface_xy_data("h2_xyHCAL_n");
 
-  // Defining interesting ROOT tree branches 
+  // defining interesting ROOT tree branches 
   TTree *Tout = new TTree("Tout", "");
   //cuts
   bool WCut;            Tout->Branch("WCut", &WCut, "WCut/O");
@@ -212,7 +212,7 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
 
   // Do the energy loss calculation here ...........
 
-  // HCAL cut definitions
+  // reading HCAL cut definitions
   double sbs_kick = jmgr->GetValueFromKey<double>("sbs_kick");
   vector<double> dx_p; jmgr->GetVectorFromKey<double>("dx_p", dx_p);
   vector<double> dy_p; jmgr->GetVectorFromKey<double>("dy_p", dy_p);
@@ -225,7 +225,7 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   vector<double> hcal_active_area = cut::hcal_active_area_data(); // Exc. 1 blk from all 4 sides
   vector<double> hcal_safety_margin = cut::hcal_safety_margin(dx_p[1], dx_n[1], dy_p[1], hcal_active_area);
 
-  // elastic cut limits
+  // reading W cut limits
   double Wmin = jmgr->GetValueFromKey<double>("Wmin");
   double Wmax = jmgr->GetValueFromKey<double>("Wmax");
 
@@ -235,7 +235,7 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   vector<TVector3> HCAL_axes; kine::SetHCALaxes(sbsconf.GetSBStheta_rad(), HCAL_axes);
   TVector3 HCAL_origin = sbsconf.GetHCALdist()*HCAL_axes[2] + hcal_voffset*HCAL_axes[0] + hcal_hoffset*HCAL_axes[1];
 
-  // looping through the tree ---------------------------------------
+  // looping through the events ---------------------------------------
   std::cout << std::endl;
   long nevent = 0, nevents = C->GetEntries(); 
   int treenum = 0, currenttreenum = 0; UInt_t runnum = 0;
@@ -377,7 +377,6 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
     T_idblkSH = idblkSH;
     T_atimeSH = atimeSH;
 
-
     T_eHCAL = eHCAL;
     T_xHCAL = xHCAL;
     T_yHCAL = yHCAL;
@@ -387,7 +386,6 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
     T_atimeHCAL = atimeHCAL;
     T_tdcHCAL = tdcHCAL;
 
-    //for (int ihit=0; ihit<ncltmeanHODO; ihit++)
     T_ncltmeanHODO = ncltmeanHODO;
     T_cltmeanHODO = cltmeanHODO[0];
 
