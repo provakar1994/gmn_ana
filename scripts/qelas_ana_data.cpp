@@ -208,6 +208,7 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   int T_ncltmeanHODO;   Tout->Branch("ncltmeanHODO", &T_ncltmeanHODO, "ncltmeanHODO/I"); 
   double T_cltmeanHODO; Tout->Branch("cltmeanHODO", &T_cltmeanHODO, "cltmeanHODO/D"); 
   //coin time trigger
+  double T_bbT_trig;    Tout->Branch("bbT_trig", &T_bbT_trig, "bbT_trig/D");
   double T_coinT_trig;  Tout->Branch("coinT_trig", &T_coinT_trig, "coinT_trig/D");
 
   // Do the energy loss calculation here ...........
@@ -276,7 +277,8 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
       if(tdcElem[ihit]==5) bbcal_time=tdcTrig[ihit];
       if(tdcElem[ihit]==0) hcal_time=tdcTrig[ihit];
     }
-    double coin_time = hcal_time - bbcal_time;  
+    double coin_time = hcal_time - bbcal_time; 
+    T_bbT_trig = bbcal_time;
     T_coinT_trig = coin_time; h_coin_time->Fill(coin_time);
 
     // constructing the 4 vectors
