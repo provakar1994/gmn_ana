@@ -35,12 +35,13 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   std::string target = jmgr->GetValueFromKey_str("target"); 
   int pass = jmgr->GetValueFromKey<int>("replay_pass"); 
   SBSconfig sbsconf(conf, sbsmag);
-  sbsconf.Print();
+  cout << sbsconf;
 
   // reading run info from relevant good runlist spreadsheet
   std::string runsheet_dir = jmgr->GetValueFromKey_str("runsheet_dir");
   int nruns = jmgr->GetValueFromKey<int>("Nruns_to_ana"); // # of runs to analyze
   vector<CodaRun> crun; util_pd::ReadRunList(runsheet_dir,nruns,conf,target,pass,sbsmag,crun);
+  cout << "1st run info:" << endl <<  crun[0];
 
   // parsing ROOT trees
   TChain *C = new TChain("T");  
@@ -259,7 +260,7 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
 	runnum = rnum;
 	// for (auto & crunel : crun)
 	//   if (crunel.runnum == runnum) {ebeam = crunel.ebeam; ebeam_std = crunel.ebeam_std; break;}
-	// In search of a faster algorithm
+	/* In search of a faster algorithm */
 	auto it = std::find_if(crun.begin(), crun.end(), [=](CodaRun const& cr) {return cr.runnum == runnum;});
 	if (it != crun.end()) {
 	  ebeam = it->ebeam; 
@@ -414,7 +415,7 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
     TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);
     T_thetapq_p = acos(p_dir.Unit().Dot(pNhat));
 
-   // calculate ToF for neutrons
+    // calculate ToF for neutrons
     double ToF_n = (n_dir.Mag() / constant::c) * sqrt(1. + pow((constant::Mn/PNprime.Vect().Mag()), 2));
     T_ToF_n = ToF_n*1e9; //ns
 

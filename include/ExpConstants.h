@@ -100,20 +100,20 @@ class SBSconfig {
     fHCALdist      = expconst::hcaldist(conf);
   }
 
-  // print to screen
-  int Print() {
-    std::cout << " -------------------------- "                         << std::endl
-	      << Form(" SBS Config: %d, "                   , GetSBSconf())   << std::endl
-	      << Form(" SBS Magnet Settings: %d (p), "      , GetSBSmag())    << std::endl
-    	      << Form(" Beam energy: %0.4f (GeV),"          , GetEbeam())     << std::endl
-    	      << Form(" BigBite angle: %0.1f (deg),"        , GetBBtheta())   << std::endl
-      	      << Form(" BigBite distance: %0.5f (m),"       , GetBBdist())    << std::endl
-    	      << Form(" Super BigBite angle: %0.1f (deg),"  , GetSBStheta())  << std::endl
-      	      << Form(" Super BigBite distance: %0.2f (m)," , GetSBSdist())   << std::endl
-	      << Form(" HCAL angle: %0.1f (deg),"           , GetHCALtheta()) << std::endl
-    	      << Form(" HCAL distance: %0.1f (m)"           , GetHCALdist())  << std::endl
-	      << " -------------------------- "                         << std::endl;
-    return 0;
+  // define an ostream operator to print to screen conveniently
+  friend ostream& operator <<(ostream &out, const SBSconfig& sbsconf) {
+    out  << " -------------------------- "                         << std::endl
+	 << Form(" SBS Config: %d, "                   , sbsconf.fSBSconf)   << std::endl
+	 << Form(" SBS Magnet Settings: %d (p), "      , sbsconf.fSBSmag)    << std::endl
+    	 << Form(" Beam energy: %0.4f (GeV),"          , sbsconf.fEbeam)     << std::endl
+    	 << Form(" BigBite angle: %0.1f (deg),"        , sbsconf.fBBtheta)   << std::endl
+      	 << Form(" BigBite distance: %0.5f (m),"       , sbsconf.fBBdist)    << std::endl
+    	 << Form(" Super BigBite angle: %0.1f (deg),"  , sbsconf.fSBStheta)  << std::endl
+      	 << Form(" Super BigBite distance: %0.2f (m)," , sbsconf.fSBSdist)   << std::endl
+	 << Form(" HCAL angle: %0.1f (deg),"           , sbsconf.fHCALtheta) << std::endl
+    	 << Form(" HCAL distance: %0.1f (m)"           , sbsconf.fHCALdist)  << std::endl
+	 << " -------------------------- "                        << std::endl << std::endl;
+    return out;
   }
 
  private:

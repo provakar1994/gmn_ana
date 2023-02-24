@@ -18,6 +18,20 @@ CodaRun():
   runnum(0),sbsconf(0),target("NONE"),sbsmag(0),bbmag(0),ebeam(0),ebeam_std(0),charge(0),DAQltime(0)
   {}
 
+  // define an ostream operator to print to screen conveniently
+  friend ostream& operator <<(ostream &out, const CodaRun& crun) {
+    out << " ------------" << std::endl;
+    out << " Run number        : " << crun.runnum << std::endl;
+    out << " SBS config        : " << crun.sbsconf << std::endl;
+    out << " Target            : " << crun.target << std::endl;
+    out << " SBS mag. cur. (A) : " << crun.sbsmag << std::endl;
+    out << " BB mag. cur. (A)  : " << crun.bbmag << std::endl;
+    out << " Avg. ebeam (GeV)  : " << crun.ebeam << std::endl;
+    out << " Ebeam std. (GeV)  : " << crun.ebeam_std << std::endl;
+    out << " ------------" << std::endl << std::endl;
+    return out;
+  }
+
   // sets data by reading runsheet (exclusively for util::ReadRunList functions)
   void SetDataRunSheet(std::vector<std::string> data) {
     sbsconf = stoi(data[0]);
