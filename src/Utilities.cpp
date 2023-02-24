@@ -109,8 +109,7 @@ namespace util_pd {
     ifstream run_data; run_data.open(run_spreadsheet);
     string readline;
     if(run_data.is_open()){
-      std::cout << std::endl 
-		<< "Reading run info from: "<< run_spreadsheet 
+      std::cout << "Reading run info from: "<< run_spreadsheet 
 		<< std::endl << std::endl;
       string skip_header; getline(run_data, skip_header);  // skipping column header
       crun.clear();
@@ -166,8 +165,7 @@ namespace util_pd {
     ifstream run_data; run_data.open(run_spreadsheet);
     string readline;
     if(run_data.is_open()){
-      std::cout << std::endl 
-		<< "Reading run info from: "<< run_spreadsheet 
+      std::cout << "Reading run info from: "<< run_spreadsheet 
 		<< std::endl << std::endl;
       string skip_header; getline(run_data, skip_header); // skipping column header
       while(getline(run_data,readline)){                  // reading each line
@@ -224,8 +222,7 @@ namespace util_pd {
     ifstream run_data; run_data.open(run_spreadsheet);
     string readline;
     if(run_data.is_open()){
-      std::cout << std::endl 
-		<< "Reading run info from: "<< run_spreadsheet 
+      std::cout << "Reading run info from: "<< run_spreadsheet 
 		<< std::endl << std::endl;     
       string skip_header; getline(run_data, skip_header); // skipping column header
       while(getline(run_data,readline)){                  // reading each line

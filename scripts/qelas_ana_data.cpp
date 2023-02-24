@@ -41,7 +41,7 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   std::string runsheet_dir = jmgr->GetValueFromKey_str("runsheet_dir");
   int nruns = jmgr->GetValueFromKey<int>("Nruns_to_ana"); // # of runs to analyze
   vector<CodaRun> crun; util_pd::ReadRunList(runsheet_dir,nruns,conf,target,pass,sbsmag,crun);
-  cout << "1st run info:" << endl <<  crun[0];
+  cout << "1st run info:" << endl << crun[0];
 
   // parsing ROOT trees
   TChain *C = new TChain("T");  
