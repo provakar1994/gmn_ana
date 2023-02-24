@@ -4,21 +4,30 @@
 
 namespace expconst {
 
-  double ebeam(int config){
+  double ebeam(int config) {
+    /* These GMn energy values are for LD2 target from good runlist. For LH2 runs
+       these numbers are ever so slightly different! 
+    */
     if(config==1)
       return 1.916;
     else if(config==4)
       //return 3.7278;
-      return 3.72825;
+      return 3.7281;
     else if(config==7)
-      return 7.906;
+      //return 7.906;
+      return 7.9071;
     else if(config==11)
       //return 9.91;
-      return 9.8594; // mean of all entries in DB/avg_ebeam_prun_sbs11_LD2.csv
-    else if(config==14 || config==8)
-      return 5.965;
+      return 9.8594;
+    else if(config==14)
+      //return 5.965;
+      return 5.9648;
+    else if(config==8)
+      //return 5.965;
+      return 5.9647;
     else if(config==9)
-      return 4.013;
+      //return 4.013;
+      return 4.0147;
     else if(config==4363)
       return 6.373;
     else{
