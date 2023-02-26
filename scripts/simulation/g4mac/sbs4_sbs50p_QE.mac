@@ -1,5 +1,5 @@
 ## Configure G4SBS for gmn (Q^2 = 3 GeV^2)
-/g4sbs/filename        gmn_SBS4_50p_SvsD_.82T_9.root   ## Output rootfile
+#/g4sbs/filename        gmn_SBS4_50p_SvsD_.82T_9.root   ## Output rootfile
 
 ## Configure Experiment
 /g4sbs/exp             gmn
@@ -13,7 +13,7 @@
 ## Configure generator settings
 /g4sbs/kine            elastic           ## Generator
 /g4sbs/beamcur         1.0 muA
-/g4sbs/beamE           3.7283 GeV
+/g4sbs/beamE           3.7281 GeV
 /g4sbs/thmin           31.0 deg
 /g4sbs/thmax           43.0 deg
 /g4sbs/phmin           -25 deg
@@ -45,5 +45,5 @@
 /g4sbs/totalabs true
 
 ## Run 100 events
-/g4sbs/eventstatusevery 100
-/g4sbs/run             500000
+#/g4sbs/eventstatusevery 100
+#/g4sbs/run             500000
