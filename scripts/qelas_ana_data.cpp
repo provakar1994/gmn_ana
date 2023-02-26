@@ -19,6 +19,8 @@
 #include "../include/gmn-ana.h"
 #include "../dflay/src/JSONManager.cxx"
 
+statis const std::string target = "LD2";
+
 int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test_qelas_ana_data")
 {
   //gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
@@ -32,7 +34,7 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   // seting up the desired SBS configuration
   int conf = jmgr->GetValueFromKey<int>("SBS_config");
   int sbsmag = jmgr->GetValueFromKey<int>("SBS_magnet_percent"); 
-  std::string target = jmgr->GetValueFromKey_str("target"); 
+  //std::string target = jmgr->GetValueFromKey_str("target"); 
   int pass = jmgr->GetValueFromKey<int>("replay_pass"); 
   SBSconfig sbsconf(conf, sbsmag);
   cout << sbsconf;

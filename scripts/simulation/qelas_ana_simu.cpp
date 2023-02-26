@@ -39,7 +39,7 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
   int conf = jmgr->GetValueFromKey<int>("SBS_config");
   int sbsmag = jmgr->GetValueFromKey<int>("SBS_magnet_percent");
   SBSconfig sbsconf(conf, sbsmag);
-  sbsconf.Print();
+  cout << sbsconf;
 
   // Choosing the model of calculation
   // model 0 => uses reconstructed p as independent variable
