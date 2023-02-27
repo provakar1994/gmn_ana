@@ -16,8 +16,8 @@
 #include "TTreeFormula.h"
 #include "TLorentzVector.h"
 
-#include "../../../include/gmn-ana.h"
-#include "../../../dflay/src/JSONManager.cxx"
+#include "../../include/gmn-ana.h"
+#include "../../dflay/src/JSONManager.cxx"
 
 /* this script will only analyze LD2 data */
 static const std::string target = "LD2";
