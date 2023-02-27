@@ -19,6 +19,9 @@
 #include "../../../include/gmn-ana.h"
 #include "../../../dflay/src/JSONManager.cxx"
 
+/* this script will only analyze LD2 data */
+static const std::string target = "LD2";
+
 int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test_qelas_ana_simu")
 {
   gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
@@ -38,6 +41,7 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
   // seting up the desired SBS configuration
   int conf = jmgr->GetValueFromKey<int>("SBS_config");
   int sbsmag = jmgr->GetValueFromKey<int>("SBS_magnet_percent");
+  double sbsfield = jmgr->GetValueFromKey<double>("SBS_field");
   SBSconfig sbsconf(conf, sbsmag);
   cout << sbsconf;
 
@@ -52,11 +56,10 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
   else { std::cerr << "Enter a valid model number! **!**" << std::endl; throw; }
 
   // parameters for normalization
-  std::string targetType = jmgr->GetValueFromKey_str("target_type");
   double I_beam = jmgr->GetValueFromKey<double>("beam_current");
   // total generated simulation events per job
   double ngen_total = jmgr->GetValueFromKey<double>("ngen_total"); 
-  double lumi = kine::Luminosity(I_beam, targetType);
+  double lumi = kine::Luminosity(I_beam, target);
 
   // choosing nucleon type 
   std::string Ntype = jmgr->GetValueFromKey_str("Ntype");
@@ -69,18 +72,17 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
   // setting up ROOT tree branch addresses ---------------------------------------
   int maxNtr=1000;
   C->SetBranchStatus("*",0);
-  // beam energy - Probably we should take an average over 100 events
-  // double HALLA_p;
-  // setrootvar::setbranch(C, "HALLA_p", "", &HALLA_p);
 
   // bbcal clus var
-  double eSH; setrootvar::setbranch(C,"bb.sh","e",&eSH);
-  double ePS; setrootvar::setbranch(C,"bb.ps","e",&ePS);
-  
+  double eSH, xSH, ySH, rblkSH, cblkSH, idblkSH, atimeSH, ePS, rblkPS, cblkPS, idblkPS, atimePS;
+  std::vector<std::string> bbcalclvar = {"sh.e","sh.x","sh.y","sh.rowblk","sh.colblk","sh.idblk","sh.atimeblk","ps.e","ps.rowblk","ps.colblk","ps.idblk","ps.atimeblk"};
+  std::vector<void*> bbcalclvar_mem = {&eSH,&xSH,&ySH,&rblkSH,&cblkSH,&idblkSH,&atimeSH,&ePS,&rblkPS,&cblkPS,&idblkPS,&atimePS};
+  setrootvar::setbranch(C, "bb", bbcalclvar, bbcalclvar_mem);
+ 
   // hcal clus var
-  double eHCAL, xHCAL, yHCAL, rblkHCAL, cblkHCAL, idblkHCAL;
-  std::vector<std::string> hcalclvar = {"e","x","y","rowblk","colblk","idblk"};
-  std::vector<void*> hcalclvar_mem = {&eHCAL,&xHCAL,&yHCAL,&rblkHCAL,&cblkHCAL,&idblkHCAL};
+  double eHCAL, xHCAL, yHCAL, rblkHCAL, cblkHCAL, idblkHCAL, atimeHCAL, tdcHCAL;
+  std::vector<std::string> hcalclvar = {"e","x","y","rowblk","colblk","idblk","atimeblk","tdctimeblk"};
+  std::vector<void*> hcalclvar_mem = {&eHCAL,&xHCAL,&yHCAL,&rblkHCAL,&cblkHCAL,&idblkHCAL,&atimeHCAL,&tdcHCAL};
   setrootvar::setbranch(C, "sbs.hcal", hcalclvar, hcalclvar_mem);
 
   // track var
@@ -146,6 +148,8 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
   double T_ephi;        Tout->Branch("ephi", &T_ephi, "ephi/D");
   double T_etheta;      Tout->Branch("etheta", &T_etheta, "etheta/D");
   double T_pcentral;    Tout->Branch("pcentral", &T_pcentral, "pcentral/D");
+  double T_thetapq_p;   Tout->Branch("thetapq_p", &T_thetapq_p, "thetapq_p/D");
+  double T_thetapq_n;   Tout->Branch("thetapq_n", &T_thetapq_n, "thetapq_n/D");
   //track
   double T_vz;          Tout->Branch("vz", &T_vz, "vz/D");
   double T_trP;         Tout->Branch("trP", &T_trP, "trP/D");
@@ -153,17 +157,37 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
   double T_trY;         Tout->Branch("trY", &T_trY, "trY/D");
   double T_trTh;        Tout->Branch("trTh", &T_trTh, "trTh/D");
   double T_trPh;        Tout->Branch("trPh", &T_trPh, "trPh/D");
+  double T_tgX;         Tout->Branch("tgX", &T_tgX, "tgX/D");
+  double T_tgY;         Tout->Branch("tgY", &T_tgY, "tgY/D");
+  double T_tgTh;        Tout->Branch("tgTh", &T_tgTh, "tgTh/D");
+  double T_tgPh;        Tout->Branch("tgPh", &T_tgPh, "tgPh/D");
   //BBCAL
   double T_ePS;         Tout->Branch("ePS", &T_ePS, "ePS/D"); 
+  double T_rblkPS;      Tout->Branch("rblkPS", &T_rblkPS, "rblkPS/D"); 
+  double T_cblkPS;      Tout->Branch("cblkPS", &T_cblkPS, "cblkPS/D"); 
+  double T_idblkPS;     Tout->Branch("idblkPS", &T_idblkPS, "idblkPS/D"); 
+  double T_atimePS;     Tout->Branch("atimePS", &T_atimePS, "atimePS/D"); 
   double T_eSH;         Tout->Branch("eSH", &T_eSH, "eSH/D"); 
+  double T_xSH;         Tout->Branch("xSH", &T_xSH, "xSH/D"); 
+  double T_ySH;         Tout->Branch("ySH", &T_ySH, "ySH/D"); 
+  double T_rblkSH;      Tout->Branch("rblkSH", &T_rblkSH, "rblkSH/D"); 
+  double T_cblkSH;      Tout->Branch("cblkSH", &T_cblkSH, "cblkSH/D"); 
+  double T_idblkSH;     Tout->Branch("idblkSH", &T_idblkSH, "idblkSH/D"); 
+  double T_atimeSH;     Tout->Branch("atimeSH", &T_atimeSH, "atimeSH/D"); 
   //HCAL
   double T_eHCAL;       Tout->Branch("eHCAL", &T_eHCAL, "eHCAL/D"); 
   double T_xHCAL;       Tout->Branch("xHCAL", &T_xHCAL, "xHCAL/D"); 
   double T_yHCAL;       Tout->Branch("yHCAL", &T_yHCAL, "yHCAL/D"); 
+  double T_idblkHCAL;   Tout->Branch("idblkHCAL", &T_idblkHCAL, "idblkHCAL/D"); 
+  double T_rblkHCAL;    Tout->Branch("rblkHCAL", &T_rblkHCAL, "rblkHCAL/D"); 
+  double T_cblkHCAL ;   Tout->Branch("cblkHCAL", &T_cblkHCAL, "cblkHCAL/D"); 
+  double T_atimeHCAL;   Tout->Branch("atimeHCAL", &T_atimeHCAL, "atimeHCAL/D"); 
+  double T_tdcHCAL;     Tout->Branch("tdcHCAL", &T_tdcHCAL, "tdcHCAL/D"); 
   double T_xHCAL_exp;   Tout->Branch("xHCAL_exp", &T_xHCAL_exp, "xHCAL_exp/D"); 
   double T_yHCAL_exp;   Tout->Branch("yHCAL_exp", &T_yHCAL_exp, "yHCAL_exp/D"); 
   double T_dx;          Tout->Branch("dx", &T_dx, "dx/D"); 
-  double T_dy;          Tout->Branch("dy", &T_dy, "dy/D");  
+  double T_dy;          Tout->Branch("dy", &T_dy, "dy/D");
+  double T_ToF_n;       Tout->Branch("ToF_n", &T_ToF_n, "ToF_n/D");
 
   // Do the energy loss calculation here ...........
 
@@ -228,6 +252,8 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
 			   precon);                 
     TLorentzVector PN;                              // target nucleon [Ntype ??]
     kine::SetPN(Ntype, PN);
+    TLorentzVector PNprime;                         // Recoil nucleon 4-vector
+    TLorentzVector q = Pe - Peprime;                // 4-momentum of virtual photon
 
     double etheta = kine::etheta(Peprime);
     double ephi = kine::ephi(Peprime);
@@ -248,21 +274,23 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
       pN_expect = kine::pN_expect(nu, Ntype);
       thetaN_expect = acos((Pe.E() - Peprime.Pz()) / pN_expect);
       pNhat = kine::qVect_unit(thetaN_expect, phiN_expect);
+      PNprime.SetPxPyPzE(pN_expect*pNhat.X(), pN_expect*pNhat.Y(), pN_expect*pNhat.Z(), nu+PN.E());
       Q2recon = kine::Q2(Pe.E(), Peprime.E(), etheta);
       W2recon = kine::W2(Pe.E(), Peprime.E(), Q2recon, Ntype);
-    } else if (model == 1) {
+     } else if (model == 1) {
       nu = Pe.E() - pcentral;
       pN_expect = kine::pN_expect(nu, Ntype);
       thetaN_expect = acos((Pe.E() - pcentral*cos(etheta)) / pN_expect);
       pNhat = kine::qVect_unit(thetaN_expect, phiN_expect);
+      PNprime.SetPxPyPzE(pN_expect*pNhat.X(), pN_expect*pNhat.Y(), pN_expect*pNhat.Z(), nu+PN.E());
       Q2recon = kine::Q2(Pe.E(), Peprime.E(), etheta);
       W2recon = kine::W2(Pe.E(), Peprime.E(), Q2recon, Ntype);
     } else if (model == 2) {
-      TLorentzVector q = Pe - Peprime; // 4-momentum of virtual photon
       nu = q.E();
-      pNhat = q.Vect().Unit();
+      PNprime = q + PN;
+      pNhat = PNprime.Vect().Unit();
       Q2recon = -q.M2();
-      W2recon = (PN + q).M2();
+      W2recon = PNprime.M2();
     }
     h_Q2->Fill(Q2recon); 
     double Wrecon = sqrt(max(0., W2recon));
@@ -286,12 +314,33 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
     T_trTh = thTr[0];
     T_trPh = phTr[0];
 
+    T_tgX = xtgt[0];
+    T_tgY = ytgt[0];
+    T_tgTh = thtgt[0];
+    T_tgPh = phtgt[0];
+
     T_ePS = ePS;
+    T_rblkPS = rblkPS;
+    T_cblkPS = cblkPS;
+    T_idblkPS = idblkPS;
+    T_atimePS = atimePS;
+
     T_eSH = eSH;
+    T_xSH = xSH;
+    T_ySH = ySH;
+    T_rblkSH = rblkSH;
+    T_cblkSH = cblkSH;
+    T_idblkSH = idblkSH;
+    T_atimeSH = atimeSH;
 
     T_eHCAL = eHCAL;
     T_xHCAL = xHCAL;
     T_yHCAL = yHCAL;
+    T_rblkHCAL = rblkHCAL;
+    T_cblkHCAL = cblkHCAL;
+    T_idblkHCAL = idblkHCAL;
+    T_atimeHCAL = atimeHCAL;
+    T_tdcHCAL = tdcHCAL;
 
     T_mc_fnucl = int(mc_fnucl);
 
@@ -306,16 +355,31 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
     T_dx = dx;
     T_dy = dy;
 
+    /* Calculating thetapq (both p & n hypothesis) */
+    // n (no deflection)
+    TVector3 HCAL_pos = HCAL_origin + xHCAL*HCAL_axes[0] + yHCAL*HCAL_axes[1];
+    TVector3 n_dir = (HCAL_pos - vertex);
+    T_thetapq_n = acos(n_dir.Unit().Dot(pNhat));
+    // p 
+    double BdL = sbsfield * expconst::sbsdipolegap;
+    double proton_thetabend = 0.3 * BdL / PNprime.Vect().Mag();  // p*theta = 0.3*BdL
+    double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist() - (sbsconf.GetSBSdist() + expconst::sbsdipolegap/2.0));
+    TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);
+    T_thetapq_p = acos(p_dir.Unit().Dot(pNhat));
+
+    // calculate ToF for neutrons
+    double ToF_n = (n_dir.Mag() / constant::c) * sqrt(1. + pow((constant::Mn/PNprime.Vect().Mag()), 2));
+    T_ToF_n = ToF_n*1e9; //ns
+    
     // HCAL active area and safety margin cuts [Fiducial region]
     bool AR_cut = cut::inHCAL_activeA(xHCAL, yHCAL, hcal_active_area);
     bool FR_cut = cut::inHCAL_fiducial(xyHCAL_exp[0], xyHCAL_exp[1], sbs_kick, hcal_safety_margin);
-
+    fiduCut = AR_cut && FR_cut;
     // HCAL cuts
     pCut = pow((dx-dx_p[0]) / (dx_p[1]*Nsigma_cut_dx_p), 2) + pow((dy-dy_p[0]) / (dy_p[1]*Nsigma_cut_dy_p), 2) <= 1.;
     nCut = pow((dx-dx_n[0]) / (dx_n[1]*Nsigma_cut_dx_n), 2) + pow((dy-dy_n[0]) / (dy_n[1]*Nsigma_cut_dy_n), 2) <= 1.;
 
-    fiduCut = AR_cut && FR_cut;
-    WCut = Wrecon > Wmin && Wrecon < Wmax;
+    WCut = Wrecon >= Wmin && Wrecon <= Wmax;
 
     // W cut
     if (WCut) {
@@ -397,7 +461,20 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
   cout << "CPU time elapsed = " << sw->CpuTime() << " s. Real time = " << sw->RealTime() << " s. " << endl << endl;
 
   c1->Write();
-  fout->Write();
+  h_W->Write();
+  h_W_cut->Write();
+  h_W_acut->Write();
+  h_dpel->Write();
+  h_Q2->Write();
+  h_dxHCAL->Write();
+  h_dyHCAL->Write();
+  h_dxHCAL_p->Write();
+  h_dxHCAL_n->Write();
+  h2_rcHCAL->Write();
+  h2_dxdyHCAL->Write();
+  h2_xyHCAL_p->Write();
+  h2_xyHCAL_n->Write();
+  //fout->Write();
   sw->Delete();
   delete jmgr;
   return 0;

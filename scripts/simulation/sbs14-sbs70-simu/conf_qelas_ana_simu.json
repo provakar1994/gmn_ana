@@ -3,10 +3,11 @@
     "SBS_config"         : 14,
     "SBS_magnet_percent" : 70,
     "model"              : 2,
-    "target_type"        : "LD2",
     "beam_current"       : 1E-6,
     "ngen_total"         : 100000,
+    "rootfile_dir"       : "/lustre19/expphy/volatile/halla/sbs/pdbforce/g4sbs_output/gmng4_sbs14/replayed_sbs14_sbs70p_QE_93*",
     "global_cut"         : "bb.tr.n==1&&abs(bb.tr.vz[0])<0.08&&bb.gem.track.nhits>3&&bb.tr.p[0]>1.7&&bb.tr.p[0]<2.3&&sbs.hcal.e>0.025&&bb.ps.e>0.2",
+    "SBS_filed"          : 0.93,
     "hcal_voffset"       : 0,
     "hcal_hoffset"       : 0,
     "sbs_kick"           : 0.823,
@@ -22,13 +23,5 @@
     "h_dyHCAL_lims"      : [200,-2,2],
     "Wmin"               : 0.74,
     "Wmax"               : 1.14,
-    "rootfile_dir"       : "/lustre19/expphy/volatile/halla/sbs/pdbforce/g4sbs_output/gmng4_sbs14/replayed_sbs14_sbs70p_QE_93*"
+    "README"             : "dx_p(n) : deltax dist. of p(n). dx_p(n)[0] => Peak position, dx_p(n)[1] => Peak RMS | dy_p(n) : deltay dist. of p(n). dy_p(n)[0] => Peak position, dy_p(n)[1] => Peak RMS | Nsigma_cut_dx(dy)_p(n) : # of sigma to include in the deltax(deltay) cut for p(n)"
 }
-
-"
-## This is a config file for qelas_ana_data.cpp script. 
-# README:
-dx_p(n) : deltax dist. of p(n). dx_p(n)[0] => Peak position, dx_p(n)[1] => Peak RMS
-dy_p(n) : deltay dist. of p(n). dy_p(n)[0] => Peak position, dy_p(n)[1] => Peak RMS
-Nsigma_cut_dx(dy)_p(n) : # of sigma to include in the deltax(deltay) cut for p(n)
-"

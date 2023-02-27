@@ -1,5 +1,4 @@
 {
-    "target"             : "LD2",
     "Ntype"              : "np",
     "SBS_config"         : 4,
     "SBS_magnet_percent" : 50,

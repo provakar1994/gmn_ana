@@ -19,7 +19,8 @@
 #include "../include/gmn-ana.h"
 #include "../dflay/src/JSONManager.cxx"
 
-statis const std::string target = "LD2";
+/* this script will only analyze LD2 data */
+static const std::string target = "LD2";
 
 int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test_qelas_ana_data")
 {
@@ -313,7 +314,7 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
        model 1 = uses reconstructed angles as independent variable 
        model 2 = uses 4-vector calculation */
     TVector3 pNhat;                   // 3-momentum of the recoil nucleon (Unit)
-    double Q2recon, W2recon;
+    double Q2recon = 0., W2recon = 0.;
     if (model == 0) {
       nu = Pe.E() - Peprime.E();
       pN_expect = kine::pN_expect(nu, Ntype);
@@ -405,7 +406,7 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
     T_dx = dx;
     T_dy = dy;
 
-    // Calculating thetapq (both p & n hypothesis)
+    /* Calculating thetapq (both p & n hypothesis) */
     // n (no deflection)
     TVector3 HCAL_pos = HCAL_origin + xHCAL*HCAL_axes[0] + yHCAL*HCAL_axes[1];
     TVector3 n_dir = (HCAL_pos - vertex);
