@@ -1,0 +1,30 @@
+{
+    "Ntype"              : "p",
+    "SBS_config"         : 4,
+    "SBS_magnet_percent" : 50,
+    "model"              : 1,
+    "target_type"        : "LH2",
+    "beam_current"       : 1E-6,
+    "ngen_total"         : 100000,
+    "global_cut"         : "bb.tr.n==1&&bb.gem.track.nhits>3&&abs(bb.tr.vz[0])<0.08&&bb.tr.p[0]>1.6&&bb.ps.e>0.2",
+    "hcal_voffset"       : 0,
+    "hcal_hoffset"       : 0,
+    "sbs_kick"           : 1.086,
+    "dx_p"               : [-1.086, 0.2],
+    "dy_p"               : [-0.004, 0.24],
+    "Nsigma_cut_dx_p"    : 1,
+    "Nsigma_cut_dy_p"    : 1,
+    "h_dxHCAL_lims"      : [260,-3.2,2],
+    "h_dyHCAL_lims"      : [200,-1.5,1.5],
+    "Wmin"               : 0.7,
+    "Wmax"               : 1.2,
+    "rootfile_dir"       : "/lustre19/expphy/volatile/halla/sbs/pdbforce/g4sbs_output/tout/replayed_simc_sbs4_1.root"
+}
+
+"
+## This is a config file for qelas_ana_data.cpp script. 
+# README:
+dx_p(n) : deltax dist. of p(n). dx_p(n)[0] => Peak position, dx_p(n)[1] => Peak RMS
+dy_p(n) : deltay dist. of p(n). dy_p(n)[0] => Peak position, dy_p(n)[1] => Peak RMS
+Nsigma_cut_dx(dy)_p(n) : # of sigma to include in the deltax(deltay) cut for p(n)
+"

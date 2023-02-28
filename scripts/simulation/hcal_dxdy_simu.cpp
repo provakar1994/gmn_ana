@@ -37,16 +37,16 @@
 #include "Math/Vector3D.h"
 #include "Math/Vector4D.h"
 
-#include "../../../include/Constants.h"
-#include "../../../src/SetROOTVar.cpp"
-#include "../../../src/ExpConstants.cpp"
+#include "../../include/Constants.h"
+#include "../../src/SetROOTVar.cpp"
+#include "../../src/ExpConstants.cpp"
 
 double PI = TMath::Pi();
 
 double Mp = 0.938272;
 double Mn = 0.939565;
 
-int SBSM=30;
+int SBSM=50;
 
 //gaussian background function for deltax
 bool reject_bg = false;

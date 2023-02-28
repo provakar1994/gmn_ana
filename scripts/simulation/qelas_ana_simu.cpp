@@ -461,6 +461,7 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
   cout << "CPU time elapsed = " << sw->CpuTime() << " s. Real time = " << sw->RealTime() << " s. " << endl << endl;
 
   c1->Write();
+  Tout->Write();
   h_W->Write();
   h_W_cut->Write();
   h_W_acut->Write();
