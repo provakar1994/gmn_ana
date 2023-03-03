@@ -10,7 +10,6 @@
     "SBS_filed"          : 0.93,
     "hcal_voffset"       : 0,
     "hcal_hoffset"       : 0,
-    "sbs_kick"           : 0.823,
     "dx_p"               : [-0.823, 0.17],
     "dy_p"               : [0.009, 0.19],
     "Nsigma_cut_dx_p"    : 1,

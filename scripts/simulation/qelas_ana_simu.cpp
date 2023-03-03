@@ -104,7 +104,7 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
   C->SetBranchStatus("bb.etot_over_p", 1);
 
   // defining the outputfile
-  TString outFile = Form("%s_sbs%d_sbs%dp_model%d_simu.root", 
+  TString outFile = Form("%s_sbs%d_sbs%dp_model%d.root", 
 			 filebase.c_str(), sbsconf.GetSBSconf(), sbsconf.GetSBSmag(), model);
   TFile *fout = new TFile(outFile.Data(), "RECREATE");
 
@@ -130,10 +130,10 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
   // Defining interesting ROOT tree branches 
   TTree *Tout = new TTree("Tout", "");
   //cuts
-  bool WCut;            Tout->Branch("WCut", &WCut, "WCut/B");
-  bool pCut;            Tout->Branch("pCut", &pCut, "pCut/B");
-  bool nCut;            Tout->Branch("nCut", &nCut, "nCut/B");
-  bool fiduCut;         Tout->Branch("fiduCut", &fiduCut, "fiduCut/B");
+  bool WCut;            Tout->Branch("WCut", &WCut, "WCut/O");
+  bool pCut;            Tout->Branch("pCut", &pCut, "pCut/O");
+  bool nCut;            Tout->Branch("nCut", &nCut, "nCut/O");
+  bool fiduCut;         Tout->Branch("fiduCut", &fiduCut, "fiduCut/O");
   //MC related
   double weight;        Tout->Branch("weight", &weight, "weight/D");  
   int T_mc_fnucl;       Tout->Branch("mc_fnucl", &T_mc_fnucl, "mc_fnucl/I");
@@ -192,8 +192,8 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
   // Do the energy loss calculation here ...........
 
   // HCAL cut definitions
-  double sbs_kick = jmgr->GetValueFromKey<double>("sbs_kick");
   vector<double> dx_p; jmgr->GetVectorFromKey<double>("dx_p", dx_p);
+  double sbs_kick = abs(dx_p[0]);
   vector<double> dy_p; jmgr->GetVectorFromKey<double>("dy_p", dy_p);
   double Nsigma_cut_dx_p = jmgr->GetValueFromKey<double>("Nsigma_cut_dx_p");
   double Nsigma_cut_dy_p = jmgr->GetValueFromKey<double>("Nsigma_cut_dy_p");
@@ -453,6 +453,25 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
   // outFile.ReplaceAll(".root",".png");
   // c1->Print(outFile.Data(),"png");
 
+  // let's record the summary
+  TCanvas *c2 = new TCanvas("c2","Summary");
+  c2->cd();
+
+  TPaveText *pt = new TPaveText(.05,.1,.95,.8);
+  pt->AddText(Form("Configfile: %s",configfilename));
+  pt->AddText(Form(" Analysis model: %d",model));
+  pt->AddText(Form(" Total # events analyzed: %ld",nevents));
+  pt->AddText(Form(" HCAL offsets: v = %.1f, h = %.1f",hcal_voffset,hcal_hoffset));
+  pt->AddText(Form(" Global cuts: %s",gcut.c_str()));
+  pt->AddText(Form(" Inbuilt W cut: %.2f <= W <= %.2f GeV/c",Wmin,Wmax));
+  pt->AddText(Form(" Inbuilt p cut (dx): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dx_p[0],dx_p[1],Nsigma_cut_dx_p));
+  pt->AddText(Form(" Inbuilt p cut (dy): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dy_p[0],dy_p[1],Nsigma_cut_dy_p));
+  pt->AddText(Form(" Inbuilt n cut (dx): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dx_n[0],dx_n[1],Nsigma_cut_dx_n));
+  pt->AddText(Form(" Inbuilt n cut (dy): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dy_n[0],dy_n[1],Nsigma_cut_dy_n));
+  TText *t1 = pt->GetLineWith("Configfile");
+  t1->SetTextColor(kBlue);
+  pt->Draw();
+
   cout << "------" << endl;
   cout << " Output file : " << outFile << endl;
   cout << "------" << endl << endl;
@@ -461,6 +480,7 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
   cout << "CPU time elapsed = " << sw->CpuTime() << " s. Real time = " << sw->RealTime() << " s. " << endl << endl;
 
   c1->Write();
+  c2->Write();
   Tout->Write();
   h_W->Write();
   h_W_cut->Write();

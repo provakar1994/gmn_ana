@@ -6,11 +6,10 @@
     "beam_current"       : 1E-6,
     "ngen_total"         : 100000,
     "rootfile_dir"       : "/lustre19/expphy/volatile/halla/sbs/pdbforce/g4sbs_output/sdr/sbs4-sbs50p/replayed_sbs4_sbs50p_QE_job_*.root",
-    "global_cut"         : "bb.tr.n>0&&bb.gem.track.nhits>2&&abs(bb.tr.vz[0])<0.08&&bb.tr.p[0]>1.6&&bb.ps.e>0.15&&sbs.hcal.e>0.0",
+    "global_cut"         : "bb.tr.n>0&&abs(bb.tr.vz[0])<.08&&bb.gem.track.nhits>2&&bb.ps.e>0.2&&sbs.hcal.e>0",
     "SBS_field"          : 0.82,
     "hcal_voffset"       : 0,
     "hcal_hoffset"       : 0,
-    "sbs_kick"           : 1.05,
     "dx_p"               : [-1.05, 0.18],
     "dy_p"               : [0.006, 0.24],
     "Nsigma_cut_dx_p"    : 1,
@@ -22,6 +21,6 @@
     "h_dxHCAL_lims"      : [260,-3.2,2],
     "h_dyHCAL_lims"      : [200,-2,2],
     "Wmin"               : 0.7,
-    "Wmax"               : 1.2,
+    "Wmax"               : 1.12,
     "README"             : "dx_p(n) : deltax dist. of p(n). dx_p(n)[0] => Peak position, dx_p(n)[1] => Peak RMS | dy_p(n) : deltay dist. of p(n). dy_p(n)[0] => Peak position, dy_p(n)[1] => Peak RMS | Nsigma_cut_dx(dy)_p(n) : # of sigma to include in the deltax(deltay) cut for p(n)"
 }

@@ -24,7 +24,7 @@ static const std::string target = "LD2";
 
 int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test_qelas_ana_data")
 {
-  //gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
+  gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
 
   // Define a clock to get macro processing time
   TStopwatch *sw = new TStopwatch(); sw->Start();
@@ -138,8 +138,8 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   TH1F *h_Q2 = util_pd::TH1FhQ2("h_Q2", conf);
   vector<double> hdx_lim; jmgr->GetVectorFromKey<double>("h_dxHCAL_lims", hdx_lim);
   vector<double> hdy_lim; jmgr->GetVectorFromKey<double>("h_dyHCAL_lims", hdy_lim);
-  TH1F *h_dxHCAL = new TH1F("h_dxHCAL","; x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
-  TH1F *h_dyHCAL = new TH1F("h_dyHCAL","; y_{HCAL} - y_{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
+  TH1F *h_dxHCAL = new TH1F("h_dxHCAL","W & fiducial cuts;x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
+  TH1F *h_dyHCAL = new TH1F("h_dyHCAL","W & fiducial cuts;y_{HCAL} - y_{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
   TH1F *h_coin_time = new TH1F("h_coin_time", "Coincidence time (ns)", 200, 380, 660);
 
   TH2F *h2_rcHCAL = util_pd::TH2FHCALface_rc("h2_rcHCAL");
@@ -218,8 +218,8 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   // Do the energy loss calculation here ...........
 
   // reading HCAL cut definitions
-  double sbs_kick = jmgr->GetValueFromKey<double>("sbs_kick");
   vector<double> dx_p; jmgr->GetVectorFromKey<double>("dx_p", dx_p);
+  double sbs_kick = abs(dx_p[0]);
   vector<double> dy_p; jmgr->GetVectorFromKey<double>("dy_p", dy_p);
   double Nsigma_cut_dx_p = jmgr->GetValueFromKey<double>("Nsigma_cut_dx_p");
   double Nsigma_cut_dy_p = jmgr->GetValueFromKey<double>("Nsigma_cut_dy_p");
@@ -487,6 +487,27 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   util_pd::DrawArea(hcal_active_area);
   util_pd::DrawArea(hcal_safety_margin,4);
 
+  // let's record the summary
+  TCanvas *c2 = new TCanvas("c2","Summary");
+  c2->cd();
+
+  TPaveText *pt = new TPaveText(.05,.1,.95,.8);
+  pt->AddText(Form("Configfile: %s",configfilename));
+  pt->AddText(Form(" Analysis model: %d",model));
+  pt->AddText(Form(" Total # events analyzed: %ld",nevents));
+  pt->AddText(Form(" Total # runs analyzed: %d",nruns));
+  pt->AddText(Form(" First run no.: %d | Last run no.: %d",crun[0].runnum,crun[nruns-1].runnum));
+  pt->AddText(Form(" HCAL offsets: v = %.4f, h = %.4f",hcal_voffset,hcal_hoffset));
+  pt->AddText(Form(" Global cuts: %s",gcut.c_str()));
+  pt->AddText(Form(" Inbuilt W cut: %.2f <= W <= %.2f GeV/c",Wmin,Wmax));
+  pt->AddText(Form(" Inbuilt p cut (dx): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dx_p[0],dx_p[1],Nsigma_cut_dx_p));
+  pt->AddText(Form(" Inbuilt p cut (dy): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dy_p[0],dy_p[1],Nsigma_cut_dy_p));
+  pt->AddText(Form(" Inbuilt n cut (dx): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dx_n[0],dx_n[1],Nsigma_cut_dx_n));
+  pt->AddText(Form(" Inbuilt n cut (dy): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dy_n[0],dy_n[1],Nsigma_cut_dy_n));
+  TText *t1 = pt->GetLineWith("Configfile");
+  t1->SetTextColor(kBlue);
+  pt->Draw();
+
   // outFile.ReplaceAll(".root",".png");
   // c1->Print(outFile.Data(),"png");
 
@@ -498,6 +519,7 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   cout << "CPU time elapsed = " << sw->CpuTime() << " s. Real time = " << sw->RealTime() << " s. " << endl << endl;
 
   c1->Write();
+  c2->Write();
   h_W->Write();
   h_W_cut->Write();
   h_W_acut->Write();
