@@ -35,7 +35,6 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   // seting up the desired SBS configuration
   int conf = jmgr->GetValueFromKey<int>("SBS_config");
   int sbsmag = jmgr->GetValueFromKey<int>("SBS_magnet_percent"); 
-  //std::string target = jmgr->GetValueFromKey_str("target"); 
   int pass = jmgr->GetValueFromKey<int>("replay_pass"); 
   SBSconfig sbsconf(conf, sbsmag);
   cout << sbsconf;
@@ -44,7 +43,7 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   std::string runsheet_dir = jmgr->GetValueFromKey_str("runsheet_dir");
   int nruns = jmgr->GetValueFromKey<int>("Nruns_to_ana"); // # of runs to analyze
   vector<CodaRun> crun; util_pd::ReadRunList(runsheet_dir,nruns,conf,target,pass,sbsmag,crun);
-  cout << "1st run info:" << endl << crun[0];
+  //cout << "1st run info:" << endl << crun[0];
 
   // parsing ROOT trees
   TChain *C = new TChain("T");  

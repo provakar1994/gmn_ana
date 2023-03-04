@@ -19,6 +19,9 @@
 #include "../include/gmn-ana.h"
 #include "../dflay/src/JSONManager.cxx"
 
+/* this script will only analyze LH2 data */
+static const std::string target = "LH2";
+
 int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_elas_ana_data")
 {
   gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
@@ -29,26 +32,28 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
   // reading input config file ---------------------------------------
   JSONManager *jmgr = new JSONManager(configfilename);
 
-  // parsing trees
-  std::string rootfile_dir = jmgr->GetValueFromKey_str("rootfile_dir");
-  std::vector<int> runnums; jmgr->GetVectorFromKey<int>("runnums",runnums);
-  int nruns = jmgr->GetValueFromKey<int>("Nruns_to_ana"); // # runs to analyze
-  TChain *C = new TChain("T");
-  if (nruns < 1 || nruns > runnums.size()) nruns = runnums.size();
-  std::cout << "Parsing ROOT files from " << nruns << " runs.." << std::endl;
-  for (int i=0; i<nruns; i++) {
-    //std::string rfname = rootfile_dir + Form("/*%d_1000k*",runnums[i]);
-    std::string rfname = rootfile_dir + Form("/*%d*",runnums[i]);
-    C->Add(rfname.c_str());
-  }
-  if (C->GetEntries()==0) {std::cerr << "*!* No ROOT file!" << std::endl; throw;}
-
   // seting up the desired SBS configuration
   int conf = jmgr->GetValueFromKey<int>("SBS_config");
   int sbsmag = jmgr->GetValueFromKey<int>("SBS_magnet_percent");
-  double sbsfieldfrac = sbsmag / 100.;
+  int pass = jmgr->GetValueFromKey<int>("replay_pass"); 
   SBSconfig sbsconf(conf, sbsmag);
-  sbsconf.Print();
+  cout << sbsconf;
+
+  // reading run info from relevant good runlist spreadsheet
+  std::string runsheet_dir = jmgr->GetValueFromKey_str("runsheet_dir");
+  int nruns = jmgr->GetValueFromKey<int>("Nruns_to_ana"); // # of runs to analyze
+  vector<CodaRun> crun; util_pd::ReadRunList(runsheet_dir,nruns,conf,target,pass,sbsmag,crun);
+  //cout << "1st run info:" << endl << crun[0];
+
+  // parsing ROOT trees
+  TChain *C = new TChain("T");  
+  std::cout << "Parsing ROOT files from " << nruns << " runs.." << std::endl;
+  std::string rootfile_dir = jmgr->GetValueFromKey_str("rootfile_dir");
+  for (int i=0; i<nruns; i++) {
+    std::string rfname = rootfile_dir + Form("/*%d*",crun[i].runnum);
+    C->Add(rfname.c_str());
+  }
+  if (C->GetEntries()==0) {std::cerr << "*!* No ROOT file!" << std::endl; throw;}
 
   // Choosing the model of calculation
   // model 0 => uses reconstructed p as independent variable
@@ -76,13 +81,15 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
   // setrootvar::setbranch(C, "HALLA_p", "", &HALLA_p);
 
   // bbcal clus var
-  double eSH; setrootvar::setbranch(C,"bb.sh","e",&eSH);
-  double ePS; setrootvar::setbranch(C,"bb.ps","e",&ePS);
+  double eSH, xSH, ySH, rblkSH, cblkSH, idblkSH, atimeSH, ePS, rblkPS, cblkPS, idblkPS, atimePS;
+  std::vector<std::string> bbcalclvar = {"sh.e","sh.x","sh.y","sh.rowblk","sh.colblk","sh.idblk","sh.atimeblk","ps.e","ps.rowblk","ps.colblk","ps.idblk","ps.atimeblk"};
+  std::vector<void*> bbcalclvar_mem = {&eSH,&xSH,&ySH,&rblkSH,&cblkSH,&idblkSH,&atimeSH,&ePS,&rblkPS,&cblkPS,&idblkPS,&atimePS};
+  setrootvar::setbranch(C, "bb", bbcalclvar, bbcalclvar_mem);
   
   // hcal clus var
-  double eHCAL, xHCAL, yHCAL, rblkHCAL, cblkHCAL, idblkHCAL, tdctblkHCAL;
-  std::vector<std::string> hcalclvar = {"e","x","y","rowblk","colblk","idblk","tdctimeblk"};
-  std::vector<void*> hcalclvar_mem = {&eHCAL,&xHCAL,&yHCAL,&rblkHCAL,&cblkHCAL,&idblkHCAL,&tdctblkHCAL};
+  double eHCAL, xHCAL, yHCAL, rblkHCAL, cblkHCAL, idblkHCAL, atimeHCAL, tdcHCAL;
+  std::vector<std::string> hcalclvar = {"e","x","y","rowblk","colblk","idblk","atimeblk","tdctimeblk"};
+  std::vector<void*> hcalclvar_mem = {&eHCAL,&xHCAL,&yHCAL,&rblkHCAL,&cblkHCAL,&idblkHCAL,&atimeHCAL,&tdcHCAL};
   setrootvar::setbranch(C, "sbs.hcal", hcalclvar, hcalclvar_mem);
 
   // bbhodo clus var
@@ -107,12 +114,17 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
   std::vector<void*> tdcvar_mem = {&tdcElem,&tdcElemN,&tdcTrig};
   setrootvar::setbranch(C,"bb.tdctrig",tdcvar,tdcvar_mem,1);
 
+  // fEvtHdr variables (N/A for simulation) 
+  UInt_t rnum, gevnum, trigbits;
+  std::vector<std::string> evhdrvar = {"fRun","fEvtNum","fTrigBits"};
+  std::vector<void*> evhdrmem = {&rnum,&gevnum,&trigbits};
+  setrootvar::setbranch(C,"fEvtHdr",evhdrvar,evhdrmem);
+
   // turning on the remaining branches we use for the globalcut
   C->SetBranchStatus("bb.gem.track.nhits", 1);
   C->SetBranchStatus("bb.etot_over_p", 1);
 
   // defining the outputfile
-  int pass = jmgr->GetValueFromKey<int>("replay_pass"); 
   TString outFile = Form("%s_sbs%d_sbs%dp_model%d_pass%d.root", 
 			 filebase.c_str(), sbsconf.GetSBSconf(), sbsconf.GetSBSmag(), model, pass);
   TFile *fout = new TFile(outFile.Data(), "RECREATE");
@@ -140,8 +152,11 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
   bool WCut;              Tout->Branch("WCut", &WCut, "WCut/B");
   bool pCut;              Tout->Branch("pCut", &pCut, "pCut/B");
   bool fiduCut;           Tout->Branch("fiduCut", &fiduCut, "fiduCut/B");
-  //
+  //run info
+  UInt_t T_rnum;          Tout->Branch("rnum", &T_rnum, "rnum/i");
   double T_ebeam;         Tout->Branch("ebeam", &T_ebeam, "ebeam/D");
+  double T_ebeam_std;     Tout->Branch("ebeam_std", &T_ebeam_std, "ebeam_std/D");
+  UInt_t T_gevnum;        Tout->Branch("gevnum", &T_gevnum, "gevnum/i");
   //kine
   double T_nu;            Tout->Branch("nu", &T_nu, "nu/D");
   double T_Q2;            Tout->Branch("Q2", &T_Q2, "Q2/D");
@@ -166,12 +181,26 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
   double T_tgPh;          Tout->Branch("tgPh", &T_tgPh, "tgPh/D");
   //BBCAL
   double T_ePS;           Tout->Branch("ePS", &T_ePS, "ePS/D"); 
+  double T_rblkPS;        Tout->Branch("rblkPS", &T_rblkPS, "rblkPS/D"); 
+  double T_cblkPS;        Tout->Branch("cblkPS", &T_cblkPS, "cblkPS/D"); 
+  double T_idblkPS;       Tout->Branch("idblkPS", &T_idblkPS, "idblkPS/D"); 
+  double T_atimePS;       Tout->Branch("atimePS", &T_atimePS, "atimePS/D"); 
   double T_eSH;           Tout->Branch("eSH", &T_eSH, "eSH/D"); 
+  double T_xSH;           Tout->Branch("xSH", &T_xSH, "xSH/D"); 
+  double T_ySH;           Tout->Branch("ySH", &T_ySH, "ySH/D"); 
+  double T_rblkSH;        Tout->Branch("rblkSH", &T_rblkSH, "rblkSH/D"); 
+  double T_cblkSH;        Tout->Branch("cblkSH", &T_cblkSH, "cblkSH/D"); 
+  double T_idblkSH;       Tout->Branch("idblkSH", &T_idblkSH, "idblkSH/D"); 
+  double T_atimeSH;       Tout->Branch("atimeSH", &T_atimeSH, "atimeSH/D"); 
   //HCAL
   double T_eHCAL;         Tout->Branch("eHCAL", &T_eHCAL, "eHCAL/D"); 
   double T_xHCAL;         Tout->Branch("xHCAL", &T_xHCAL, "xHCAL/D"); 
   double T_yHCAL;         Tout->Branch("yHCAL", &T_yHCAL, "yHCAL/D"); 
-  double T_tdctblkHCAL;   Tout->Branch("tdctblkHCAL", &T_tdctblkHCAL, "tdctblkHCAL/D"); 
+  double T_idblkHCAL;     Tout->Branch("idblkHCAL", &T_idblkHCAL, "idblkHCAL/D"); 
+  double T_rblkHCAL;      Tout->Branch("rblkHCAL", &T_rblkHCAL, "rblkHCAL/D"); 
+  double T_cblkHCAL ;     Tout->Branch("cblkHCAL", &T_cblkHCAL, "cblkHCAL/D"); 
+  double T_atimeHCAL;     Tout->Branch("atimeHCAL", &T_atimeHCAL, "atimeHCAL/D"); 
+  double T_tdcHCAL;       Tout->Branch("tdcHCAL", &T_tdcHCAL, "tdcHCAL/D"); 
   double T_xHCAL_exp;     Tout->Branch("xHCAL_exp", &T_xHCAL_exp, "xHCAL_exp/D"); 
   double T_yHCAL_exp;     Tout->Branch("yHCAL_exp", &T_yHCAL_exp, "yHCAL_exp/D"); 
   double T_dx;            Tout->Branch("dx", &T_dx, "dx/D"); 
@@ -181,13 +210,14 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
   int T_ncltmeanHODO;     Tout->Branch("ncltmeanHODO", &T_ncltmeanHODO, "ncltmeanHODO/I"); 
   double T_cltmeanHODO;   Tout->Branch("cltmeanHODO", &T_cltmeanHODO, "cltmeanHODO/D"); 
   //coin time trigger
-  double T_coinT_trig;    Tout->Branch("coinT_trig", &T_coinT_trig, "coinT_trig/D");
+  double T_bbT_trig;    Tout->Branch("bbT_trig", &T_bbT_trig, "bbT_trig/D");
+  double T_coinT_trig;  Tout->Branch("coinT_trig", &T_coinT_trig, "coinT_trig/D");
 
   // Do the energy loss calculation here ...........
 
   // HCAL cut definitions
-  double sbs_kick = jmgr->GetValueFromKey<double>("sbs_kick");
   vector<double> dx_p; jmgr->GetVectorFromKey<double>("dx_p", dx_p);
+  double sbs_kick = abs(dx_p[0]);
   vector<double> dy_p; jmgr->GetVectorFromKey<double>("dy_p", dy_p);
   double Nsigma_cut_dx_p = jmgr->GetValueFromKey<double>("Nsigma_cut_dx_p");
   double Nsigma_cut_dy_p = jmgr->GetValueFromKey<double>("Nsigma_cut_dy_p");
@@ -207,18 +237,31 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
   // looping through the tree ---------------------------------------
   std::cout << std::endl;
   long nevent = 0, nevents = C->GetEntries(); 
-  int treenum = 0, currenttreenum = 0;
+  int treenum = 0, currenttreenum = 0; UInt_t runnum = 0;
+  double ebeam = sbsconf.GetEbeam(), ebeam_std = 0.; 
   while (C->GetEntry(nevent++)) {
    
     // print progress 
     if( nevent % 1000 == 0 ) std::cout << nevent << "/" << nevents << "\r";
     std::cout.flush();
 
-    // apply global cuts efficiently (AJRP method)
+    // keep track of run number & tree number
     currenttreenum = C->GetTreeNumber();
     if (nevent == 1 || currenttreenum != treenum) {
       treenum = currenttreenum;
+      // apply global cuts efficiently (AJRP method)
       GlobalCut->UpdateFormulaLeaves();
+
+      // read ebeam once per run
+      if (nevent == 1 || rnum != runnum) {
+	runnum = rnum;
+	auto it = std::find_if(crun.begin(), crun.end(), [=](CodaRun const& cr) {return cr.runnum == runnum;});
+	if (it != crun.end()) {
+	  ebeam = it->ebeam; 
+	  ebeam_std = it->ebeam_std;
+	}else 
+	  std::cerr << "**!** Run " << runnum << " is not in spreadsheet!" << std::endl;
+     }
     } 
     bool passedgCut = GlobalCut->EvalInstance(0) != 0;   
     if (!passedgCut) continue;
@@ -229,7 +272,8 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
       if(tdcElem[ihit]==5) bbcal_time=tdcTrig[ihit];
       if(tdcElem[ihit]==0) hcal_time=tdcTrig[ihit];
     }
-    double coin_time = hcal_time - bbcal_time;  
+    double coin_time = hcal_time - bbcal_time;
+    T_bbT_trig = bbcal_time;  
     T_coinT_trig = coin_time; h_coin_time->Fill(coin_time);
 
     // kinematic parameters
@@ -293,6 +337,7 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
     double dpel = Peprime.E()/pcentral - 1.0; h_dpel->Fill(dpel);
 
     T_ebeam = Pe.E();
+    T_ebeam_std = ebeam_std;
 
     T_nu = nu;
     T_Q2 = Q2recon;
@@ -302,6 +347,9 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
     T_ephi = ephi;
     T_etheta = etheta;
     T_pcentral = pcentral;
+
+    T_rnum = rnum;
+    T_gevnum = gevnum;
 
     T_vz = vz[0];
     T_trP = p[0];
@@ -316,14 +364,28 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
     T_tgPh = phtgt[0];
 
     T_ePS = ePS;
+    T_rblkPS = rblkPS;
+    T_cblkPS = cblkPS;
+    T_idblkPS = idblkPS;
+    T_atimePS = atimePS;
+
     T_eSH = eSH;
+    T_xSH = xSH;
+    T_ySH = ySH;
+    T_rblkSH = rblkSH;
+    T_cblkSH = cblkSH;
+    T_idblkSH = idblkSH;
+    T_atimeSH = atimeSH;
 
     T_eHCAL = eHCAL;
     T_xHCAL = xHCAL;
     T_yHCAL = yHCAL;
-    T_tdctblkHCAL = tdctblkHCAL;
+    T_rblkHCAL = rblkHCAL;
+    T_cblkHCAL = cblkHCAL;
+    T_idblkHCAL = idblkHCAL;
+    T_atimeHCAL = atimeHCAL;
+    T_tdcHCAL = tdcHCAL;
 
-    //for (int ihit=0; ihit<ncltmeanHODO; ihit++)
     T_ncltmeanHODO = ncltmeanHODO;
     T_cltmeanHODO = cltmeanHODO[0];
 
@@ -344,7 +406,7 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
     TVector3 nodef_dir = (HCAL_pos - vertex).Unit();
     T_thetapq_nodef = acos(nodef_dir.Dot(pNhat));
     // p 
-    double BdL = sbsfieldfrac * expconst::sbsmaxfield * expconst::sbsdipolegap;
+    double BdL = (sbsmag / 100.) * expconst::sbsmaxfield * expconst::sbsdipolegap;
     double proton_thetabend = 0.3 * BdL / PNprime.Vect().Mag();  // p*theta = 0.3*BdL
     double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist() - (sbsconf.GetSBSdist() + expconst::sbsdipolegap/2.0));
     TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);
@@ -411,6 +473,25 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
   util_pd::DrawArea(hcal_active_area);
   util_pd::DrawArea(hcal_safety_margin,4);
 
+  // let's record the summary
+  TCanvas *c2 = new TCanvas("c2","Summary");
+  c2->cd();
+
+  TPaveText *pt = new TPaveText(.05,.1,.95,.8);
+  pt->AddText(Form("Configfile: %s",configfilename));
+  pt->AddText(Form(" Analysis model: %d",model));
+  pt->AddText(Form(" Total # events analyzed: %ld",nevents));
+  pt->AddText(Form(" Total # runs analyzed: %d",nruns));
+  pt->AddText(Form(" First run no.: %d | Last run no.: %d",crun[0].runnum,crun[nruns-1].runnum));
+  pt->AddText(Form(" HCAL offsets: v = %.4f, h = %.4f",hcal_voffset,hcal_hoffset));
+  pt->AddText(Form(" Global cuts: %s",gcut.c_str()));
+  pt->AddText(Form(" Inbuilt W cut: %.2f <= W <= %.2f GeV/c",Wmin,Wmax));
+  pt->AddText(Form(" Inbuilt p cut (dx): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dx_p[0],dx_p[1],Nsigma_cut_dx_p));
+  pt->AddText(Form(" Inbuilt p cut (dy): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dy_p[0],dy_p[1],Nsigma_cut_dy_p));
+  TText *t1 = pt->GetLineWith("Configfile");
+  t1->SetTextColor(kBlue);
+  pt->Draw();
+
   // outFile.ReplaceAll(".root",".png");
   // c1->Print(outFile.Data(),"png");
 
@@ -422,6 +503,18 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
   cout << "CPU time elapsed = " << sw->CpuTime() << " s. Real time = " << sw->RealTime() << " s. " << endl << endl;
 
   c1->Write();
+  c2->Write();
+  h_W->Write();
+  h_W_cut->Write();
+  h_W_acut->Write();
+  h_dpel->Write();
+  h_Q2->Write();
+  h_dxHCAL->Write();
+  h_dyHCAL->Write();
+  h2_rcHCAL->Write();
+  h2_dxdyHCAL->Write();
+  h2_xyHCAL_p->Write();
+  h_coin_time->Write();
   fout->Write();
   sw->Delete();
   delete jmgr;
