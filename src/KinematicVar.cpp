@@ -139,7 +139,7 @@ namespace kine {
   double Luminosity(double ibeam, std::string targetType) {
     double lumi = 0.;
     if (targetType.compare("LH2") == 0)
-      lumi = ((ibeam/constant::qe)*expconst::tarlen*expconst::lh2tarrho*(constant::N_A/constant::D2_Amass));
+      lumi = ((ibeam/constant::qe)*expconst::tarlen*expconst::lh2tarrho*(constant::N_A/constant::H2_Amass));
     else if (targetType.compare("LD2") == 0)
       lumi = ((ibeam/constant::qe)*expconst::tarlen*expconst::ld2tarrho*(constant::N_A/constant::D2_Amass));
     else
