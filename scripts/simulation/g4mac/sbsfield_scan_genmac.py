@@ -1,3 +1,8 @@
+'''
+This script reads a g4sbs macro and generates multiple copies
+of that with various SBS field values.
+'''
+
 #import numpy as np
 #import pandas as pd
 
