@@ -194,6 +194,7 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
     gchi2R->GetYaxis()->SetTitle("#chi^{2}");  gchi2R->GetYaxis()->SetMaxDigits(3);
 
     // let's fit chi2 vs R
+    vector<double> fpR; jmgr->GetVectorFromKey<double>("fit_params_R", fpR);
     TF1 *chi2Rfn = new TF1("chi2Rfn",fit_parabola,R_lims[1],R_lims[2],3);
     chi2Rfn->SetNpx(500);
     // gchi2R->Fit(chi2Rfn, "R");
@@ -201,7 +202,7 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
     chi2Rfn->SetParameters(1,1,1);
     gchi2R->Fit("chi2Rfn","QR0");
     // second try
-    chi2Rfn->SetParameters(16591,10113,1.3);
+    chi2Rfn->SetParameters(fpR[0],fpR[1],fpR[2]);
     gchi2R->Fit("chi2Rfn","QRV+","ep");
 
     // getting Rmin
@@ -312,6 +313,7 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
       gchi2B->GetYaxis()->SetTitle("#chi^{2}");  gchi2B->GetYaxis()->SetMaxDigits(3);
 
       // let's fit chi2 vs B
+      vector<double> fpB; jmgr->GetVectorFromKey<double>("fit_params_B", fpB);
       TF1 *chi2Bfn = new TF1("chi2Bfn",fit_parabola,B_lims[1],B_lims[2],3);
       chi2Bfn->SetNpx(500);
       // gchi2B->Fit(chi2Bfn, "R");
@@ -319,7 +321,7 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
       chi2Bfn->SetParameters(1,1,1);
       gchi2B->Fit("chi2Bfn","QR0");
       // second try
-      chi2Bfn->SetParameters(884,5000,0.032);
+      chi2Bfn->SetParameters(fpB[0],fpB[1],fpB[2]);
       gchi2B->Fit("chi2Bfn","QRV+","ep");
 
       c1->cd(2);
@@ -448,15 +450,16 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
     gchi2RB->GetZaxis()->SetTitle("#chi^{2}"); // gchi2RB->GetYaxis()->SetMaxDigits(3);
     gchi2RB->Draw("AP");
 
-    // let's minimize chi2
     c1->cd(2);    
+    // let's minimize chi2
+    vector<double> fpRB; jmgr->GetVectorFromKey<double>("fit_params_RB", fpRB);
     TF2 *chi2RBfn = new TF2("chi2RBfn",fit_paraboloid,R_lims[1],R_lims[2],B_lims[1],B_lims[2],5);
     chi2RBfn->SetNpx(500);
     // first try
     chi2RBfn->SetParameters(1,1,1,1,1);
     gchi2RB->Fit("chi2RBfn","QR0");
     // second try
-    chi2RBfn->SetParameters(800,1600,0.98,100000,0.03);
+    chi2RBfn->SetParameters(fpRB[0],fpRB[1],fpRB[2],fpRB[3],fpRB[4]);
     gchi2RB->Fit("chi2RBfn","QRV+","ep");
     chi2RBfn->Draw();
 
