@@ -98,8 +98,8 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
      MC QE analysis ROOT files, I'll create them here. This is ensure the use of exactly the same cuts and histogram ranges
      between data and MC.
   */
-  ROOT::RDataFrame data_rdf("Tout", Form("../pdout/qelas_ana_data_sbs%d_sbs%dp_model%d_data.root", conf, sbsmag, model));
-  ROOT::RDataFrame simu_rdf("Tout", Form("siout/qelas_ana_simu_sbs%d_sbs%dp_model%d.root", conf, sbsmag, model));
+  ROOT::RDataFrame data_rdf("Tout", Form("../pdout/qelas_ana_data_sbs%d_sbs%dp_model%d_pass%d.root",conf,sbsmag,model,pass));
+  ROOT::RDataFrame simu_rdf("Tout", Form("siout/qelas_ana_simu_sbs%d_sbs%dp_model%d.root",conf,sbsmag,model));
 
   // Applying cuts
   std::string cuts_for_signal = jmgr->GetValueFromKey_str("cuts_for_signal");
@@ -464,14 +464,14 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
     chi2RBfn->Draw();
 
     // getting Rmin & Bmin
-    double Rmin = chi2RBfn->GetParameter(2), Bmin = chi2RBfn->GetParameter(4);
-    std::cout << Form(" Rmin = %.2f, Bmin = %.4f", Rmin , Bmin)<< std::endl;
+    double Rmin = chi2RBfn->GetParameter(2), Bmin = chi2RBfn->GetParameter(4), Chi2 = chi2RBfn->Eval(Rmin,Bmin);
+    std::cout << Form(" Rmin = %.2f, Bmin = %.4f, Chi2 = %.2f", Rmin , Bmin, Chi2) << std::endl;
 
     // **** Now that we have both Rmin and Bmin, it's time to draw the best fit histogram ****
-    TH1F *h_comb_MC_RB_bfit = new TH1F("h_comb_MC_RB_bfit", Form("Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), int(h_dx[0]), h_dx[1], h_dx[2]);
-    TH1F *h_n_RB_bfit = new TH1F("h_n_RB_bfit", Form("n | Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), int(h_dx[0]), h_dx[1], h_dx[2]);
-    TH1F *h_p_RB_bfit = new TH1F("h_p_RB_bfit", Form("p | Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), int(h_dx[0]), h_dx[1], h_dx[2]);
-    TH1F *h_bg_bfit = new TH1F("h_bg_bfit", Form("bg | Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), int(h_dx[0]), h_dx[1], h_dx[2]);
+    TH1F *h_comb_MC_RB_bfit = new TH1F("h_comb_MC_RB_bfit", Form("Rmin = %0.2f, Bmin = %0.4f, #chi^{2} = %0.2f",Rmin,Bmin,Chi2), int(h_dx[0]), h_dx[1], h_dx[2]);
+    TH1F *h_n_RB_bfit = new TH1F("h_n_RB_bfit", Form("n | Rmin = %0.2f, Bmin = %0.4f, #chi^{2} = %0.2f",Rmin,Bmin,Chi2), int(h_dx[0]), h_dx[1], h_dx[2]);
+    TH1F *h_p_RB_bfit = new TH1F("h_p_RB_bfit", Form("p | Rmin = %0.2f, Bmin = %0.4f, #chi^{2} = %0.2f",Rmin,Bmin,Chi2), int(h_dx[0]), h_dx[1], h_dx[2]);
+    TH1F *h_bg_bfit = new TH1F("h_bg_bfit", Form("bg | Rmin = %0.2f, Bmin = %0.4f, #chi^{2} = %0.2f",Rmin,Bmin,Chi2), int(h_dx[0]), h_dx[1], h_dx[2]);
 
     double norm = 1. / (h_dxHCAL_simu_p->Integral() + Rmin*h_dxHCAL_simu_n->Integral() + Bmin*h_dxHCAL_bg->Integral());
     // Looping over bins to create combined simulation histo using AJRP method
