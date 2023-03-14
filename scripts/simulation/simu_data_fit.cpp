@@ -41,11 +41,10 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
   int sbsmag = jmgr->GetValueFromKey<int>("SBS_magnet_percent");
   int model = jmgr->GetValueFromKey<int>("model");
   int pass = jmgr->GetValueFromKey<int>("pass");
-  TFile *fdata = new TFile(Form("../pdout/qelas_ana_data_sbs%d_sbs%dp_model%d_data.root", conf, sbsmag, model));
-  // TFile *fdata = new TFile(Form("../pdout/qelas_ana_data_sbs%d_sbs%dp_model%d_pass%d.root", conf, sbsmag, model, pass));
-  TFile *fsimu = new TFile(Form("siout/qelas_ana_simu_sbs%d_sbs%dp_model%d.root", conf, sbsmag, model));
 
-  // reading in mode of analysis and then defining the outputfile names
+  //############################//
+  // Defining output file names //
+  //############################//
   bool fit_RB_simul = jmgr->GetValueFromKey<int>("fit_RB_simul"); // 1 => Simulataneous fit, 0 => Independent fit (i.e. fit B given Rmin)
   bool fit_only_R = jmgr->GetValueFromKey<int>("fit_only_R"); // 1 => No bg included in the fit
   if (fit_only_R) fit_RB_simul = 0;
@@ -72,26 +71,57 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
     fit_data << "R,B,chi2" << std::endl; 
   TFile *fout = new TFile(outFile,"RECREATE");
 
-  // read in important histograms
-  bool write_all_fit_histos = jmgr->GetValueFromKey<int>("write_all_fit_histos");
-  TH1F *h_dxHCAL_data; fdata->GetObject("h_dxHCAL_data",h_dxHCAL_data);
-  TH1F *h_dxHCAL_bg; fdata->GetObject("h_dxHCAL_bg",h_dxHCAL_bg);
-  TH1F *h_dxHCAL_simu; fsimu->GetObject("h_dxHCAL_simu",h_dxHCAL_simu);
-  TH1F *h_dxHCAL_simu_p; fsimu->GetObject("h_dxHCAL_simu_p",h_dxHCAL_simu_p); 
-  TH1F *h_dxHCAL_simu_n; fsimu->GetObject("h_dxHCAL_simu_n",h_dxHCAL_simu_n); 
+  //####################################################//
+  // Creating all the important histograms for analysis //
+  //####################################################//
+  // // read in important histograms (Old method, doesn't use RDataFrame)
+  // TFile *fdata = new TFile(Form("../pdout/qelas_ana_data_sbs%d_sbs%dp_model%d_data.root", conf, sbsmag, model));
+  // // TFile *fdata = new TFile(Form("../pdout/qelas_ana_data_sbs%d_sbs%dp_model%d_pass%d.root", conf, sbsmag, model, pass));
+  // TFile *fsimu = new TFile(Form("siout/qelas_ana_simu_sbs%d_sbs%dp_model%d.root", conf, sbsmag, model));
+  // TH1F *h_dxHCAL_data; fdata->GetObject("h_dxHCAL_data",h_dxHCAL_data);
+  // TH1F *h_dxHCAL_bg; fdata->GetObject("h_dxHCAL_bg",h_dxHCAL_bg);
+  // TH1F *h_dxHCAL_simu; fsimu->GetObject("h_dxHCAL_simu",h_dxHCAL_simu);
+  // TH1F *h_dxHCAL_simu_p; fsimu->GetObject("h_dxHCAL_simu_p",h_dxHCAL_simu_p); 
+  // TH1F *h_dxH%CAL_simu_n; fsimu->GetObject("h_dxHCAL_simu_n",h_dxHCAL_simu_n); 
 
-  // sanity checks (nbin & ranges of histos need to be same for comparison)
-  int nbin = h_dxHCAL_data->GetNbinsX();
-  double hmin = h_dxHCAL_data->GetXaxis()->GetXmin();
-  double hmax = h_dxHCAL_data->GetXaxis()->GetXmax();
-  CompareHisto(h_dxHCAL_data, h_dxHCAL_bg);
-  CompareHisto(h_dxHCAL_data, h_dxHCAL_simu);
-  CompareHisto(h_dxHCAL_data, h_dxHCAL_simu_p);
-  CompareHisto(h_dxHCAL_data, h_dxHCAL_simu_n);
+  // // sanity checks (nbin & ranges of histos need to be same for comparison)
+  // int nbin = h_dxHCAL_data->GetNbinsX();
+  // double hmin = h_dxHCAL_data->GetXaxis()->GetXmin();
+  // double hmax = h_dxHCAL_data->GetXaxis()->GetXmax();
+  // CompareHisto(h_dxHCAL_data, h_dxHCAL_bg);
+  // CompareHisto(h_dxHCAL_data, h_dxHCAL_simu);
+  // CompareHisto(h_dxHCAL_data, h_dxHCAL_simu_p);
+  // CompareHisto(h_dxHCAL_data, h_dxHCAL_simu_n);
+
+  /* 
+     Switching to RDataFrame. Should fit perfectly for such analysis. Instead of reading the histograms from general data
+     MC QE analysis ROOT files, I'll create them here. This is ensure the use of exactly the same cuts and histogram ranges
+     between data and MC.
+  */
+  ROOT::RDataFrame data_rdf("Tout", Form("../pdout/qelas_ana_data_sbs%d_sbs%dp_model%d_data.root", conf, sbsmag, model));
+  ROOT::RDataFrame simu_rdf("Tout", Form("siout/qelas_ana_simu_sbs%d_sbs%dp_model%d.root", conf, sbsmag, model));
+
+  // Applying cuts
+  std::string cuts_for_signal = jmgr->GetValueFromKey_str("cuts_for_signal");
+  std::string cuts_for_bg = jmgr->GetValueFromKey_str("cuts_for_bg");
+  auto data_rdf_filtered = data_rdf.Filter(cuts_for_signal);
+  auto simu_rdf_filtered = simu_rdf.Filter(cuts_for_signal);
+  auto bg_rdf_filtered = data_rdf.Filter(cuts_for_bg);
+
+  // Creating important histograms
+  vector<double> h_dx; jmgr->GetVectorFromKey<double>("h_dx", h_dx);
+  auto h_dxHCAL_data = data_rdf_filtered.Histo1D({"h_dxHCAL_data", "", int(h_dx[0]), h_dx[1], h_dx[2]}, "dx");
+  auto h_dxHCAL_simu = simu_rdf_filtered.Histo1D({"h_dxHCAL_simu", "", int(h_dx[0]), h_dx[1], h_dx[2]}, "dx", "weight");
+  auto h_dxHCAL_simu_p = simu_rdf_filtered.Filter("mc_fnucl==1").Histo1D({"h_dxHCAL_simu_p", "", int(h_dx[0]), h_dx[1], h_dx[2]}, "dx", "weight");
+  auto h_dxHCAL_simu_n = simu_rdf_filtered.Filter("mc_fnucl==0").Histo1D({"h_dxHCAL_simu_n", "", int(h_dx[0]), h_dx[1], h_dx[2]}, "dx", "weight");
+  auto h_dxHCAL_bg = bg_rdf_filtered.Histo1D({"h_dxHCAL_bg", "", int(h_dx[0]), h_dx[1], h_dx[2]}, "dx");
   
+  // customize data histogram
+  h_dxHCAL_data->SetMarkerStyle(20); h_dxHCAL_data->SetMarkerStyle(kBlack); 
+  h_dxHCAL_data->SetMarkerSize(0.6); h_dxHCAL_data->SetLineColor(kBlack); 
   // normalize relevant histograms
   h_dxHCAL_data->Scale(1./h_dxHCAL_data->Integral()); h_dxHCAL_data->Write();
-  h_dxHCAL_bg->Scale(1./h_dxHCAL_bg->Integral()); h_dxHCAL_bg->Write();
+  h_dxHCAL_bg->Scale(1./h_dxHCAL_bg->Integral()); if(!fit_only_R) h_dxHCAL_bg->Write();
   h_dxHCAL_simu->Scale(1./h_dxHCAL_simu->Integral()); h_dxHCAL_simu->Write();
   // let's not scale the following two histograms yet
   h_dxHCAL_simu_p->Write();
@@ -99,13 +129,16 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
 
   // define fit range
   // (E.g. leave the tails out. Need to implement radiative correction first.)
+  bool write_all_fit_histos = jmgr->GetValueFromKey<int>("write_all_fit_histos");
   vector<double> fit_range; jmgr->GetVectorFromKey<double>("fit_range", fit_range);
   int lbin = h_dxHCAL_data->FindBin(fit_range[0]);
   int hbin = h_dxHCAL_data->FindBin(fit_range[1]);
   std::cout << Form("\nFit range: (%.2f,%.2f) | Corr. bins: (%d,%d)",fit_range[0],fit_range[1],lbin,hbin) << std::endl; 
 
+  //###################//
+  // Starting analysis //
+  //###################//
   if (!fit_RB_simul) {
-
     // read in ranges to vary parameter R
     double R = 0;
     vector<double> R_lims; jmgr->GetVectorFromKey<double>("R_lims", R_lims);
@@ -122,9 +155,9 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
       R = R_lims[1] + iR*Rwidth;
     
       // create histos
-      h_comb_MC[iR] = MakeHisto("h_comb_MC_R", R, nbin, hmin, hmax);
-      h_n_R[iR] = MakeHisto("h_n_R", R, nbin, hmin, hmax);
-      h_p_R[iR] = MakeHisto("h_p_R", R, nbin, hmin, hmax);
+      h_comb_MC[iR] = MakeHisto("h_comb_MC_R", R, int(h_dx[0]), h_dx[1], h_dx[2]);
+      h_n_R[iR] = MakeHisto("h_n_R", R, int(h_dx[0]), h_dx[1], h_dx[2]);
+      h_p_R[iR] = MakeHisto("h_p_R", R, int(h_dx[0]), h_dx[1], h_dx[2]);
     
       double norm = 1. / (h_dxHCAL_simu_p->Integral() + R*h_dxHCAL_simu_n->Integral());
       // Looping over bins to create combined simulation histo using AJRP method
@@ -184,9 +217,9 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
     if (fit_only_R) {
       // **** Fitting only with R (No background) 
       // **** Now that we have Rmin, it's time to draw the best fit histogram ****
-      TH1F *h_comb_MC_R_bfit = new TH1F("h_comb_MC_R_bfit", Form("Rmin = %0.2f", Rmin), nbin, hmin, hmax);
-      TH1F *h_n_R_bfit = new TH1F("h_n_R_bfit", Form("n | Rmin = %0.2f", Rmin), nbin, hmin, hmax);
-      TH1F *h_p_R_bfit = new TH1F("h_p_R_bfit", Form("p | Rmin = %0.2f", Rmin), nbin, hmin, hmax);
+      TH1F *h_comb_MC_R_bfit = new TH1F("h_comb_MC_R_bfit", Form("Rmin = %0.2f", Rmin), int(h_dx[0]), h_dx[1], h_dx[2]);
+      TH1F *h_n_R_bfit = new TH1F("h_n_R_bfit", Form("n | Rmin = %0.2f", Rmin), int(h_dx[0]), h_dx[1], h_dx[2]);
+      TH1F *h_p_R_bfit = new TH1F("h_p_R_bfit", Form("p | Rmin = %0.2f", Rmin), int(h_dx[0]), h_dx[1], h_dx[2]);
 
       double norm = 1. / (h_dxHCAL_simu_p->Integral() + Rmin*h_dxHCAL_simu_n->Integral());
       // Looping over bins to create combined simulation histo using AJRP method
@@ -204,13 +237,13 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
 
       c1->cd(2);
       h_comb_MC_R_bfit->Draw();
-      h_dxHCAL_data->Draw("same");
+      h_dxHCAL_data->DrawClone("same");
 
       c1->cd(3);
       h_comb_MC_R_bfit->Draw();
       h_n_R_bfit->Draw("same");
       h_p_R_bfit->Draw("same");
-      h_dxHCAL_data->Draw("same");
+      h_dxHCAL_data->DrawClone("same");
 
       if (!write_all_fit_histos) {
 	h_comb_MC_R_bfit->Write();
@@ -238,10 +271,10 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
 	B = B_lims[1] + iB*Bwidth;
     
 	// create histos
-	h_comb_MC_RB[iB] = MakeHistoRB("h_comb_MC_RB", Rmin, B, nbin, hmin, hmax);
-	h_n_RB[iB] = MakeHistoRB("h_n_RB", Rmin, B, nbin, hmin, hmax);
-	h_p_RB[iB] = MakeHistoRB("h_p_RB", Rmin, B, nbin, hmin, hmax);
-	h_bg[iB] = MakeHistoRB("h_bg", B, Rmin, nbin, hmin, hmax);
+	h_comb_MC_RB[iB] = MakeHistoRB("h_comb_MC_RB", Rmin, B, int(h_dx[0]), h_dx[1], h_dx[2]);
+	h_n_RB[iB] = MakeHistoRB("h_n_RB", Rmin, B, int(h_dx[0]), h_dx[1], h_dx[2]);
+	h_p_RB[iB] = MakeHistoRB("h_p_RB", Rmin, B, int(h_dx[0]), h_dx[1], h_dx[2]);
+	h_bg[iB] = MakeHistoRB("h_bg", B, Rmin, int(h_dx[0]), h_dx[1], h_dx[2]);
     
 	double norm = 1. / (h_dxHCAL_simu_p->Integral() + Rmin*h_dxHCAL_simu_n->Integral() + B*h_dxHCAL_bg->Integral());
 	// Looping over bins to create combined simulation histo using AJRP method
@@ -297,10 +330,10 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
       std::cout << " Bmin = " << Bmin << std::endl;
 
       // **** Now that we have both Rmin and Bmin, it's time to draw the best fit histogram ****
-      TH1F *h_comb_MC_RB_bfit = new TH1F("h_comb_MC_RB_bfit", Form("Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), nbin, hmin, hmax);
-      TH1F *h_n_RB_bfit = new TH1F("h_n_RB_bfit", Form("n | Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), nbin, hmin, hmax);
-      TH1F *h_p_RB_bfit = new TH1F("h_p_RB_bfit", Form("p | Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), nbin, hmin, hmax);
-      TH1F *h_bg_bfit = new TH1F("h_bg_bfit", Form("bg | Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), nbin, hmin, hmax);
+      TH1F *h_comb_MC_RB_bfit = new TH1F("h_comb_MC_RB_bfit", Form("Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), int(h_dx[0]), h_dx[1], h_dx[2]);
+      TH1F *h_n_RB_bfit = new TH1F("h_n_RB_bfit", Form("n | Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), int(h_dx[0]), h_dx[1], h_dx[2]);
+      TH1F *h_p_RB_bfit = new TH1F("h_p_RB_bfit", Form("p | Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), int(h_dx[0]), h_dx[1], h_dx[2]);
+      TH1F *h_bg_bfit = new TH1F("h_bg_bfit", Form("bg | Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), int(h_dx[0]), h_dx[1], h_dx[2]);
 
       double norm = 1. / (h_dxHCAL_simu_p->Integral() + Rmin*h_dxHCAL_simu_n->Integral() + Bmin*h_dxHCAL_bg->Integral());
       // Looping over bins to create combined simulation histo using AJRP method
@@ -320,14 +353,14 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
 
       c1->cd(3);
       h_comb_MC_RB_bfit->Draw();
-      h_dxHCAL_data->Draw("same");
+      h_dxHCAL_data->DrawClone("same");
 
       c1->cd(4);
       h_comb_MC_RB_bfit->Draw();
       h_n_RB_bfit->Draw("same");
       h_p_RB_bfit->Draw("same");
       h_bg_bfit->Draw("same");
-      h_dxHCAL_data->Draw("same");
+      h_dxHCAL_data->DrawClone("same");
 
       if (!write_all_fit_histos) {
 	h_comb_MC_RB_bfit->Write();
@@ -366,10 +399,10 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
 	B = B_lims[1] + iB*Bwidth;
     
 	// create histos
-	h_comb_MC_RB_simul[iter] = MakeHistoRB("h_comb_MC_RB_simul", R, B, nbin, hmin, hmax);
-	h_n_RB_simul[iter] = MakeHistoRB("h_n_RB_simul", R, B, nbin, hmin, hmax);
-	h_p_RB_simul[iter] = MakeHistoRB("h_p_RB_simul", R, B, nbin, hmin, hmax);
-	h_bg_simul[iter] = MakeHistoRB("h_bg_simul", R, B, nbin, hmin, hmax);
+	h_comb_MC_RB_simul[iter] = MakeHistoRB("h_comb_MC_RB_simul", R, B, int(h_dx[0]), h_dx[1], h_dx[2]);
+	h_n_RB_simul[iter] = MakeHistoRB("h_n_RB_simul", R, B, int(h_dx[0]), h_dx[1], h_dx[2]);
+	h_p_RB_simul[iter] = MakeHistoRB("h_p_RB_simul", R, B, int(h_dx[0]), h_dx[1], h_dx[2]);
+	h_bg_simul[iter] = MakeHistoRB("h_bg_simul", R, B, int(h_dx[0]), h_dx[1], h_dx[2]);
     
 	double norm = 1. / (h_dxHCAL_simu_p->Integral() + R*h_dxHCAL_simu_n->Integral() + B*h_dxHCAL_bg->Integral());
 	// Looping over bins to create combined simulation histo using AJRP method
@@ -432,10 +465,10 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
     std::cout << Form(" Rmin = %.2f, Bmin = %.4f", Rmin , Bmin)<< std::endl;
 
     // **** Now that we have both Rmin and Bmin, it's time to draw the best fit histogram ****
-    TH1F *h_comb_MC_RB_bfit = new TH1F("h_comb_MC_RB_bfit", Form("Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), nbin, hmin, hmax);
-    TH1F *h_n_RB_bfit = new TH1F("h_n_RB_bfit", Form("n | Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), nbin, hmin, hmax);
-    TH1F *h_p_RB_bfit = new TH1F("h_p_RB_bfit", Form("p | Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), nbin, hmin, hmax);
-    TH1F *h_bg_bfit = new TH1F("h_bg_bfit", Form("bg | Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), nbin, hmin, hmax);
+    TH1F *h_comb_MC_RB_bfit = new TH1F("h_comb_MC_RB_bfit", Form("Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), int(h_dx[0]), h_dx[1], h_dx[2]);
+    TH1F *h_n_RB_bfit = new TH1F("h_n_RB_bfit", Form("n | Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), int(h_dx[0]), h_dx[1], h_dx[2]);
+    TH1F *h_p_RB_bfit = new TH1F("h_p_RB_bfit", Form("p | Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), int(h_dx[0]), h_dx[1], h_dx[2]);
+    TH1F *h_bg_bfit = new TH1F("h_bg_bfit", Form("bg | Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), int(h_dx[0]), h_dx[1], h_dx[2]);
 
     double norm = 1. / (h_dxHCAL_simu_p->Integral() + Rmin*h_dxHCAL_simu_n->Integral() + Bmin*h_dxHCAL_bg->Integral());
     // Looping over bins to create combined simulation histo using AJRP method
@@ -455,14 +488,14 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
 
     c1->cd(3);
     h_comb_MC_RB_bfit->Draw();
-    h_dxHCAL_data->Draw("same");
+    h_dxHCAL_data->DrawClone("same");
 
     c1->cd(4);
     h_comb_MC_RB_bfit->Draw();
     h_n_RB_bfit->Draw("same");
     h_p_RB_bfit->Draw("same");
     h_bg_bfit->Draw("same");
-    h_dxHCAL_data->Draw("same");
+    h_dxHCAL_data->DrawClone("same");
 
     if (!write_all_fit_histos) {
       h_comb_MC_RB_bfit->Write();
