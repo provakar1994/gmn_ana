@@ -1,0 +1,13 @@
+{
+    "SBS_config"           : 4,
+    "SBS_magnet_percent"   : 50,
+    "model"                : 2,
+    "pass"                 : 1,
+    "fit_range"            : [-3.5, 2.5],
+    "fit_RB_simul"         : 1,
+    "fit_only_R"           : 1,
+    "write_all_fit_histos" : 0,
+    "R_lims"               : [48, 0.86, 1.40],
+    "B_lims"               : [40, 0.0250, 0.037],
+    "README"               : "fit_range : fit_range[0] => low range, fit_range[1] => high range | R_lims : fit param R. R_lims[0] => nR, R_lims[1] => Rmin, R_lims[2] => Rmax | fit_RB_simul : 1 => Simulataneous fit, 0 => Independent fit (i.e. fit B given Rmin) | fit_only_R : 1 => No bg included, it automatically sets fit_RB_simu to 0."
+}

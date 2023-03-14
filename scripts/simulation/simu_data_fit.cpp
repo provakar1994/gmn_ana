@@ -14,8 +14,8 @@
 #include <fstream>
 #include <iostream>
 
-#include "../../../include/gmn-ana.h"
-#include "../../../dflay/src/JSONManager.cxx"
+#include "../../include/gmn-ana.h"
+#include "../../dflay/src/JSONManager.cxx"
 
 void CompareHisto (TH1F*, TH1F*);
 TH1F* MakeHisto (std::string, double, int, double, double);
@@ -29,7 +29,7 @@ double fit_paraboloid (double *x, double *par) {
   return par[0] + par[1] * pow((x[0] - par[2]), 2) + par[3] * pow((x[1] - par[4]), 2); 
 }
 
-int simu_data_fit (const char *configfilename, std::string filebase="siout/simu_data_fit")
+int simu_data_fit (const char *configfilename, std::string filebase="siout/test_simu_data_fit")
 {
   gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
 
@@ -41,24 +41,39 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/simu_
   int sbsmag = jmgr->GetValueFromKey<int>("SBS_magnet_percent");
   int model = jmgr->GetValueFromKey<int>("model");
   int pass = jmgr->GetValueFromKey<int>("pass");
-  TFile *fdata = new TFile(Form("../pdout/qelas_ana_data_sbs%d_sbs%dp_model%d_pass%d.root", conf, sbsmag, model, pass));
-  TFile *fsimu = new TFile(Form("siout/qelas_ana_simu_sbs%d_sbs%dp_model%d_simu.root", conf, sbsmag, model));
+  TFile *fdata = new TFile(Form("../pdout/qelas_ana_data_sbs%d_sbs%dp_model%d_data.root", conf, sbsmag, model));
+  // TFile *fdata = new TFile(Form("../pdout/qelas_ana_data_sbs%d_sbs%dp_model%d_pass%d.root", conf, sbsmag, model, pass));
+  TFile *fsimu = new TFile(Form("siout/qelas_ana_simu_sbs%d_sbs%dp_model%d.root", conf, sbsmag, model));
 
   // reading in mode of analysis and then defining the outputfile names
   bool fit_RB_simul = jmgr->GetValueFromKey<int>("fit_RB_simul"); // 1 => Simulataneous fit, 0 => Independent fit (i.e. fit B given Rmin)
-  TString outFile, outtxtFile;
+  bool fit_only_R = jmgr->GetValueFromKey<int>("fit_only_R"); // 1 => No bg included in the fit
+  if (fit_only_R) fit_RB_simul = 0;
+  TString outFile, outtxtFile, outtxtFileR;
   if (!fit_RB_simul) {
-    outFile = Form("%s_sbs%d_sbs%dp_model%d_RBindep.root", filebase.c_str(), conf, sbsmag, model);
-    outtxtFile = Form("%s_sbs%d_sbs%dp_model%d_RBindep.csv", filebase.c_str(), conf, sbsmag, model);
+    if (!fit_only_R) {
+      outFile = Form("%s_sbs%d_sbs%dp_model%d_RBindep.root", filebase.c_str(), conf, sbsmag, model);
+      outtxtFileR = Form("%s_sbs%d_sbs%dp_model%d_RBindep_RvsChi2.csv", filebase.c_str(), conf, sbsmag, model);
+      outtxtFile = Form("%s_sbs%d_sbs%dp_model%d_RBindep_BvsChi2.csv", filebase.c_str(), conf, sbsmag, model);
+    } else {
+      outFile = Form("%s_sbs%d_sbs%dp_model%d_R_no_bg.root", filebase.c_str(), conf, sbsmag, model);
+      outtxtFileR = Form("%s_sbs%d_sbs%dp_model%d_R_no_bg.csv", filebase.c_str(), conf, sbsmag, model);
+    }  
   } else {
     outFile = Form("%s_sbs%d_sbs%dp_model%d_RBsimul.root", filebase.c_str(), conf, sbsmag, model);
     outtxtFile = Form("%s_sbs%d_sbs%dp_model%d_RBsimul.csv", filebase.c_str(), conf, sbsmag, model);
   }
+  ofstream fit_dataR; fit_dataR.open(outtxtFileR);
+  fit_dataR << "R,chi2" << std::endl;
   ofstream fit_data; fit_data.open(outtxtFile);
-  fit_data << "R,B,chi2" << std::endl;  
+  if (!fit_RB_simul)
+    fit_data << "B,chi2" << std::endl; 
+  else
+    fit_data << "R,B,chi2" << std::endl; 
   TFile *fout = new TFile(outFile,"RECREATE");
 
   // read in important histograms
+  bool write_all_fit_histos = jmgr->GetValueFromKey<int>("write_all_fit_histos");
   TH1F *h_dxHCAL_data; fdata->GetObject("h_dxHCAL_data",h_dxHCAL_data);
   TH1F *h_dxHCAL_bg; fdata->GetObject("h_dxHCAL_bg",h_dxHCAL_bg);
   TH1F *h_dxHCAL_simu; fsimu->GetObject("h_dxHCAL_simu",h_dxHCAL_simu);
@@ -133,7 +148,7 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/simu_
 
       // report R vs chi2
       arrayR[iR] = R; arrayChi2[iR] = chi2;
-      // std::cout << Form("R = %.2f,  chi2 = %.2f",R,chi2) << std::endl;
+      fit_dataR << Form("%.2f,%.2f",R,chi2) << std::endl;
       std::cout << Form("%.2f,%.2f",R,chi2) << std::endl;
     }
     std::cout << std::endl;
@@ -165,117 +180,143 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/simu_
     c1->Divide(2,1);
     c1->cd(1);
     gchi2R->Draw("AP");
-    // h_comb_MC[0]->Draw("p"); h_comb_MC[0]->SetMarkerStyle(20); h_comb_MC[0]->SetMarkerColor(2);
-    // // h_n_R[0]->Draw("same p"); h_n_R->SetMarkerStyle(20); h_n_R->SetMarkerColor(4);
-    // // h_p_R[0]->Draw("same p"); h_p_R->SetMarkerStyle(20); h_p_R->SetMarkerColor(8);
-    // h_dxHCAL_data->Draw("same");
 
-    // c1->cd(2);
-    // h_dxHCAL_simu->Draw(); h_dxHCAL_simu->SetMarkerStyle(20); h_dxHCAL_simu->SetMarkerColor(2);
-    // h_dxHCAL_data->Draw("same");
+    if (fit_only_R) {
+      // **** Fitting only with R (No background) 
+      // **** Now that we have Rmin, it's time to draw the best fit histogram ****
+      TH1F *h_comb_MC_R_bfit = new TH1F("h_comb_MC_R_bfit", Form("Rmin = %0.2f", Rmin), nbin, hmin, hmax);
+      TH1F *h_n_R_bfit = new TH1F("h_n_R_bfit", Form("n | Rmin = %0.2f", Rmin), nbin, hmin, hmax);
+      TH1F *h_p_R_bfit = new TH1F("h_p_R_bfit", Form("p | Rmin = %0.2f", Rmin), nbin, hmin, hmax);
 
-
-    // ofstream datafile1("chi2_vs_R_sbs50_.82T.csv", ios_base::app | ios_base::out);
-    // datafile1 << R << "," << chi2 << endl;
-    // ofstream datafile2("chi2_vs_R_sbs50_.82T_ap.csv", ios_base::app | ios_base::out);
-    // datafile2 << R << "," << chi2_ap << endl;
-
-    // ============================ Varying B ==============================
-    double B = 0;
-    vector<double> B_lims; jmgr->GetVectorFromKey<double>("B_lims", B_lims);
-    TH1F *h_n_RB[int(B_lims[0])];
-    TH1F *h_p_RB[int(B_lims[0])];
-    TH1F *h_bg[int(B_lims[0])];
-    TH1F *h_comb_MC_RB[int(B_lims[0])];
-
-    std::cout << Form("\nVarying parameter B... [Range: (%.2f,%.2f)]",B_lims[1],B_lims[2]) << std::endl;
-    // varying B
-    double arrayB[int(B_lims[0])], arrayRBChi2[int(B_lims[0])];
-    for (int iB=0; iB<int(B_lims[0]); iB++) {
-      // construct B
-      double Bwidth = (B_lims[2] - B_lims[1]) / B_lims[0];
-      B = B_lims[1] + iB*Bwidth;
-    
-      // create histos
-      h_comb_MC_RB[iB] = MakeHistoRB("h_comb_MC_RB", Rmin, B, nbin, hmin, hmax);
-      h_n_RB[iB] = MakeHistoRB("h_n_RB", Rmin, B, nbin, hmin, hmax);
-      h_p_RB[iB] = MakeHistoRB("h_p_RB", Rmin, B, nbin, hmin, hmax);
-      h_bg[iB] = MakeHistoRB("h_bg", B, Rmin, nbin, hmin, hmax);
-    
-      double norm = 1. / (h_dxHCAL_simu_p->Integral() + Rmin*h_dxHCAL_simu_n->Integral() + B*h_dxHCAL_bg->Integral());
+      double norm = 1. / (h_dxHCAL_simu_p->Integral() + Rmin*h_dxHCAL_simu_n->Integral());
       // Looping over bins to create combined simulation histo using AJRP method
       for (int ibin=lbin; ibin<hbin; ibin++) {
-	double simu = norm*(h_dxHCAL_simu_p->GetBinContent(ibin) + Rmin*h_dxHCAL_simu_n->GetBinContent(ibin) + B*h_dxHCAL_bg->GetBinContent(ibin));
-	h_comb_MC_RB[iB]->SetBinContent(ibin, simu);
-	h_n_RB[iB]->SetBinContent(ibin, norm*(Rmin*h_dxHCAL_simu_n->GetBinContent(ibin)));
-	h_p_RB[iB]->SetBinContent(ibin, norm*(h_dxHCAL_simu_p->GetBinContent(ibin)));
-	h_bg[iB]->SetBinContent(ibin, norm*(B*h_dxHCAL_bg->GetBinContent(ibin)));
+	double simu = norm*(h_dxHCAL_simu_p->GetBinContent(ibin) + Rmin*h_dxHCAL_simu_n->GetBinContent(ibin));
+	h_comb_MC_R_bfit->SetBinContent(ibin, simu);
+	h_n_R_bfit->SetBinContent(ibin, norm*(Rmin*h_dxHCAL_simu_n->GetBinContent(ibin)));
+	h_p_R_bfit->SetBinContent(ibin, norm*(h_dxHCAL_simu_p->GetBinContent(ibin)));
       }
-
-      // looping over bins again to calculate chi2
-      double chi2 = 0.;
-      for (int ibin=lbin; ibin<hbin; ibin++) {
-	double simu = h_comb_MC_RB[iB]->GetBinContent(ibin);
-	double data = h_dxHCAL_data->GetBinContent(ibin);
-	if (data>0) { 
-	  double dataErr = sqrt(data)/sqrt(h_dxHCAL_data->GetEntries());
-	  chi2 += (data-simu)*(data-simu) / ((dataErr)*(dataErr));
-	}
-      }
-
-      // report B vs chi2
-      arrayB[iB] = B; arrayRBChi2[iB] = chi2;
-      // std::cout << Form("%.4f,%.2f",B,chi2) << std::endl;
-      fit_data << Form("%.4f,%.2f",B,chi2) << std::endl;
-    }
-    std::cout << std::endl;
-
-    // let's plot chi2 vs B
-    TGraph *gchi2B = new TGraph(int(B_lims[0]), arrayB, arrayRBChi2);
-    gchi2B->SetMarkerStyle(20); gchi2B->SetMarkerColor(4);
-    gchi2B->SetTitle("#chi^{2} vs B");
-    gchi2B->GetXaxis()->SetTitle("B");
-    gchi2B->GetYaxis()->SetTitle("#chi^{2}");  gchi2B->GetYaxis()->SetMaxDigits(3);
-
-    // let's fit chi2 vs B
-    TF1 *chi2Bfn = new TF1("chi2Bfn",fit_parabola,B_lims[1],B_lims[2],3);
-    chi2Bfn->SetNpx(500);
-    // gchi2B->Fit(chi2Bfn, "R");
-    // first try
-    chi2Bfn->SetParameters(1,1,1);
-    gchi2B->Fit("chi2Bfn","QR0");
-    // second try
-    chi2Bfn->SetParameters(884,5000,0.032);
-    gchi2B->Fit("chi2Bfn","QRV+","ep");
-
-    c1->cd(2);
-    gchi2B->Draw("AP");
-
-    // getting Bmin
-    double Bmin = chi2Bfn->GetParameter(2);
-    std::cout << " Bmin = " << Bmin << std::endl;
-
-    // **** Now that we have both Rmin and Bmin, it's time to draw the best fit histogram ****
-    TH1F *h_comb_MC_RB_bfit = new TH1F("h_comb_MC_RB_bfit", Form("Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), nbin, hmin, hmax);
-    TH1F *h_n_RB_bfit = new TH1F("h_n_RB_bfit", Form("n | Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), nbin, hmin, hmax);
-    TH1F *h_p_RB_bfit = new TH1F("h_p_RB_bfit", Form("p | Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), nbin, hmin, hmax);
-    TH1F *h_bg_bfit = new TH1F("h_bg_bfit", Form("bg | Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), nbin, hmin, hmax);
-
-    double norm = 1. / (h_dxHCAL_simu_p->Integral() + Rmin*h_dxHCAL_simu_n->Integral() + Bmin*h_dxHCAL_bg->Integral());
-    // Looping over bins to create combined simulation histo using AJRP method
-    for (int ibin=lbin; ibin<hbin; ibin++) {
-      double simu = norm*(h_dxHCAL_simu_p->GetBinContent(ibin) + Rmin*h_dxHCAL_simu_n->GetBinContent(ibin) + Bmin*h_dxHCAL_bg->GetBinContent(ibin));
-      h_comb_MC_RB_bfit->SetBinContent(ibin, simu);
-      h_n_RB_bfit->SetBinContent(ibin, norm*(Rmin*h_dxHCAL_simu_n->GetBinContent(ibin)));
-      h_p_RB_bfit->SetBinContent(ibin, norm*(h_dxHCAL_simu_p->GetBinContent(ibin)));
-      h_bg_bfit->SetBinContent(ibin, norm*(Bmin*h_dxHCAL_bg->GetBinContent(ibin)));
-    }
   
-    // setting histogram styles
-    h_comb_MC_RB_bfit->SetLineColor(kRed);
-    h_n_RB_bfit->SetLineColor(kGreen);
-    h_p_RB_bfit->SetLineColor(kBlue);
-    h_bg_bfit->SetLineColor(kMagenta);
+      // setting histogram styles
+      h_comb_MC_R_bfit->SetLineColor(kRed);
+      h_n_R_bfit->SetLineColor(kGreen);
+      h_p_R_bfit->SetLineColor(kBlue);
+
+      if (!write_all_fit_histos) {
+	h_comb_MC_R_bfit->Write();
+	h_n_R_bfit->Write();
+	h_p_R_bfit->Write();
+      }
+      c1->Write();
+ 
+    } else {
+
+      // ============================ Varying B ==============================
+      double B = 0;
+      vector<double> B_lims; jmgr->GetVectorFromKey<double>("B_lims", B_lims);
+      TH1F *h_n_RB[int(B_lims[0])];
+      TH1F *h_p_RB[int(B_lims[0])];
+      TH1F *h_bg[int(B_lims[0])];
+      TH1F *h_comb_MC_RB[int(B_lims[0])];
+
+      std::cout << Form("\nVarying parameter B... [Range: (%.2f,%.2f)]",B_lims[1],B_lims[2]) << std::endl;
+      // varying B
+      double arrayB[int(B_lims[0])], arrayRBChi2[int(B_lims[0])];
+      for (int iB=0; iB<int(B_lims[0]); iB++) {
+	// construct B
+	double Bwidth = (B_lims[2] - B_lims[1]) / B_lims[0];
+	B = B_lims[1] + iB*Bwidth;
+    
+	// create histos
+	h_comb_MC_RB[iB] = MakeHistoRB("h_comb_MC_RB", Rmin, B, nbin, hmin, hmax);
+	h_n_RB[iB] = MakeHistoRB("h_n_RB", Rmin, B, nbin, hmin, hmax);
+	h_p_RB[iB] = MakeHistoRB("h_p_RB", Rmin, B, nbin, hmin, hmax);
+	h_bg[iB] = MakeHistoRB("h_bg", B, Rmin, nbin, hmin, hmax);
+    
+	double norm = 1. / (h_dxHCAL_simu_p->Integral() + Rmin*h_dxHCAL_simu_n->Integral() + B*h_dxHCAL_bg->Integral());
+	// Looping over bins to create combined simulation histo using AJRP method
+	for (int ibin=lbin; ibin<hbin; ibin++) {
+	  double simu = norm*(h_dxHCAL_simu_p->GetBinContent(ibin) + Rmin*h_dxHCAL_simu_n->GetBinContent(ibin) + B*h_dxHCAL_bg->GetBinContent(ibin));
+	  h_comb_MC_RB[iB]->SetBinContent(ibin, simu);
+	  h_n_RB[iB]->SetBinContent(ibin, norm*(Rmin*h_dxHCAL_simu_n->GetBinContent(ibin)));
+	  h_p_RB[iB]->SetBinContent(ibin, norm*(h_dxHCAL_simu_p->GetBinContent(ibin)));
+	  h_bg[iB]->SetBinContent(ibin, norm*(B*h_dxHCAL_bg->GetBinContent(ibin)));
+	}
+
+	// looping over bins again to calculate chi2
+	double chi2 = 0.;
+	for (int ibin=lbin; ibin<hbin; ibin++) {
+	  double simu = h_comb_MC_RB[iB]->GetBinContent(ibin);
+	  double data = h_dxHCAL_data->GetBinContent(ibin);
+	  if (data>0) { 
+	    double dataErr = sqrt(data)/sqrt(h_dxHCAL_data->GetEntries());
+	    chi2 += (data-simu)*(data-simu) / ((dataErr)*(dataErr));
+	  }
+	}
+
+	// report B vs chi2
+	arrayB[iB] = B; arrayRBChi2[iB] = chi2;
+	// std::cout << Form("%.4f,%.2f",B,chi2) << std::endl;
+	fit_data << Form("%.4f,%.2f",B,chi2) << std::endl;
+      }
+      std::cout << std::endl;
+
+      // let's plot chi2 vs B
+      TGraph *gchi2B = new TGraph(int(B_lims[0]), arrayB, arrayRBChi2);
+      gchi2B->SetMarkerStyle(20); gchi2B->SetMarkerColor(4);
+      gchi2B->SetTitle("#chi^{2} vs B");
+      gchi2B->GetXaxis()->SetTitle("B");
+      gchi2B->GetYaxis()->SetTitle("#chi^{2}");  gchi2B->GetYaxis()->SetMaxDigits(3);
+
+      // let's fit chi2 vs B
+      TF1 *chi2Bfn = new TF1("chi2Bfn",fit_parabola,B_lims[1],B_lims[2],3);
+      chi2Bfn->SetNpx(500);
+      // gchi2B->Fit(chi2Bfn, "R");
+      // first try
+      chi2Bfn->SetParameters(1,1,1);
+      gchi2B->Fit("chi2Bfn","QR0");
+      // second try
+      chi2Bfn->SetParameters(884,5000,0.032);
+      gchi2B->Fit("chi2Bfn","QRV+","ep");
+
+      c1->cd(2);
+      gchi2B->Draw("AP");
+
+      // getting Bmin
+      double Bmin = chi2Bfn->GetParameter(2);
+      std::cout << " Bmin = " << Bmin << std::endl;
+
+      // **** Now that we have both Rmin and Bmin, it's time to draw the best fit histogram ****
+      TH1F *h_comb_MC_RB_bfit = new TH1F("h_comb_MC_RB_bfit", Form("Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), nbin, hmin, hmax);
+      TH1F *h_n_RB_bfit = new TH1F("h_n_RB_bfit", Form("n | Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), nbin, hmin, hmax);
+      TH1F *h_p_RB_bfit = new TH1F("h_p_RB_bfit", Form("p | Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), nbin, hmin, hmax);
+      TH1F *h_bg_bfit = new TH1F("h_bg_bfit", Form("bg | Rmin = %0.2f, Bmin = %0.4f", Rmin, Bmin), nbin, hmin, hmax);
+
+      double norm = 1. / (h_dxHCAL_simu_p->Integral() + Rmin*h_dxHCAL_simu_n->Integral() + Bmin*h_dxHCAL_bg->Integral());
+      // Looping over bins to create combined simulation histo using AJRP method
+      for (int ibin=lbin; ibin<hbin; ibin++) {
+	double simu = norm*(h_dxHCAL_simu_p->GetBinContent(ibin) + Rmin*h_dxHCAL_simu_n->GetBinContent(ibin) + Bmin*h_dxHCAL_bg->GetBinContent(ibin));
+	h_comb_MC_RB_bfit->SetBinContent(ibin, simu);
+	h_n_RB_bfit->SetBinContent(ibin, norm*(Rmin*h_dxHCAL_simu_n->GetBinContent(ibin)));
+	h_p_RB_bfit->SetBinContent(ibin, norm*(h_dxHCAL_simu_p->GetBinContent(ibin)));
+	h_bg_bfit->SetBinContent(ibin, norm*(Bmin*h_dxHCAL_bg->GetBinContent(ibin)));
+      }
+  
+      // setting histogram styles
+      h_comb_MC_RB_bfit->SetLineColor(kRed);
+      h_n_RB_bfit->SetLineColor(kGreen);
+      h_p_RB_bfit->SetLineColor(kBlue);
+      h_bg_bfit->SetLineColor(kMagenta);
+
+      if (!write_all_fit_histos) {
+	h_comb_MC_RB_bfit->Write();
+	h_n_RB_bfit->Write();
+	h_p_RB_bfit->Write();
+	h_bg_bfit->Write();
+      }
+      c1->Write();
+
+    } // fit_only_R = False
   }
   
   else {
@@ -390,11 +431,18 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/simu_
     h_n_RB_bfit->SetLineColor(kGreen);
     h_p_RB_bfit->SetLineColor(kBlue);
     h_bg_bfit->SetLineColor(kMagenta);
+
+    if (!write_all_fit_histos) {
+      h_comb_MC_RB_bfit->Write();
+      h_n_RB_bfit->Write();
+      h_p_RB_bfit->Write();
+      h_bg_bfit->Write();
+    }
     c1->Write();
 
   } // else
 
-  fout->Write(); //fout->Close(); 
+  if (write_all_fit_histos) fout->Write(); //fout->Close(); 
   delete jmgr;
   return 0;
 }
