@@ -177,7 +177,7 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
 
     // canvas
     TCanvas *c1 = new TCanvas("c1","c1",1600,1200);
-    c1->Divide(2,1);
+    c1->Divide(2,2);
     c1->cd(1);
     gchi2R->Draw("AP");
 
@@ -201,6 +201,16 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
       h_comb_MC_R_bfit->SetLineColor(kRed);
       h_n_R_bfit->SetLineColor(kGreen);
       h_p_R_bfit->SetLineColor(kBlue);
+
+      c1->cd(2);
+      h_comb_MC_R_bfit->Draw();
+      h_dxHCAL_data->Draw("same");
+
+      c1->cd(3);
+      h_comb_MC_R_bfit->Draw();
+      h_n_R_bfit->Draw("same");
+      h_p_R_bfit->Draw("same");
+      h_dxHCAL_data->Draw("same");
 
       if (!write_all_fit_histos) {
 	h_comb_MC_R_bfit->Write();
@@ -308,6 +318,17 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
       h_p_RB_bfit->SetLineColor(kBlue);
       h_bg_bfit->SetLineColor(kMagenta);
 
+      c1->cd(3);
+      h_comb_MC_RB_bfit->Draw();
+      h_dxHCAL_data->Draw("same");
+
+      c1->cd(4);
+      h_comb_MC_RB_bfit->Draw();
+      h_n_RB_bfit->Draw("same");
+      h_p_RB_bfit->Draw("same");
+      h_bg_bfit->Draw("same");
+      h_dxHCAL_data->Draw("same");
+
       if (!write_all_fit_histos) {
 	h_comb_MC_RB_bfit->Write();
 	h_n_RB_bfit->Write();
@@ -382,7 +403,7 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
     } // for R
     std::cout << std::endl;
 
-    TCanvas *c1 = new TCanvas("c1", "c1", 1200, 800); c1->Divide(2,1);
+    TCanvas *c1 = new TCanvas("c1", "c1", 1200, 800); c1->Divide(2,2);
     c1->cd(1);
 
     // let's plot chi2 vs R & B
@@ -431,6 +452,17 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
     h_n_RB_bfit->SetLineColor(kGreen);
     h_p_RB_bfit->SetLineColor(kBlue);
     h_bg_bfit->SetLineColor(kMagenta);
+
+    c1->cd(3);
+    h_comb_MC_RB_bfit->Draw();
+    h_dxHCAL_data->Draw("same");
+
+    c1->cd(4);
+    h_comb_MC_RB_bfit->Draw();
+    h_n_RB_bfit->Draw("same");
+    h_p_RB_bfit->Draw("same");
+    h_bg_bfit->Draw("same");
+    h_dxHCAL_data->Draw("same");
 
     if (!write_all_fit_histos) {
       h_comb_MC_RB_bfit->Write();
