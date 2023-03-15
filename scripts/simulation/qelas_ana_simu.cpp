@@ -439,23 +439,30 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
   h_W_acut->Draw("same");
 
   c1->cd(3);
-  h_dxHCAL->Draw();
-  // h2_xyHCAL_p->Draw("colz");
-  // util_pd::DrawArea(hcal_active_area);
-  // util_pd::DrawArea(hcal_safety_margin,4);
+  h2_xyHCAL_p->Draw("colz");
+  util_pd::DrawArea(hcal_active_area);
+  util_pd::DrawArea(hcal_safety_margin,4);
 
   c1->cd(4); 
+  h2_xyHCAL_n->Draw("colz");
+  util_pd::DrawArea(hcal_active_area);
+  util_pd::DrawArea(hcal_safety_margin,4);
+
+  TCanvas *c2 = new TCanvas("c2", "c2", 800, 600);
+  c2->Divide(2,1);
+
+  c2->cd(1);
+  h_dxHCAL->Draw();
+
+  c2->cd(2);
   h_dyHCAL->Draw();
-  // h2_xyHCAL_n->Draw("colz");
-  // util_pd::DrawArea(hcal_active_area);
-  // util_pd::DrawArea(hcal_safety_margin,4);
 
   // outFile.ReplaceAll(".root",".png");
   // c1->Print(outFile.Data(),"png");
 
   // let's record the summary
-  TCanvas *c2 = new TCanvas("c2","Summary");
-  c2->cd();
+  TCanvas *c3 = new TCanvas("c3","Summary");
+  c3->cd();
 
   TPaveText *pt = new TPaveText(.05,.1,.95,.8);
   pt->AddText(Form("Configfile: %s",configfilename));
@@ -481,6 +488,7 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
 
   c1->Write();
   c2->Write();
+  c3->Write();
   Tout->Write();
   h_W->Write();
   h_W_cut->Write();
