@@ -95,9 +95,10 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
 
   /* 
      Switching to RDataFrame. Should fit perfectly for such analysis. Instead of reading the histograms from general data
-     MC QE analysis ROOT files, I'll create them here. This is ensure the use of exactly the same cuts and histogram ranges
+     MC QE analysis ROOT files, I'll create them here. This will ensure the use of exactly the same cuts and histogram ranges
      between data and MC.
   */
+  ROOT::EnableImplicitMT();
   ROOT::RDataFrame data_rdf("Tout", Form("../pdout/qelas_ana_data_sbs%d_sbs%dp_model%d_pass%d.root",conf,sbsmag,model,pass));
   ROOT::RDataFrame simu_rdf("Tout", Form("siout/qelas_ana_simu_sbs%d_sbs%dp_model%d.root",conf,sbsmag,model));
 
