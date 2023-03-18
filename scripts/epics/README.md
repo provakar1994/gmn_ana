@@ -2,7 +2,7 @@
 
 #### Instructions to carry out various procedures 
 
-- Calculate average ebam (and std) per run:
+- Calculate mean & std of beam energy per run:
     1. Modify `conf_get_avgHALLA_p_prun.json` config file with desired values
     2. Execute `get_avgHALLA_p_prun.cpp` with the above config file
     3. Execute `get_avgHALLA_p_prun.ipynb` with the above config file
