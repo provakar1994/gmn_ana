@@ -2,7 +2,7 @@
    This macro will loop through the scaler tree (TSsbs) of every 
    run in a given SBS configuration and then generate 2 CSV files. 
    One file will contain:
-   1)runnum, 2)segnum, 3)sevnum, 4)gevnum 5)dnew.cnt, 6)dnew.current 7)cum. charge
+   1)runnum, 2)segnum, 3)index, 4)sevnum, 5)gevnum 6)dnew.cnt, 7)dnew.current, 8)cum. charge
    ** charge calculated with gain factor: 3317.99 +/- 31.69 Hz/uA
    Another will contain:
    1)runnum, 2)tot. charge
@@ -44,11 +44,13 @@ int get_scalerdata_prun (const char *configfilename)
   TString outFile2; outFile2 = Form("epout/get_beamcharge_prun_SBS%d_%s.csv",conf,target.c_str());
   ofstream outFile_data1; outFile_data1.open(outFile1);
   ofstream outFile_data2; outFile_data2.open(outFile2);
-  outFile_data1 << "runnum," << "segnum," << "sevnum," << "gevnum," << "dnewcnt," << "dnewcurr," << "cumcharge(C)" << std::endl;
+  outFile_data1 << "runnum," << "segnum," << "index," << "sevnum," << "gevnum," 
+		<< "dnewcnt," << "dnewcurr(A)," << "cumcharge(C)" << std::endl;
   outFile_data2 << "runnum," << "totcharge(C)" << std::endl;
 
   // looping through runs
   for (int irun=0; irun<nruns; irun++) {
+    int runnum = crun[irun].runnum;
     std::cout << "Analyzing run " << crun[irun].runnum << std::endl;
     C = new TChain("TSsbs"); util_pd::LoadROOTTree(rootfile_dir,crun[irun],1,0,C);
 
@@ -66,9 +68,9 @@ int get_scalerdata_prun (const char *configfilename)
 
     // looping through the events ---------------------------------------
     std::cout << std::endl;
-    double dnewcharge_cum = 0.;
-    long nevent = 0, nevents = C->GetEntries(); 
-    int treenum = 0, currenttreenum = 0; int segnum = 0;
+    double dnewcharge_cum=0.;
+    long nevent=0, nevents=C->GetEntries(); 
+    int treenum=0, currenttreenum=0, segnum=0, index=0;
     while (C->GetEntry(nevent++)) {
    
       // print progress 
@@ -84,11 +86,12 @@ int get_scalerdata_prun (const char *configfilename)
 
       dnewcharge_cum = (dnewcnt / dnewgain) * 1e-6; //C 
 
-      outFile_data1 << crun[irun].runnum << "," << segnum << "," << sevnum << "," << gevnum << "," 
+      index++;  // gets reset at the beginning of every run
+      outFile_data1 << runnum << "," << segnum << "," << index << "," << sevnum << "," << gevnum << "," 
 		    << dnewcnt << "," << dnewcurr << "," << dnewcharge_cum << "," << std::endl;
     } //event loop
     
-    outFile_data2 << crun[irun].runnum << "," << dnewcharge_cum << std::endl;
+    outFile_data2 << runnum << "," << dnewcharge_cum << std::endl;
     
     // getting ready for next run
     C->Reset();
