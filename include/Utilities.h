@@ -74,7 +74,13 @@ namespace util_pd {
      ## Functions to read ROOT files by sorted segment ##  
      #################################################### */
   int LoadROOTTree(std::string path,          // ROOT file directory path
-		   std::vector<CodaRun> crun, // CodaRun object with info
+		   std::vector<CodaRun> crun, // CodaRun objects with run info
+		   bool sort,                 // Sort by segments before parsing?
+		   bool verbose,              // verbosity
+		   TChain* &C);               // Output: TChain with data
+
+  int LoadROOTTree(std::string path,          // ROOT file directory path
+		   CodaRun crun,              // CodaRun object with run info
 		   bool sort,                 // Sort by segments before parsing?
 		   bool verbose,              // verbosity
 		   TChain* &C);               // Output: TChain with data

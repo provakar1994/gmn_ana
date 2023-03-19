@@ -381,7 +381,7 @@ namespace util_pd {
   } 
   //______________________________________________________________________________
   int LoadROOTTree(std::string path,
-		   std::vector<CodaRun> crun,
+		   std::vector<CodaRun> crun,    // multiple CODA runs
 		   bool sort,
 		   int verbose,
 		   TChain* &C) 
@@ -431,6 +431,55 @@ namespace util_pd {
     }else 
       throw "[util_pd::LoadROOTTree] CODA run list is empty!";
 
+    return 0;
+  }
+  //______________________________________________________________________________
+  int LoadROOTTree(std::string path,
+		   CodaRun crun,           // single CODA run
+		   bool sort,
+		   int verbose,
+		   TChain* &C) 
+  {
+    
+    if (crun.runnum != 0) {
+       std::cout << "Parsing ROOT files from run " << crun.runnum << std::endl;
+      if (!sort) {
+	std::string rfname = Form("%s/*%d*",path.c_str(),crun.runnum);
+	if (verbose > 1) std::cout << rfname << std::endl;
+	C->Add(rfname.c_str());
+      } else {
+	std::cout << "Sorting by segments.." << std::endl;
+	int aRun, aNumFiles, aStream, rc;
+	std::vector<int> md;
+	std::vector<pair<int, int>> segB_segE;
+	// Looping through unique runs
+	aRun = crun.runnum;
+	rc = GetROOTFileMetaData(path.c_str(),aRun,md,segB_segE,0);
+	aStream   = md[0]; //stream no.
+	aNumFiles = md[1]; //total # segments
+	if (verbose > 0) {
+	  std::cout << "----" << std::endl;
+	  std::cout << Form(" Run %d, Total # of segments %d",aRun,aNumFiles) << std::endl;
+	  std::cout << Form(" Beg seg %d-%d, End seg %d-%d",segB_segE[0].first,segB_segE[0].second,
+			    segB_segE[aNumFiles-1].first,segB_segE[aNumFiles-1].second) << std::endl;
+	  std::cout << "----" << std::endl;
+	}
+	// Looping through segments and adding to tree
+	for (int iseg=0; iseg<aNumFiles; iseg++) {
+	  std::string rfname = Form("%s/e1209019_fullreplay_%d_stream%d_seg%d_%d.root",path.c_str(),
+				    aRun,aStream,segB_segE[iseg].first,segB_segE[iseg].second);
+	  if (verbose > 1) std::cout << rfname << std::endl;
+	  C->Add(rfname.c_str());
+	}
+	// getting ready for next run
+	md.clear();
+	segB_segE.clear();
+      }
+      if (C->GetEntries()==0) 
+	throw "[util_pd::LoadROOTTree] Empty ROOT files Or, they don't exist!";
+    }else 
+      throw "[util_pd::LoadROOTTree] CodaRun object is empty!";
+    
     return 0;
   }
 }
