@@ -39,21 +39,12 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   SBSconfig sbsconf(conf, sbsmag);
   cout << sbsconf;
 
-  // reading run info from relevant good runlist spreadsheet
+  // reading run info and parsing ROOT trees
   std::string runsheet_dir = jmgr->GetValueFromKey_str("runsheet_dir");
   int nruns = jmgr->GetValueFromKey<int>("Nruns_to_ana"); // # of runs to analyze
-  vector<CodaRun> crun; util_pd::ReadRunList(runsheet_dir,nruns,conf,target,pass,sbsmag,crun);
-  //cout << "1st run info:" << endl << crun[0];
-
-  // parsing ROOT trees
-  TChain *C = new TChain("T");  
-  std::cout << "Parsing ROOT files from " << nruns << " runs.." << std::endl;
+  vector<CodaRun> crun; util_pd::ReadRunList(runsheet_dir,nruns,conf,target,pass,sbsmag,0,crun);
   std::string rootfile_dir = jmgr->GetValueFromKey_str("rootfile_dir");
-  for (int i=0; i<nruns; i++) {
-    std::string rfname = rootfile_dir + Form("/*%d*",crun[i].runnum);
-    C->Add(rfname.c_str());
-  }
-  if (C->GetEntries()==0) {std::cerr << "*!* No ROOT file!" << std::endl; throw;}
+  TChain *C = new TChain("T"); util_pd::LoadROOTTree(rootfile_dir,crun,0,0,C); 
 
   // Choosing the model of calculation
   // model 0 => uses reconstructed p as independent variable

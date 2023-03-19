@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <dirent.h>
 
 #include "TH1F.h"
 #include "TH2F.h"
@@ -47,6 +48,7 @@ namespace util_pd {
 		   int sbsconf,               // SBS configuration
 		   std::string target,        // target type
 		   int replay_pass,           // replay pass
+		   int verbose,               // verbosity
 		   vector<CodaRun> &crun);    // Output: Vector of CodaRun structs
 
   void ReadRunList(std::string runsheet_dir,  // Dir. path containing CSV files with run info
@@ -55,6 +57,7 @@ namespace util_pd {
 		   std::string target,        // target type
 		   int replay_pass,           // replay pass
 		   int sbsmag,                // SBS magnet current (in %)
+		   int verbose,               // verbosity
 		   vector<CodaRun> &crun);    // Output: Vector of CodaRun structs
 
   void ReadRunList(std::string runsheet_dir,  // Dir. path containing CSV files with run info
@@ -64,7 +67,17 @@ namespace util_pd {
 		   int replay_pass,           // replay pass
 		   int sbsmag,                // SBS magnet current (in %)
 		   int bbmag,                 // BB magnet current (in %)
+		   int verbose,               // verbosity
 		   vector<CodaRun> &crun);    // Output: Vector of CodaRun structs
+
+  /* ####################################################
+     ## Functions to read ROOT files by sorted segment ##  
+     #################################################### */
+  int LoadROOTTree(std::string path,          // ROOT file directory path
+		   std::vector<CodaRun> crun, // CodaRun object with info
+		   bool sort,                 // Sort by segments before parsing?
+		   bool verbose,              // verbosity
+		   TChain* &C);               // Output: TChain with data
 }
 
 #endif
