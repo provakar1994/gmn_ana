@@ -108,7 +108,8 @@ int get_scalerdata_prun (const char *target,        // LH2/LD2
 	segnum++;  //keep track of segment number
       } 
 
-      dnewcharge_cum = (dnewcnt / dnewgain) * 1e-6; //C 
+      if (dnewcnt>0) //avoid last segment with 0 count 
+	dnewcharge_cum = (dnewcnt / dnewgain) * 1e-6; //C 
 
       T_rnum = runnum;
       T_segnum = segnum;
