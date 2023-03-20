@@ -72,7 +72,8 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
 
   // bbcal clus var
   double eSH, xSH, ySH, rblkSH, cblkSH, idblkSH, atimeSH, ePS, rblkPS, cblkPS, idblkPS, atimePS;
-  std::vector<std::string> bbcalclvar = {"sh.e","sh.x","sh.y","sh.rowblk","sh.colblk","sh.idblk","sh.atimeblk","ps.e","ps.rowblk","ps.colblk","ps.idblk","ps.atimeblk"};
+  std::vector<std::string> bbcalclvar = {"sh.e","sh.x","sh.y","sh.rowblk","sh.colblk","sh.idblk","sh.atimeblk",
+					 "ps.e","ps.rowblk","ps.colblk","ps.idblk","ps.atimeblk"};
   std::vector<void*> bbcalclvar_mem = {&eSH,&xSH,&ySH,&rblkSH,&cblkSH,&idblkSH,&atimeSH,&ePS,&rblkPS,&cblkPS,&idblkPS,&atimePS};
   setrootvar::setbranch(C, "bb", bbcalclvar, bbcalclvar_mem);
  

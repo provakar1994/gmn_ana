@@ -482,4 +482,17 @@ namespace util_pd {
     
     return 0;
   }
+  /* ###############################
+     ## General Purpose Functions ##  
+     ############################### */
+  //______________________________________________________________________________
+  double GetTotCharge(std::vector<CodaRun> crun) 
+  /* Calculates total charge from a vector of CodaRuns */
+  {
+    double totcharge=0.;
+    for (auto & run : crun)
+      totcharge += run.charge;
+
+    return totcharge;
+  }
 }

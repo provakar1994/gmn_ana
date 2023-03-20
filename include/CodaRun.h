@@ -28,19 +28,21 @@ CodaRun():
     out << " BB mag. cur. (A)  : " << crun.bbmag << std::endl;
     out << " Avg. ebeam (GeV)  : " << crun.ebeam << std::endl;
     out << " Ebeam std. (GeV)  : " << crun.ebeam_std << std::endl;
+    out << " Tot. charge. (C)  : " << crun.charge << std::endl;
     out << " ------------" << std::endl << std::endl;
     return out;
   }
 
   // sets data by reading runsheet (exclusively for util::ReadRunList functions)
   void SetDataRunSheet(std::vector<std::string> data) {
-    sbsconf = stoi(data[0]);
-    runnum = stoi(data[1]);
-    target = data[2];
-    sbsmag = stoi(data[3]);
-    bbmag = stoi(data[4]);
-    ebeam = stod(data[5]);
+    sbsconf   = stoi(data[0]);
+    runnum    = stoi(data[1]);
+    target    = data[2];
+    sbsmag    = stoi(data[3]);
+    bbmag     = stoi(data[4]);
+    ebeam     = stod(data[5]);
     ebeam_std = stod(data[6]);
+    charge    = stod(data[7]);
   }
 
 } CodaRun_t;  

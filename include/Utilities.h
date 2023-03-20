@@ -84,6 +84,11 @@ namespace util_pd {
 		   bool sort,                 // Sort by segments before parsing?
 		   bool verbose,              // verbosity
 		   TChain* &C);               // Output: TChain with data
-}
 
+  /* ###############################
+     ## General Purpose Functions ##  
+     ############################### */
+  double GetTotCharge(std::vector<CodaRun> crun);  // Calculates total charge
+
+}
 #endif
