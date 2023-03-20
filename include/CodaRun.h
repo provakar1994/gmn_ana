@@ -42,7 +42,7 @@ CodaRun():
     bbmag     = stoi(data[4]);
     ebeam     = stod(data[5]);
     ebeam_std = stod(data[6]);
-    charge    = stod(data[7]);
+    //charge    = stod(data[7]);
   }
 
 } CodaRun_t;  

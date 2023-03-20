@@ -76,7 +76,8 @@ int get_scalerdata_prun (const char *target,        // LH2/LD2
   for (int irun=0; irun<nruns; irun++) {
     int runnum = crun[irun].runnum;
     std::cout << "Analyzing run " << crun[irun].runnum << std::endl;
-    C = new TChain("TSsbs"); util_pd::LoadROOTTree(rootfile_dir,crun[irun],1,verbose,C);
+    C = new TChain("TSsbs"); int lr = util_pd::LoadROOTTree(rootfile_dir,crun[irun],1,verbose,C);
+    if (lr!=0) continue;
 
     // setting up ROOT tree branch addresses ----------------------------
     C->SetBranchStatus("*",0);

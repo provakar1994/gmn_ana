@@ -141,7 +141,7 @@ namespace util_pd {
 	std::cout << "Last run info:" << std::endl << crun[nruns-1];
       }
     }else
-      throw "[util_pd::ReadRunList] Run spreadsheet doesn't exist";
+      throw std::runtime_error("[util_pd::ReadRunList] Run spreadsheet doesn't exist");
     run_data.close();
   }
   //_____________________________________
@@ -199,7 +199,7 @@ namespace util_pd {
 	std::cout << "Last run info:" << std::endl << crun[nruns-1];
       }
     }else
-      throw "[util_pd::ReadRunList] Run spreadsheet doesn't exist";
+      throw std::runtime_error("[util_pd::ReadRunList] Run spreadsheet doesn't exist");
     run_data.close();
   }
   //_____________________________________
@@ -260,7 +260,7 @@ namespace util_pd {
 	std::cout << "Last run info:" << std::endl << crun[nruns-1];
       }
     }else
-      throw "[util_pd::ReadRunList] Run spreadsheet doesn't exist";
+      throw std::runtime_error("[util_pd::ReadRunList] Run spreadsheet doesn't exist");
     run_data.close();
   }
 
@@ -359,7 +359,7 @@ namespace util_pd {
 	  SplitString('g', theStr, o2); 
 	  int bseg = std::atoi(o2[1].c_str());
 	  int eseg = std::atoi(o1[5].c_str());
-	  segB_segE.push_back( make_pair(bseg, eseg) );
+	  segB_segE.push_back(make_pair(bseg,eseg));
 	  o2.clear();
 	}
 	o1.clear();
@@ -370,8 +370,11 @@ namespace util_pd {
     // this is necessary for proper beam charge calculation
     sort(segB_segE.begin(), segB_segE.end(), sortbyval);  
 
-    if(fileCnt==0){
-      throw "[util_pd::GetROOTFileMetaData]: ROOT file directory is empty!";
+    if (fileCnt==0) {
+      std::cout << std::endl << "--!!--" << std::endl  
+		<< "WARNING! [util_pd::GetROOTFileMetaData]: ROOT file directory is empty!" 
+		<< std::endl << "--!!--" << std::endl;
+      return -1;
     }
 
     data.push_back(stream); 
@@ -405,21 +408,28 @@ namespace util_pd {
 	for (int irun=0; irun<nruns; irun++) {
 	  aRun = crun[irun].runnum;
 	  rc = GetROOTFileMetaData(path.c_str(),aRun,md,segB_segE,0);
-	  aStream   = md[0]; //stream no.
-	  aNumFiles = md[1]; //total # segments
-	  if (verbose > 0) {
-	    std::cout << "----" << std::endl;
-	    std::cout << Form(" Run %d, Total # of segments %d",aRun,aNumFiles) << std::endl;
-	    std::cout << Form(" Beg seg %d-%d, End seg %d-%d",segB_segE[0].first,segB_segE[0].second,
-			      segB_segE[aNumFiles-1].first,segB_segE[aNumFiles-1].second) << std::endl;
-	    std::cout << "----" << std::endl;
-	  }
-	  // Looping through segments and adding to tree
-	  for (int iseg=0; iseg<aNumFiles; iseg++) {
-	    std::string rfname = Form("%s/e1209019_fullreplay_%d_stream%d_seg%d_%d.root",path.c_str(),
-				      aRun,aStream,segB_segE[iseg].first,segB_segE[iseg].second);
-	    if (verbose > 1) std::cout << rfname << std::endl;
-	    C->Add(rfname.c_str());
+	  if (rc==0) { // non-zero number of segments
+	    aStream   = md[0]; //stream no.
+	    aNumFiles = md[1]; //total # segments
+	    if (verbose > 0) {
+	      std::cout << "----" << std::endl;
+	      std::cout << Form(" Run %d, Total # of segments %d",aRun,aNumFiles) << std::endl;
+	      std::cout << Form(" Beg seg %d-%d, End seg %d-%d",segB_segE[0].first,segB_segE[0].second,
+				segB_segE[aNumFiles-1].first,segB_segE[aNumFiles-1].second) << std::endl;
+	      std::cout << "----" << std::endl;
+	    }
+	    // Looping through segments and adding to tree
+	    for (int iseg=0; iseg<aNumFiles; iseg++) {
+	      std::string rfname = Form("%s/e1209019_fullreplay_%d_stream%d_seg%d_%d.root",path.c_str(),
+					aRun,aStream,segB_segE[iseg].first,segB_segE[iseg].second);
+	      if (verbose > 1) std::cout << rfname << std::endl;
+	      C->Add(rfname.c_str());
+	    }	
+	  } else {
+	    std::cout << std::endl << "--!!--" << std::endl  
+		      << "WARNING! [util_pd::LoadROOTTree]: No ROOT file exists for run " << crun[irun].runnum << "!" 
+		      << std::endl << "--!!--" << std::endl;
+	    return -1;
 	  }
 	  // getting ready for next run
 	  md.clear();
@@ -427,9 +437,9 @@ namespace util_pd {
 	}
       }
       if (C->GetEntries()==0) 
-	throw "[util_pd::LoadROOTTree] Empty ROOT files Or, they don't exist!";
+	throw std::runtime_error("[util_pd::LoadROOTTree] Empty ROOT files Or, they don't exist!");
     }else 
-      throw "[util_pd::LoadROOTTree] CODA run list is empty!";
+      throw std::runtime_error("[util_pd::LoadROOTTree] CODA run list is empty!");
 
     return 0;
   }
@@ -455,30 +465,36 @@ namespace util_pd {
 	// Looping through unique runs
 	aRun = crun.runnum;
 	rc = GetROOTFileMetaData(path.c_str(),aRun,md,segB_segE,0);
-	aStream   = md[0]; //stream no.
-	aNumFiles = md[1]; //total # segments
-	if (verbose > 0) {
-	  std::cout << "----" << std::endl;
-	  std::cout << Form(" Run %d, Total # of segments %d",aRun,aNumFiles) << std::endl;
-	  std::cout << Form(" Beg seg %d-%d, End seg %d-%d",segB_segE[0].first,segB_segE[0].second,
-			    segB_segE[aNumFiles-1].first,segB_segE[aNumFiles-1].second) << std::endl;
-	  std::cout << "----" << std::endl;
-	}
-	// Looping through segments and adding to tree
-	for (int iseg=0; iseg<aNumFiles; iseg++) {
-	  std::string rfname = Form("%s/e1209019_fullreplay_%d_stream%d_seg%d_%d.root",path.c_str(),
-				    aRun,aStream,segB_segE[iseg].first,segB_segE[iseg].second);
-	  if (verbose > 1) std::cout << rfname << std::endl;
-	  C->Add(rfname.c_str());
+	if (rc==0) { // non-zero number of segments
+	  aStream   = md[0]; //stream no.
+	  aNumFiles = md[1]; //total # segments
+	  if (verbose > 0) {
+	    std::cout << "----" << std::endl;
+	    std::cout << Form(" Run %d, Total # of segments %d",aRun,aNumFiles) << std::endl;
+	    std::cout << Form(" Beg seg %d-%d, End seg %d-%d",segB_segE[0].first,segB_segE[0].second,
+			      segB_segE[aNumFiles-1].first,segB_segE[aNumFiles-1].second) << std::endl;
+	    std::cout << "----" << std::endl;
+	  }
+	  // Looping through segments and adding to tree
+	  for (int iseg=0; iseg<aNumFiles; iseg++) {
+	    std::string rfname = Form("%s/e1209019_fullreplay_%d_stream%d_seg%d_%d.root",path.c_str(),
+				      aRun,aStream,segB_segE[iseg].first,segB_segE[iseg].second);
+	    if (verbose > 1) std::cout << rfname << std::endl;
+	    C->Add(rfname.c_str());
+	  }
+	} else {
+	  std::cout << std::endl << "--!!--" << std::endl  
+		    << "WARNING! [util_pd::LoadROOTTree]: No ROOT file exists for run " << crun.runnum << "!" 
+		    << std::endl << "--!!--" << std::endl;
+	  return -1;
 	}
 	// getting ready for next run
 	md.clear();
 	segB_segE.clear();
       }
-      if (C->GetEntries()==0) 
-	throw "[util_pd::LoadROOTTree] Empty ROOT files Or, they don't exist!";
-    }else 
-      throw "[util_pd::LoadROOTTree] CodaRun object is empty!";
+    }else {
+      throw std::runtime_error("[util_pd::LoadROOTTree] CodaRun object is empty!");
+    }
     
     return 0;
   }
