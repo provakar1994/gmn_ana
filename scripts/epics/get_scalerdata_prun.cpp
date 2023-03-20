@@ -13,46 +13,70 @@
 #include <iostream>
 
 #include "../../include/gmn-ana.h"
-#include "../../dflay/src/JSONManager.cxx"
+//#include "../../dflay/src/JSONManager.cxx"
 
-// bcm gain factors from calibration
-static const double dnewgain = 3317.99; // +/- 31.69 [Hz/uA]
+static const int pass = 1; // replay pass
+static const double dnewgain = 3317.99; // +/- 31.69 [Hz/uA], bcm gain for dnew source
+static const std::string runsheet_dir = "/w/halla-scshelf2102/sbs/pdbforce/gmn-ana/DB";
 
-int get_scalerdata_prun (const char *configfilename) 
+int get_scalerdata_prun (const char *target,        // LH2/LD2
+			 int conf,                  // SBS config
+			 int sbsmagfield,           // -1=>No restriction
+			 int nruns,                 // # runs to analyze
+			 const char *rootfile_dir,  // path to ROOT files
+			 int verbose)               // >0=>Debug
 {
   gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
   
   // Define a clock to get macro processing time
   TStopwatch *sw = new TStopwatch(); sw->Start();
 
-  // reading input config file ---------------------------------------
-  JSONManager *jmgr = new JSONManager(configfilename);
-
-  // seting up the desired SBS configuration
-  int conf = jmgr->GetValueFromKey<int>("SBS_config");
-  int pass = jmgr->GetValueFromKey<int>("replay_pass");
-  std::string target = jmgr->GetValueFromKey_str("target");
-
-  // reading run info and parsing ROOT trees
-  std::string runsheet_dir = jmgr->GetValueFromKey_str("runsheet_dir");
-  int nruns = jmgr->GetValueFromKey<int>("Nruns_to_ana"); // # of runs to analyze
-  vector<CodaRun> crun; util_pd::ReadRunList(runsheet_dir,nruns,conf,target,pass,0,crun);
-  std::string rootfile_dir = jmgr->GetValueFromKey_str("rootfile_dir");
+  // reading runs list ---------------------------------------
+  vector<CodaRun> crun; 
+  if (sbsmagfield<0) util_pd::ReadRunList(runsheet_dir,nruns,conf,target,pass,verbose,crun);
+  else util_pd::ReadRunList(runsheet_dir,nruns,conf,target,pass,sbsmagfield,verbose,crun);
   TChain *C = nullptr;
 
-  TString outFile1; outFile1 = Form("epout/get_scalerdata_prun_SBS%d_%s.csv",conf,target.c_str());
-  TString outFile2; outFile2 = Form("epout/get_beamcharge_prun_SBS%d_%s.csv",conf,target.c_str());
-  ofstream outFile_data1; outFile_data1.open(outFile1);
+  TString outFile1, outFile2;
+  if (verbose==0) {
+    if (sbsmagfield<0) {
+      outFile1 = Form("epout/scalerdata_prun_SBS%d_%s.root",conf,target);
+      outFile2 = Form("epout/beamcharge_prun_SBS%d_%s.csv",conf,target);
+    } else {
+      outFile1 = Form("epout/scalerdata_prun_SBS%d_%dp_%s.root",conf,sbsmagfield,target);
+      outFile2 = Form("epout/beamcharge_prun_SBS%d_%dp_%s.csv",conf,sbsmagfield,target);
+    }  
+  } else {
+    if (sbsmagfield<0) {
+      outFile1 = Form("epout/test_scalerdata_prun_SBS%d_%s.root",conf,target);
+      outFile2 = Form("epout/test_beamcharge_prun_SBS%d_%s.csv",conf,target);
+    } else {
+      outFile1 = Form("epout/test_scalerdata_prun_SBS%d_%dp_%s.root",conf,sbsmagfield,target);
+      outFile2 = Form("epout/test_beamcharge_prun_SBS%d_%dp_%s.csv",conf,sbsmagfield,target);
+    }  
+  }
+  TFile *fout = new TFile(outFile1.Data(),"RECREATE");
   ofstream outFile_data2; outFile_data2.open(outFile2);
-  outFile_data1 << "runnum," << "segnum," << "index," << "sevnum," << "gevnum," 
-		<< "dnewcnt," << "dnewcurr(A)," << "cumcharge(C)" << std::endl;
   outFile_data2 << "runnum," << "totcharge(C)" << std::endl;
+
+  // defining interesting ROOT tree branches 
+  TTree *Tout = new TTree("Tout", "");
+  // ev info
+  UInt_t T_rnum;        Tout->Branch("rnum", &T_rnum, "rnum/i");
+  UInt_t T_segnum;      Tout->Branch("segnum", &T_segnum, "segnum/i");
+  ULong64_t T_evindex;  Tout->Branch("evindex", &T_evindex, "evindex/l");
+  ULong64_t T_sevnum;   Tout->Branch("sevnum", &T_sevnum, "sevnum/l");
+  ULong64_t T_gevnum;   Tout->Branch("gevnum", &T_gevnum, "gevnum/l");
+  // bcm info
+  double T_dnewcnt;     Tout->Branch("dnewcnt", &T_dnewcnt, "dnewcnt/D");
+  double T_dnewcurr;    Tout->Branch("dnewcurr", &T_dnewcurr, "dnewcurr/D");
+  double T_dnewcharge;  Tout->Branch("dnewcharge", &T_dnewcharge, "dnewcharge/D");
 
   // looping through runs
   for (int irun=0; irun<nruns; irun++) {
     int runnum = crun[irun].runnum;
     std::cout << "Analyzing run " << crun[irun].runnum << std::endl;
-    C = new TChain("TSsbs"); util_pd::LoadROOTTree(rootfile_dir,crun[irun],1,0,C);
+    C = new TChain("TSsbs"); util_pd::LoadROOTTree(rootfile_dir,crun[irun],1,verbose,C);
 
     // setting up ROOT tree branch addresses ----------------------------
     C->SetBranchStatus("*",0);
@@ -86,23 +110,42 @@ int get_scalerdata_prun (const char *configfilename)
 
       dnewcharge_cum = (dnewcnt / dnewgain) * 1e-6; //C 
 
+      T_rnum = runnum;
+      T_segnum = segnum;
+      T_evindex = index;
+      T_sevnum = sevnum;
+      T_gevnum = gevnum;
+
+      T_dnewcnt = dnewcnt;
+      T_dnewcurr = dnewcurr;
+      T_dnewcharge = dnewcharge_cum;
+
       index++;  // gets reset at the beginning of every run
-      outFile_data1 << runnum << "," << segnum << "," << index << "," << sevnum << "," << gevnum << "," 
-		    << dnewcnt << "," << dnewcurr << "," << dnewcharge_cum << "," << std::endl;
+      if (verbose>0 && nevent<5)
+	std::cout << runnum << "," << segnum << "," << index << "," << sevnum << "," << gevnum << "," 
+		  << dnewcnt << "," << dnewcurr << "," << dnewcharge_cum << "," << std::endl;
+
+      Tout->Fill();
     } //event loop
     
     outFile_data2 << runnum << "," << dnewcharge_cum << std::endl;
+    if (verbose>0) std::cout << runnum << "," << dnewcharge_cum << std::endl;
     
     // getting ready for next run
     C->Reset();
   } //run loop
-  std::cout << std::endl;
+  std::cout << std::endl << std::endl;
 
+  cout << "------" << endl;
+  cout << " Output CSV file  : " << outFile2 << endl;
+  cout << " Output ROOT file : " << outFile1 << endl;
+  cout << "------" << endl << endl;
 
   sw->Stop();
   cout << "CPU time elapsed = " << sw->CpuTime() << " s. Real time = " << sw->RealTime() << " s. " << endl << endl;
 
+  fout->Write();
   sw->Delete();
-  delete jmgr;
+  // delete jmgr;
   return 0;
 }
