@@ -51,9 +51,11 @@ int qelas_ana_data (const char *configfilename,
  
   // reading scaler tree
   TChain *S = new TChain("Tout"); 
-  S->Add(Form("epics/epout/scalerdata_prun_SBS%d_%s.root",conf,target.c_str()));
   int get_scaler_info = jmgr->GetValueFromKey<int>("get_scaler_info");
-  if (get_scaler_info) if (S->GetEntries()==0) throw std::runtime_error("No scaler event found!");
+  if (get_scaler_info) {
+    S->Add(Form("epics/epout/scalerdata_prun_SBS%d_%s.root",conf,target.c_str()));
+    if (S->GetEntries()==0) throw std::runtime_error("No scaler event found!");
+  }
 
   // Choosing the model of calculation
   // model 0 => uses reconstructed p as independent variable
@@ -125,12 +127,12 @@ int qelas_ana_data (const char *configfilename,
   C->SetBranchStatus("bb.gem.track.nhits", 1);
 
   // epics tree variables
-  UInt_t rnumS=0, segnum;
+  UInt_t rnumS=0, segnumS;
   double dnewcnt, dnewcurr;
   ULong64_t evindex, gevnumS;
   std::vector<std::string> streevar = {"rnum","segnum","gevnum","evindex","dnewcnt","dnewcurr"};
-  std::vector<void*> streevar_mem = {&rnumS,&segnum,&gevnumS,&evindex,&dnewcnt,&dnewcurr};
-  setrootvar::setbranch(S,"",streevar,streevar_mem);
+  std::vector<void*> streevar_mem = {&rnumS,&segnumS,&gevnumS,&evindex,&dnewcnt,&dnewcurr};
+  if (get_scaler_info) setrootvar::setbranch(S,"",streevar,streevar_mem);
 
   // defining the outputfile
   if (verbose==0 && verbosefn==0) filebase = "pdout/qelas_ana_data";
@@ -170,8 +172,9 @@ int qelas_ana_data (const char *configfilename,
   double T_ebeam;       Tout->Branch("ebeam", &T_ebeam, "ebeam/D");
   double T_ebeam_std;   Tout->Branch("ebeam_std", &T_ebeam_std, "ebeam_std/D");
   //bcm/scaler
-  double T_dnewcnt;     Tout->Branch("dnewcnt", &T_dnewcnt, "dnewcnt/D"); 
-  double T_dnewcurr;    Tout->Branch("dnewcurr", &T_dnewcurr, "dnewcurr/D"); 
+  //UInt_t T_segnumS;   if (get_scaler_info) Tout->Branch("segnumS", &T_segnumS, "segnumS/i");
+  double T_dnewcnt;     if (get_scaler_info) Tout->Branch("dnewcnt", &T_dnewcnt, "dnewcnt/D"); 
+  double T_dnewcurr;    if (get_scaler_info) Tout->Branch("dnewcurr", &T_dnewcurr, "dnewcurr/D"); 
   //kine
   double T_nu;          Tout->Branch("nu", &T_nu, "nu/D");
   double T_Q2;          Tout->Branch("Q2", &T_Q2, "Q2/D");
@@ -256,7 +259,7 @@ int qelas_ana_data (const char *configfilename,
   // looping through the events ---------------------------------------
   std::cout << std::endl;
   long nevent=0, nevents=C->GetEntries(), neventsS=S->GetEntries(), index=0, tgevnumS; 
-  int treenum=0, currenttreenum=0; UInt_t runnum=0, nseg=0;
+  int treenum=0, currenttreenum=0; UInt_t runnum=0, nseg, tsegnumS;
   double ebeam=sbsconf.GetEbeam(), ebeam_std=0.; 
   double tdnewcurr=0., tdnewcnt=0; 
   while (C->GetEntry(nevent++)) {
@@ -266,21 +269,17 @@ int qelas_ana_data (const char *configfilename,
         // finding 1st scaler event for the current run
         if (nevent==1 || rnumS!=rnum) {
           while (rnumS!=rnum && index<neventsS) {
-            S->GetEntry(index);
-            index++;
-            tgevnumS = gevnumS;
-            tdnewcnt = dnewcnt;
-            tdnewcurr = dnewcurr;
+            S->GetEntry(index); index++;
+	    tsegnumS = segnumS; tgevnumS = gevnumS;
+            tdnewcnt = dnewcnt; tdnewcurr = dnewcurr;
           }
         }   
         // finding nearest scaler event for the current T event
         while (gevnum>gevnumS && rnumS==rnum && index<neventsS) {
-          tgevnumS = gevnumS;
-          tdnewcnt = dnewcnt;
-          tdnewcurr = dnewcurr;
-          S->GetEntry(index);
-          index++;
-          if (verbose==-2) std::cout << tgevnumS << " " << gevnum << " " << segnum << std::endl;
+	  tsegnumS = segnumS; tgevnumS = gevnumS;
+          tdnewcnt = dnewcnt; tdnewcurr = dnewcurr;
+          S->GetEntry(index); index++;
+          if (verbose==-2) std::cout << tgevnumS << " " << gevnum << " " << segnumS << std::endl;
         }
     }
 
@@ -291,13 +290,13 @@ int qelas_ana_data (const char *configfilename,
     // keep track of run number & tree number
     currenttreenum = C->GetTreeNumber();
     if (nevent == 1 || currenttreenum != treenum) {
-      treenum = currenttreenum;
+      treenum = currenttreenum; nseg++;
       // apply global cuts efficiently (AJRP method)
       GlobalCut->UpdateFormulaLeaves();
       
       // read ebeam once per run
       if (nevent == 1 || rnum != runnum) {
-	runnum = rnum;
+	runnum = rnum; nseg=1;
 	/* In search of a faster algorithm */
 	auto it = std::find_if(crun.begin(), crun.end(), [=](CodaRun const& cr) {return cr.runnum == runnum;});
 	if (it != crun.end()) {
@@ -309,8 +308,6 @@ int qelas_ana_data (const char *configfilename,
     } 
     bool passedgCut = GlobalCut->EvalInstance(0) != 0;   
     if (!passedgCut) continue;
-
-    //if (nevent<1000) std::cout << tgevnumS << " " << gevnum << " " << segnum << std::endl;
       
     // coin time cut (N/A for simulation)  !! Not a reliable cut - loosing a lot of elastics
     double bbcal_time=0., hcal_time=0.;
@@ -389,12 +386,15 @@ int qelas_ana_data (const char *configfilename,
     T_pcentral = pcentral;
 
     T_rnum = rnum;
-    T_segnum = segnum;
+    T_segnum = nseg;
     T_gevnum = gevnum;
     T_ebeam = Pe.E();
     T_ebeam_std = ebeam_std;
-    T_dnewcnt = tdnewcnt;
-    T_dnewcurr = tdnewcurr;
+    if (get_scaler_info) {
+      //T_segnumS = tsegnumS;
+      T_dnewcnt = tdnewcnt;
+      T_dnewcurr = tdnewcurr;
+    }
 
     T_vz = vz[0];
     T_trP = p[0];
@@ -536,7 +536,7 @@ int qelas_ana_data (const char *configfilename,
   TPaveText *pt = new TPaveText(.05,.1,.95,.8);
   pt->AddText(Form("Configfile: %s",configfilename));
   pt->AddText(Form(" Analysis model: %d",model));
-  pt->AddText(Form(" Total charge (C): %d",totcharge));
+  pt->AddText(Form(" Total charge (C): %f",totcharge));
   pt->AddText(Form(" Total # runs analyzed: %d",nruns));
   pt->AddText(Form(" Total # events analyzed: %ld",nevents));
   pt->AddText(Form(" First run no.: %d | Last run no.: %d",crun[0].runnum,crun[nruns-1].runnum));
