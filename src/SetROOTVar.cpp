@@ -9,8 +9,8 @@ namespace setrootvar {
   {
     T->SetMakeClass(1);    // Allows access to individual sub-branchs
     std::string branchname;
-    if (suffix.empty()) {  // In case the branch doesn't have <pref.suff> structure
-      branchname = prefix;
+    if (prefix.empty()) {  // In case the branch doesn't have <pref.suff> structure
+      branchname = suffix;
     } else {
       branchname = prefix + std::string(".") + suffix;
     }
@@ -29,10 +29,18 @@ namespace setrootvar {
     }
     T->SetMakeClass(1); // Allows access to individual sub-branchs
     std::string branchname;
-    for(int i=0;i<int(suffix.size());i++){
-      branchname = prefix + std::string(".") + suffix[i];
-      T->SetBranchStatus(branchname.c_str(),1);
-      T->SetBranchAddress(branchname.c_str(),memory[i]);
+    if (!prefix.empty()) {  // In case the branch doesn't have <pref.suff> structure
+      for(int i=0;i<int(suffix.size());i++){
+	branchname = prefix + std::string(".") + suffix[i];
+	T->SetBranchStatus(branchname.c_str(),1);
+	T->SetBranchAddress(branchname.c_str(),memory[i]);
+      }
+    } else {
+      for(int i=0;i<int(suffix.size());i++){
+	branchname = suffix[i];
+	T->SetBranchStatus(branchname.c_str(),1);
+	T->SetBranchAddress(branchname.c_str(),memory[i]);
+      }
     }
   }
   //--------------------------------------------

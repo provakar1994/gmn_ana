@@ -22,7 +22,10 @@
 /* this script will only analyze LD2 data */
 static const std::string target = "LD2";
 
-int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test_qelas_ana_data")
+int qelas_ana_data (const char *configfilename,
+                    int verbose=-1,  //<0=>Debug
+                    int verbosefn=0, //>0=>Debug
+                    std::string filebase="pdout/test_qelas_ana_data")
 {
   gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
 
@@ -42,9 +45,15 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   // reading run info and parsing ROOT trees
   std::string runsheet_dir = jmgr->GetValueFromKey_str("runsheet_dir");
   int nruns = jmgr->GetValueFromKey<int>("Nruns_to_ana"); // # of runs to analyze
-  vector<CodaRun> crun; util_pd::ReadRunList(runsheet_dir,nruns,conf,target,pass,sbsmag,0,crun);
+  vector<CodaRun> crun; util_pd::ReadRunList(runsheet_dir,nruns,conf,target,pass,sbsmag,verbosefn,crun);
   std::string rootfile_dir = jmgr->GetValueFromKey_str("rootfile_dir");
-  TChain *C = new TChain("T"); util_pd::LoadROOTTree(rootfile_dir,crun,0,0,C); 
+  TChain *C = new TChain("T"); util_pd::LoadROOTTree(rootfile_dir,crun,1,verbosefn,C); 
+ 
+  // reading scaler tree
+  TChain *S = new TChain("Tout"); 
+  S->Add(Form("epics/epout/scalerdata_prun_SBS%d_%s.root",conf,target.c_str()));
+  int get_scaler_info = jmgr->GetValueFromKey<int>("get_scaler_info");
+  if (get_scaler_info) if (S->GetEntries()==0) throw std::runtime_error("No scaler event found!");
 
   // Choosing the model of calculation
   // model 0 => uses reconstructed p as independent variable
@@ -108,14 +117,23 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   // fEvtHdr variables (N/A for simulation) 
   UInt_t rnum, gevnum, trigbits;
   std::vector<std::string> evhdrvar = {"fRun","fEvtNum","fTrigBits"};
-  std::vector<void*> evhdrmem = {&rnum,&gevnum,&trigbits};
-  setrootvar::setbranch(C,"fEvtHdr",evhdrvar,evhdrmem);
+  std::vector<void*> evhdrvar_mem = {&rnum,&gevnum,&trigbits};
+  setrootvar::setbranch(C,"fEvtHdr",evhdrvar,evhdrvar_mem);
 
   // turning on the remaining branches we use for the globalcut
   C->SetBranchStatus("bb.etot_over_p", 1);
   C->SetBranchStatus("bb.gem.track.nhits", 1);
 
+  // epics tree variables
+  UInt_t rnumS=0, segnum;
+  double dnewcnt, dnewcurr;
+  ULong64_t evindex, gevnumS;
+  std::vector<std::string> streevar = {"rnum","segnum","gevnum","evindex","dnewcnt","dnewcurr"};
+  std::vector<void*> streevar_mem = {&rnumS,&segnum,&gevnumS,&evindex,&dnewcnt,&dnewcurr};
+  setrootvar::setbranch(S,"",streevar,streevar_mem);
+
   // defining the outputfile
+  if (verbose==0 && verbosefn==0) filebase = "pdout/qelas_ana_data";
   TString outFile = Form("%s_sbs%d_sbs%dp_model%d_pass%d.root", 
 			 filebase.c_str(), sbsconf.GetSBSconf(), sbsconf.GetSBSmag(), model, pass);
   TFile *fout = new TFile(outFile.Data(), "RECREATE");
@@ -147,9 +165,13 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   bool fiduCut;         Tout->Branch("fiduCut", &fiduCut, "fiduCut/O");
   //run info
   UInt_t T_rnum;        Tout->Branch("rnum", &T_rnum, "rnum/i");
+  UInt_t T_segnum;      Tout->Branch("segnum", &T_segnum, "segnum/i");
+  ULong64_t T_gevnum;   Tout->Branch("gevnum", &T_gevnum, "gevnum/l");
   double T_ebeam;       Tout->Branch("ebeam", &T_ebeam, "ebeam/D");
   double T_ebeam_std;   Tout->Branch("ebeam_std", &T_ebeam_std, "ebeam_std/D");
-  UInt_t T_gevnum;      Tout->Branch("gevnum", &T_gevnum, "gevnum/i");
+  //bcm/scaler
+  double T_dnewcnt;     Tout->Branch("dnewcnt", &T_dnewcnt, "dnewcnt/D"); 
+  double T_dnewcurr;    Tout->Branch("dnewcurr", &T_dnewcurr, "dnewcurr/D"); 
   //kine
   double T_nu;          Tout->Branch("nu", &T_nu, "nu/D");
   double T_Q2;          Tout->Branch("Q2", &T_Q2, "Q2/D");
@@ -233,13 +255,37 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
 
   // looping through the events ---------------------------------------
   std::cout << std::endl;
-  long nevent = 0, nevents = C->GetEntries(); 
-  int treenum = 0, currenttreenum = 0; UInt_t runnum = 0;
-  double ebeam = sbsconf.GetEbeam(), ebeam_std = 0.; 
+  long nevent=0, nevents=C->GetEntries(), neventsS=S->GetEntries(), index=0, tgevnumS; 
+  int treenum=0, currenttreenum=0; UInt_t runnum=0, nseg=0;
+  double ebeam=sbsconf.GetEbeam(), ebeam_std=0.; 
+  double tdnewcurr=0., tdnewcnt=0; 
   while (C->GetEntry(nevent++)) {
-   
+
+    // reading matching scaler info per event
+    if (get_scaler_info) {
+        // finding 1st scaler event for the current run
+        if (nevent==1 || rnumS!=rnum) {
+          while (rnumS!=rnum && index<neventsS) {
+            S->GetEntry(index);
+            index++;
+            tgevnumS = gevnumS;
+            tdnewcnt = dnewcnt;
+            tdnewcurr = dnewcurr;
+          }
+        }   
+        // finding nearest scaler event for the current T event
+        while (gevnum>gevnumS && rnumS==rnum && index<neventsS) {
+          tgevnumS = gevnumS;
+          tdnewcnt = dnewcnt;
+          tdnewcurr = dnewcurr;
+          S->GetEntry(index);
+          index++;
+          if (verbose==-2) std::cout << tgevnumS << " " << gevnum << " " << segnum << std::endl;
+        }
+    }
+
     // print progress 
-    if( nevent % 1000 == 0 ) std::cout << nevent << "/" << nevents << "\r";
+    if (nevent % 1000 == 0) std::cout << nevent << "/" << nevents << "\r";
     std::cout.flush();
 
     // keep track of run number & tree number
@@ -252,8 +298,6 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
       // read ebeam once per run
       if (nevent == 1 || rnum != runnum) {
 	runnum = rnum;
-	// for (auto & crunel : crun)
-	//   if (crunel.runnum == runnum) {ebeam = crunel.ebeam; ebeam_std = crunel.ebeam_std; break;}
 	/* In search of a faster algorithm */
 	auto it = std::find_if(crun.begin(), crun.end(), [=](CodaRun const& cr) {return cr.runnum == runnum;});
 	if (it != crun.end()) {
@@ -266,6 +310,8 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
     bool passedgCut = GlobalCut->EvalInstance(0) != 0;   
     if (!passedgCut) continue;
 
+    //if (nevent<1000) std::cout << tgevnumS << " " << gevnum << " " << segnum << std::endl;
+      
     // coin time cut (N/A for simulation)  !! Not a reliable cut - loosing a lot of elastics
     double bbcal_time=0., hcal_time=0.;
     for(int ihit=0; ihit<tdcElemN; ihit++){
@@ -333,9 +379,6 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
     double Wrecon = sqrt(max(0., W2recon));
     double dpel = Peprime.E()/pcentral - 1.0; h_dpel->Fill(dpel);
 
-    T_ebeam = Pe.E();
-    T_ebeam_std = ebeam_std;
-
     T_nu = nu;
     T_Q2 = Q2recon;
     T_W2 = W2recon;
@@ -346,7 +389,12 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
     T_pcentral = pcentral;
 
     T_rnum = rnum;
+    T_segnum = segnum;
     T_gevnum = gevnum;
+    T_ebeam = Pe.E();
+    T_ebeam_std = ebeam_std;
+    T_dnewcnt = tdnewcnt;
+    T_dnewcurr = tdnewcurr;
 
     T_vz = vz[0];
     T_trP = p[0];
@@ -427,13 +475,13 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
     if (WCut) {
       // fiducial cut
       if (fiduCut) {
-	h_dxHCAL->Fill(dx);
-	h_dyHCAL->Fill(dy);
-	h2_rcHCAL->Fill(cblkHCAL, rblkHCAL);
-	h2_dxdyHCAL->Fill(dy, dx);
+        h_dxHCAL->Fill(dx);
+        h_dyHCAL->Fill(dy);
+        h2_rcHCAL->Fill(cblkHCAL, rblkHCAL);
+        h2_dxdyHCAL->Fill(dy, dx);
 
-	if (pCut) h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick);
-	if (nCut) h2_xyHCAL_n->Fill(xyHCAL_exp[1], xyHCAL_exp[0]);
+        if (pCut) h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick);
+        if (nCut) h2_xyHCAL_n->Fill(xyHCAL_exp[1], xyHCAL_exp[0]);
       }
     }
 
@@ -441,9 +489,9 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
     if (fiduCut) {
       h_W->Fill(Wrecon);
       if (pCut || nCut) { 
-	h_W_cut->Fill(Wrecon);
+        h_W_cut->Fill(Wrecon);
       } else {
-	h_W_acut->Fill(Wrecon);
+        h_W_acut->Fill(Wrecon);
       }
     }
       
@@ -452,6 +500,9 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   } // event loop
   std::cout << std::endl << std::endl;
 
+  // calculating total charge analyzed
+  double totcharge = util_pd::GetTotCharge(crun);
+    
   TCanvas *c1 = new TCanvas("c1", "c1", 1200, 1000);
   c1->Divide(2,2);
 
@@ -485,8 +536,9 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   TPaveText *pt = new TPaveText(.05,.1,.95,.8);
   pt->AddText(Form("Configfile: %s",configfilename));
   pt->AddText(Form(" Analysis model: %d",model));
-  pt->AddText(Form(" Total # events analyzed: %ld",nevents));
+  pt->AddText(Form(" Total charge (C): %d",totcharge));
   pt->AddText(Form(" Total # runs analyzed: %d",nruns));
+  pt->AddText(Form(" Total # events analyzed: %ld",nevents));
   pt->AddText(Form(" First run no.: %d | Last run no.: %d",crun[0].runnum,crun[nruns-1].runnum));
   pt->AddText(Form(" HCAL offsets: v = %.4f, h = %.4f",hcal_voffset,hcal_hoffset));
   pt->AddText(Form(" Global cuts: %s",gcut.c_str()));
@@ -503,7 +555,8 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   // c1->Print(outFile.Data(),"png");
 
   cout << "------" << endl;
-  cout << " Output file : " << outFile << endl;
+  cout << " Total charge : " << totcharge << " C" << endl;
+  cout << " Output file  : " << outFile << endl;
   cout << "------" << endl << endl;
 
   sw->Stop();
@@ -523,7 +576,7 @@ int qelas_ana_data (const char *configfilename, std::string filebase="pdout/test
   h2_xyHCAL_p->Write();
   h2_xyHCAL_n->Write();
   h_coin_time->Write();
-  //fout->Write();
+  fout->Write();
   sw->Delete();
   delete jmgr;
   return 0;

@@ -35,15 +35,18 @@ CodaRun():
 
   // sets data by reading runsheet (exclusively for util::ReadRunList functions)
   void SetDataRunSheet(std::vector<std::string> data) {
-    sbsconf   = stoi(data[0]);
-    runnum    = stoi(data[1]);
-    target    = data[2];
-    sbsmag    = stoi(data[3]);
-    bbmag     = stoi(data[4]);
-    ebeam     = stod(data[5]);
-    ebeam_std = stod(data[6]);
-    //charge    = stod(data[7]);
-  }
+    if (data.size()==8) {
+        sbsconf   = stoi(data[0]);
+        runnum    = stoi(data[1]);
+        target    = data[2];
+        sbsmag    = stoi(data[3]);
+        bbmag     = stoi(data[4]);
+        ebeam     = stod(data[5]);
+        ebeam_std = stod(data[6]);
+        charge    = stod(data[7]);
+     } else 
+        throw::runtime_error("Potential NaN column entry in the run sheet!");
+    }
 
 } CodaRun_t;  
 
