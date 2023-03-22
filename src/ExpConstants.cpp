@@ -11,22 +11,16 @@ namespace expconst {
     if(config==1)
       return 1.916;
     else if(config==4)
-      //return 3.7278;
       return 3.7393;
     else if(config==7)
-      //return 7.906;
       return 7.9308;
     else if(config==11)
-      //return 9.91;
       return 9.889;
     else if(config==14)
-      //return 5.965;
-      return 5.9827;
+      return 5.9828;
     else if(config==8)
-      //return 5.965;
       return 5.9826;
     else if(config==9)
-      //return 4.013;
       return 4.0268;
     else if(config==4363)
       return 6.373;
