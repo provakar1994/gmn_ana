@@ -22,7 +22,10 @@
 /* this script will only analyze LH2 data */
 static const std::string target = "LH2";
 
-int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_elas_ana_data")
+int elas_ana_data (const char *configfilename,
+                    int verbose=-1,  //<0=>Debug
+                    int verbosefn=0, //>0=>Debug
+                    std::string filebase="pdout/test_qelas_ana_data")
 {
   gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
 
@@ -39,21 +42,20 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
   SBSconfig sbsconf(conf, sbsmag);
   cout << sbsconf;
 
-  // reading run info from relevant good runlist spreadsheet
+  // reading run info and parsing ROOT trees
   std::string runsheet_dir = jmgr->GetValueFromKey_str("runsheet_dir");
   int nruns = jmgr->GetValueFromKey<int>("Nruns_to_ana"); // # of runs to analyze
-  vector<CodaRun> crun; util_pd::ReadRunList(runsheet_dir,nruns,conf,target,pass,sbsmag,crun);
-  //cout << "1st run info:" << endl << crun[0];
-
-  // parsing ROOT trees
-  TChain *C = new TChain("T");  
-  std::cout << "Parsing ROOT files from " << nruns << " runs.." << std::endl;
+  vector<CodaRun> crun; util_pd::ReadRunList(runsheet_dir,nruns,conf,target,pass,sbsmag,verbosefn,crun);
   std::string rootfile_dir = jmgr->GetValueFromKey_str("rootfile_dir");
-  for (int i=0; i<nruns; i++) {
-    std::string rfname = rootfile_dir + Form("/*%d*",crun[i].runnum);
-    C->Add(rfname.c_str());
+  TChain *C = new TChain("T"); util_pd::LoadROOTTree(rootfile_dir,crun,1,verbosefn,C); 
+ 
+  // reading scaler tree
+  TChain *S = new TChain("Tout"); 
+  int get_scaler_info = jmgr->GetValueFromKey<int>("get_scaler_info");
+  if (get_scaler_info) {
+    S->Add(Form("epics/epout/scalerdata_prun_SBS%d_%s.root",conf,target.c_str()));
+    if (S->GetEntries()==0) throw std::runtime_error("No scaler event found!");
   }
-  if (C->GetEntries()==0) {std::cerr << "*!* No ROOT file!" << std::endl; throw;}
 
   // Choosing the model of calculation
   // model 0 => uses reconstructed p as independent variable
@@ -82,7 +84,8 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
 
   // bbcal clus var
   double eSH, xSH, ySH, rblkSH, cblkSH, idblkSH, atimeSH, ePS, rblkPS, cblkPS, idblkPS, atimePS;
-  std::vector<std::string> bbcalclvar = {"sh.e","sh.x","sh.y","sh.rowblk","sh.colblk","sh.idblk","sh.atimeblk","ps.e","ps.rowblk","ps.colblk","ps.idblk","ps.atimeblk"};
+  std::vector<std::string> bbcalclvar = {"sh.e","sh.x","sh.y","sh.rowblk","sh.colblk","sh.idblk","sh.atimeblk",
+					 "ps.e","ps.rowblk","ps.colblk","ps.idblk","ps.atimeblk"};
   std::vector<void*> bbcalclvar_mem = {&eSH,&xSH,&ySH,&rblkSH,&cblkSH,&idblkSH,&atimeSH,&ePS,&rblkPS,&cblkPS,&idblkPS,&atimePS};
   setrootvar::setbranch(C, "bb", bbcalclvar, bbcalclvar_mem);
   
@@ -121,10 +124,19 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
   setrootvar::setbranch(C,"fEvtHdr",evhdrvar,evhdrmem);
 
   // turning on the remaining branches we use for the globalcut
-  C->SetBranchStatus("bb.gem.track.nhits", 1);
   C->SetBranchStatus("bb.etot_over_p", 1);
+  C->SetBranchStatus("bb.gem.track.nhits", 1);
+
+  // scaler tree variables
+  UInt_t rnumS=0, segnumS;
+  double dnewcnt, dnewcurr;
+  ULong64_t evindex, gevnumS;
+  std::vector<std::string> streevar = {"rnum","segnum","gevnum","evindex","dnewcnt","dnewcurr"};
+  std::vector<void*> streevar_mem = {&rnumS,&segnumS,&gevnumS,&evindex,&dnewcnt,&dnewcurr};
+  if (get_scaler_info) setrootvar::setbranch(S,"",streevar,streevar_mem);
 
   // defining the outputfile
+  if (verbose==0 && verbosefn==0) filebase = "pdout/elas_ana_data";
   TString outFile = Form("%s_sbs%d_sbs%dp_model%d_pass%d.root", 
 			 filebase.c_str(), sbsconf.GetSBSconf(), sbsconf.GetSBSmag(), model, pass);
   TFile *fout = new TFile(outFile.Data(), "RECREATE");
@@ -154,9 +166,14 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
   bool fiduCut;           Tout->Branch("fiduCut", &fiduCut, "fiduCut/B");
   //run info
   UInt_t T_rnum;          Tout->Branch("rnum", &T_rnum, "rnum/i");
+  UInt_t T_segnum;        Tout->Branch("segnum", &T_segnum, "segnum/i");
+  ULong64_t T_gevnum;     Tout->Branch("gevnum", &T_gevnum, "gevnum/l");
   double T_ebeam;         Tout->Branch("ebeam", &T_ebeam, "ebeam/D");
   double T_ebeam_std;     Tout->Branch("ebeam_std", &T_ebeam_std, "ebeam_std/D");
-  UInt_t T_gevnum;        Tout->Branch("gevnum", &T_gevnum, "gevnum/i");
+  //bcm/scaler
+  //UInt_t T_segnumS;     if (get_scaler_info) Tout->Branch("segnumS", &T_segnumS, "segnumS/i");
+  double T_dnewcnt;       if (get_scaler_info) Tout->Branch("dnewcnt", &T_dnewcnt, "dnewcnt/D"); 
+  double T_dnewcurr;      if (get_scaler_info) Tout->Branch("dnewcurr", &T_dnewcurr, "dnewcurr/D"); 
   //kine
   double T_nu;            Tout->Branch("nu", &T_nu, "nu/D");
   double T_Q2;            Tout->Branch("Q2", &T_Q2, "Q2/D");
@@ -210,8 +227,8 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
   int T_ncltmeanHODO;     Tout->Branch("ncltmeanHODO", &T_ncltmeanHODO, "ncltmeanHODO/I"); 
   double T_cltmeanHODO;   Tout->Branch("cltmeanHODO", &T_cltmeanHODO, "cltmeanHODO/D"); 
   //coin time trigger
-  double T_bbT_trig;    Tout->Branch("bbT_trig", &T_bbT_trig, "bbT_trig/D");
-  double T_coinT_trig;  Tout->Branch("coinT_trig", &T_coinT_trig, "coinT_trig/D");
+  double T_bbT_trig;      Tout->Branch("bbT_trig", &T_bbT_trig, "bbT_trig/D");
+  double T_coinT_trig;    Tout->Branch("coinT_trig", &T_coinT_trig, "coinT_trig/D");
 
   // Do the energy loss calculation here ...........
 
@@ -236,25 +253,45 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
 
   // looping through the tree ---------------------------------------
   std::cout << std::endl;
-  long nevent = 0, nevents = C->GetEntries(); 
-  int treenum = 0, currenttreenum = 0; UInt_t runnum = 0;
-  double ebeam = sbsconf.GetEbeam(), ebeam_std = 0.; 
+  long nevent=0, nevents=C->GetEntries(), neventsS=S->GetEntries(), index=0, tgevnumS; 
+  int treenum=0, currenttreenum=0; UInt_t runnum=0, nseg, tsegnumS;
+  double ebeam=sbsconf.GetEbeam(), ebeam_std=0.; 
+  double tdnewcurr=0., tdnewcnt=0;  
   while (C->GetEntry(nevent++)) {
    
-    // print progress 
-    if( nevent % 1000 == 0 ) std::cout << nevent << "/" << nevents << "\r";
+    // progress indicator 
+    if (nevent % 1000 == 0) std::cout << nevent << "/" << nevents << "\r";
     std::cout.flush();
+
+    // reading matching scaler info per event
+    if (get_scaler_info) {
+        // finding 1st scaler event for the current run
+        if (nevent==1 || rnumS!=rnum) {
+          while (rnumS!=rnum && index<neventsS) {
+            S->GetEntry(index); index++;
+	    tsegnumS = segnumS; tgevnumS = gevnumS;
+            tdnewcnt = dnewcnt; tdnewcurr = dnewcurr;
+          }
+        }   
+        // finding nearest scaler event for the current T event
+        while (gevnum>gevnumS && rnumS==rnum && index<neventsS) {
+	  tsegnumS = segnumS; tgevnumS = gevnumS;
+          tdnewcnt = dnewcnt; tdnewcurr = dnewcurr;
+          S->GetEntry(index); index++;
+          if (verbose==-2) std::cout << tgevnumS << " " << gevnum << " " << segnumS << std::endl;
+        }
+    }
 
     // keep track of run number & tree number
     currenttreenum = C->GetTreeNumber();
     if (nevent == 1 || currenttreenum != treenum) {
-      treenum = currenttreenum;
+      treenum = currenttreenum; nseg++;
       // apply global cuts efficiently (AJRP method)
       GlobalCut->UpdateFormulaLeaves();
 
       // read ebeam once per run
       if (nevent == 1 || rnum != runnum) {
-	runnum = rnum;
+	runnum = rnum; nseg=1;
 	auto it = std::find_if(crun.begin(), crun.end(), [=](CodaRun const& cr) {return cr.runnum == runnum;});
 	if (it != crun.end()) {
 	  ebeam = it->ebeam; 
@@ -276,14 +313,11 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
     T_bbT_trig = bbcal_time;  
     T_coinT_trig = coin_time; h_coin_time->Fill(coin_time);
 
-    // kinematic parameters
-    double ebeam = sbsconf.GetEbeam();       // Expected beam energy (GeV) [Get it from EPICS, eventually]
+    // constructing the 4 vectors
+    /* Reaction    : e + e' -> p + p'
+       Conservation: Pe + Peprime = Pp + Ppprime */
     double ebeam_corr = ebeam; //- MeanEloss;
     double precon = p[0]; //+ MeanEloss_outgoing
-
-    // constructing the 4 vectors
-    /* Reaction    : e + e' -> N + N'
-       Conservation: Pe + Peprime = PN + PNprime */
     TVector3 vertex(0, 0, vz[0]);
     TLorentzVector Pe(0,0,ebeam_corr,ebeam_corr);   // incoming e- 4-vector
     TLorentzVector Peprime(px[0] * (precon/p[0]),   // scattered e- 4-vector
@@ -336,9 +370,6 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
     double Wrecon = sqrt(max(0., W2recon));
     double dpel = Peprime.E()/pcentral - 1.0; h_dpel->Fill(dpel);
 
-    T_ebeam = Pe.E();
-    T_ebeam_std = ebeam_std;
-
     T_nu = nu;
     T_Q2 = Q2recon;
     T_W2 = W2recon;
@@ -349,7 +380,15 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
     T_pcentral = pcentral;
 
     T_rnum = rnum;
+    T_segnum = nseg;
     T_gevnum = gevnum;
+    T_ebeam = Pe.E();
+    T_ebeam_std = ebeam_std;
+    if (get_scaler_info) {
+      //T_segnumS = tsegnumS;
+      T_dnewcnt = tdnewcnt;
+      T_dnewcurr = tdnewcurr;
+    }
 
     T_vz = vz[0];
     T_trP = p[0];
@@ -422,38 +461,40 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
     bool AR_cut = cut::inHCAL_activeA(xHCAL, yHCAL, hcal_active_area);
     bool FR_cut = cut::inHCAL_fiducial(xyHCAL_exp[0], xyHCAL_exp[1], sbs_kick, hcal_safety_margin);
     fiduCut = AR_cut && FR_cut; 
-
-    // HCAL cuts
+    // defining HCAL cuts
     pCut = pow((dx-dx_p[0]) / (dx_p[1]*Nsigma_cut_dx_p), 2) + pow((dy-dy_p[0]) / (dy_p[1]*Nsigma_cut_dy_p), 2) <= 1.;
-
+    // defining W cut
     WCut = Wrecon >= Wmin && Wrecon <= Wmax;
 
     // W cut
     if (WCut) {
-      // fiducial cut (not using it for LH2 data)
-      // if (fiduCut) {
-      h_dxHCAL->Fill(dx);
-      h_dyHCAL->Fill(dy);
-      h2_rcHCAL->Fill(cblkHCAL, rblkHCAL);
-      h2_dxdyHCAL->Fill(dy, dx);
+      // fiducial cut (Should we use it for LH2 data?)
+      if (fiduCut) {
+	h_dxHCAL->Fill(dx);
+	h_dyHCAL->Fill(dy);
+	h2_rcHCAL->Fill(cblkHCAL, rblkHCAL);
+	h2_dxdyHCAL->Fill(dy, dx);
 
-      if (pCut) h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick);
-      // }
+	if (pCut) h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick);
+      }
     }
 
     // fiducial cut but no W cut
-    // if (fiduCut) {  (not using it for LH2 data)
-    h_W->Fill(Wrecon);
-    if (pCut) { 
-      h_W_cut->Fill(Wrecon);
-    } else {
-      h_W_acut->Fill(Wrecon);
+    if (fiduCut) {
+      h_W->Fill(Wrecon);
+      if (pCut) { 
+	h_W_cut->Fill(Wrecon);
+      } else {
+	h_W_acut->Fill(Wrecon);
+      }
     }
-    // }
 
     Tout->Fill();
   } // event loop
   std::cout << std::endl << std::endl;
+
+  // calculating total charge analyzed
+  double totcharge = util_pd::GetTotCharge(crun);
 
   TCanvas *c1 = new TCanvas("c1", "c1", 1200, 1000);
   c1->Divide(2,2);
@@ -469,6 +510,9 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
   h_W_acut->Draw("same");
 
   c1->cd(3);
+  h_dxHCAL->Draw();
+
+  c1->cd(4);
   h2_xyHCAL_p->Draw("colz");
   util_pd::DrawArea(hcal_active_area);
   util_pd::DrawArea(hcal_safety_margin,4);
@@ -480,6 +524,7 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
   TPaveText *pt = new TPaveText(.05,.1,.95,.8);
   pt->AddText(Form("Configfile: %s",configfilename));
   pt->AddText(Form(" Analysis model: %d",model));
+  pt->AddText(Form(" Total charge : %f C",totcharge));
   pt->AddText(Form(" Total # events analyzed: %ld",nevents));
   pt->AddText(Form(" Total # runs analyzed: %d",nruns));
   pt->AddText(Form(" First run no.: %d | Last run no.: %d",crun[0].runnum,crun[nruns-1].runnum));
@@ -495,12 +540,14 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
   // outFile.ReplaceAll(".root",".png");
   // c1->Print(outFile.Data(),"png");
 
-  cout << "------" << endl;
-  cout << " Output file : " << outFile << endl;
-  cout << "------" << endl << endl;
+  std::cout << "------" << std::endl;
+  std::cout << " Total charge : " << totcharge << " C" << std::endl;
+  std::cout << " Output file  : " << outFile << std::endl;
+  std::cout << "------" << std::endl << std::endl;
 
   sw->Stop();
-  cout << "CPU time elapsed = " << sw->CpuTime() << " s. Real time = " << sw->RealTime() << " s. " << endl << endl;
+  std::cout << "CPU time elapsed = " << sw->CpuTime() 
+	    << " s. Real time = " << sw->RealTime() << " s. " << std::endl << std::endl;
 
   c1->Write();
   c2->Write();
@@ -515,7 +562,7 @@ int elas_ana_data (const char *configfilename, std::string filebase="pdout/test_
   h2_dxdyHCAL->Write();
   h2_xyHCAL_p->Write();
   h_coin_time->Write();
-  fout->Write();
+  Tout->Write();
   sw->Delete();
   delete jmgr;
   return 0;

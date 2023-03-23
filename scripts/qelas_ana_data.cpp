@@ -126,7 +126,7 @@ int qelas_ana_data (const char *configfilename,
   C->SetBranchStatus("bb.etot_over_p", 1);
   C->SetBranchStatus("bb.gem.track.nhits", 1);
 
-  // epics tree variables
+  // scaler tree variables
   UInt_t rnumS=0, segnumS;
   double dnewcnt, dnewcurr;
   ULong64_t evindex, gevnumS;
@@ -264,6 +264,10 @@ int qelas_ana_data (const char *configfilename,
   double tdnewcurr=0., tdnewcnt=0; 
   while (C->GetEntry(nevent++)) {
 
+    // progress indicator 
+    if (nevent % 1000 == 0) std::cout << nevent << "/" << nevents << "\r";
+    std::cout.flush();
+
     // reading matching scaler info per event
     if (get_scaler_info) {
         // finding 1st scaler event for the current run
@@ -282,10 +286,6 @@ int qelas_ana_data (const char *configfilename,
           if (verbose==-2) std::cout << tgevnumS << " " << gevnum << " " << segnumS << std::endl;
         }
     }
-
-    // print progress 
-    if (nevent % 1000 == 0) std::cout << nevent << "/" << nevents << "\r";
-    std::cout.flush();
 
     // keep track of run number & tree number
     currenttreenum = C->GetTreeNumber();
@@ -465,10 +465,10 @@ int qelas_ana_data (const char *configfilename,
     bool AR_cut = cut::inHCAL_activeA(xHCAL, yHCAL, hcal_active_area);
     bool FR_cut = cut::inHCAL_fiducial(xyHCAL_exp[0], xyHCAL_exp[1], sbs_kick, hcal_safety_margin);
     fiduCut = AR_cut && FR_cut;
-    // HCAL cuts
+    // defining HCAL cuts
     pCut = pow((dx-dx_p[0]) / (dx_p[1]*Nsigma_cut_dx_p), 2) + pow((dy-dy_p[0]) / (dy_p[1]*Nsigma_cut_dy_p), 2) <= 1.;
     nCut = pow((dx-dx_n[0]) / (dx_n[1]*Nsigma_cut_dx_n), 2) + pow((dy-dy_n[0]) / (dy_n[1]*Nsigma_cut_dy_n), 2) <= 1.;
-
+    // defining W cut
     WCut = Wrecon >= Wmin && Wrecon <= Wmax;
 
     // W cut
@@ -493,8 +493,7 @@ int qelas_ana_data (const char *configfilename,
       } else {
         h_W_acut->Fill(Wrecon);
       }
-    }
-      
+    }  
 
     Tout->Fill();
   } // event loop
@@ -536,7 +535,7 @@ int qelas_ana_data (const char *configfilename,
   TPaveText *pt = new TPaveText(.05,.1,.95,.8);
   pt->AddText(Form("Configfile: %s",configfilename));
   pt->AddText(Form(" Analysis model: %d",model));
-  pt->AddText(Form(" Total charge (C): %f",totcharge));
+  pt->AddText(Form(" Total charge : %f C",totcharge));
   pt->AddText(Form(" Total # runs analyzed: %d",nruns));
   pt->AddText(Form(" Total # events analyzed: %ld",nevents));
   pt->AddText(Form(" First run no.: %d | Last run no.: %d",crun[0].runnum,crun[nruns-1].runnum));
@@ -554,13 +553,14 @@ int qelas_ana_data (const char *configfilename,
   // outFile.ReplaceAll(".root",".png");
   // c1->Print(outFile.Data(),"png");
 
-  cout << "------" << endl;
-  cout << " Total charge : " << totcharge << " C" << endl;
-  cout << " Output file  : " << outFile << endl;
-  cout << "------" << endl << endl;
+  std::cout << "------" << std::endl;
+  std::cout << " Total charge : " << totcharge << " C" << std::endl;
+  std::cout << " Output file  : " << outFile << std::endl;
+  std::cout << "------" << std::endl << std::endl;
 
   sw->Stop();
-  cout << "CPU time elapsed = " << sw->CpuTime() << " s. Real time = " << sw->RealTime() << " s. " << endl << endl;
+  std::cout << "CPU time elapsed = " << sw->CpuTime() 
+	    << " s. Real time = " << sw->RealTime() << " s. " << std::endl << std::endl;
 
   c1->Write();
   c2->Write();
@@ -576,7 +576,7 @@ int qelas_ana_data (const char *configfilename,
   h2_xyHCAL_p->Write();
   h2_xyHCAL_n->Write();
   h_coin_time->Write();
-  fout->Write();
+  Tout->Write();
   sw->Delete();
   delete jmgr;
   return 0;
