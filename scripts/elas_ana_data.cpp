@@ -265,21 +265,25 @@ int elas_ana_data (const char *configfilename,
 
     // reading matching scaler info per event
     if (get_scaler_info) {
-        // finding 1st scaler event for the current run
-        if (nevent==1 || rnumS!=rnum) {
-          while (rnumS!=rnum && index<neventsS) {
-            S->GetEntry(index); index++;
-	    tsegnumS = segnumS; tgevnumS = gevnumS;
-            tdnewcnt = dnewcnt; tdnewcurr = dnewcurr;
-          }
-        }   
-        // finding nearest scaler event for the current T event
-        while (gevnum>gevnumS && rnumS==rnum && index<neventsS) {
-	  tsegnumS = segnumS; tgevnumS = gevnumS;
-          tdnewcnt = dnewcnt; tdnewcurr = dnewcurr;
-          S->GetEntry(index); index++;
-          if (verbose==-2) std::cout << tgevnumS << " " << gevnum << " " << segnumS << std::endl;
-        }
+      while (rnumS!=rnum) {
+	if (index==neventsS) {
+	  std::cout << Form("Run %u | GevNum %u | GevNumS %llu",rnum,gevnum,gevnumS) << std::endl;
+	  throw std::runtime_error("S tree index out of bounds! INVESTIGATE!");
+	}
+	S->GetEntry(index); index++;
+	tsegnumS = segnumS; tgevnumS = gevnumS;
+	tdnewcnt = dnewcnt; tdnewcurr = dnewcurr;
+      }
+      while (gevnum>gevnumS && rnumS==rnum) {
+	if (index==neventsS) {
+	  std::cout << Form("Run %u | GevNum %u | GevNumS %llu",rnum,gevnum,gevnumS) << std::endl;
+	  throw std::runtime_error("S tree index out of bounds! INVESTIGATE!");
+	}
+	tsegnumS = segnumS; tgevnumS = gevnumS;
+	tdnewcnt = dnewcnt; tdnewcurr = dnewcurr;
+	S->GetEntry(index); index++;
+	if (verbose==-2) std::cout << tgevnumS << " " << gevnum << " " << segnumS << std::endl;
+      }
     }
 
     // keep track of run number & tree number
