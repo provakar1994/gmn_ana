@@ -270,6 +270,7 @@ int qelas_ana_data (const char *configfilename,
 
     // reading matching scaler info per event
     if (get_scaler_info) {
+      /* finding 1st scaler event for the current run */
       while (rnumS!=rnum) {
 	if (index==neventsS) {
 	  std::cout << Form("Run %u | GevNum %u | GevNumS %llu",rnum,gevnum,gevnumS) << std::endl;
@@ -279,6 +280,7 @@ int qelas_ana_data (const char *configfilename,
 	tsegnumS = segnumS; tgevnumS = gevnumS;
 	tdnewcnt = dnewcnt; tdnewcurr = dnewcurr;
       }
+      /* finding nearest scaler event for the current T event */
       while (gevnum>gevnumS && rnumS==rnum) {
 	if (index==neventsS) {
 	  std::cout << Form("Run %u | GevNum %u | GevNumS %llu",rnum,gevnum,gevnumS) << std::endl;
