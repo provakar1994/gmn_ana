@@ -17,7 +17,7 @@
 
 static const int pass = 1; // replay pass
 static const double dnewgain = 3317.99; // +/- 31.69 [Hz/uA], bcm gain for dnew source
-static const std::string runsheet_dir = "/w/halla-scshelf2102/sbs/pdbforce/gmn-ana/DB";
+static const std::string runsheet_dir = "../../DB";
 
 int get_scalerdata_prun (const char *target,        // LH2/LD2
 			 int conf,                  // SBS config
