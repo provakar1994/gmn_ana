@@ -269,6 +269,7 @@ namespace util_pd {
      #################################################### */
   //______________________________________________________________________________
   void ListDirectory(const char *path,std::vector<std::string> &list){
+    /* Acknowledgement: Based on a function written by David Flay. */
     struct dirent *entry;
     DIR *dir = opendir(path);
     if(dir==NULL){
@@ -284,6 +285,7 @@ namespace util_pd {
   }
   //______________________________________________________________________________
   int SplitString(const char delim, const std::string myStr, std::vector<std::string> &out){
+    /* Acknowledgement: Based on a function written by David Flay. */
     // split a string by a delimiter
     std::stringstream ss(myStr);
     std::vector<std::string> result;
