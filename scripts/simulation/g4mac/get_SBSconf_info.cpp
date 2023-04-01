@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "../../../../include/gmn-ana.h"
+#include "../../../include/gmn_ana.h"
 
 void get_SBSconf_info (int conf=4, int sbsmag=30) {
 

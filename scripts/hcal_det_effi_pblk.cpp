@@ -15,8 +15,8 @@
 #include "TTreeFormula.h"
 #include "TLorentzVector.h"
 
-#include "../../include/gmn-ana.h"
-#include "../../dflay/src/JSONManager.cxx"
+#include "../include/gmn_ana.h"
+#include "../dflay/src/JSONManager.cxx"
 
 int hcal_det_effi_pblk (const char *configfilename, std::string filebase="pdout/hcal_det_effi_pblk")
 {

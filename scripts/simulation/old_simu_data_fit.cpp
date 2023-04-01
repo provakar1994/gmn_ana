@@ -36,9 +36,9 @@
 #include "Math/Vector3D.h"
 #include "Math/Vector4D.h"
 
-#include "../../../include/Constants.h"
-#include "../../../src/SetROOTVar.cpp"
-#include "../../../src/ExpConstants.cpp"
+#include "../../include/Constants.h"
+#include "../../src/SetROOTVar.cpp"
+#include "../../src/ExpConstants.cpp"
 
 double PI = TMath::Pi();
 

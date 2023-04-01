@@ -16,7 +16,7 @@
 #include "TTreeFormula.h"
 #include "TLorentzVector.h"
 
-#include "../../include/gmn-ana.h"
+#include "../../include/gmn_ana.h"
 #include "../../dflay/src/JSONManager.cxx"
 
 int elas_ana_simu (const char *configfilename, std::string filebase="siout/test_elas_ana_simu")

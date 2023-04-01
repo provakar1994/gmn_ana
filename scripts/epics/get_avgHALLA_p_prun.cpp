@@ -8,7 +8,7 @@
 #include <vector>
 #include <iostream>
 
-#include "../../include/gmn-ana.h"
+#include "../../include/gmn_ana.h"
 #include "../../dflay/src/JSONManager.cxx"
 
 int get_avgHALLA_p_prun (const char *configfilename) 

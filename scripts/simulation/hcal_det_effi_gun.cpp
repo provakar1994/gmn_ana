@@ -18,8 +18,8 @@
 #include "TTreeFormula.h"
 #include "TLorentzVector.h"
 
-#include "../../../include/gmn-ana.h"
-#include "../../../dflay/src/JSONManager.cxx"
+#include "../../include/gmn_ana.h"
+#include "../../dflay/src/JSONManager.cxx"
 
 TH1D* MakeHisto(int, int, double, double, std::string);
 

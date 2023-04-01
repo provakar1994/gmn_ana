@@ -12,7 +12,7 @@
 #include <vector>
 #include <iostream>
 
-#include "../../include/gmn-ana.h"
+#include "../../include/gmn_ana.h"
 //#include "../../dflay/src/JSONManager.cxx"
 
 static const int pass = 1; // replay pass

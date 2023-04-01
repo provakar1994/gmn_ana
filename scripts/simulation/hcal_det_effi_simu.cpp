@@ -15,8 +15,8 @@
 #include "TTreeFormula.h"
 #include "TLorentzVector.h"
 
-#include "../../../include/gmn-ana.h"
-#include "../../../dflay/src/JSONManager.cxx"
+#include "../../include/gmn_ana.h"
+#include "../../dflay/src/JSONManager.cxx"
 
 double pi = constant::pi;
 double Mp = constant::Mp;

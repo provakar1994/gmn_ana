@@ -16,7 +16,7 @@
 #include "TTreeFormula.h"
 #include "TLorentzVector.h"
 
-#include "../../include/gmn-ana.h"
+#include "../../include/gmn_ana.h"
 #include "../../dflay/src/JSONManager.cxx"
 
 /* this script will only analyze LD2 data */

@@ -13,9 +13,9 @@
 #include <TFile.h>
 #include <TEventList.h>
 
-#include "../../include/Constants.h"
-#include "../../src/SetROOTVar.cpp"
-#include "../../src/ExpConstants.cpp"
+#include "../include/Constants.h"
+#include "../src/SetROOTVar.cpp"
+#include "../src/ExpConstants.cpp"
 
 void pedAlgo_study(const char* rfile="",TCut cut="",
 		   const char* outFile="pedAlgo_study_sbs11_nalgo.root")

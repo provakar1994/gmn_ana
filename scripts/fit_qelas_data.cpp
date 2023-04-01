@@ -10,7 +10,7 @@
 #include "TLatex.h"
 #include "TChain.h"
 
-#include "../include/gmn-ana.h"
+#include "../include/gmn_ana.h"
 #include "../dflay/src/JSONManager.cxx"
 
 /* <============ Defining fit fuctions ============> */

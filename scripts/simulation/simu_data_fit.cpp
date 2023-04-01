@@ -14,7 +14,7 @@
 #include <fstream>
 #include <iostream>
 
-#include "../../include/gmn-ana.h"
+#include "../../include/gmn_ana.h"
 #include "../../dflay/src/JSONManager.cxx"
 
 void CompareHisto (TH1F*, TH1F*);
