@@ -303,15 +303,15 @@ namespace util_pd {
 			  std::vector<int> &data, 
 			  std::vector<pair<int, int>> &segB_segE,
 			  int verbose){
-    // determine the beginning and end segment number for a CODA run
-    // input: 
-    // - rfDirPath: path to where the ROOT file(s) are located 
-    // - run: CODA run number 
-    // output: vector containing:  
-    // - stream: stream number of the EVIO file associated with the run  
-    // - begSeg: start segment number of the ROOT file associated with run 
-    // - endSeg: ending segment number of the ROOT file associated with run
-    // - number of files associated with the run
+    /* Acknowledgement: Based on a function written by David Flay.
+    Determines the beginning and end segment number for a CODA run
+    input: 
+    - rfDirPath: path to where the ROOT file(s) are located 
+    - run: CODA run number 
+    output: vector containing:  
+    - stream number of the EVIO file associated with the run  
+    - number of files associated with the run
+    - list of sengment numbers of the run (sorted) */
 
     int rc=-1; // assume fail 
 
