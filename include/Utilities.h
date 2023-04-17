@@ -91,7 +91,7 @@ namespace util_pd {
   /* Acknowledgement: SplitString is based on a function written by David Flay.*/ 
   int SplitString(const char delim,                // delimiter
 		  const std::string myStr,         // input string
-		  std::vector<std::string &out>);  // output sub-strings
+		  std::vector<std::string> &out);  // output sub-strings
 
   double GetTotCharge(std::vector<CodaRun> crun);  // Calculates total charge
 

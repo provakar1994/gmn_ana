@@ -48,7 +48,8 @@ namespace util_pd {
     return h;
   }
   //_____________________________________
-  void DrawArea(vector<double> dimensions, int lcolor=2, int lwidth=4, int lstyle=9) {
+  void DrawArea(vector<double> dimensions, 
+		int lcolor=2, int lwidth=4, int lstyle=9) {
     /* Draws four lines to represent a rectangular cut area */
     double top = dimensions[0];                 // -X axis
     double bottom = dimensions[1];              // +X axis
@@ -268,7 +269,8 @@ namespace util_pd {
      ## Functions to read ROOT files by sorted segment ##  
      #################################################### */
   //______________________________________________________________________________
-  void ListDirectory(const char *path,std::vector<std::string> &list){
+  void ListDirectory(const char *path,
+		     std::vector<std::string> &list){
     /* Acknowledgement: Based on a function written by David Flay. */
     struct dirent *entry;
     DIR *dir = opendir(path);
@@ -284,7 +286,9 @@ namespace util_pd {
     closedir(dir);
   }
   //______________________________________________________________________________
-  int SplitString(const char delim, const std::string myStr, std::vector<std::string> &out){
+  int SplitString(const char delim, 
+		  const std::string myStr, 
+		  std::vector<std::string> &out){
     /* Acknowledgement: Based on a function written by David Flay. */
     // split a string by a delimiter
     std::stringstream ss(myStr);
