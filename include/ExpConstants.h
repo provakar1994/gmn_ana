@@ -51,6 +51,8 @@ namespace expconst {
   static const double ld2tarrho = 0.169;      //g/cc, target density
 
   // magnet
+  static const double bbmaxcurr = 750;   //A, 100% BB magnet current
+  static const double sbsmaxcurr = 2100; //A, 100% SBS magnet current
   static const double sbsdipolegap = (48.0*2.54) / 100.;  // ~1.22 m
   static const double sbsmaxfield = 3.1*atan(0.85 / (11.0-2.25-(sbsdipolegap/2.))) / (0.3*sbsdipolegap*0.7); // ~1.26 T (?)
 

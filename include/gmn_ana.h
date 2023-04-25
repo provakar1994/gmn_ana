@@ -8,6 +8,7 @@
 
 #include "Constants.h"                // namespace constant
 #include "CodaRun.h"                  // CodaRun struct
+#include "SimuJob.h"                  // SimuJob struct
 #include "../src/Cut.cpp"             // namespace cut
 #include "../src/Utilities.cpp"       // namespace util_pd
 #include "../src/ExpConstants.cpp"    // namespace expconst & class SBSconfig

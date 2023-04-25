@@ -88,9 +88,9 @@ namespace util_pd {
     return h;
   }
 
-  /* #################################################
-     ##   Function to read CSV file with run info   ##  
-     ################################################# */
+  /* ##################################################
+     ##   Functions to read CSV file with run info   ##  
+     ################################################## */
   void ReadRunList(std::string runsheet_dir,  // Dir. path containing CSV files with run info
 		   int &nruns,                // No. of runs to analyze
 		   int sbsconf,               // SBS configuration
@@ -153,7 +153,7 @@ namespace util_pd {
 		   int replay_pass,           // replay pass
 		   int sbsmag,                // SBS magnet current (in %)
 		   int verbose,               // verbosity
-		   vector<CodaRun> &crun)     // Output: Vector of CodaRun structs
+		   vector<CodaRun> &crun)     // Output: Vector of CodaRun objects
   {
     // Define the name of the relevant run spreadsheet
     std::string fst = "/good_runList_GMn_nTPE_"; 
@@ -163,7 +163,7 @@ namespace util_pd {
     std::string run_spreadsheet = runsheet_dir + fst + target + mid + std::to_string(replay_pass) + lst;
 
     // convert magnet field values from % to A
-    sbsmag *= 21;    // 100% SBS magnet current = 2100 A
+    sbsmag *= int(expconst::sbsmaxcurr/100);    // 100% SBS magnet current = 2100 A
 
     // Reading the spreadsheet
     if (nruns < 0) nruns = 1e6;         // replay all runs if nruns < 0
@@ -222,8 +222,8 @@ namespace util_pd {
     std::string run_spreadsheet = runsheet_dir + fst + target + mid + std::to_string(replay_pass) + lst;
 
     // convert magnet field values from % to A
-    sbsmag *= 21;    // 100% SBS magnet current = 2100 A
-    bbmag *= 7.5;    // 100% BB magnet current = 750 A
+    sbsmag *= int(expconst::sbsmaxcurr/100);  // 100% SBS magnet current = 2100 A
+    bbmag *= int(expconst::bbmaxcurr/100);    // 100% BB magnet current = 750 A
 
     // Reading the spreadsheet
     if (nruns < 0) nruns = 1e6;         // replay all runs if nruns < 0
@@ -266,7 +266,7 @@ namespace util_pd {
   }
 
   /* ####################################################
-     ## Functions to read ROOT files by sorted segment ##  
+     ## Functions to load ROOT files by sorted segment ##  
      #################################################### */
   //______________________________________________________________________________
   void ListDirectory(const char *path,
@@ -516,5 +516,126 @@ namespace util_pd {
       totcharge += run.charge;
 
     return totcharge;
+  }
+  /* ##################################################
+     ##   Function to read MC replay summary files   ##  
+     ################################################## */
+  //______________________________________________________________________________
+  void ReadSimuJobSummary(std::string logfile_dir,   // Dir. path containing MC summary files
+			  int &njobs,                // # jobs to analyze per process
+			  bool issimcgen,            // True=>SIMC genrated events
+			  int sbsconf,               // SBS configuration
+			  int sbsmag,                // SBS magnet current (in %)
+			  std::string target,        // target type
+			  int verbose,               // verbosity
+			  vector<SimuJob> &sjob)     // Output: Vector of SimuJob objects
+  /* Reads simulation job specifics from summary files and loads the values to SimuJob objects.
+     This function has the standard naming conventions of output simulation and summary files 
+     hard coded. Please make sure the files to analyze have names compatible with the standard
+     naming convention for successful execution.
+     ---------
+     Standard naming conventions:
+     1. Filebase: sbs<sbsconf>_sbs<sbsmag>p for g4sbs gen., sbs<sbsconf>_sbs<sbsmag>p_simc for SIMC gen.
+     2. MC job summary file: <filebase>_summary.csv
+     3. Digitized ROOT file: <filebase>_<process>_job_<jobid>.root
+     4. Replayed digitized ROOT file: replayed_<filebase>_<process>_job_<jobid>.root
+  */
+  {
+    TString filebase = Form("sbs%d_sbs%dp",sbsconf,sbsmag);              //g4sbs generator
+    if (issimcgen) filebase = Form("sbs%d_sbs%dp_simc",sbsconf,sbsmag);  //simc generator
+
+    // Define the name of the summary file and corresponding process based on generator and target
+    vector<TString> simu_logfile, process;
+    if (target.compare("LH2") == 0) {
+      TString temp = Form("%s_heep_summary.csv",filebase.Data());
+      simu_logfile.push_back(temp); process.push_back("heep");
+    } 
+    else if (target.compare("LD2") == 0) {
+      TString temp = "";
+      if (issimcgen) {
+	temp = Form("%s_deep_summary.csv",filebase.Data());
+	simu_logfile.push_back(temp); process.push_back("deep");
+	temp = Form("%s_deen_summary.csv",filebase.Data());
+	simu_logfile.push_back(temp); process.push_back("deen");
+      } else {
+	temp = Form("%s_deeN_summary.csv",filebase.Data());
+	simu_logfile.push_back(temp); process.push_back("deeN");
+      }
+    }
+    else
+      throw std::invalid_argument("[util_pd::ReadSimuJobSummary] Given target type is invalid!");
+
+    // Reading the summary spreadsheet
+    if (njobs < 0) njobs = 1e4;         // replay all runs if njobs < 0
+    // looping through list of summary files
+    for (int ifile=0; ifile<simu_logfile.size(); ifile++) {
+      int inisize = sjob.size();
+      TString logfile_temp = Form("%s/%s",logfile_dir.c_str(),simu_logfile[ifile].Data());
+      ifstream simu_log; simu_log.open(logfile_temp);
+      string readline;
+      if(simu_log.is_open()){
+	std::cout << "Reading summary file: " << logfile_temp << std::endl;
+	string skip_header; getline(simu_log,skip_header); // skipping column header
+	while(getline(simu_log,readline)){                  // reading each line
+	  istringstream tokenStream(readline);
+	  string token;
+	  char delimiter = ',';
+	  vector<string> temp, data;
+	  while(getline(tokenStream,token,delimiter)){      // reading each element of a line
+	    string temptoken=token;
+	    temp.push_back(temptoken);
+	  }
+	  // add relevant info to SimuJob objects
+	  if (sjob.size() >= njobs) {njobs += njobs; break;}
+	  SimuJob temp_cr;
+	  int jobid = stoi(temp[0]);
+	  TString sfname = Form("%s/%s_%s_job_%d.root",logfile_dir.c_str(),
+				filebase.Data(),process[ifile].Data(),jobid); 
+	  TString rfname = Form("%s/replayed_%s_%s_job_%d.root",logfile_dir.c_str(),
+				filebase.Data(),process[ifile].Data(),jobid); 
+	  // handling the sicrepancy in summary file by generator
+	  data.push_back(sfname.Data());
+	  data.push_back(rfname.Data());
+	  if (issimcgen) {
+	    data.push_back(temp[1]);
+	    data.push_back(temp[2]);
+	    data.push_back(temp[4]);
+	    double lumi = stod(temp[5])*stod(temp[2])/(stod(temp[1])*stod(temp[4]));
+	    data.push_back(to_string(lumi));
+	    data.push_back(to_string(stod(temp[3])/1000.));
+	  }
+
+	  temp_cr.SetDataSimuJob(data);
+	  sjob.push_back(temp_cr);
+
+	  temp.clear();
+	  data.clear();
+	}
+	if (verbose > 0) {
+	  std::cout << "First job info:" << std::endl << sjob[inisize];
+	  std::cout << "Last job info:" << std::endl << sjob[sjob.size()-1];
+	}
+      }else
+	throw std::runtime_error("[util_pd::ReadSimuJobSummary] Summary file doesn't exist");
+      simu_log.close();
+    }
+    // let's update njobs with total no. of runs to analyze
+    njobs = sjob.size();
+  }
+  //______________________________________________________________________________
+  void LoadSimuROOTTree(std::vector<SimuJob> sjobs,  // SimuJob objects with run info
+			int verbose,                 // verbosity
+			TChain* &C)                  // Output: TChain with data
+  {
+    if (!sjobs.empty()) {
+      for (int ijob=0; ijob<sjobs.size(); ijob++) {
+	if (verbose > 1) std::cout << sjobs[ijob].rfname << std::endl;
+	C->Add(sjobs[ijob].rfname.c_str());
+      }
+      if (C->GetEntries()==0) 
+	throw std::runtime_error("[util_pd::LoadSimuROOTTree] Empty ROOT files Or, they don't exist!");
+    }else {
+      throw std::runtime_error("[util_pd::LoadSimuROOTTree] Simu job list is empty!");
+    }
   }
 }

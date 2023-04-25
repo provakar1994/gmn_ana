@@ -14,6 +14,7 @@
 #include "TString.h"
 
 #include "../include/CodaRun.h"
+#include "../include/SimuJob.h"
 #include "../include/ExpConstants.h"
 
 namespace util_pd {
@@ -76,14 +77,40 @@ namespace util_pd {
   int LoadROOTTree(std::string path,          // ROOT file directory path
 		   std::vector<CodaRun> crun, // CodaRun objects with run info
 		   bool sort,                 // Sort by segments before parsing?
-		   bool verbose,              // verbosity
+		   int verbose,               // verbosity
 		   TChain* &C);               // Output: TChain with data
 
   int LoadROOTTree(std::string path,          // ROOT file directory path
 		   CodaRun crun,              // CodaRun object with run info
 		   bool sort,                 // Sort by segments before parsing?
-		   bool verbose,              // verbosity
+		   int verbose,               // verbosity
 		   TChain* &C);               // Output: TChain with data
+
+  /* ##################################################
+     ##   Function to read MC replay summary files   ##  
+     ################################################## */
+  /* Reads simulation job specifics from summary files and loads the values to SimuJob objects.
+     This function has the standard naming conventions of output simulation and summary files 
+     hard coded. Please make sure the files to analyze have names compatible with the standard
+     naming convention for successful execution.
+     ---------
+     Standard naming conventions:
+     1. Filebase: sbs<sbsconf>_sbs<sbsmag> for g4sbs gen., sbs<sbsconf>_sbs<sbsmag>_simc for SIMC gen.
+     2. MC job summary file: <filebase>_summary.csv
+     3. Digitized ROOT file: <filebase>_<process>_job_<jobid>.root
+     4. Replayed digitized ROOT file: replayed_<filebase>_<process>_job_<jobid>.root */
+  void ReadSimuJobSummary(std::string logfile_dir,   // Dir. path containing MC summary files
+			  int &njobs,                // # jobs to analyze per process
+			  bool issimcgen,            // True=>SIMC genrated events
+			  int sbsconf,               // SBS configuration
+			  int sbsmag,                // SBS magnet current (in %)
+			  std::string target,        // target type
+			  int verbose,               // verbosity
+			  vector<SimuJob> &sjob);    // Output: Vector of SimuJob objects
+
+  void LoadSimuROOTTree(std::vector<SimuJob> sjobs,  // SimuJob objects with run info
+			int verbose,                 // verbosity
+			TChain* &C);                 // Output: TChain with data
 
   /* ###############################
      ## General Purpose Functions ##  
