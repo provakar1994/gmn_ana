@@ -504,19 +504,7 @@ namespace util_pd {
     
     return 0;
   }
-  /* ###############################
-     ## General Purpose Functions ##  
-     ############################### */
-  //______________________________________________________________________________
-  double GetTotCharge(std::vector<CodaRun> crun) 
-  /* Calculates total charge from a vector of CodaRuns */
-  {
-    double totcharge=0.;
-    for (auto & run : crun)
-      totcharge += run.charge;
 
-    return totcharge;
-  }
   /* ##################################################
      ##   Function to read MC replay summary files   ##  
      ################################################## */
@@ -528,7 +516,7 @@ namespace util_pd {
 			  int sbsmag,                // SBS magnet current (in %)
 			  std::string target,        // target type
 			  int verbose,               // verbosity
-			  vector<SimuJob> &sjob)     // Output: Vector of SimuJob objects
+			  vector<SimuJob> &sjobs)    // Output: Vector of SimuJob objects
   /* Reads simulation job specifics from summary files and loads the values to SimuJob objects.
      This function has the standard naming conventions of output simulation and summary files 
      hard coded. Please make sure the files to analyze have names compatible with the standard
@@ -569,7 +557,7 @@ namespace util_pd {
     if (njobs < 0) njobs = 1e4;         // replay all runs if njobs < 0
     // looping through list of summary files
     for (int ifile=0; ifile<simu_logfile.size(); ifile++) {
-      int inisize = sjob.size();
+      int inisize = sjobs.size();
       TString logfile_temp = Form("%s/%s",logfile_dir.c_str(),simu_logfile[ifile].Data());
       ifstream simu_log; simu_log.open(logfile_temp);
       string readline;
@@ -586,8 +574,8 @@ namespace util_pd {
 	    temp.push_back(temptoken);
 	  }
 	  // add relevant info to SimuJob objects
-	  if (sjob.size() >= njobs) {njobs += njobs; break;}
-	  SimuJob temp_cr;
+	  if (sjobs.size() >= njobs) {njobs += njobs; break;}
+	  SimuJob temp_sj;
 	  int jobid = stoi(temp[0]);
 	  TString sfname = Form("%s/%s_%s_job_%d.root",logfile_dir.c_str(),
 				filebase.Data(),process[ifile].Data(),jobid); 
@@ -605,22 +593,23 @@ namespace util_pd {
 	    data.push_back(to_string(stod(temp[3])/1000.));
 	  }
 
-	  temp_cr.SetDataSimuJob(data);
-	  sjob.push_back(temp_cr);
+	  temp_sj.SetDataSimuJob(data);
+	  sjobs.push_back(temp_sj);
 
 	  temp.clear();
 	  data.clear();
 	}
 	if (verbose > 0) {
-	  std::cout << "First job info:" << std::endl << sjob[inisize];
-	  std::cout << "Last job info:" << std::endl << sjob[sjob.size()-1];
+	  std::cout << "First job info:" << std::endl << sjobs[inisize];
+	  std::cout << "Last job info:" << std::endl << sjobs[sjobs.size()-1];
 	}
       }else
 	throw std::runtime_error("[util_pd::ReadSimuJobSummary] Summary file doesn't exist");
       simu_log.close();
     }
+    std::cout << std::endl;
     // let's update njobs with total no. of runs to analyze
-    njobs = sjob.size();
+    njobs = sjobs.size();
   }
   //______________________________________________________________________________
   void LoadSimuROOTTree(std::vector<SimuJob> sjobs,  // SimuJob objects with run info
@@ -628,6 +617,8 @@ namespace util_pd {
 			TChain* &C)                  // Output: TChain with data
   {
     if (!sjobs.empty()) {
+      const int njobs = sjobs.size();
+      std::cout << "Parsing ROOT files from " << njobs << " jobs.." << std::endl;
       for (int ijob=0; ijob<sjobs.size(); ijob++) {
 	if (verbose > 1) std::cout << sjobs[ijob].rfname << std::endl;
 	C->Add(sjobs[ijob].rfname.c_str());
@@ -637,5 +628,48 @@ namespace util_pd {
     }else {
       throw std::runtime_error("[util_pd::LoadSimuROOTTree] Simu job list is empty!");
     }
+  }
+
+  /* ###############################
+     ## General Purpose Functions ##  
+     ############################### */
+  //______________________________________________________________________________
+  double GetTotCharge(std::vector<CodaRun> cruns) 
+  /* Calculates total charge from a vector of CodaRuns */
+  {
+    double totcharge=0.;
+    for (auto & run : cruns)
+      totcharge += run.charge;
+    return totcharge;
+  }
+  //______________________________________________________________________________
+  double GetTotCharge(std::vector<SimuJob> sjobs) 
+  /* Calculates total charge from a vector of SimuJobs */
+  {
+    double totcharge=0.;
+    for (auto & job : sjobs)
+      totcharge += job.charge;
+    return totcharge;
+  }
+  //______________________________________________________________________________
+  double GetTotNtries(std::vector<SimuJob> sjobs) 
+  /* Calculates total # tries from a vector of SimuJobs */
+  {
+    double totntries=0.;
+    for (auto & job : sjobs)
+      totntries += job.ntried;
+    return totntries;
+  }
+  //______________________________________________________________________________
+  void GetTotNtriesnCh(std::vector<SimuJob> sjobs, // Input: List of SimuJob objects
+		       vector<double> &data)       // Output: data[0]=>Tot. Ch., data[1]=>Tot. ntries
+  /* Calc. # tries & tot. Ch. from SimuJob objects */
+  {
+    double totntries=0.,totcharge=0.;
+    for (auto & job : sjobs) {
+      totntries += job.ntried;
+      totcharge += job.charge;
+    }
+    data = {totntries,totcharge};
   }
 }

@@ -106,7 +106,7 @@ namespace util_pd {
 			  int sbsmag,                // SBS magnet current (in %)
 			  std::string target,        // target type
 			  int verbose,               // verbosity
-			  vector<SimuJob> &sjob);    // Output: Vector of SimuJob objects
+			  vector<SimuJob> &sjobs);   // Output: Vector of SimuJob objects
 
   void LoadSimuROOTTree(std::vector<SimuJob> sjobs,  // SimuJob objects with run info
 			int verbose,                 // verbosity
@@ -120,7 +120,14 @@ namespace util_pd {
 		  const std::string myStr,         // input string
 		  std::vector<std::string> &out);  // output sub-strings
 
-  double GetTotCharge(std::vector<CodaRun> crun);  // Calculates total charge
+  double GetTotCharge(std::vector<CodaRun> cruns); // Calc. tot. charge from CodaRun objects
+  double GetTotCharge(std::vector<SimuJob> sjobs); // Calc. tot. charge from SimuJob objects
+
+  double GetTotNtries(std::vector<SimuJob> sjobs); // Calc. tot. # tries from SimuJob objects
+
+  /* Calc. # tries & tot. Ch. from SimuJob objects */
+  void GetTotNtriesnCh(std::vector<SimuJob> sjobs, // Input: List of SimuJob objects
+		       vector<double> &data);      // Output: data[0]=>Tot. Ntries, data[1]=>Tot. Charge
 
 }
 #endif
