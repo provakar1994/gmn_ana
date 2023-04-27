@@ -510,11 +510,11 @@ namespace util_pd {
      ################################################## */
   //______________________________________________________________________________
   void ReadSimuJobSummary(std::string logfile_dir,   // Dir. path containing MC summary files
-			  int &njobs,                // # jobs to analyze per process
-			  bool issimcgen,            // True=>SIMC genrated events
 			  int sbsconf,               // SBS configuration
 			  int sbsmag,                // SBS magnet current (in %)
+			  std::string generator,     // simc / g4sbs
 			  std::string target,        // target type
+			  int &njobs,                // # jobs to analyze per process
 			  int verbose,               // verbosity
 			  vector<SimuJob> &sjobs)    // Output: Vector of SimuJob objects
   /* Reads simulation job specifics from summary files and loads the values to SimuJob objects.
@@ -523,14 +523,13 @@ namespace util_pd {
      naming convention for successful execution.
      ---------
      Standard naming conventions:
-     1. Filebase: sbs<sbsconf>_sbs<sbsmag>p for g4sbs gen., sbs<sbsconf>_sbs<sbsmag>p_simc for SIMC gen.
+     1. Filebase: sbs<sbsconf>_sbs<sbsmag>p_<generator>
      2. MC job summary file: <filebase>_summary.csv
      3. Digitized ROOT file: <filebase>_<process>_job_<jobid>.root
      4. Replayed digitized ROOT file: replayed_<filebase>_<process>_job_<jobid>.root
   */
   {
-    TString filebase = Form("sbs%d_sbs%dp",sbsconf,sbsmag);              //g4sbs generator
-    if (issimcgen) filebase = Form("sbs%d_sbs%dp_simc",sbsconf,sbsmag);  //simc generator
+    TString filebase = Form("sbs%d_sbs%dp_%s",sbsconf,sbsmag,generator.c_str());
 
     // Define the name of the summary file and corresponding process based on generator and target
     vector<TString> simu_logfile, process;
@@ -540,7 +539,7 @@ namespace util_pd {
     } 
     else if (target.compare("LD2") == 0) {
       TString temp = "";
-      if (issimcgen) {
+      if (generator.compare("simc") == 0) {
 	temp = Form("%s_deep_summary.csv",filebase.Data());
 	simu_logfile.push_back(temp); process.push_back("deep");
 	temp = Form("%s_deen_summary.csv",filebase.Data());
@@ -584,7 +583,7 @@ namespace util_pd {
 	  // handling the sicrepancy in summary file by generator
 	  data.push_back(sfname.Data());
 	  data.push_back(rfname.Data());
-	  if (issimcgen) {
+	  if (generator.compare("simc") == 0) {
 	    data.push_back(temp[1]);
 	    data.push_back(temp[2]);
 	    data.push_back(temp[4]);

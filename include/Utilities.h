@@ -95,16 +95,16 @@ namespace util_pd {
      naming convention for successful execution.
      ---------
      Standard naming conventions:
-     1. Filebase: sbs<sbsconf>_sbs<sbsmag> for g4sbs gen., sbs<sbsconf>_sbs<sbsmag>_simc for SIMC gen.
+     1. Filebase: sbs<sbsconf>_sbs<sbsmag>_<generator>
      2. MC job summary file: <filebase>_summary.csv
      3. Digitized ROOT file: <filebase>_<process>_job_<jobid>.root
      4. Replayed digitized ROOT file: replayed_<filebase>_<process>_job_<jobid>.root */
   void ReadSimuJobSummary(std::string logfile_dir,   // Dir. path containing MC summary files
-			  int &njobs,                // # jobs to analyze per process
-			  bool issimcgen,            // True=>SIMC genrated events
 			  int sbsconf,               // SBS configuration
 			  int sbsmag,                // SBS magnet current (in %)
+			  std::string generator,     // simc / g4sbs
 			  std::string target,        // target type
+			  int &njobs,                // # jobs to analyze per process
 			  int verbose,               // verbosity
 			  vector<SimuJob> &sjobs);   // Output: Vector of SimuJob objects
 

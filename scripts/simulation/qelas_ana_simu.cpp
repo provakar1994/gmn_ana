@@ -22,21 +22,19 @@
 /* this script will only analyze LD2 data */
 static const std::string target = "LD2";
 
-int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test_qelas_ana_simu")
+int qelas_ana_simu (const char *configfilename, 
+                    int verbose=-1,  //<-1=>Debug, =-1=>Test
+                    int verbosefn=0, //>0=>Debug
+		    /* verbose=0 & verbosefn=0 => Production*/
+		    std::string filebase="siout/test_qelas_ana")
 {
   gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
 
-  // Define a clock to get macro processing time
+  // clock to keep macro processing time
   TStopwatch *sw = new TStopwatch(); sw->Start();
 
   // reading input config file ---------------------------------------
   JSONManager *jmgr = new JSONManager(configfilename);
-
-  // parsing trees
-  std::string rootfile_dir = jmgr->GetValueFromKey_str("rootfile_dir");
-  TChain *C = new TChain("T");
-  C->Add(rootfile_dir.c_str());
-  if (C->GetEntries()==0) {std::cerr << "*!* No ROOT file!" << std::endl; throw;}
  
   // seting up the desired SBS configuration
   int conf = jmgr->GetValueFromKey<int>("SBS_config");
@@ -44,6 +42,13 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
   double sbsfield = jmgr->GetValueFromKey<double>("SBS_field");
   SBSconfig sbsconf(conf, sbsmag);
   cout << sbsconf;
+
+  // reading job summary and parsing ROOT trees
+  std::string rfd = jmgr->GetValueFromKey_str("rootfile_dir");
+  std::string gen = jmgr->GetValueFromKey_str("generator");
+  int njobs = jmgr->GetValueFromKey<int>("Njobs_to_ana"); // # MC jobs to analyze
+  vector<SimuJob> sjobs; util_pd::ReadSimuJobSummary(rfd,conf,sbsmag,gen,target,njobs,verbosefn,sjobs);
+  TChain *C = new TChain("T"); util_pd::LoadSimuROOTTree(sjobs,verbosefn,C);
 
   // Choosing the model of calculation
   // model 0 => uses reconstructed p as independent variable
@@ -55,29 +60,33 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
   else if (model == 2) std::cout << "Using model 2 [4-vector calculation] for analysis.." << std::endl;
   else { std::cerr << "Enter a valid model number! **!**" << std::endl; throw; }
 
-  // parameters for normalization
-  double I_beam = jmgr->GetValueFromKey<double>("beam_current");
-  // total generated simulation events per job
-  double ngen_total = jmgr->GetValueFromKey<double>("ngen_total"); 
-  double lumi = kine::Luminosity(I_beam, target);
+  // // parameters for normalization
+  // double I_beam = jmgr->GetValueFromKey<double>("beam_current");
+  // // total generated simulation events per job
+  // double ngen_total = jmgr->GetValueFromKey<double>("ngen_total"); 
+  // double lumi = kine::Luminosity(I_beam, target);
 
   // choosing nucleon type 
   std::string Ntype = jmgr->GetValueFromKey_str("Ntype");
 
   // setting up global cuts
-  std::string gcut = jmgr->GetValueFromKey_str("global_cut");
-  TCut globalcut = gcut.c_str();
+  std::string gcut = jmgr->GetValueFromKey_str("global_cut"); TCut globalcut = gcut.c_str();
   TTreeFormula *GlobalCut = new TTreeFormula("GlobalCut", globalcut, C);
 
   // setting up ROOT tree branch addresses ---------------------------------------
   int maxNtr=1000;
   C->SetBranchStatus("*",0);
+  // bbsh clus var
+  double eSH, xSH, ySH, rblkSH, cblkSH, idblkSH, atimeSH;
+  std::vector<std::string> bbshclvar = {"sh.e","sh.x","sh.y","sh.rowblk","sh.colblk","sh.idblk","sh.atimeblk"};
+  std::vector<void*> bbshclvar_mem = {&eSH,&xSH,&ySH,&rblkSH,&cblkSH,&idblkSH,&atimeSH};
+  setrootvar::setbranch(C, "bb", bbshclvar, bbshclvar_mem);
 
-  // bbcal clus var
-  double eSH, xSH, ySH, rblkSH, cblkSH, idblkSH, atimeSH, ePS, rblkPS, cblkPS, idblkPS, atimePS;
-  std::vector<std::string> bbcalclvar = {"sh.e","sh.x","sh.y","sh.rowblk","sh.colblk","sh.idblk","sh.atimeblk","ps.e","ps.rowblk","ps.colblk","ps.idblk","ps.atimeblk"};
-  std::vector<void*> bbcalclvar_mem = {&eSH,&xSH,&ySH,&rblkSH,&cblkSH,&idblkSH,&atimeSH,&ePS,&rblkPS,&cblkPS,&idblkPS,&atimePS};
-  setrootvar::setbranch(C, "bb", bbcalclvar, bbcalclvar_mem);
+  // bbps clus var
+  double ePS, rblkPS, cblkPS, idblkPS, atimePS;
+  std::vector<std::string> bbpsclvar = {"ps.e","ps.rowblk","ps.colblk","ps.idblk","ps.atimeblk"};
+  std::vector<void*> bbpsclvar_mem = {&ePS,&rblkPS,&cblkPS,&idblkPS,&atimePS};
+  setrootvar::setbranch(C, "bb", bbpsclvar, bbpsclvar_mem);
  
   // hcal clus var
   double eHCAL, xHCAL, yHCAL, rblkHCAL, cblkHCAL, idblkHCAL, atimeHCAL, tdcHCAL;
@@ -93,10 +102,23 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
   std::vector<void*> trvar_mem = {&ntrack,&p,&px,&py,&pz,&xTr,&yTr,&thTr,&phTr,&vx,&vy,&vz,&xtgt,&ytgt,&thtgt,&phtgt};
   setrootvar::setbranch(C,"bb.tr",trvar,trvar_mem);
 
+  // //MC variables (g4sbs gen)
+  // double mc_sigma, mc_omega, mc_fnucl;
+  // std::vector<std::string> mc = {"mc_sigma","mc_omega","mc_fnucl"};
+  // std::vector<void*> mc_mem = {&mc_sigma,&mc_omega,&mc_fnucl};
+  // setrootvar::setbranch(C,"MC",mc,mc_mem);
+
+  // //MC variables (SIMC gen)
+  // double simc_sigma, simc_Weight, simc_fnucl;
+  // std::vector<std::string> simc = {"simc_sigma","simc_Weight","simc_fnucl"};
+  // std::vector<void*> simc_mem = {&simc_sigma,&simc_Weight,&simc_fnucl};
+  // setrootvar::setbranch(C,"MC",simc,simc_mem);
+
   //MC variables
-  double mc_sigma, mc_omega, mc_fnucl;
-  std::vector<std::string> mc = {"mc_sigma","mc_omega","mc_fnucl"};
-  std::vector<void*> mc_mem = {&mc_sigma,&mc_omega,&mc_fnucl};
+  double mc_sigma, mc_fnucl; // mc_sigma => Cross-section weight
+  std::vector<std::string> mc = {"mc_sigma","mc_fnucl"};          //Default: g4sbs gen.
+  if (gen.compare("simc")==0) mc = {"simc_Weight","simc_fnucl"};  
+  std::vector<void*> mc_mem = {&mc_sigma,&mc_fnucl}; 
   setrootvar::setbranch(C,"MC",mc,mc_mem);
 
   // turning on the remaining branches we use for the globalcut
@@ -104,9 +126,9 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
   C->SetBranchStatus("bb.etot_over_p", 1);
 
   // defining the outputfile
-  TString outFile = Form("%s_sbs%d_sbs%dp_model%d.root", 
-			 filebase.c_str(), sbsconf.GetSBSconf(), sbsconf.GetSBSmag(), model);
-  TFile *fout = new TFile(outFile.Data(), "RECREATE");
+  if (verbose==0 || verbosefn==0) filebase = "pdout/qelas_ana";
+  TString outFile = Form("%_%s_sbs%d_sbs%dp_model%d.root",filebase.c_str(),gen.c_str(),conf,sbsmag,model);
+  TFile *fout = new TFile(outFile.Data(),"RECREATE");
 
   // defining histograms
   TH1F *h_W = util_pd::TH1FhW("h_W");
@@ -214,27 +236,38 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
   vector<TVector3> HCAL_axes; kine::SetHCALaxes(sbsconf.GetSBStheta_rad(), HCAL_axes);
   TVector3 HCAL_origin = sbsconf.GetHCALdist()*HCAL_axes[2] + hcal_voffset*HCAL_axes[0] + hcal_hoffset*HCAL_axes[1];
 
+  // calculating MC normalizetion factors 
+  double mc_omega, lumi;
+  vector<double> totNtriesnCh; util_pd::GetTotNtriesnCh(sjobs,totNtriesnCh);
+
   // looping through the tree ---------------------------------------
   std::cout << std::endl;
   long nevent = 0, nevents = C->GetEntries(); 
-  int treenum = 0, currenttreenum = 0;
+  int treenum = 0, currenttreenum = 0, treeitr = 0;
   while (C->GetEntry(nevent++)) {
    
     // print progress 
-    if( nevent % 1000 == 0 ) std::cout << nevent << "/" << nevents << "\r";
+    if (nevent%1000 == 0) std::cout << nevent << "/" << nevents << "\r";
     std::cout.flush();
 
-    // apply global cuts efficiently (AJRP method)
     currenttreenum = C->GetTreeNumber();
     if (nevent == 1 || currenttreenum != treenum) {
       treenum = currenttreenum;
+      // apply global cuts efficiently (AJRP method)
       GlobalCut->UpdateFormulaLeaves();
+      
+      // getting normalization factors per run
+      /* sophisticated but slightly inefficient way */
+	 const char* rftemp = C->GetFile()->GetName();
+	 auto it = std::find_if(sjobs.begin(), sjobs.end(), [=](SimuJob const& sj){return sj.rfname.compare(rftemp) == 0;});
+	 if (it != sjobs.end()) {lumi = it->lumi; mc_omega = it->genvol;} 
+	 //lumi = sjobs[treeitr].lumi; mc_omega = sjobs[treeitr].genvol; treeitr++;
     } 
     bool passedgCut = GlobalCut->EvalInstance(0) != 0;   
     if (!passedgCut) continue;
 
     // cross section weighted normalization factor
-    weight = mc_sigma*mc_omega*lumi / ngen_total;
+    weight = mc_sigma*mc_omega*lumi / totNtriesnCh[0];
 
     // kinematic parameters
     double ebeam = sbsconf.GetEbeam();       // Expected beam energy (GeV) [Get it from EPICS, eventually]
@@ -247,9 +280,9 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
     TVector3 vertex(0, 0, vz[0]);
     TLorentzVector Pe(0,0,ebeam_corr,ebeam_corr);   // incoming e-
     TLorentzVector Peprime(px[0] * (precon/p[0]),   // scattered e-
-			   py[0] * (precon/p[0]),
-			   pz[0] * (precon/p[0]),
-			   precon);                 
+    			   py[0] * (precon/p[0]),
+    			   pz[0] * (precon/p[0]),
+    			   precon);                 
     TLorentzVector PN;                              // target nucleon [Ntype ??]
     kine::SetPN(Ntype, PN);
     TLorentzVector PNprime;                         // Recoil nucleon 4-vector
@@ -385,25 +418,25 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
     if (WCut) {
       // fiducial cut
       if (fiduCut) {
-	h_dxHCAL->Fill(dx, weight);
-	h_dyHCAL->Fill(dy, weight);
-	// dx dist. for p & n separately using MC info
-	if (int(mc_fnucl)==0) {
-	  h_dxHCAL_n->Fill(dx, weight);
-	} else if (int(mc_fnucl)==1) {
-	  h_dxHCAL_p->Fill(dx, weight);
-	} else {
-	  std::cerr << "*!* Invalid final state nuclei!" << std::endl; 
-	  throw;
-	}
+    	h_dxHCAL->Fill(dx, weight);
+    	h_dyHCAL->Fill(dy, weight);
+    	// dx dist. for p & n separately using MC info
+    	if (int(mc_fnucl)==0) {
+    	  h_dxHCAL_n->Fill(dx, weight);
+    	} else if (int(mc_fnucl)==1) {
+    	  h_dxHCAL_p->Fill(dx, weight);
+    	} else {
+    	  std::cerr << "*!* Invalid final state nuclei!" << std::endl; 
+    	  throw;
+    	}
 
-	h2_rcHCAL->Fill(cblkHCAL, rblkHCAL);
-	// p & n spots
-	h2_dxdyHCAL->Fill(dy, dx);
+    	h2_rcHCAL->Fill(cblkHCAL, rblkHCAL);
+    	// p & n spots
+    	h2_dxdyHCAL->Fill(dy, dx);
 
-	// hit map to show p & n in fiducial region
-	if (pCut) h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick);
-	if (nCut) h2_xyHCAL_n->Fill(xyHCAL_exp[1], xyHCAL_exp[0]);
+    	// hit map to show p & n in fiducial region
+    	if (pCut) h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick);
+    	if (nCut) h2_xyHCAL_n->Fill(xyHCAL_exp[1], xyHCAL_exp[0]);
       }
     }
 
@@ -411,13 +444,12 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
     if (fiduCut) {
       h_W->Fill(Wrecon);
       if (pCut || nCut) { 
-	h_W_cut->Fill(Wrecon);
+    	h_W_cut->Fill(Wrecon);
       } else {
-	h_W_acut->Fill(Wrecon);
+    	h_W_acut->Fill(Wrecon);
       }
     }
       
-
     Tout->Fill();
   } // event loop
   std::cout << std::endl << std::endl;
@@ -503,7 +535,6 @@ int qelas_ana_simu (const char *configfilename, std::string filebase="siout/test
   h2_dxdyHCAL->Write();
   h2_xyHCAL_p->Write();
   h2_xyHCAL_n->Write();
-  //fout->Write();
   sw->Delete();
   delete jmgr;
   return 0;

@@ -3,9 +3,9 @@
     "SBS_config"         : 4,
     "SBS_magnet_percent" : 50,
     "model"              : 2,
-    "beam_current"       : 1E-6,
-    "ngen_total"         : 100000,
-    "rootfile_dir"       : "/lustre19/expphy/volatile/halla/sbs/pdbforce/g4sbs_output/sdr/sbs4-sbs50p/replayed_sbs4_sbs50p_89T_QE_job_*.root",
+    "generator"          : "simc",
+    "Njobs_to_ana"       : -1,
+    "rootfile_dir"       : "/volatile/halla/sbs/pdbforce/g4sbs_output/simcSDR/sbs4-sbs50p-qelas",
     "global_cut"         : "bb.tr.n>0&&abs(bb.tr.vz[0])<.08&&bb.gem.track.nhits>2&&bb.ps.e>0.2&&sbs.hcal.e>0",
     "SBS_field"          : 0.89,
     "hcal_voffset"       : 0,
@@ -22,5 +22,7 @@
     "h_dyHCAL_lims"      : [200,-2,2],
     "Wmin"               : 0.7,
     "Wmax"               : 1.12,
-    "README"             : "dx_p(n) : deltax dist. of p(n). dx_p(n)[0] => Peak position, dx_p(n)[1] => Peak RMS | dy_p(n) : deltay dist. of p(n). dy_p(n)[0] => Peak position, dy_p(n)[1] => Peak RMS | Nsigma_cut_dx(dy)_p(n) : # of sigma to include in the deltax(deltay) cut for p(n)"
+    "README"             : ["dx_p(n) : deltax dist. of p(n). dx_p(n)[0] => Peak position, dx_p(n)[1] => Peak RMS", "dy_p(n) : deltay dist. of p(n). dy_p(n)[0] => Peak position, dy_p(n)[1] => Peak RMS", "Nsigma_cut_dx(dy)_p(n) : # of sigma to include in the deltax(deltay) cut for p(n)"],
+    "beam_current"       : 1E-6,
+    "ngen_total"         : 100000
 }

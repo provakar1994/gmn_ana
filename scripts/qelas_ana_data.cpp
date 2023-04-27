@@ -23,9 +23,10 @@
 static const std::string target = "LD2";
 
 int qelas_ana_data (const char *configfilename,
-                    int verbose=-1,  //<0=>Debug
+                    int verbose=-1,  //<-1=>Debug, =-1=>Test
                     int verbosefn=0, //>0=>Debug
-                    std::string filebase="pdout/test_qelas_ana_data")
+		    /* verbose==verbosefn==0 => Production*/
+                    std::string filebase="pdout/test_qelas_ana")
 {
   gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
 
@@ -71,8 +72,7 @@ int qelas_ana_data (const char *configfilename,
   std::string Ntype = jmgr->GetValueFromKey_str("Ntype");
 
   // setting up global cuts
-  std::string gcut = jmgr->GetValueFromKey_str("global_cut");
-  TCut globalcut = gcut.c_str();
+  std::string gcut = jmgr->GetValueFromKey_str("global_cut"); TCut globalcut = gcut.c_str();
   TTreeFormula *GlobalCut = new TTreeFormula("GlobalCut", globalcut, C);
 
   // setting up ROOT tree branch addresses ---------------------------------------
@@ -81,12 +81,17 @@ int qelas_ana_data (const char *configfilename,
   // beam energy 
   // double HALLA_p; setrootvar::setbranch(C, "HALLA_p", "", &HALLA_p);
 
-  // bbcal clus var
-  double eSH, xSH, ySH, rblkSH, cblkSH, idblkSH, atimeSH, ePS, rblkPS, cblkPS, idblkPS, atimePS;
-  std::vector<std::string> bbcalclvar = {"sh.e","sh.x","sh.y","sh.rowblk","sh.colblk","sh.idblk","sh.atimeblk",
-					 "ps.e","ps.rowblk","ps.colblk","ps.idblk","ps.atimeblk"};
-  std::vector<void*> bbcalclvar_mem = {&eSH,&xSH,&ySH,&rblkSH,&cblkSH,&idblkSH,&atimeSH,&ePS,&rblkPS,&cblkPS,&idblkPS,&atimePS};
-  setrootvar::setbranch(C, "bb", bbcalclvar, bbcalclvar_mem);
+  // bbsh clus var
+  double eSH, xSH, ySH, rblkSH, cblkSH, idblkSH, atimeSH;
+  std::vector<std::string> bbshclvar = {"sh.e","sh.x","sh.y","sh.rowblk","sh.colblk","sh.idblk","sh.atimeblk"};
+  std::vector<void*> bbshclvar_mem = {&eSH,&xSH,&ySH,&rblkSH,&cblkSH,&idblkSH,&atimeSH};
+  setrootvar::setbranch(C, "bb", bbshclvar, bbshclvar_mem);
+
+  // bbps clus var
+  double ePS, rblkPS, cblkPS, idblkPS, atimePS;
+  std::vector<std::string> bbpsclvar = {"ps.e","ps.rowblk","ps.colblk","ps.idblk","ps.atimeblk"};
+  std::vector<void*> bbpsclvar_mem = {&ePS,&rblkPS,&cblkPS,&idblkPS,&atimePS};
+  setrootvar::setbranch(C, "bb", bbpsclvar, bbpsclvar_mem);
  
   // hcal clus var
   double eHCAL, xHCAL, yHCAL, rblkHCAL, cblkHCAL, idblkHCAL, atimeHCAL, tdcHCAL;
@@ -135,9 +140,8 @@ int qelas_ana_data (const char *configfilename,
   if (get_scaler_info) setrootvar::setbranch(S,"",streevar,streevar_mem);
 
   // defining the outputfile
-  if (verbose==0 && verbosefn==0) filebase = "pdout/qelas_ana_data";
-  TString outFile = Form("%s_sbs%d_sbs%dp_model%d_pass%d.root", 
-			 filebase.c_str(), sbsconf.GetSBSconf(), sbsconf.GetSBSmag(), model, pass);
+  if (verbose==0 && verbosefn==0) filebase = "pdout/qelas_ana";
+  TString outFile = Form("%s_data_sbs%d_sbs%dp_model%d_pass%d.root",filebase.c_str(),conf,sbsmag,model,pass);
   TFile *fout = new TFile(outFile.Data(), "RECREATE");
 
   // defining histograms
@@ -565,8 +569,8 @@ int qelas_ana_data (const char *configfilename,
   std::cout << "------" << std::endl << std::endl;
 
   sw->Stop();
-  std::cout << "CPU time elapsed = " << sw->CpuTime() 
-	    << " s. Real time = " << sw->RealTime() << " s. " << std::endl << std::endl;
+  std::cout << "CPU time = " << sw->CpuTime() << " s. " 
+	    << "Real time = " << sw->RealTime() << " s. " << std::endl << std::endl;
 
   c1->Write();
   c2->Write();

@@ -23,5 +23,5 @@
     "h_dyHCAL_lims"      : [200,-1.5,1.5],
     "Wmin"               : 0.7,
     "Wmax"               : 1.12,
-    "README"             : "dx_p(n) : deltax dist. of p(n). dx_p(n)[0] => Peak position, dx_p(n)[1] => Peak RMS | dy_p(n) : deltay dist. of p(n). dy_p(n)[0] => Peak position, dy_p(n)[1] => Peak RMS | Nsigma_cut_dx(dy)_p(n) : # of sigma to include in the deltax(deltay) cut for p(n)"
+    "README"             : ["dx_p(n) : deltax dist. of p(n). dx_p(n)[0] => Peak position, dx_p(n)[1] => Peak RMS", "dy_p(n) : deltay dist. of p(n). dy_p(n)[0] => Peak position, dy_p(n)[1] => Peak RMS", "Nsigma_cut_dx(dy)_p(n) : # of sigma to include in the deltax(deltay) cut for p(n)"]
 }
