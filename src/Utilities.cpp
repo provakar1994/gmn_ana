@@ -586,9 +586,10 @@ namespace util_pd {
 	  if (generator.compare("simc") == 0) {
 	    data.push_back(temp[1]);
 	    data.push_back(temp[2]);
+	    data.push_back(temp[5]);
 	    data.push_back(temp[4]);
-	    double lumi = stod(temp[5])*stod(temp[2])/(stod(temp[1])*stod(temp[4]));
-	    data.push_back(to_string(lumi));
+	    // double lumi = stod(temp[5])*stod(temp[2])/(stod(temp[1])*stod(temp[4]));
+	    // data.push_back(to_string(lumi));
 	    data.push_back(to_string(stod(temp[3])/1000.));
 	  }
 
