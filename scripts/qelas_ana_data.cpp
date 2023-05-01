@@ -83,15 +83,15 @@ int qelas_ana_data (const char *configfilename,
 
   // bbsh clus var
   double eSH, xSH, ySH, rblkSH, cblkSH, idblkSH, atimeSH;
-  std::vector<std::string> bbshclvar = {"sh.e","sh.x","sh.y","sh.rowblk","sh.colblk","sh.idblk","sh.atimeblk"};
+  std::vector<std::string> bbshclvar = {"e","x","y","rowblk","colblk","idblk","atimeblk"};
   std::vector<void*> bbshclvar_mem = {&eSH,&xSH,&ySH,&rblkSH,&cblkSH,&idblkSH,&atimeSH};
-  setrootvar::setbranch(C, "bb", bbshclvar, bbshclvar_mem);
+  setrootvar::setbranch(C, "bb.sh", bbshclvar, bbshclvar_mem);
 
   // bbps clus var
   double ePS, rblkPS, cblkPS, idblkPS, atimePS;
-  std::vector<std::string> bbpsclvar = {"ps.e","ps.rowblk","ps.colblk","ps.idblk","ps.atimeblk"};
+  std::vector<std::string> bbpsclvar = {"e","rowblk","colblk","idblk","atimeblk"};
   std::vector<void*> bbpsclvar_mem = {&ePS,&rblkPS,&cblkPS,&idblkPS,&atimePS};
-  setrootvar::setbranch(C, "bb", bbpsclvar, bbpsclvar_mem);
+  setrootvar::setbranch(C, "bb.ps", bbpsclvar, bbpsclvar_mem);
  
   // hcal clus var
   double eHCAL, xHCAL, yHCAL, rblkHCAL, cblkHCAL, idblkHCAL, atimeHCAL, tdcHCAL;
