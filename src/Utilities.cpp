@@ -2,6 +2,26 @@
 
 namespace util_pd {
 
+  /* #########################################
+     ##                General              ##  
+     ######################################### */
+  TCanvas *TC(std::string name,   // name of the canvas
+ 	      int rdiv,           // # divisions in row
+	      int cdiv)           // # divisions in column 
+  /* returns a customized canvas*/
+  {
+    int w = 1000; int h = 800;
+    if (rdiv<1 || cdiv<1) {rdiv = 1; cdiv = 1;}
+    // if (rdiv>1 && cdiv==1) {h = 500*rdiv; w = 500;}
+    // if (rdiv==1 && cdiv>1) {h = 500; w = 500*cdiv;}
+    // if (rdiv>1 && cdiv>1) {h = 1400; w = 1400;}
+    if (rdiv>1 || cdiv>1) {h = 450*rdiv; w = 450*cdiv;}
+    if (rdiv>4 || cdiv>4) {h = 200*rdiv; w = 200*cdiv;}
+    TCanvas *c = new TCanvas(name.c_str(),name.c_str(),w,h);
+    c->Divide(cdiv,rdiv);
+    return c;
+  }
+
   /* #################################################
      ##                HCAL Related                 ##  
      ################################################# */

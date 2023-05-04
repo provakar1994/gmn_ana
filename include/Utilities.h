@@ -13,11 +13,18 @@
 #include "TLatex.h"
 #include "TString.h"
 
-#include "../include/CodaRun.h"
-#include "../include/SimuJob.h"
-#include "../include/ExpConstants.h"
+#include "CodaRun.h"
+#include "SimuJob.h"
+#include "ExpConstants.h"
 
 namespace util_pd {
+
+  /* #########################################
+     ##                General              ##  
+     ######################################### */
+  TCanvas *TC(std::string name,   // name of the canvas
+ 	      int rdiv,           // # divisions in row
+	      int cdiv);          // # divisions in column 
 
   /* #################################################
      ##                HCAL Histograms              ##  

@@ -6,17 +6,20 @@
    P. Datta <pdbforce@jlab.org> Created 09-17-2022
 */
 
-#include "Constants.h"                // namespace constant
-#include "CodaRun.h"                  // CodaRun struct
-#include "SimuJob.h"                  // SimuJob struct
-#include "../src/Cut.cpp"             // namespace cut
-#include "../src/Utilities.cpp"       // namespace util_pd
-#include "../src/ExpConstants.cpp"    // namespace expconst & class SBSconfig
-#include "../src/SetROOTVar.cpp"      // namespace setrootvar
-#include "../src/KinematicVar.cpp"    // namespace kine
+#include "Constants.h"                // namespace constant (General constants)
+#include "CodaRun.h"                  // struct CodaRun     
+#include "SimuJob.h"                  // struct SimuJob 
+#include "FitFns.h"                   // class FitFn        (Various fit fns.)
+#include "../src/Fit.cpp"             // namespace fit      (Various fit methods.)
+#include "../src/Cut.cpp"             // namespace cut      (Various cut defn.)
+#include "../src/Utilities.cpp"       // namespace util_pd  (Various utility fns.)
+#include "../src/ExpConstants.cpp"    // namespace expconst & class SBSconfig (Experimental constants)
+#include "../src/SetROOTVar.cpp"      // namespace setrootvar 
+#include "../src/KinematicVar.cpp"    // namespace kine     (fns. to calculate physics variables)
 
 /* --- List of gmn_ana libraries --- */
-// Cut.h          : namespace Cut
+// Fit.h          : namespace fit
+// Cut.h          : namespace cut
 // Constants.h    : namespace constant
 // KinematicVar.h : namespace kine
 // ExpConstants.h : namespace expconst & class SBSconfig
