@@ -8,7 +8,7 @@
     "get_scaler_info"    : 1,
     "runsheet_dir"       : "../DB",
     "rootfile_dir"       : "/lustre19/expphy/volatile/halla/sbs/pdbforce/gmn-replays/rootfiles",
-    "global_cut"         : "fEvtHdr.fTrigBits==1&&bb.tr.n>0&&abs(bb.tr.vz[0])<.08&&bb.gem.track.nhits>2&&bb.ps.e>0.2&&sbs.hcal.e>0",
+    "global_cut"         : "fEvtHdr.fTrigBits==1&&bb.tr.n>0&&abs(bb.tr.vz[0])<.08&&bb.gem.track.nhits>2&&bb.ps.e>0.2",
     "hcal_voffset"       : -0.3383,
     "hcal_hoffset"       : 0.1289,
     "dx_p"               : [-1.16186, 0.19],
