@@ -45,9 +45,10 @@ int qelas_ana_simu (const char *configfilename,
 
   // reading job summary and parsing ROOT trees
   std::string rfd = jmgr->GetValueFromKey_str("rootfile_dir");
+  std::string prefix = jmgr->GetValueFromKey_str("prefix_to_filebase");
   std::string gen = jmgr->GetValueFromKey_str("generator");
   int njobs = jmgr->GetValueFromKey<int>("Njobs_to_ana"); // # MC jobs to analyze
-  vector<SimuJob> sjobs; util_pd::ReadSimuJobSummary(rfd,conf,sbsmag,gen,target,njobs,verbosefn,sjobs);
+  vector<SimuJob> sjobs; util_pd::ReadSimuJobSummary(rfd,prefix,conf,sbsmag,gen,target,njobs,verbosefn,sjobs);
   TChain *C = new TChain("T"); util_pd::LoadSimuROOTTree(sjobs,verbosefn,C);
 
   // Choosing the model of calculation
@@ -127,7 +128,7 @@ int qelas_ana_simu (const char *configfilename,
 
   // defining the outputfile
   if (verbose==0 || verbosefn==0) filebase = "pdout/qelas_ana";
-  TString outFile = Form("%_%s_sbs%d_sbs%dp_model%d.root",filebase.c_str(),gen.c_str(),conf,sbsmag,model);
+  TString outFile = Form("%s_%s_sbs%d_sbs%dp_model%d.root",filebase.c_str(),gen.c_str(),conf,sbsmag,model);
   TFile *fout = new TFile(outFile.Data(),"RECREATE");
 
   // defining histograms
@@ -258,10 +259,10 @@ int qelas_ana_simu (const char *configfilename,
       
       // getting normalization factors per run
       /* sophisticated but slightly inefficient way */
-	 const char* rftemp = C->GetFile()->GetName();
-	 auto it = std::find_if(sjobs.begin(), sjobs.end(), [=](SimuJob const& sj){return sj.rfname.compare(rftemp) == 0;});
-	 if (it != sjobs.end()) {lumi = it->lumi; mc_omega = it->genvol;} 
-	 //lumi = sjobs[treeitr].lumi; mc_omega = sjobs[treeitr].genvol; treeitr++;
+      const char* rftemp = C->GetFile()->GetName();
+      auto it = std::find_if(sjobs.begin(), sjobs.end(), [=](SimuJob const& sj){return sj.rfname.compare(rftemp) == 0;});
+      if (it != sjobs.end()) {lumi = it->lumi; mc_omega = it->genvol;} 
+      //lumi = sjobs[treeitr].lumi; mc_omega = sjobs[treeitr].genvol; treeitr++;
     } 
     bool passedgCut = GlobalCut->EvalInstance(0) != 0;   
     if (!passedgCut) continue;

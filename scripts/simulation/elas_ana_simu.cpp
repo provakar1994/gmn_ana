@@ -19,27 +19,49 @@
 #include "../../include/gmn_ana.h"
 #include "../../dflay/src/JSONManager.cxx"
 
-int elas_ana_simu (const char *configfilename, std::string filebase="siout/test_elas_ana_simu")
+/* this script will only analyze LD2 data */
+static const std::string target = "LH2";
+
+int elas_ana_simu (const char *configfilename, 
+                    int verbose=-1,  //<-1=>Debug, =-1=>Test
+                    int verbosefn=0, //>0=>Debug
+		    /* verbose=0 & verbosefn=0 => Production*/
+		    std::string filebase="siout/test_elas_ana")
 {
   gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
 
-  // Define a clock to get macro processing time
+  // clock to keep macro processing time
   TStopwatch *sw = new TStopwatch(); sw->Start();
 
   // reading input config file ---------------------------------------
   JSONManager *jmgr = new JSONManager(configfilename);
 
-  // parsing trees
-  std::string rootfile_dir = jmgr->GetValueFromKey_str("rootfile_dir");
-  TChain *C = new TChain("T");
-  C->Add(rootfile_dir.c_str());
-  if (C->GetEntries()==0) {std::cerr << "*!* No ROOT file!" << std::endl; throw;}
+  // // parsing trees
+  // std::string rootfile_dir = jmgr->GetValueFromKey_str("rootfile_dir");
+  // TChain *C = new TChain("T");
+  // C->Add(rootfile_dir.c_str());
+  // if (C->GetEntries()==0) {std::cerr << "*!* No ROOT file!" << std::endl; throw;}
  
+  // seting up the desired SBS configuration
+  // int conf = jmgr->GetValueFromKey<int>("SBS_config");
+  // int sbsmag = jmgr->GetValueFromKey<int>("SBS_magnet_percent");
+  // SBSconfig sbsconf(conf, sbsmag);
+  // cout << sbsconf;
+
   // seting up the desired SBS configuration
   int conf = jmgr->GetValueFromKey<int>("SBS_config");
   int sbsmag = jmgr->GetValueFromKey<int>("SBS_magnet_percent");
+  double sbsfield = jmgr->GetValueFromKey<double>("SBS_field");
   SBSconfig sbsconf(conf, sbsmag);
   cout << sbsconf;
+
+  // reading job summary and parsing ROOT trees
+  std::string rfd = jmgr->GetValueFromKey_str("rootfile_dir");
+  std::string prefix = jmgr->GetValueFromKey_str("prefix_to_filebase");
+  std::string gen = jmgr->GetValueFromKey_str("generator");
+  int njobs = jmgr->GetValueFromKey<int>("Njobs_to_ana"); // # MC jobs to analyze
+  vector<SimuJob> sjobs; util_pd::ReadSimuJobSummary(rfd,prefix,conf,sbsmag,gen,target,njobs,verbosefn,sjobs);
+  TChain *C = new TChain("T"); util_pd::LoadSimuROOTTree(sjobs,verbosefn,C);
 
   // Choosing the model of calculation
   // model 0 => uses reconstructed p as independent variable
@@ -51,36 +73,39 @@ int elas_ana_simu (const char *configfilename, std::string filebase="siout/test_
   else if (model == 2) std::cout << "Using model 2 [4-vector calculation] for analysis.." << std::endl;
   else { std::cerr << "Enter a valid model number! **!**" << std::endl; throw; }
 
-  // parameters for normalization
-  std::string targetType = jmgr->GetValueFromKey_str("target_type");
-  double I_beam = jmgr->GetValueFromKey<double>("beam_current");
-  // total generated simulation events per job
-  double ngen_total = jmgr->GetValueFromKey<double>("ngen_total"); 
-  double lumi = kine::Luminosity(I_beam, targetType);
+  // // parameters for normalization
+  // std::string targetType = jmgr->GetValueFromKey_str("target_type");
+  // double I_beam = jmgr->GetValueFromKey<double>("beam_current");
+  // // total generated simulation events per job
+  // double ngen_total = jmgr->GetValueFromKey<double>("ngen_total"); 
+  // double lumi = kine::Luminosity(I_beam, targetType);
 
   // choosing nucleon type 
   std::string Ntype = jmgr->GetValueFromKey_str("Ntype");
 
   // setting up global cuts
-  std::string gcut = jmgr->GetValueFromKey_str("global_cut");
-  TCut globalcut = gcut.c_str();
+  std::string gcut = jmgr->GetValueFromKey_str("global_cut"); TCut globalcut = gcut.c_str();
   TTreeFormula *GlobalCut = new TTreeFormula("GlobalCut", globalcut, C);
 
   // setting up ROOT tree branch addresses ---------------------------------------
   int maxNtr=1000;
   C->SetBranchStatus("*",0);
-  // beam energy - Probably we should take an average over 100 events
-  // double HALLA_p;
-  // setrootvar::setbranch(C, "HALLA_p", "", &HALLA_p);
+  // bbsh clus var
+  double eSH, xSH, ySH, rblkSH, cblkSH, idblkSH, atimeSH;
+  std::vector<std::string> bbshclvar = {"e","x","y","rowblk","colblk","idblk","atimeblk"};
+  std::vector<void*> bbshclvar_mem = {&eSH,&xSH,&ySH,&rblkSH,&cblkSH,&idblkSH,&atimeSH};
+  setrootvar::setbranch(C, "bb.sh", bbshclvar, bbshclvar_mem);
 
-  // bbcal clus var
-  double eSH; setrootvar::setbranch(C,"bb.sh","e",&eSH);
-  double ePS; setrootvar::setbranch(C,"bb.ps","e",&ePS);
-  
+  // bbps clus var
+  double ePS, rblkPS, cblkPS, idblkPS, atimePS;
+  std::vector<std::string> bbpsclvar = {"e","rowblk","colblk","idblk","atimeblk"};
+  std::vector<void*> bbpsclvar_mem = {&ePS,&rblkPS,&cblkPS,&idblkPS,&atimePS};
+  setrootvar::setbranch(C, "bb.ps", bbpsclvar, bbpsclvar_mem);
+ 
   // hcal clus var
-  double eHCAL, xHCAL, yHCAL, rblkHCAL, cblkHCAL, idblkHCAL;
-  std::vector<std::string> hcalclvar = {"e","x","y","rowblk","colblk","idblk"};
-  std::vector<void*> hcalclvar_mem = {&eHCAL,&xHCAL,&yHCAL,&rblkHCAL,&cblkHCAL,&idblkHCAL};
+  double eHCAL, xHCAL, yHCAL, rblkHCAL, cblkHCAL, idblkHCAL, atimeHCAL, tdcHCAL;
+  std::vector<std::string> hcalclvar = {"e","x","y","rowblk","colblk","idblk","atimeblk","tdctimeblk"};
+  std::vector<void*> hcalclvar_mem = {&eHCAL,&xHCAL,&yHCAL,&rblkHCAL,&cblkHCAL,&idblkHCAL,&atimeHCAL,&tdcHCAL};
   setrootvar::setbranch(C, "sbs.hcal", hcalclvar, hcalclvar_mem);
 
   // track var
@@ -91,29 +116,40 @@ int elas_ana_simu (const char *configfilename, std::string filebase="siout/test_
   std::vector<void*> trvar_mem = {&ntrack,&p,&px,&py,&pz,&xTr,&yTr,&thTr,&phTr,&vx,&vy,&vz,&xtgt,&ytgt,&thtgt,&phtgt};
   setrootvar::setbranch(C,"bb.tr",trvar,trvar_mem);
 
-  //MC variables
-  double mc_sigma, mc_omega, mc_fnucl;
-  std::vector<std::string> mc = {"mc_sigma","mc_omega","mc_fnucl"};
-  std::vector<void*> mc_mem = {&mc_sigma,&mc_omega,&mc_fnucl};
-  setrootvar::setbranch(C,"MC",mc,mc_mem);
+  // //MC variables (g4sbs gen)
+  // double mc_sigma, mc_omega, mc_fnucl;
+  // std::vector<std::string> mc = {"mc_sigma","mc_omega","mc_fnucl"};
+  // std::vector<void*> mc_mem = {&mc_sigma,&mc_omega,&mc_fnucl};
+  // setrootvar::setbranch(C,"MC",mc,mc_mem);
 
-  //MC variables (SIMC)
-  double simc_sigma, simc_Weight;
-  std::vector<std::string> simc = {"simc_sigma","simc_Weight"};
-  std::vector<void*> simc_mem = {&simc_sigma,&simc_Weight};
-  setrootvar::setbranch(C,"MC",simc,simc_mem);
+  // //MC variables (SIMC gen)
+  // double simc_sigma, simc_Weight;
+  // std::vector<std::string> simc = {"simc_sigma","simc_Weight"};
+  // std::vector<void*> simc_mem = {&simc_sigma,&simc_Weight};
+  // setrootvar::setbranch(C,"MC",simc,simc_mem);
+
+  //MC variables
+  double mc_sigma, mc_fnucl; // mc_sigma => Cross-section weight
+  std::vector<std::string> mc = {"mc_sigma","mc_fnucl"};          //Default: g4sbs gen.
+  if (gen.compare("simc")==0) mc = {"simc_Weight","simc_fnucl"};  
+  std::vector<void*> mc_mem = {&mc_sigma,&mc_fnucl}; 
+  setrootvar::setbranch(C,"MC",mc,mc_mem);
 
   // turning on the remaining branches we use for the globalcut
   C->SetBranchStatus("bb.gem.track.nhits", 1);
   C->SetBranchStatus("bb.etot_over_p", 1);
 
+  // // defining the outputfile
+  // TString outFile = Form("%s_sbs%d_sbs%dp_model%d.root", 
+  // 			 filebase.c_str(), sbsconf.GetSBSconf(), sbsconf.GetSBSmag(), model);
+  // TFile *fout = new TFile(outFile.Data(), "RECREATE");
+
   // defining the outputfile
-  TString outFile = Form("%s_sbs%d_sbs%dp_model%d.root", 
-			 filebase.c_str(), sbsconf.GetSBSconf(), sbsconf.GetSBSmag(), model);
-  TFile *fout = new TFile(outFile.Data(), "RECREATE");
+  if (verbose==0 || verbosefn==0) filebase = "siout/elas_ana";
+  TString outFile = Form("%s_%s_sbs%d_sbs%dp_model%d.root",filebase.c_str(),gen.c_str(),conf,sbsmag,model);
+  TFile *fout = new TFile(outFile.Data(),"RECREATE");
 
   // defining histograms
-  TH1F *h_W2 = new TH1F("h_W2","h_W2",300,-3.,3.);
   TH1F *h_W = util_pd::TH1FhW("h_W");
   TH1F *h_W_cut = util_pd::TH1FhW("h_W_cut");
   TH1F *h_W_acut = util_pd::TH1FhW("h_W_acut");
@@ -150,6 +186,7 @@ int elas_ana_simu (const char *configfilename, std::string filebase="siout/test_
   double T_ephi;        Tout->Branch("ephi", &T_ephi, "ephi/D");
   double T_etheta;      Tout->Branch("etheta", &T_etheta, "etheta/D");
   double T_pcentral;    Tout->Branch("pcentral", &T_pcentral, "pcentral/D");
+  double T_thetapq_p;   Tout->Branch("thetapq_p", &T_thetapq_p, "thetapq_p/D");
   //track
   double T_vz;          Tout->Branch("vz", &T_vz, "vz/D");
   double T_trP;         Tout->Branch("trP", &T_trP, "trP/D");
@@ -157,23 +194,42 @@ int elas_ana_simu (const char *configfilename, std::string filebase="siout/test_
   double T_trY;         Tout->Branch("trY", &T_trY, "trY/D");
   double T_trTh;        Tout->Branch("trTh", &T_trTh, "trTh/D");
   double T_trPh;        Tout->Branch("trPh", &T_trPh, "trPh/D");
+  double T_tgX;         Tout->Branch("tgX", &T_tgX, "tgX/D");
+  double T_tgY;         Tout->Branch("tgY", &T_tgY, "tgY/D");
+  double T_tgTh;        Tout->Branch("tgTh", &T_tgTh, "tgTh/D");
+  double T_tgPh;        Tout->Branch("tgPh", &T_tgPh, "tgPh/D");
   //BBCAL
   double T_ePS;         Tout->Branch("ePS", &T_ePS, "ePS/D"); 
+  double T_rblkPS;      Tout->Branch("rblkPS", &T_rblkPS, "rblkPS/D"); 
+  double T_cblkPS;      Tout->Branch("cblkPS", &T_cblkPS, "cblkPS/D"); 
+  double T_idblkPS;     Tout->Branch("idblkPS", &T_idblkPS, "idblkPS/D"); 
+  double T_atimePS;     Tout->Branch("atimePS", &T_atimePS, "atimePS/D"); 
   double T_eSH;         Tout->Branch("eSH", &T_eSH, "eSH/D"); 
+  double T_xSH;         Tout->Branch("xSH", &T_xSH, "xSH/D"); 
+  double T_ySH;         Tout->Branch("ySH", &T_ySH, "ySH/D"); 
+  double T_rblkSH;      Tout->Branch("rblkSH", &T_rblkSH, "rblkSH/D"); 
+  double T_cblkSH;      Tout->Branch("cblkSH", &T_cblkSH, "cblkSH/D"); 
+  double T_idblkSH;     Tout->Branch("idblkSH", &T_idblkSH, "idblkSH/D"); 
+  double T_atimeSH;     Tout->Branch("atimeSH", &T_atimeSH, "atimeSH/D");  
   //HCAL
   double T_eHCAL;       Tout->Branch("eHCAL", &T_eHCAL, "eHCAL/D"); 
   double T_xHCAL;       Tout->Branch("xHCAL", &T_xHCAL, "xHCAL/D"); 
   double T_yHCAL;       Tout->Branch("yHCAL", &T_yHCAL, "yHCAL/D"); 
+  double T_idblkHCAL;   Tout->Branch("idblkHCAL", &T_idblkHCAL, "idblkHCAL/D"); 
+  double T_rblkHCAL;    Tout->Branch("rblkHCAL", &T_rblkHCAL, "rblkHCAL/D"); 
+  double T_cblkHCAL ;   Tout->Branch("cblkHCAL", &T_cblkHCAL, "cblkHCAL/D"); 
+  double T_atimeHCAL;   Tout->Branch("atimeHCAL", &T_atimeHCAL, "atimeHCAL/D"); 
+  double T_tdcHCAL;     Tout->Branch("tdcHCAL", &T_tdcHCAL, "tdcHCAL/D"); 
   double T_xHCAL_exp;   Tout->Branch("xHCAL_exp", &T_xHCAL_exp, "xHCAL_exp/D"); 
   double T_yHCAL_exp;   Tout->Branch("yHCAL_exp", &T_yHCAL_exp, "yHCAL_exp/D"); 
   double T_dx;          Tout->Branch("dx", &T_dx, "dx/D"); 
-  double T_dy;          Tout->Branch("dy", &T_dy, "dy/D");  
+  double T_dy;          Tout->Branch("dy", &T_dy, "dy/D");
 
   // Do the energy loss calculation here ...........
 
   // HCAL cut definitions
-  double sbs_kick = jmgr->GetValueFromKey<double>("sbs_kick");
   vector<double> dx_p; jmgr->GetVectorFromKey<double>("dx_p", dx_p);
+  double sbs_kick = abs(dx_p[0]);
   vector<double> dy_p; jmgr->GetVectorFromKey<double>("dy_p", dy_p);
   double Nsigma_cut_dx_p = jmgr->GetValueFromKey<double>("Nsigma_cut_dx_p");
   double Nsigma_cut_dy_p = jmgr->GetValueFromKey<double>("Nsigma_cut_dy_p");
@@ -190,10 +246,14 @@ int elas_ana_simu (const char *configfilename, std::string filebase="siout/test_
   vector<TVector3> HCAL_axes; kine::SetHCALaxes(sbsconf.GetSBStheta_rad(), HCAL_axes);
   TVector3 HCAL_origin = sbsconf.GetHCALdist()*HCAL_axes[2] + hcal_voffset*HCAL_axes[0] + hcal_hoffset*HCAL_axes[1];
 
+  // calculating MC normalizetion factors 
+  double mc_omega, lumi;
+  vector<double> totNtriesnCh; util_pd::GetTotNtriesnCh(sjobs,totNtriesnCh);
+
   // looping through the tree ---------------------------------------
   std::cout << std::endl;
   long nevent = 0, nevents = C->GetEntries(); 
-  int treenum = 0, currenttreenum = 0;
+  int treenum = 0, currenttreenum = 0, treeitr = 0;
   while (C->GetEntry(nevent++)) {
    
     // print progress 
@@ -205,13 +265,23 @@ int elas_ana_simu (const char *configfilename, std::string filebase="siout/test_
     if (nevent == 1 || currenttreenum != treenum) {
       treenum = currenttreenum;
       GlobalCut->UpdateFormulaLeaves();
+      
+      // getting normalization factors per run
+      /* sophisticated but slightly inefficient way */
+      const char* rftemp = C->GetFile()->GetName();
+      auto it = std::find_if(sjobs.begin(), sjobs.end(), [=](SimuJob const& sj){return sj.rfname.compare(rftemp) == 0;});
+      if (it != sjobs.end()) {lumi = it->lumi; mc_omega = it->genvol;} 
+      //lumi = sjobs[treeitr].lumi; mc_omega = sjobs[treeitr].genvol; treeitr++;
     } 
     bool passedgCut = GlobalCut->EvalInstance(0) != 0;   
     if (!passedgCut) continue;
 
+    // // cross section weighted normalization factor
+    // //weight = mc_sigma*mc_omega*lumi / ngen_total;
+    // weight = simc_Weight;
+
     // cross section weighted normalization factor
-    //weight = mc_sigma*mc_omega*lumi / ngen_total;
-    weight = simc_Weight;
+    weight = mc_sigma*mc_omega*lumi / totNtriesnCh[0];
 
     // kinematic parameters
     double ebeam = sbsconf.GetEbeam();       // Expected beam energy (GeV) [Get it from EPICS, eventually]
@@ -229,6 +299,8 @@ int elas_ana_simu (const char *configfilename, std::string filebase="siout/test_
 			   precon);                 
     TLorentzVector PN;                              // target nucleon [Ntype ??]
     kine::SetPN(Ntype, PN);
+    TLorentzVector PNprime;                         // Recoil nucleon 4-vector
+    TLorentzVector q = Pe - Peprime;                // 4-momentum of virtual photon
 
     double etheta = kine::etheta(Peprime);
     double ephi = kine::ephi(Peprime);
@@ -249,6 +321,7 @@ int elas_ana_simu (const char *configfilename, std::string filebase="siout/test_
       pN_expect = kine::pN_expect(nu, Ntype);
       thetaN_expect = acos((Pe.E() - Peprime.Pz()) / pN_expect);
       pNhat = kine::qVect_unit(thetaN_expect, phiN_expect);
+      PNprime.SetPxPyPzE(pN_expect*pNhat.X(), pN_expect*pNhat.Y(), pN_expect*pNhat.Z(), nu+PN.E());
       Q2recon = kine::Q2(Pe.E(), Peprime.E(), etheta);
       W2recon = kine::W2(Pe.E(), Peprime.E(), Q2recon, Ntype);
     } else if (model == 1) {
@@ -256,14 +329,15 @@ int elas_ana_simu (const char *configfilename, std::string filebase="siout/test_
       pN_expect = kine::pN_expect(nu, Ntype);
       thetaN_expect = acos((Pe.E() - pcentral*cos(etheta)) / pN_expect);
       pNhat = kine::qVect_unit(thetaN_expect, phiN_expect);
+      PNprime.SetPxPyPzE(pN_expect*pNhat.X(), pN_expect*pNhat.Y(), pN_expect*pNhat.Z(), nu+PN.E());
       Q2recon = kine::Q2(Pe.E(), Peprime.E(), etheta);
       W2recon = kine::W2(Pe.E(), Peprime.E(), Q2recon, Ntype);
     } else if (model == 2) {
-      TLorentzVector q = Pe - Peprime; // 4-momentum of virtual photon
       nu = q.E();
-      pNhat = q.Vect().Unit();
+      PNprime = q + PN;
+      pNhat = PNprime.Vect().Unit();
       Q2recon = -q.M2();
-      W2recon = (PN + q).M2();
+      W2recon = PNprime.M2();
     }
     h_Q2->Fill(Q2recon); 
     double Wrecon = sqrt(max(0., W2recon));
@@ -287,12 +361,33 @@ int elas_ana_simu (const char *configfilename, std::string filebase="siout/test_
     T_trTh = thTr[0];
     T_trPh = phTr[0];
 
+    T_tgX = xtgt[0];
+    T_tgY = ytgt[0];
+    T_tgTh = thtgt[0];
+    T_tgPh = phtgt[0];
+
     T_ePS = ePS;
+    T_rblkPS = rblkPS;
+    T_cblkPS = cblkPS;
+    T_idblkPS = idblkPS;
+    T_atimePS = atimePS;
+
     T_eSH = eSH;
+    T_xSH = xSH;
+    T_ySH = ySH;
+    T_rblkSH = rblkSH;
+    T_cblkSH = cblkSH;
+    T_idblkSH = idblkSH;
+    T_atimeSH = atimeSH;
 
     T_eHCAL = eHCAL;
     T_xHCAL = xHCAL;
     T_yHCAL = yHCAL;
+    T_rblkHCAL = rblkHCAL;
+    T_cblkHCAL = cblkHCAL;
+    T_idblkHCAL = idblkHCAL;
+    T_atimeHCAL = atimeHCAL;
+    T_tdcHCAL = tdcHCAL;
 
     T_mc_fnucl = int(mc_fnucl);
 
@@ -307,9 +402,16 @@ int elas_ana_simu (const char *configfilename, std::string filebase="siout/test_
     T_dx = dx;
     T_dy = dy;
 
+    /* Calculating thetapq (p hypothesis) */
+    TVector3 HCAL_pos = HCAL_origin + xHCAL*HCAL_axes[0] + yHCAL*HCAL_axes[1];
+    double BdL = sbsfield * expconst::sbsdipolegap;
+    double proton_thetabend = 0.3 * BdL / PNprime.Vect().Mag();  // p*theta = 0.3*BdL
+    double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist() - (sbsconf.GetSBSdist() + expconst::sbsdipolegap/2.0));
+    TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);
+    T_thetapq_p = acos(p_dir.Unit().Dot(pNhat));
+
     // HCAL active area and safety margin cuts [Fiducial region]
-    /* Using fiducut for LH2 data doesn't make sense. Still keeping the branch just 
-       in case we need to check something. Won't be using this on any histograms. */
+    /* Does using fiducial cut for LH2 data make sense?. */
     bool AR_cut = cut::inHCAL_activeA(xHCAL, yHCAL, hcal_active_area);
     bool FR_cut = cut::inHCAL_fiducial(xyHCAL_exp[0], xyHCAL_exp[1], sbs_kick, hcal_safety_margin);
     fiduCut = AR_cut && FR_cut;
@@ -343,7 +445,6 @@ int elas_ana_simu (const char *configfilename, std::string filebase="siout/test_
 
     // fiducial cut but no W cut
     // if (fiduCut) {  (not using it for LH2 data)
-    h_W2->Fill(W2recon, weight);
     h_W->Fill(Wrecon, weight);
     if (pCut) { 
       h_W_cut->Fill(Wrecon);
@@ -376,8 +477,7 @@ int elas_ana_simu (const char *configfilename, std::string filebase="siout/test_
   // util_pd::DrawArea(hcal_safety_margin,4);
 
   c1->cd(4);
-  h_W2->Draw();
-  // h_dyHCAL->Draw();
+  h_dyHCAL->Draw();
   // h2_xyHCAL_n->Draw("colz");
   // util_pd::DrawArea(hcal_active_area);
   // util_pd::DrawArea(hcal_safety_margin,4);
@@ -393,7 +493,18 @@ int elas_ana_simu (const char *configfilename, std::string filebase="siout/test_
   cout << "CPU time elapsed = " << sw->CpuTime() << " s. Real time = " << sw->RealTime() << " s. " << endl << endl;
 
   c1->Write();
-  fout->Write();
+  Tout->Write();
+  h_W->Write();
+  h_W_cut->Write();
+  h_W_acut->Write();
+  h_dpel->Write();
+  h_Q2->Write();
+  h_dxHCAL->Write();
+  h_dyHCAL->Write();
+  h_dxHCAL_p->Write();
+  h2_rcHCAL->Write();
+  h2_dxdyHCAL->Write();
+  h2_xyHCAL_p->Write();
   sw->Delete();
   delete jmgr;
   return 0;
