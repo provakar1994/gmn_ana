@@ -530,6 +530,7 @@ namespace util_pd {
      ################################################## */
   //______________________________________________________________________________
   void ReadSimuJobSummary(std::string logfile_dir,   // Dir. path containing MC summary files
+			  std::string prefix,        // prefix to standard filebase (Special case handling)
 			  int sbsconf,               // SBS configuration
 			  int sbsmag,                // SBS magnet current (in %)
 			  std::string generator,     // simc / g4sbs
@@ -543,13 +544,14 @@ namespace util_pd {
      naming convention for successful execution.
      ---------
      Standard naming conventions:
-     1. Filebase: sbs<sbsconf>_sbs<sbsmag>p_<generator>
+     1. Filebase: prefix_sbs<sbsconf>_sbs<sbsmag>p_<generator>
      2. MC job summary file: <filebase>_summary.csv
      3. Digitized ROOT file: <filebase>_<process>_job_<jobid>.root
      4. Replayed digitized ROOT file: replayed_<filebase>_<process>_job_<jobid>.root
   */
   {
     TString filebase = Form("sbs%d_sbs%dp_%s",sbsconf,sbsmag,generator.c_str());
+    if (!prefix.empty) filebase = (TString)prefix + "_" + filebase;
 
     // Define the name of the summary file and corresponding process based on generator and target
     vector<TString> simu_logfile, process;

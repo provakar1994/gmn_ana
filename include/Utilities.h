@@ -107,6 +107,7 @@ namespace util_pd {
      3. Digitized ROOT file: <filebase>_<process>_job_<jobid>.root
      4. Replayed digitized ROOT file: replayed_<filebase>_<process>_job_<jobid>.root */
   void ReadSimuJobSummary(std::string logfile_dir,   // Dir. path containing MC summary files
+			  std::string prefix,        // prefix to standard filebase (Special case)
 			  int sbsconf,               // SBS configuration
 			  int sbsmag,                // SBS magnet current (in %)
 			  std::string generator,     // simc / g4sbs

@@ -25,7 +25,7 @@ static const std::string target = "LH2";
 int elas_ana_data (const char *configfilename,
                     int verbose=-1,  //<0=>Debug
                     int verbosefn=0, //>0=>Debug
-                    std::string filebase="pdout/test_qelas_ana_data")
+                    std::string filebase="pdout/test_elas_ana_data")
 {
   gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
 
