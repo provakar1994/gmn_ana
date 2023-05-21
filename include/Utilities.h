@@ -10,7 +10,9 @@
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TLine.h"
+#include "TChain.h"
 #include "TLatex.h"
+#include "TCanvas.h"
 #include "TString.h"
 
 #include "CodaRun.h"
@@ -35,7 +37,7 @@ namespace util_pd {
   TH2F *TH2FdxdyHCAL(std::string name);         // returns TH2F for dxdyHCAL
 
   // draws rectangular cut regions
-  void DrawArea(vector<double> dimensions,      // a vector with extreme points
+  void DrawArea(std::vector<double> dimensions,      // a vector with extreme points
 		int lcolor,  // Default = 2 
 		int lwidth,  // Default = 4
 		int lstyle); // Default = 9
@@ -57,7 +59,7 @@ namespace util_pd {
 		   std::string target,        // target type
 		   int replay_pass,           // replay pass
 		   int verbose,               // verbosity
-		   vector<CodaRun> &crun);    // Output: Vector of CodaRun structs
+		   std::vector<CodaRun> &crun);    // Output: Vector of CodaRun structs
 
   void ReadRunList(std::string runsheet_dir,  // Dir. path containing CSV files with run info
 		   int &nruns,                // No. of runs to analyze
@@ -66,7 +68,7 @@ namespace util_pd {
 		   int replay_pass,           // replay pass
 		   int sbsmag,                // SBS magnet current (in %)
 		   int verbose,               // verbosity
-		   vector<CodaRun> &crun);    // Output: Vector of CodaRun structs
+		   std::vector<CodaRun> &crun);    // Output: Vector of CodaRun structs
 
   void ReadRunList(std::string runsheet_dir,  // Dir. path containing CSV files with run info
 		   int &nruns,                // No. of runs to analyze
@@ -76,7 +78,7 @@ namespace util_pd {
 		   int sbsmag,                // SBS magnet current (in %)
 		   int bbmag,                 // BB magnet current (in %)
 		   int verbose,               // verbosity
-		   vector<CodaRun> &crun);    // Output: Vector of CodaRun structs
+		   std::vector<CodaRun> &crun);    // Output: Vector of CodaRun structs
 
   /* ####################################################
      ## Functions to read ROOT files by sorted segment ##  
@@ -114,7 +116,7 @@ namespace util_pd {
 			  std::string target,        // target type
 			  int &njobs,                // # jobs to analyze per process
 			  int verbose,               // verbosity
-			  vector<SimuJob> &sjobs);   // Output: Vector of SimuJob objects
+			  std::vector<SimuJob> &sjobs);   // Output: Vector of SimuJob objects
 
   void LoadSimuROOTTree(std::vector<SimuJob> sjobs,  // SimuJob objects with run info
 			int verbose,                 // verbosity
@@ -135,7 +137,7 @@ namespace util_pd {
 
   /* Calc. # tries & tot. Ch. from SimuJob objects */
   void GetTotNtriesnCh(std::vector<SimuJob> sjobs, // Input: List of SimuJob objects
-		       vector<double> &data);      // Output: data[0]=>Tot. Ntries, data[1]=>Tot. Charge
+		       std::vector<double> &data);      // Output: data[0]=>Tot. Ntries, data[1]=>Tot. Charge
 
 }
 #endif

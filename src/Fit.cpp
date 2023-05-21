@@ -2,14 +2,14 @@
 
 namespace fit {
 
-  TF1* fit_1hs_nbg_THI (vector<double> fit_range,
+  TF1* fit_1hs_nbg_THI (std::vector<double> fit_range,
   		    TH1D* ht,           // total histo to fit 
   		    TH1D* hs,           // signal histo for
-  		    vector<TH1D*> &ho)  // Output: ht,hs (fitted w/ proper scaling)
+  		    std::vector<TH1D*> &ho)  // Output: ht,hs (fitted w/ proper scaling)
   /* TH Interpolation fit using 1 signal histo & no background (1 par) */
   {
     const int npars = 1;
-    vector<double> setpars{1};
+    std::vector<double> setpars{1};
 
     TH1D *ht_cp = (TH1D*)ht->Clone(); 
     TH1D *hs_cp1 = (TH1D*)hs->Clone(); 
@@ -21,7 +21,7 @@ namespace fit {
     f1->SetParName(0,"Norm");
 
     ht_cp->Fit(f1); 
-    vector<double> pars;
+    std::vector<double> pars;
     for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
 
     TH1D *hs_cp2 = (TH1D*)hs_cp1->Clone(); hs_cp2->Scale(pars[0]);
@@ -30,15 +30,15 @@ namespace fit {
     return f1;    
   }
 
-  TF1* fit_2hs_nbg_THI (vector<double> fit_range,
+  TF1* fit_2hs_nbg_THI (std::vector<double> fit_range,
 			TH1D* ht,             // total histo to fit 
 			TH1D* hs1,            // 1st signal histo for fit
 			TH1D* hs2,            // 2nd signal histo for fit
-			vector<TH1D*> &ho)    // Output: ht,hs,hbg,N*hs1,N*R*hs2 (N=par[0],R=par[1])
+			std::vector<TH1D*> &ho)    // Output: ht,hs,hbg,N*hs1,N*R*hs2 (N=par[0],R=par[1])
   /* TH Interpolation fit using 2 signal histo & no background (2 pars) */
   {
     const int npars = 2;
-    vector<double> setpars{1,1};
+    std::vector<double> setpars{1,1};
 
     TH1D *ht_cp = (TH1D*)ht->Clone(); 
     TH1D *hs1_cp1 = (TH1D*)hs1->Clone(); 
@@ -52,7 +52,7 @@ namespace fit {
     f1->SetParName(1,"R");
 
     ht_cp->Fit(f1); 
-    vector<double> pars;
+    std::vector<double> pars;
     for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
 
     TH1D *hs1_cp2 = (TH1D*)hs1_cp1->Clone(); hs1_cp2->Scale(pars[0]);
@@ -63,16 +63,16 @@ namespace fit {
     return f1;
   }
 
-  TF1* fit_2hs_1hbg_THI (vector<double> fit_range,
+  TF1* fit_2hs_1hbg_THI (std::vector<double> fit_range,
 			 TH1D* ht,             // total histo to fit 
 			 TH1D* hs1,            // 1st signal histo for fit
 			 TH1D* hs2,            // 2nd signal histo for fit
 			 TH1D* hbg,            // bg histo for fit
-			 vector<TH1D*> &ho)    // Output: ht,hs,hbg,N*hs1,N*R*hs2 (N=par[0],R=par[1])
+			 std::vector<TH1D*> &ho)    // Output: ht,hs,hbg,N*hs1,N*R*hs2 (N=par[0],R=par[1])
   /* TH Interpolation fit using 2 signal histo & 1 bg histo (3 pars) */
   {
     const int npars = 3;
-    vector<double> setpars{1,1,0};
+    std::vector<double> setpars{1,1,0};
 
     TH1D *ht_cp = (TH1D*)ht->Clone(); 
     TH1D *hs1_cp1 = (TH1D*)hs1->Clone(); 
@@ -88,7 +88,7 @@ namespace fit {
     f1->SetParName(2,"B");
 
     ht_cp->Fit(f1);
-    vector<double> pars;
+    std::vector<double> pars;
     for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
 
     TH1D *hs1_cp2 = (TH1D*)hs1_cp1->Clone(); hs1_cp2->Scale(pars[0]);
@@ -100,15 +100,15 @@ namespace fit {
     return f1;
   }
 
-  TF1* fit_2hs_nbg_THI (vector<double> fit_range,
+  TF1* fit_2hs_nbg_THI (std::vector<double> fit_range,
 			TH1D* ht,             // total histo to fit 
 			TH1D* hs,             // signal histo for fit
 			int Opoly,            // Order of poly to fit bg
-			vector<TH1D*> &ho)    // Output: ht,hs,hbg
+			std::vector<TH1D*> &ho)    // Output: ht,hs,hbg
   /* TH Interpolation fit using 1 signal histo & 1 poly bg (1+Opoly+1 pars) */
   {
     const int npars = 1+Opoly+1;
-    vector<double> setpars{1}; for (int i=1;i<npars;i++) setpars.push_back(0);
+    std::vector<double> setpars{1}; for (int i=1;i<npars;i++) setpars.push_back(0);
 
     TH1D *ht_cp = (TH1D*)ht->Clone(); 
     TH1D *hs_cp1 = (TH1D*)hs->Clone(); 
@@ -120,7 +120,7 @@ namespace fit {
     f1->SetParName(0,"Norm");
 
     ht_cp->Fit(f1); 
-    vector<double> pars;
+    std::vector<double> pars;
     for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
 
     TH1D *hs_cp2 = (TH1D*)hs_cp1->Clone(); hs_cp2->Scale(pars[0]);
@@ -130,16 +130,16 @@ namespace fit {
     return f1;    
   }
 
-  TF1* fit_2hs_1pbg_THI (vector<double> fit_range,
+  TF1* fit_2hs_1pbg_THI (std::vector<double> fit_range,
 			 TH1D* ht,             // total histo to fit 
 			 TH1D* hs1,            // 1st signal histo for fit
 			 TH1D* hs2,            // 2nd signal histo for fit
 			 int Opoly,            // Order of poly to fit bg
-			 vector<TH1D*> &ho)    // Output: ht,hs,hbg,N*hs1,N*R*hs2 (N=par[0],R=par[1])
+			 std::vector<TH1D*> &ho)    // Output: ht,hs,hbg,N*hs1,N*R*hs2 (N=par[0],R=par[1])
   /* TH Interpolation fit using 2 signal histos & 1 poly bg (2+Opoly+1 pars) */
   {
     const int npars = 2+Opoly+1;
-    vector<double> setpars{1,1}; for (int i=2;i<npars;i++) setpars.push_back(0);
+    std::vector<double> setpars{1,1}; for (int i=2;i<npars;i++) setpars.push_back(0);
 
     TH1D *ht_cp = (TH1D*)ht->Clone(); 
     TH1D *hs1_cp1 = (TH1D*)hs1->Clone(); 
@@ -153,7 +153,7 @@ namespace fit {
     f1->SetParName(1,"R");
 
     ht_cp->Fit(f1);
-    vector<double> pars;
+    std::vector<double> pars;
     for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
 
     TH1D *hs1_cp2 = (TH1D*)hs1_cp1->Clone(); hs1_cp2->Scale(pars[0]);

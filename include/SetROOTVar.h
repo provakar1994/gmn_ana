@@ -7,9 +7,9 @@
 namespace setrootvar {
 
   void setbranch(TTree *T, //use to settreebranch for one variable
-		 std::string prefix,
-		 std::string suffix,
-		 void* memory);
+  		 std::string prefix,
+  		 std::string suffix,
+  		 void* memory);
   void setbranch(TTree *T, //use to settreebranch for multiple variables
 		 std::string prefix,
 		 std::vector<std::string> suffix,

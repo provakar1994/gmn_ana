@@ -36,7 +36,7 @@ namespace kine{
 
   // Constructing HCAL co-ordinate system (CoS) in terms of Hall CoS
   void SetHCALaxes(double sbstheta_rad,           // SBS angle (rad)
-		   vector<TVector3> &HCAL_axes);  // HCAL axes in order: X, Y, Z (Output)
+		   std::vector<TVector3> &HCAL_axes);  // HCAL axes in order: X, Y, Z (Output)
 
   /* // Returns HCAL origin offset vector: A vector pointing from HCAL center  */
   /* // defined by DB xpos and ypos to real HCAL origin. */
@@ -53,8 +53,8 @@ namespace kine{
   void GetxyHCALexpect(TVector3 vertex,                 // vertex vector [in Hall CoS]
 		       TVector3 pNhat,                  // projected q vector
 		       TVector3 HCAL_origin,            // HCAL origin vector [in Hall CoS]
-		       vector<TVector3> HCAL_axes,      // HCAL CoS axes [in Hall CoS]
-		       vector<double> &xyHCALexpect);   // expected x and y positions (Output)       
+		       std::vector<TVector3> HCAL_axes,      // HCAL CoS axes [in Hall CoS]
+		       std::vector<double> &xyHCALexpect);   // expected x and y positions (Output)       
 
   double Q2(double ebeam, double eeprime, double etheta);                // GeV, GeV, rad
   double W2(double ebeam, double eeprime, double Q2, std::string Ntype); // GeV, GeV, GeV2

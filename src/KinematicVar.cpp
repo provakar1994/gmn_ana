@@ -56,7 +56,7 @@ namespace kine {
   }
   //--------------------------------------------
   void SetHCALaxes(double sbstheta_rad,                           // SBS angle in radian 
-		   vector<TVector3> &HCAL_axes) {
+		   std::vector<TVector3> &HCAL_axes) {
     TVector3 HCAL_zaxis(sin(-sbstheta_rad),0,cos(-sbstheta_rad)); // Clock-wise rotation about Y axis
     TVector3 HCAL_xaxis(0,-1,0);                                  // -Y axis of Hall CoS = X axis of HCAL CoS
     TVector3 HCAL_yaxis = HCAL_zaxis.Cross(HCAL_xaxis).Unit();
@@ -92,7 +92,7 @@ namespace kine {
   // }
   //--------------------------------------------
   void GetxyHCALexpect(TVector3 vertex, TVector3 pNhat, TVector3 HCAL_origin, 
-		       vector<TVector3> HCAL_axes, vector<double> &xyHCALexpect) {
+		       std::vector<TVector3> HCAL_axes, std::vector<double> &xyHCALexpect) {
     /* This function calculates the expected vertical (x) and horizontal (y) positions
      of the recoil nucleon at the face of HCAL. 
      input:
@@ -133,7 +133,7 @@ namespace kine {
   }
   //--------------------------------------------
   double W(double ebeam, double eeprime, double Q2, std::string Ntype) {
-    return max(0., sqrt(kine::W2(ebeam, eeprime, Q2, Ntype)));
+    return std::max(0., sqrt(kine::W2(ebeam, eeprime, Q2, Ntype)));
   }
   //--------------------------------------------
   double Luminosity(double ibeam, std::string targetType) {

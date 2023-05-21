@@ -2,7 +2,7 @@
 
 namespace setrootvar {
 
-  void setbranch(TTree *T,
+  void setbranch(TTree* T,
 		 std::string prefix,
 		 std::string suffix,
 		 void* memory)
@@ -18,13 +18,13 @@ namespace setrootvar {
     T->SetBranchAddress(branchname.c_str(),memory);
   }
   //--------------------------------------------
-  void setbranch(TTree *T,
+  void setbranch(TTree* T,
 		 std::string prefix,
 		 std::vector<std::string> suffix,
 		 std::vector<void*> memory)
   {
     if(suffix.size()!=memory.size()){
-      std::cerr<< "!*! Contaier size of branch suffix != Container size of branch memory!" << std::endl;
+      std::cerr<< "!&! Contaier size of branch suffix != Container size of branch memory!" << std::endl;
       throw;
     }
     T->SetMakeClass(1); // Allows access to individual sub-branchs
@@ -44,14 +44,14 @@ namespace setrootvar {
     }
   }
   //--------------------------------------------
-  void setbranch(TTree *T,
+  void setbranch(TTree* T,
   		 std::string prefix,
   		 std::vector<std::string> suffix,
   		 std::vector<void*> memory,
   		 int ndatavarpos)
   {
     if(suffix.size()!=memory.size()){
-      std::cerr<< "!*! Contaier size of branch suffix != Container size of branch memory!" << std::endl;
+      std::cerr<< "!&! Contaier size of branch suffix != Container size of branch memory!" << std::endl;
       throw;
     }
     T->SetMakeClass(1); // Allows access to individual sub-branchs
@@ -69,7 +69,7 @@ namespace setrootvar {
     }
   }
   //--------------------------------------------
-  void setbranch(TTree *T,
+  void setbranch(TTree* T,
   		 std::string prefix,
   		 std::vector<std::string> suffix,
   		 std::vector<void*> memory,

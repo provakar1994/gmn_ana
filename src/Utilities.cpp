@@ -68,7 +68,7 @@ namespace util_pd {
     return h;
   }
   //_____________________________________
-  void DrawArea(vector<double> dimensions, 
+  void DrawArea(std::vector<double> dimensions, 
 		int lcolor=2, int lwidth=4, int lstyle=9) {
     /* Draws four lines to represent a rectangular cut area */
     double top = dimensions[0];                 // -X axis
@@ -102,7 +102,7 @@ namespace util_pd {
     else if (conf==14) { nbin=100; hmin=5.; hmax=10.; }
     else if (conf==7) { nbin=120; hmin=6.; hmax=12.; }
     else if (conf==11) { nbin=200; hmin=8.; hmax=18.; }
-    else cerr << "[Utilities::TH1FhQ2] Enter valid SBS config!!" << endl;
+    else std::cerr << "[Utilities::TH1FhQ2] Enter valid SBS config!!" << std::endl;
     TH1F *h = new TH1F(name.c_str(), "Q^{2} Distribution (GeV^{2})", 
 		       nbin, hmin, hmax);
     return h;
@@ -117,7 +117,7 @@ namespace util_pd {
 		   std::string target,        // target type
 		   int replay_pass,           // replay pass
 		   int verbose,               // verbosity
-		   vector<CodaRun> &crun)     // Output: Vector of CodaRun structs
+		   std::vector<CodaRun> &crun)     // Output: Vector of CodaRun structs
   {
     // Define the name of the relevant run spreadsheet
     std::string fst = "/good_runList_GMn_nTPE_"; 
@@ -128,20 +128,20 @@ namespace util_pd {
 
     // Reading the spreadsheet
     if (nruns < 0) nruns = 1e6;         // replay all runs if nruns < 0
-    ifstream run_data; run_data.open(run_spreadsheet);
-    string readline;
+    std::ifstream run_data; run_data.open(run_spreadsheet);
+    std::string readline;
     if(run_data.is_open()){
       std::cout << "Reading run info from: "<< run_spreadsheet 
 		<< std::endl << std::endl;
-      string skip_header; getline(run_data, skip_header);  // skipping column header
+      std::string skip_header; getline(run_data, skip_header);  // skipping column header
       crun.clear();
       while(getline(run_data,readline)){                   // reading each line
-	istringstream tokenStream(readline);
-	string token;
+	std::istringstream tokenStream(readline);
+	std::string token;
 	char delimiter = ',';
-	vector<string> temp;
+	std::vector<std::string> temp;
 	while(getline(tokenStream,token,delimiter)){       // reading each element of a line
-	  string temptoken=token;
+	  std::string temptoken=token;
 	  temp.push_back(temptoken);
 	}
 	// add relevant info to CodaRun objects
@@ -173,7 +173,7 @@ namespace util_pd {
 		   int replay_pass,           // replay pass
 		   int sbsmag,                // SBS magnet current (in %)
 		   int verbose,               // verbosity
-		   vector<CodaRun> &crun)     // Output: Vector of CodaRun objects
+		   std::vector<CodaRun> &crun)     // Output: Vector of CodaRun objects
   {
     // Define the name of the relevant run spreadsheet
     std::string fst = "/good_runList_GMn_nTPE_"; 
@@ -187,19 +187,19 @@ namespace util_pd {
 
     // Reading the spreadsheet
     if (nruns < 0) nruns = 1e6;         // replay all runs if nruns < 0
-    ifstream run_data; run_data.open(run_spreadsheet);
-    string readline;
+    std::ifstream run_data; run_data.open(run_spreadsheet);
+    std::string readline;
     if(run_data.is_open()){
       std::cout << "Reading run info from: "<< run_spreadsheet 
 		<< std::endl << std::endl;
-      string skip_header; getline(run_data, skip_header); // skipping column header
+      std::string skip_header; getline(run_data, skip_header); // skipping column header
       while(getline(run_data,readline)){                  // reading each line
-	istringstream tokenStream(readline);
-	string token;
+	std::istringstream tokenStream(readline);
+	std::string token;
 	char delimiter = ',';
-	vector<string> temp;
+	std::vector<std::string> temp;
 	while(getline(tokenStream,token,delimiter)){      // reading each element of a line
-	  string temptoken=token;
+	  std::string temptoken=token;
 	  temp.push_back(temptoken);
 	}
 	// add relevant info to CodaRun objects
@@ -232,7 +232,7 @@ namespace util_pd {
 		   int sbsmag,                // SBS magnet current (in %)
 		   int bbmag,                 // BB magnet current (in %)
 		   int verbose,               // verbosity
-		   vector<CodaRun> &crun)     // Output: Vector of CodaRun structs
+		   std::vector<CodaRun> &crun)     // Output: Vector of CodaRun structs
   {
     // Define the name of the relevant run spreadsheet
     std::string fst = "/good_runList_GMn_nTPE_"; 
@@ -247,19 +247,19 @@ namespace util_pd {
 
     // Reading the spreadsheet
     if (nruns < 0) nruns = 1e6;         // replay all runs if nruns < 0
-    ifstream run_data; run_data.open(run_spreadsheet);
-    string readline;
+    std::ifstream run_data; run_data.open(run_spreadsheet);
+    std::string readline;
     if(run_data.is_open()){
       std::cout << "Reading run info from: "<< run_spreadsheet 
 		<< std::endl << std::endl;     
-      string skip_header; getline(run_data, skip_header); // skipping column header
+      std::string skip_header; getline(run_data, skip_header); // skipping column header
       while(getline(run_data,readline)){                  // reading each line
-	istringstream tokenStream(readline);
-	string token;
+	std::istringstream tokenStream(readline);
+	std::string token;
 	char delimiter = ',';
-	vector<string> temp;
+	std::vector<std::string> temp;
 	while(getline(tokenStream,token,delimiter)){      // reading each element of a line
-	  string temptoken=token;
+	  std::string temptoken=token;
 	  temp.push_back(temptoken);
 	}
 	// add relevant info to CodaRun objects
@@ -321,13 +321,13 @@ namespace util_pd {
     return 0;
   }
   //______________________________________________________________________________
-  bool sortbyval(const pair<int, int> &a, const pair<int, int> &b) {
+  bool sortbyval(const std::pair<int, int> &a, const std::pair<int, int> &b) {
     return (a.first < b.first);
   } 
   //______________________________________________________________________________
   int GetROOTFileMetaData(const char *rfDirPath, int run,
 			  std::vector<int> &data, 
-			  std::vector<pair<int, int>> &segB_segE,
+			  std::vector<std::pair<int, int>> &segB_segE,
 			  int verbose){
     /* Acknowledgement: Based on a function written by David Flay.
     Determines the beginning and end segment number for a CODA run
@@ -385,7 +385,7 @@ namespace util_pd {
 	  SplitString('g', theStr, o2); 
 	  int bseg = std::atoi(o2[1].c_str());
 	  int eseg = std::atoi(o1[5].c_str());
-	  segB_segE.push_back(make_pair(bseg,eseg));
+	  segB_segE.push_back(std::make_pair(bseg,eseg));
 	  o2.clear();
 	}
 	o1.clear();
@@ -429,7 +429,7 @@ namespace util_pd {
 	std::cout << "Sorting by segments.." << std::endl;
 	int aRun, aNumFiles, aStream, rc;
 	std::vector<int> md;
-	std::vector<pair<int, int>> segB_segE;
+	std::vector<std::pair<int, int>> segB_segE;
 	// Looping through unique runs
 	for (int irun=0; irun<nruns; irun++) {
 	  aRun = crun[irun].runnum;
@@ -487,7 +487,7 @@ namespace util_pd {
 	std::cout << "Sorting by segments.." << std::endl;
 	int aRun, aNumFiles, aStream, rc;
 	std::vector<int> md;
-	std::vector<pair<int, int>> segB_segE;
+	std::vector<std::pair<int, int>> segB_segE;
 	// Looping through unique runs
 	aRun = crun.runnum;
 	rc = GetROOTFileMetaData(path.c_str(),aRun,md,segB_segE,0);
@@ -537,7 +537,7 @@ namespace util_pd {
 			  std::string target,        // target type
 			  int &njobs,                // # jobs to analyze per process
 			  int verbose,               // verbosity
-			  vector<SimuJob> &sjobs)    // Output: Vector of SimuJob objects
+			  std::vector<SimuJob> &sjobs)    // Output: Vector of SimuJob objects
   /* Reads simulation job specifics from summary files and loads the values to SimuJob objects.
      This function has the standard naming conventions of output simulation and summary files 
      hard coded. Please make sure the files to analyze have names compatible with the standard
@@ -551,10 +551,10 @@ namespace util_pd {
   */
   {
     TString filebase = Form("sbs%d_sbs%dp_%s",sbsconf,sbsmag,generator.c_str());
-    if (!prefix.empty) filebase = (TString)prefix + "_" + filebase;
+    if (!prefix.empty()) filebase = (TString)prefix + "_" + filebase;
 
     // Define the name of the summary file and corresponding process based on generator and target
-    vector<TString> simu_logfile, process;
+    std::vector<TString> simu_logfile, process;
     if (target.compare("LH2") == 0) {
       TString temp = Form("%s_heep_summary.csv",filebase.Data());
       simu_logfile.push_back(temp); process.push_back("heep");
@@ -580,18 +580,18 @@ namespace util_pd {
     for (int ifile=0; ifile<simu_logfile.size(); ifile++) {
       int inisize = sjobs.size();
       TString logfile_temp = Form("%s/%s",logfile_dir.c_str(),simu_logfile[ifile].Data());
-      ifstream simu_log; simu_log.open(logfile_temp);
-      string readline;
+      std::ifstream simu_log; simu_log.open(logfile_temp);
+      std::string readline;
       if(simu_log.is_open()){
 	std::cout << "Reading summary file: " << logfile_temp << std::endl;
-	string skip_header; getline(simu_log,skip_header); // skipping column header
+	std::string skip_header; getline(simu_log,skip_header); // skipping column header
 	while(getline(simu_log,readline)){                  // reading each line
-	  istringstream tokenStream(readline);
-	  string token;
+	  std::istringstream tokenStream(readline);
+	  std::string token;
 	  char delimiter = ',';
-	  vector<string> temp, data;
+	  std::vector<std::string> temp, data;
 	  while(getline(tokenStream,token,delimiter)){      // reading each element of a line
-	    string temptoken=token;
+	    std::string temptoken=token;
 	    temp.push_back(temptoken);
 	  }
 	  // add relevant info to SimuJob objects
@@ -605,14 +605,20 @@ namespace util_pd {
 	  // handling the sicrepancy in summary file by generator
 	  data.push_back(sfname.Data());
 	  data.push_back(rfname.Data());
+	  data.push_back(generator);
 	  if (generator.compare("simc") == 0) {
-	    data.push_back(temp[1]);
-	    data.push_back(temp[2]);
-	    data.push_back(temp[5]);
-	    data.push_back(temp[4]);
-	    // double lumi = stod(temp[5])*stod(temp[2])/(stod(temp[1])*stod(temp[4]));
-	    // data.push_back(to_string(lumi));
-	    data.push_back(to_string(stod(temp[3])/1000.));
+	    data.push_back(temp[1]); //ngenreq
+	    data.push_back(temp[2]); //nthrown
+	    data.push_back(temp[5]); //genvol(MeV*sr2)
+	    data.push_back(temp[4]); //lumi(ub^-1)
+	    data.push_back(temp[3]); //charge(mC)
+	  }else	if (generator.compare("g4sbs") == 0) {
+	    data.push_back(temp[1]); //ngenreq
+	    data.push_back(temp[2]); //nthrown
+	    data.push_back(temp[5]); //genvol(sr)
+	    data.push_back(temp[6]); //lumi(Hz/cm2)
+	    data.push_back(temp[3]); //ebeam(GeV) 
+	    data.push_back(temp[4]); //ibeam(A)
 	  }
 
 	  temp_sj.SetDataSimuJob(data);
@@ -684,7 +690,7 @@ namespace util_pd {
   }
   //______________________________________________________________________________
   void GetTotNtriesnCh(std::vector<SimuJob> sjobs, // Input: List of SimuJob objects
-		       vector<double> &data)       // Output: data[0]=>Tot. Ch., data[1]=>Tot. ntries
+		       std::vector<double> &data)       // Output: data[0]=>Tot. Ch., data[1]=>Tot. ntries
   /* Calc. # tries & tot. Ch. from SimuJob objects */
   {
     double totntries=0.,totcharge=0.;

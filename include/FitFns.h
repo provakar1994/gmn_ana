@@ -1,6 +1,8 @@
 #ifndef FIT_FNS_H
 #define FIT_FNS_H
 
+#include "TH1D.h"
+
 class FitFn {
  private:
   int fpoly=0;       // order of polynomial

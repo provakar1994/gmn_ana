@@ -103,7 +103,7 @@ class SBSconfig {
   }
 
   // define an ostream operator to print to screen conveniently
-  friend ostream& operator <<(ostream &out, const SBSconfig& sbsconf) {
+  friend std::ostream& operator <<(std::ostream &out, const SBSconfig& sbsconf) {
     out  << " -------------------------- "                         << std::endl
 	 << Form(" SBS Config: %d, "                   , sbsconf.fSBSconf)   << std::endl
 	 << Form(" SBS Magnet Settings: %d (p), "      , sbsconf.fSBSmag)    << std::endl

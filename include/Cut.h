@@ -7,8 +7,6 @@
 
 namespace cut {
 
-
-  
   /* ##########################
      ##  HCAL Geometry Cuts  ##
      ########################## */
@@ -26,7 +24,7 @@ namespace cut {
 					     int nBlk_y);  // No. of blocks to exclude form left and right (Default=1)
 
   // Returns "True" if nucleon pos. in HCAL is within active area
-  bool isHCAL_activeA (double xHCAL,                           // vertical (x) pos of recoil N at HCAL
+  bool inHCAL_activeA (double xHCAL,                           // vertical (x) pos of recoil N at HCAL
 		       double yHCAL,                           // horizontal (y) pos of recoil N at HCAL
 		       std::vector<double> hcal_active_area);  // HCAL active area co-ordinates
 

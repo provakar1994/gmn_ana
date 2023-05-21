@@ -116,10 +116,13 @@ int qelas_ana_simu (const char *configfilename,
   // setrootvar::setbranch(C,"MC",simc,simc_mem);
 
   //MC variables
-  double mc_sigma, mc_fnucl; // mc_sigma => Cross-section weight
-  std::vector<std::string> mc = {"mc_sigma","mc_fnucl"};          //Default: g4sbs gen.
-  if (gen.compare("simc")==0) mc = {"simc_Weight","simc_fnucl"};  
+  double mc_sigma, mc_fnucl, mc_ebeam;                    // mc_sigma => Cross-section weight
+  std::vector<std::string> mc = {"mc_sigma","mc_fnucl"};  // Default: g4sbs gen.
   std::vector<void*> mc_mem = {&mc_sigma,&mc_fnucl}; 
+  if (gen.compare("simc")==0) {
+    mc = {"simc_Weight","simc_fnucl","simc_Ebeam"};  
+    mc_mem = {&mc_sigma,&mc_fnucl,&mc_ebeam}; 
+  }
   setrootvar::setbranch(C,"MC",mc,mc_mem);
 
   // turning on the remaining branches we use for the globalcut
@@ -127,7 +130,7 @@ int qelas_ana_simu (const char *configfilename,
   C->SetBranchStatus("bb.etot_over_p", 1);
 
   // defining the outputfile
-  if (verbose==0 || verbosefn==0) filebase = "pdout/qelas_ana";
+  if (verbose==0 && verbosefn==0) filebase = "pdout/qelas_ana";
   TString outFile = Form("%s_%s_sbs%d_sbs%dp_model%d.root",filebase.c_str(),gen.c_str(),conf,sbsmag,model);
   TFile *fout = new TFile(outFile.Data(),"RECREATE");
 
@@ -212,7 +215,8 @@ int qelas_ana_simu (const char *configfilename,
   double T_dy;          Tout->Branch("dy", &T_dy, "dy/D");
   double T_ToF_n;       Tout->Branch("ToF_n", &T_ToF_n, "ToF_n/D");
 
-  // Do the energy loss calculation here ...........
+  // Do the energy loss calculation here (only for g4sbs generator)
+  double ebeam = sbsconf.GetEbeam(); // gets overwritten in the event loop
 
   // HCAL cut definitions
   vector<double> dx_p; jmgr->GetVectorFromKey<double>("dx_p", dx_p);
@@ -261,7 +265,7 @@ int qelas_ana_simu (const char *configfilename,
       /* sophisticated but slightly inefficient way */
       const char* rftemp = C->GetFile()->GetName();
       auto it = std::find_if(sjobs.begin(), sjobs.end(), [=](SimuJob const& sj){return sj.rfname.compare(rftemp) == 0;});
-      if (it != sjobs.end()) {lumi = it->lumi; mc_omega = it->genvol;} 
+      if (it != sjobs.end()) {lumi = it->lumi; mc_omega = it->genvol; if (gen.compare("g4sbs")==0) ebeam = it->ebeam;} 
       //lumi = sjobs[treeitr].lumi; mc_omega = sjobs[treeitr].genvol; treeitr++;
     } 
     bool passedgCut = GlobalCut->EvalInstance(0) != 0;   
@@ -271,8 +275,8 @@ int qelas_ana_simu (const char *configfilename,
     weight = mc_sigma*mc_omega*lumi / totNtriesnCh[0];
 
     // kinematic parameters
-    double ebeam = sbsconf.GetEbeam();       // Expected beam energy (GeV) [Get it from EPICS, eventually]
     double ebeam_corr = ebeam; //- MeanEloss;
+    if (gen.compare("simc")==0) ebeam_corr = mc_ebeam;
     double precon = p[0]; //+ MeanEloss_outgoing
 
     // constructing the 4 vectors

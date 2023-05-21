@@ -19,7 +19,7 @@ CodaRun():
   {}
 
   // define an ostream operator to print to screen conveniently
-  friend ostream& operator <<(ostream &out, const CodaRun& crun) {
+  friend std::ostream& operator <<(std::ostream &out, const CodaRun& crun) {
     out << " ------------" << std::endl;
     out << " Run number        : " << crun.runnum << std::endl;
     out << " SBS config        : " << crun.sbsconf << std::endl;
@@ -45,7 +45,7 @@ CodaRun():
         ebeam_std = stod(data[6]);
         charge    = stod(data[7]);
      } else 
-        throw::runtime_error("Potential NaN column entry in the run sheet!");
+      throw std::runtime_error("Potential NaN column entry in the run sheet!");
     }
 
 } CodaRun_t;  

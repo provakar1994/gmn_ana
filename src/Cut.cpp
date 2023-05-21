@@ -84,7 +84,7 @@ namespace cut {
     return safety_margin;
   }
   //___________________________________________________________________
-  bool inHCAL_fiducial (double xHCAL_exp, double yHCAL_exp, double delx_shift, vector<double> hcal_safety_margin) {
+  bool inHCAL_fiducial (double xHCAL_exp, double yHCAL_exp, double delx_shift, std::vector<double> hcal_safety_margin) {
     // returns "True" if expected nucleon pos. in HCAL is within "Fiducial" region
     bool inFidu = false;
     // active area dimensions
