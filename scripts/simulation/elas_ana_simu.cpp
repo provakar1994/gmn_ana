@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "TCut.h"
-#include "TH1F.h"
+#include "TH1D.h"
 #include "TFile.h"
 #include "TLatex.h"
 #include "TChain.h"
@@ -17,15 +17,6 @@
 #include "TStopwatch.h"
 #include "TTreeFormula.h"
 #include "TLorentzVector.h"
-
-// #include "Cut.h"
-// #include "Fit.h"
-// #include "SimuJob.h"
-// #include "Constants.h"
-// #include "Utilities.h"
-// #include "SetROOTVar.h"
-// #include "KinematicVar.h"
-// #include "ExpConstants.h"
 
 #include "../../include/gmn_ana.h"
 #include "../../dflay/src/JSONManager.cxx"
@@ -47,18 +38,6 @@ int elas_ana_simu (const char *configfilename,
   // reading input config file ---------------------------------------
   JSONManager *jmgr = new JSONManager(configfilename);
 
-  // // parsing trees
-  // std::string rootfile_dir = jmgr->GetValueFromKey_str("rootfile_dir");
-  // TChain *C = new TChain("T");
-  // C->Add(rootfile_dir.c_str());
-  // if (C->GetEntries()==0) {std::cerr << "*!* No ROOT file!" << std::endl; throw;}
- 
-  // seting up the desired SBS configuration
-  // int conf = jmgr->GetValueFromKey<int>("SBS_config");
-  // int sbsmag = jmgr->GetValueFromKey<int>("SBS_magnet_percent");
-  // SBSconfig sbsconf(conf, sbsmag);
-  // cout << sbsconf;
-
   // seting up the desired SBS configuration
   int conf = jmgr->GetValueFromKey<int>("SBS_config");
   int sbsmag = jmgr->GetValueFromKey<int>("SBS_magnet_percent");
@@ -71,7 +50,7 @@ int elas_ana_simu (const char *configfilename,
   std::string prefix = jmgr->GetValueFromKey_str("prefix_to_filebase");
   std::string gen = jmgr->GetValueFromKey_str("generator");
   int njobs = jmgr->GetValueFromKey<int>("Njobs_to_ana"); // # MC jobs to analyze
-  vector<SimuJob> sjobs; util_pd::ReadSimuJobSummary(rfd,prefix,conf,sbsmag,gen,target,njobs,verbosefn,sjobs);
+  std::vector<SimuJob> sjobs; util_pd::ReadSimuJobSummary(rfd,prefix,conf,sbsmag,gen,target,njobs,verbosefn,sjobs);
   TChain *C = new TChain("T"); util_pd::LoadSimuROOTTree(sjobs,verbosefn,C);
 
   // Choosing the model of calculation
@@ -82,14 +61,6 @@ int elas_ana_simu (const char *configfilename,
   if (model == 0) std::cout << "Using model 0 [recon. p as indep. var.] for analysis.." << std::endl;
   else if (model == 1) std::cout << "Using model 1 [recon. angle as indep. var.] for analysis.." << std::endl;
   else if (model == 2) std::cout << "Using model 2 [4-vector calculation] for analysis.." << std::endl;
-  else { std::cerr << "Enter a valid model number! **!**" << std::endl; throw; }
-
-  // // parameters for normalization
-  // std::string targetType = jmgr->GetValueFromKey_str("target_type");
-  // double I_beam = jmgr->GetValueFromKey<double>("beam_current");
-  // // total generated simulation events per job
-  // double ngen_total = jmgr->GetValueFromKey<double>("ngen_total"); 
-  // double lumi = kine::Luminosity(I_beam, targetType);
 
   // choosing nucleon type 
   std::string Ntype = jmgr->GetValueFromKey_str("Ntype");
@@ -127,18 +98,6 @@ int elas_ana_simu (const char *configfilename,
   std::vector<void*> trvar_mem = {&ntrack,&p,&px,&py,&pz,&xTr,&yTr,&thTr,&phTr,&vx,&vy,&vz,&xtgt,&ytgt,&thtgt,&phtgt};
   setrootvar::setbranch(C,"bb.tr",trvar,trvar_mem);
 
-  // //MC variables (g4sbs gen)
-  // double mc_sigma, mc_omega, mc_fnucl;
-  // std::vector<std::string> mc = {"mc_sigma","mc_omega","mc_fnucl"};
-  // std::vector<void*> mc_mem = {&mc_sigma,&mc_omega,&mc_fnucl};
-  // setrootvar::setbranch(C,"MC",mc,mc_mem);
-
-  // //MC variables (SIMC gen)
-  // double simc_sigma, simc_Weight;
-  // std::vector<std::string> simc = {"simc_sigma","simc_Weight"};
-  // std::vector<void*> simc_mem = {&simc_sigma,&simc_Weight};
-  // setrootvar::setbranch(C,"MC",simc,simc_mem);
-
   //MC variables
   double mc_sigma, mc_fnucl, mc_ebeam;                    // mc_sigma => Cross-section weight
   std::vector<std::string> mc = {"mc_sigma","mc_fnucl"};  // Default: g4sbs gen.
@@ -159,21 +118,23 @@ int elas_ana_simu (const char *configfilename,
   TFile *fout = new TFile(outFile.Data(),"RECREATE");
 
   // defining histograms
-  TH1F *h_W = util_pd::TH1FhW("h_W");
-  TH1F *h_W_cut = util_pd::TH1FhW("h_W_cut");
-  TH1F *h_W_acut = util_pd::TH1FhW("h_W_acut");
+  TH1D *h_W = util_pd::TH1DhW("h_W");
+  TH1D *h_W_cut = util_pd::TH1DhW("h_W_cut");
+  TH1D *h_W_acut = util_pd::TH1DhW("h_W_acut");
   TH1D *h_dpel = new TH1D("h_dpel",";p/p_{elastic}(#theta)-1;",100,-0.3,0.3);
   
-  TH1F *h_Q2 = util_pd::TH1FhQ2("h_Q2", conf);
-  vector<double> hdx_lim; jmgr->GetVectorFromKey<double>("h_dxHCAL_lims", hdx_lim);
-  vector<double> hdy_lim; jmgr->GetVectorFromKey<double>("h_dyHCAL_lims", hdy_lim);
-  TH1F *h_dxHCAL = new TH1F("h_dxHCAL","; x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
-  TH1F *h_dyHCAL = new TH1F("h_dyHCAL","; y_{HCAL} - y_{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
-  TH1F *h_dxHCAL_p = new TH1F("h_dxHCAL_p","mc_fnucl = p; x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
+  TH1D *h_Q2 = util_pd::TH1DhQ2("h_Q2", conf);
+  std::vector<double> hdx_lim; jmgr->GetVectorFromKey<double>("h_dxHCAL_lims", hdx_lim);
+  std::vector<double> hdy_lim; jmgr->GetVectorFromKey<double>("h_dyHCAL_lims", hdy_lim);
+  TH1D *h_dxHCAL = new TH1D("h_dxHCAL","; x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
+  TH1D *h_dxHCAL_nfc = new TH1D("h_dxHCAL_nfc","; x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
+  TH1D *h_dyHCAL = new TH1D("h_dyHCAL","; y_{HCAL} - y_{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
+  TH1D *h_dyHCAL_nfc = new TH1D("h_dyHCAL_nfc","; y_{HCAL} - y_{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
+  TH1D *h_dxHCAL_p = new TH1D("h_dxHCAL_p","mc_fnucl = p; x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
 
-  TH2F *h2_rcHCAL = util_pd::TH2FHCALface_rc("h2_rcHCAL");
-  TH2F *h2_dxdyHCAL = util_pd::TH2FdxdyHCAL("h2_dxdyHCAL");
-  TH2F *h2_xyHCAL_p = util_pd::TH2FHCALface_xy_simu("h2_xyHCAL_p");
+  TH2D *h2_rcHCAL = util_pd::TH2DHCALface_rc("h2_rcHCAL");
+  TH2D *h2_dxdyHCAL = util_pd::TH2DdxdyHCAL("h2_dxdyHCAL");
+  TH2D *h2_xyHCAL_p = util_pd::TH2DHCALface_xy_simu("h2_xyHCAL_p");
 
   // Defining interesting ROOT tree branches 
   TTree *Tout = new TTree("Tout", "");
@@ -279,16 +240,12 @@ int elas_ana_simu (const char *configfilename,
       // getting normalization factors per run
       /* sophisticated but slightly inefficient way */
       const char* rftemp = C->GetFile()->GetName();
-      auto it = std::find_if(sjobs.begin(), sjobs.end(), [=](SimuJob const& sj){return sj.rfname.compare(rftemp) == 0;});
+      auto it = std::find_if(sjobs.begin(), sjobs.end(), [&](SimuJob const& sj){return sj.rfname.compare(rftemp) == 0;});
       if (it != sjobs.end()) {lumi = it->lumi; mc_omega = it->genvol; if (gen.compare("g4sbs")==0) ebeam = it->ebeam;} 
       //lumi = sjobs[treeitr].lumi; mc_omega = sjobs[treeitr].genvol; treeitr++;
     } 
     bool passedgCut = GlobalCut->EvalInstance(0) != 0;   
     if (!passedgCut) continue;
-
-    // // cross section weighted normalization factor
-    // //weight = mc_sigma*mc_omega*lumi / ngen_total;
-    // weight = simc_Weight;
 
     // cross section weighted normalization factor
     weight = mc_sigma*mc_omega*lumi / totNtriesnCh[0];
@@ -307,7 +264,7 @@ int elas_ana_simu (const char *configfilename,
 			   py[0] * (precon/p[0]),
 			   pz[0] * (precon/p[0]),
 			   precon);                 
-    TLorentzVector PN;                              // target nucleon [Ntype ??]
+    TLorentzVector PN;                              // target nucleon
     kine::SetPN(Ntype, PN);
     TLorentzVector PNprime;                         // Recoil nucleon 4-vector
     TLorentzVector q = Pe - Peprime;                // 4-momentum of virtual photon
@@ -416,7 +373,7 @@ int elas_ana_simu (const char *configfilename,
     TVector3 HCAL_pos = HCAL_origin + xHCAL*HCAL_axes[0] + yHCAL*HCAL_axes[1];
     double BdL = sbsfield * expconst::sbsdipolegap;
     double proton_thetabend = 0.3 * BdL / PNprime.Vect().Mag();  // p*theta = 0.3*BdL
-    double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist() - (sbsconf.GetSBSdist() + expconst::sbsdipolegap/2.0));
+    double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist()-(sbsconf.GetSBSdist()+expconst::sbsdipolegap/2.0));
     TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);
     T_thetapq_p = acos(p_dir.Unit().Dot(pNhat));
 
@@ -432,65 +389,71 @@ int elas_ana_simu (const char *configfilename,
 
     // W cut
     if (WCut) {
-      // fiducial cut  (not using it for LH2 data)
-      // if (fiduCut) {
-      h_dxHCAL->Fill(dx, weight);
-      h_dyHCAL->Fill(dy, weight);
-      // dx dist. for p & n separately using MC info
-      if (int(mc_fnucl)==1) {
-	h_dxHCAL_p->Fill(dx, weight);
-      } else {
-	std::cerr << "*!* Invalid final state nuclei!" << std::endl; 
-	throw;
+      h_dxHCAL_nfc->Fill(dx, weight);
+      h_dyHCAL_nfc->Fill(dy, weight);
+      if (fiduCut) {
+	h_dxHCAL->Fill(dx, weight);
+	h_dyHCAL->Fill(dy, weight);
+	// dx dist. for p & n separately using MC info
+	if (int(mc_fnucl)==1) {
+	  h_dxHCAL_p->Fill(dx, weight);
+	} else {
+	  std::cerr << "*!* Invalid final state nuclei!" << std::endl; 
+	  std::exit(1);
+	}
+
+	h2_rcHCAL->Fill(cblkHCAL, rblkHCAL);
+	// p & n spots
+	h2_dxdyHCAL->Fill(dy, dx);
+
+	// hit map to show p & n in fiducial region
+	if (pCut) h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick);
       }
-
-      h2_rcHCAL->Fill(cblkHCAL, rblkHCAL);
-      // p & n spots
-      h2_dxdyHCAL->Fill(dy, dx);
-
-      // hit map to show p & n in fiducial region
-      if (pCut) h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick);
-      // }
     }
 
     // fiducial cut but no W cut
-    // if (fiduCut) {  (not using it for LH2 data)
-    h_W->Fill(Wrecon, weight);
-    if (pCut) { 
-      h_W_cut->Fill(Wrecon);
-    } else {
-      h_W_acut->Fill(Wrecon);
+    if (fiduCut) { 
+	h_W->Fill(Wrecon, weight);
+      if (pCut) { 
+	h_W_cut->Fill(Wrecon);
+      } else {
+	h_W_acut->Fill(Wrecon);
+      }
     }
-    // }
       
     Tout->Fill();
   } // event loop
   std::cout << std::endl << std::endl;
 
-  TCanvas *c1 = new TCanvas("c1", "c1", 1200, 1000);
-  c1->Divide(2,2);
-
-  c1->cd(1); h2_dxdyHCAL->Draw("colz");
+  TCanvas *c1 = util_pd::TC("c1",2,2);
+  c1->cd(1); //
+  h2_dxdyHCAL->Draw("colz");
   TEllipse Ep_p;
   Ep_p.SetFillStyle(0); Ep_p.SetLineColor(2); Ep_p.SetLineWidth(2);
   Ep_p.DrawEllipse(dy_p[0], dx_p[0], Nsigma_cut_dy_p*dy_p[1], Nsigma_cut_dx_p*dx_p[1], 0,360,0);
- 
-  c1->cd(2);
+  c1->cd(2); //
   h_W->Draw(); h_W->SetLineColor(1);
   h_W_cut->Draw("same"); h_W_cut->SetLineColor(2);
   h_W_acut->Draw("same");
+  c1->cd(3); //
+  h2_xyHCAL_p->Draw("colz");
+  util_pd::DrawArea(hcal_active_area,2,4,9);
+  util_pd::DrawArea(hcal_safety_margin,4,4,9);
+  c1->Write();
 
-  c1->cd(3);
-  h_dxHCAL->Draw();
-  // h2_xyHCAL_p->Draw("colz");
-  // util_pd::DrawArea(hcal_active_area);
-  // util_pd::DrawArea(hcal_safety_margin,4);
-
-  c1->cd(4);
-  h_dyHCAL->Draw();
-  // h2_xyHCAL_n->Draw("colz");
-  // util_pd::DrawArea(hcal_active_area);
-  // util_pd::DrawArea(hcal_safety_margin,4);
+  TCanvas *c2 = util_pd::TC("c2",2,2);
+  std::vector<double> hdx_fitR; jmgr->GetVectorFromKey<double>("h_dxHCAL_fitR", hdx_fitR);
+  std::vector<double> hdy_fitR; jmgr->GetVectorFromKey<double>("h_dyHCAL_fitR", hdy_fitR);
+  gStyle->SetOptFit(1);
+  c2->cd(1); //
+  TF1 *f1 = fit::fit_1gs_nbg(hdx_fitR,h_dxHCAL);
+  c2->cd(2); //
+  TF1 *f2 = fit::fit_1gs_nbg(hdy_fitR,h_dyHCAL);
+  c2->cd(3); //
+  TF1 *f3 = fit::fit_1gs_nbg(hdx_fitR,h_dxHCAL_nfc);
+  c2->cd(4); //
+  TF1 *f4 = fit::fit_1gs_nbg(hdy_fitR,h_dyHCAL_nfc);
+  c2->Write();
 
   // outFile.ReplaceAll(".root",".png");
   // c1->Print(outFile.Data(),"png");
@@ -502,7 +465,7 @@ int elas_ana_simu (const char *configfilename,
   sw->Stop();
   cout << "CPU time elapsed = " << sw->CpuTime() << " s. Real time = " << sw->RealTime() << " s. " << endl << endl;
 
-  c1->Write();
+
   Tout->Write();
   h_W->Write();
   h_W_cut->Write();
@@ -510,7 +473,9 @@ int elas_ana_simu (const char *configfilename,
   h_dpel->Write();
   h_Q2->Write();
   h_dxHCAL->Write();
+  h_dxHCAL_nfc->Write();
   h_dyHCAL->Write();
+  h_dyHCAL_nfc->Write();
   h_dxHCAL_p->Write();
   h2_rcHCAL->Write();
   h2_dxdyHCAL->Write();

@@ -5,12 +5,13 @@
 
 class FitFn {
  private:
-  int fpoly=0;       // order of polynomial
-  TH1D *fhs1=NULL;   // Signal histo 1
-  TH1D *fhs2=NULL;   // Signal histo 2
-  TH1D *fhbg=NULL;   // Background histo
+  int fpoly{0};       // order of polynomial
+  TH1D *fhs1{nullptr};   // Signal histo 1
+  TH1D *fhs2{nullptr};   // Signal histo 2
+  TH1D *fhbg{nullptr};   // Background histo
 
  public:
+  FitFn() {}
   FitFn(TH1D *hs1): fhs1(hs1) {}
   FitFn(TH1D *hs1, int poly): fhs1(hs1),fpoly(poly) {}
   FitFn(TH1D *hs1, TH1D *hs2): fhs1(hs1),fhs2(hs2) {}
@@ -51,6 +52,11 @@ class FitFn {
     double R = par[1];
     double bg = 0; for (int i=2; i<fpoly+3; i++) bg += par[i]*pow(x[0],i-2);
     return Norm*(fhs1->Interpolate(x[0])+R*fhs2->Interpolate(x[0])) + bg;
+  }
+
+  // returns Gaussian fit function (Doesn't work!)
+  double ffn_gaus (double *x, double *par) const {
+    return par[0]*std::exp(-0.5*std::pow((x[0]-par[1])/par[2],2.));
   }
 };
 

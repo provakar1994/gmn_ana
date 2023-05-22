@@ -2,7 +2,18 @@
 
 namespace fit {
 
-  TF1* fit_1hs_nbg_THI (std::vector<double> fit_range,
+  void set_poly_par_names (TF1* f1,
+			   int const Spar,
+			   int const Opoly)
+  /* Sets the name of polynomial parameters */
+  {
+    for (int i=Spar; i<Opoly+Spar+1; i++) {
+      std::string s = "p" + std::to_string(i-Spar);
+      f1->SetParName(i,s.c_str());
+    }
+  }
+
+  TF1* fit_1hs_nbg_THI (std::vector<double> const & fit_range,
   		    TH1D* ht,           // total histo to fit 
   		    TH1D* hs,           // signal histo for
   		    std::vector<TH1D*> &ho)  // Output: ht,hs (fitted w/ proper scaling)
@@ -30,7 +41,7 @@ namespace fit {
     return f1;    
   }
 
-  TF1* fit_2hs_nbg_THI (std::vector<double> fit_range,
+  TF1* fit_2hs_nbg_THI (std::vector<double> const & fit_range,
 			TH1D* ht,             // total histo to fit 
 			TH1D* hs1,            // 1st signal histo for fit
 			TH1D* hs2,            // 2nd signal histo for fit
@@ -63,7 +74,7 @@ namespace fit {
     return f1;
   }
 
-  TF1* fit_2hs_1hbg_THI (std::vector<double> fit_range,
+  TF1* fit_2hs_1hbg_THI (std::vector<double> const & fit_range,
 			 TH1D* ht,             // total histo to fit 
 			 TH1D* hs1,            // 1st signal histo for fit
 			 TH1D* hs2,            // 2nd signal histo for fit
@@ -100,7 +111,7 @@ namespace fit {
     return f1;
   }
 
-  TF1* fit_2hs_nbg_THI (std::vector<double> fit_range,
+  TF1* fit_2hs_nbg_THI (std::vector<double> const & fit_range,
 			TH1D* ht,             // total histo to fit 
 			TH1D* hs,             // signal histo for fit
 			int Opoly,            // Order of poly to fit bg
@@ -118,6 +129,7 @@ namespace fit {
     f1->SetNpx(2000);
     f1->SetParameters(&setpars[0]);
     f1->SetParName(0,"Norm");
+    set_poly_par_names(f1,1,Opoly);
 
     ht_cp->Fit(f1); 
     std::vector<double> pars;
@@ -130,7 +142,7 @@ namespace fit {
     return f1;    
   }
 
-  TF1* fit_2hs_1pbg_THI (std::vector<double> fit_range,
+  TF1* fit_2hs_1pbg_THI (std::vector<double> const & fit_range,
 			 TH1D* ht,             // total histo to fit 
 			 TH1D* hs1,            // 1st signal histo for fit
 			 TH1D* hs2,            // 2nd signal histo for fit
@@ -151,6 +163,7 @@ namespace fit {
     f1->SetParameters(&setpars[0]);
     f1->SetParName(0,"Norm");
     f1->SetParName(1,"R");
+    set_poly_par_names(f1,2,Opoly);
 
     ht_cp->Fit(f1);
     std::vector<double> pars;
@@ -165,4 +178,52 @@ namespace fit {
     return f1;
   }
 
-}
+  TF1* fit_1gs_nbg (std::vector<double> const & fit_range,  // fit range
+  		    TH1D const * ht)                        // input histogram
+  /* Fitting signal peak using a Gaussian (3 pars) */
+  {
+    int const npars = 3;
+    
+    // let's not edit the original histogram
+    TH1D *ht_cp = (TH1D*)ht->Clone();
+
+    // define fit function
+    // FitFn *ffn = new FitFn();
+    // TF1 *f1 = new TF1("f1",ffn,&FitFn::ffn_gaus,fit_range[0],fit_range[1],npars);
+    TF1 *f1 = new TF1("f1","gaus",fit_range[0],fit_range[1]);
+    f1->SetNpx(1000);
+    f1->SetParName(0,"Norm");
+    f1->SetParName(1,"Mean"); 
+    f1->SetParName(2,"Sigma"); 
+    f1->SetRange(fit_range[0],fit_range[1]);
+    
+    // first fit
+    ht_cp->GetXaxis()->SetRangeUser(fit_range[0],fit_range[1]);
+    double norm = ht_cp->GetMaximum();
+    double mean = ht_cp->GetMean();
+    double sigma = ht_cp->GetStdDev();
+    
+    f1->SetRange(fit_range[0],fit_range[1]);
+    f1->SetParameter(0,norm);
+    f1->SetParameter(1,mean);
+    f1->SetParameter(2,sigma);
+
+    ht_cp->Fit(f1,"R");
+    std::vector<double> pars1;
+    for (int i=0;i<npars;i++) {pars1.push_back(f1->GetParameter(i));}
+
+    // Second fit with tailored range
+    double llim = pars1[1] - 1.5*pars1[2];
+    double hlim = pars1[1] + 1.5*pars1[2];
+    f1->SetParameters(&pars1[0]);
+    f1->SetRange(llim,hlim);
+    ht_cp->Fit(f1,"R");
+
+    // re-adjust histogram range
+    ht_cp->GetXaxis()->SetRangeUser(ht->GetXaxis()->GetXmin(),ht->GetXaxis()->GetXmax());
+
+    return f1;
+  }
+
+
+} // namespace fit
