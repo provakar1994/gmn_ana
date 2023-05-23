@@ -178,8 +178,9 @@ namespace fit {
     return f1;
   }
 
-  TF1* fit_1gs_nbg (std::vector<double> const & fit_range,  // fit range
-  		    TH1D const * ht)                        // input histogram
+  TF1* fit_1gs_nbg (std::vector<double> const & fit_range, // [0]=>xmin,[1]=>xmax (for 1st fit)
+                                                           // [2]=>nSLow,[3]=>nSHi (for 2nd fit)
+  		    TH1D const * ht)                       // input histogram
   /* Fitting signal peak using a Gaussian (3 pars) */
   {
     int const npars = 3;
@@ -188,9 +189,8 @@ namespace fit {
     TH1D *ht_cp = (TH1D*)ht->Clone();
 
     // define fit function
-    // FitFn *ffn = new FitFn();
-    // TF1 *f1 = new TF1("f1",ffn,&FitFn::ffn_gaus,fit_range[0],fit_range[1],npars);
-    TF1 *f1 = new TF1("f1","gaus",fit_range[0],fit_range[1]);
+    FitFn *ffn = new FitFn();
+    TF1 *f1 = new TF1("f1",ffn,&FitFn::ffn_gaus,fit_range[0],fit_range[1],npars);
     f1->SetNpx(1000);
     f1->SetParName(0,"Norm");
     f1->SetParName(1,"Mean"); 
@@ -213,14 +213,15 @@ namespace fit {
     for (int i=0;i<npars;i++) {pars1.push_back(f1->GetParameter(i));}
 
     // Second fit with tailored range
-    double llim = pars1[1] - 1.5*pars1[2];
-    double hlim = pars1[1] + 1.5*pars1[2];
+    double llim = pars1[1] - fit_range[2]*pars1[2];
+    double hlim = pars1[1] + fit_range[3]*pars1[2];
     f1->SetParameters(&pars1[0]);
     f1->SetRange(llim,hlim);
     ht_cp->Fit(f1,"R");
 
     // re-adjust histogram range
-    ht_cp->GetXaxis()->SetRangeUser(ht->GetXaxis()->GetXmin(),ht->GetXaxis()->GetXmax());
+    ht_cp->GetXaxis()->SetRangeUser(ht->GetXaxis()->GetXmin(),
+				    ht->GetXaxis()->GetXmax());
 
     return f1;
   }

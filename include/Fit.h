@@ -53,8 +53,9 @@ namespace fit {
 			 std::vector<TH1D*> &ho);   // Output: ht,hs,hbg,N*hs1,N*R*hs2 (N=par[0],R=par[1])
 
   // Fitting signal peak using a Gaussian (3 pars)
-  TF1* fit_1gs_nbg (std::vector<double> const & fit_range,  // fit range
-		    TH1D const * ht);                       // input histogram
+  TF1* fit_1gs_nbg (std::vector<double> const & fit_range, // [0]=>xmin,[1]=>xmax (for 1st fit)
+                                                           // [2]=>nSLow,[3]=>nSHi (for 2nd fit)
+		    TH1D const * ht);                      // input histogram
 }
 
 
