@@ -542,6 +542,9 @@ namespace util_pd {
      This function has the standard naming conventions of output simulation and summary files 
      hard coded. Please make sure the files to analyze have names compatible with the standard
      naming convention for successful execution.
+     NOTE: The presence of a summary file is must for this process to work. In case of SIMC 
+     D(ee'N) process, the ROOT file directory must have two summary files presents. One for 
+     the deep process and one for the deen process. Each file must have at least one entry.
      ---------
      Standard naming conventions:
      1. Filebase: prefix_sbs<sbsconf>_sbs<sbsmag>p_<generator>
