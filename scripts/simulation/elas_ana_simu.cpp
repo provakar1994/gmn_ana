@@ -196,7 +196,7 @@ int elas_ana_simu (const char *configfilename,
   double T_dy;          Tout->Branch("dy", &T_dy, "dy/D");
 
   // Do the energy loss calculation here (only for g4sbs generator)
-  double ebeam = sbsconf.GetEbeam();
+  double ebeam = sbsconf.GetEbeam(); // gets overwritten in the event loop
 
   // HCAL cut definitions
   vector<double> dx_p; jmgr->GetVectorFromKey<double>("dx_p", dx_p);
@@ -231,10 +231,10 @@ int elas_ana_simu (const char *configfilename,
     if( nevent % 1000 == 0 ) std::cout << nevent << "/" << nevents << "\r";
     std::cout.flush();
 
-    // apply global cuts efficiently (AJRP method)
     currenttreenum = C->GetTreeNumber();
     if (nevent == 1 || currenttreenum != treenum) {
       treenum = currenttreenum;
+      // apply global cuts efficiently (AJRP method)
       GlobalCut->UpdateFormulaLeaves();
       
       // getting normalization factors per run
@@ -446,27 +446,51 @@ int elas_ana_simu (const char *configfilename,
   std::vector<double> hdy_fitR; jmgr->GetVectorFromKey<double>("h_dyHCAL_fitR", hdy_fitR);
   gStyle->SetOptFit(1);
   c2->cd(1); //
-  TF1 *f1 = fit::fit_1gs_nbg(hdx_fitR,h_dxHCAL);
+  TF1 *fdxp = fit::fit_1gs_nbg(hdx_fitR,h_dxHCAL);
+  double dxpM = fdxp->GetParameter(1); double dxpS = fdxp->GetParameter(2);
   c2->cd(2); //
-  TF1 *f2 = fit::fit_1gs_nbg(hdy_fitR,h_dyHCAL);
+  TF1 *fdyp = fit::fit_1gs_nbg(hdy_fitR,h_dyHCAL);
+  double dypM = fdyp->GetParameter(1); double dypS = fdyp->GetParameter(2);
   c2->cd(3); //
-  TF1 *f3 = fit::fit_1gs_nbg(hdx_fitR,h_dxHCAL_nfc);
+  TF1 *fdxp_nfc = fit::fit_1gs_nbg(hdx_fitR,h_dxHCAL_nfc);
+  double dxpM_nfc = fdxp_nfc->GetParameter(1); double dxpS_nfc = fdxp_nfc->GetParameter(2);
   c2->cd(4); //
-  TF1 *f4 = fit::fit_1gs_nbg(hdy_fitR,h_dyHCAL_nfc);
+  TF1 *fdyp_nfc = fit::fit_1gs_nbg(hdy_fitR,h_dyHCAL_nfc);
+  double dypM_nfc = fdyp_nfc->GetParameter(1); double dypS_nfc = fdyp_nfc->GetParameter(2);
   c2->Write();
+
+  TCanvas *c3 = util_pd::TC("c3",1,1);
+  TPaveText *pt = new TPaveText(.05,.1,.95,.8);
+  pt->AddText(Form("Configfile: %s",configfilename));
+  pt->AddText(Form(" Analysis model: %d",model));
+  pt->AddText(Form(" Total # events analyzed: %ld",nevents));
+  pt->AddText(Form(" HCAL offsets: v = %.1f, h = %.1f",hcal_voffset,hcal_hoffset));
+  pt->AddText(Form(" Global cuts: %s",gcut.c_str()));
+  pt->AddText(Form(" Inbuilt W cut: %.2f <= W <= %.2f GeV/c",Wmin,Wmax));
+  pt->AddText(Form(" Inbuilt p cut (dx): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dx_p[0],dx_p[1],Nsigma_cut_dx_p));
+  pt->AddText(Form(" Inbuilt p cut (dy): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dy_p[0],dy_p[1],Nsigma_cut_dy_p));
+  TText *t1 = pt->GetLineWith("Configfile");
+  t1->SetTextColor(kBlue);
+  pt->Draw(); 
+  c3->Write();
 
   // outFile.ReplaceAll(".root",".png");
   // c1->Print(outFile.Data(),"png");
 
-  cout << "------" << endl;
-  cout << " Output file : " << outFile << endl;
-  cout << "------" << endl << endl;
+  std::cout << "\n----Fit info----" << "\n";
+  std::cout << "dxpM,dxpS,dypM,dypS,dxpM_nfc,dxpS_nfc,dypM_nfc,dypS_nfc" << "\n";
+  std::cout << dxpM<<","<<dxpS<<","<<dypM<<","<<dypS<<","<<dxpM_nfc<<","<<dxpS_nfc<<","<<dypM_nfc<<","<<dypS_nfc<<"\n";
+  std::cout << "----------------" << "\n\n";  
+
+  std::cout << "------" << "\n";
+  std::cout << " Output file : " << outFile << "\n";
+  std::cout << "------" << "\n\n";
 
   sw->Stop();
-  cout << "CPU time elapsed = " << sw->CpuTime() << " s. Real time = " << sw->RealTime() << " s. " << endl << endl;
+  std::cout << "CPU time elapsed = " << sw->CpuTime() << " s. Real time = " << sw->RealTime() << " s. \n\n";
 
 
-  Tout->Write();
+  Tout->Write("", TObject::kOverwrite);
   h_W->Write();
   h_W_cut->Write();
   h_W_acut->Write();
