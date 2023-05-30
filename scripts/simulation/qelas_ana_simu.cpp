@@ -1,6 +1,8 @@
 /* 
-   This macro will perform QE analysis for GMn using MC data.
+   This macro will perform QE analysis for GMn using MC data. 
    E.g. Config. File: sbs14-sbs70p-simu/conf_qelas_ana_simu.json
+   * A brief description of all the config. file parameters can be
+   found at the bottom of this script. 
    -----
    P. Datta  Created  11-05-2022 
 */
@@ -8,10 +10,13 @@
 #include <iostream>
 
 #include "TCut.h"
-#include "TH1F.h"
+#include "TH1D.h"
+#include "TFile.h"
 #include "TLatex.h"
 #include "TChain.h"
+#include "TCanvas.h"
 #include "TVector3.h"
+#include "TEllipse.h"
 #include "TStopwatch.h"
 #include "TTreeFormula.h"
 #include "TLorentzVector.h"
@@ -48,7 +53,7 @@ int qelas_ana_simu (const char *configfilename,
   std::string prefix = jmgr->GetValueFromKey_str("prefix_to_filebase");
   std::string gen = jmgr->GetValueFromKey_str("generator");
   int njobs = jmgr->GetValueFromKey<int>("Njobs_to_ana"); // # MC jobs to analyze
-  vector<SimuJob> sjobs; util_pd::ReadSimuJobSummary(rfd,prefix,conf,sbsmag,gen,target,njobs,verbosefn,sjobs);
+  std::vector<SimuJob> sjobs; util_pd::ReadSimuJobSummary(rfd,prefix,conf,sbsmag,gen,target,njobs,verbosefn,sjobs);
   TChain *C = new TChain("T"); util_pd::LoadSimuROOTTree(sjobs,verbosefn,C);
 
   // Choosing the model of calculation
@@ -60,12 +65,6 @@ int qelas_ana_simu (const char *configfilename,
   else if (model == 1) std::cout << "Using model 1 [recon. angle as indep. var.] for analysis.." << std::endl;
   else if (model == 2) std::cout << "Using model 2 [4-vector calculation] for analysis.." << std::endl;
   else { std::cerr << "Enter a valid model number! **!**" << std::endl; throw; }
-
-  // // parameters for normalization
-  // double I_beam = jmgr->GetValueFromKey<double>("beam_current");
-  // // total generated simulation events per job
-  // double ngen_total = jmgr->GetValueFromKey<double>("ngen_total"); 
-  // double lumi = kine::Luminosity(I_beam, target);
 
   // choosing nucleon type 
   std::string Ntype = jmgr->GetValueFromKey_str("Ntype");
@@ -103,18 +102,6 @@ int qelas_ana_simu (const char *configfilename,
   std::vector<void*> trvar_mem = {&ntrack,&p,&px,&py,&pz,&xTr,&yTr,&thTr,&phTr,&vx,&vy,&vz,&xtgt,&ytgt,&thtgt,&phtgt};
   setrootvar::setbranch(C,"bb.tr",trvar,trvar_mem);
 
-  // //MC variables (g4sbs gen)
-  // double mc_sigma, mc_omega, mc_fnucl;
-  // std::vector<std::string> mc = {"mc_sigma","mc_omega","mc_fnucl"};
-  // std::vector<void*> mc_mem = {&mc_sigma,&mc_omega,&mc_fnucl};
-  // setrootvar::setbranch(C,"MC",mc,mc_mem);
-
-  // //MC variables (SIMC gen)
-  // double simc_sigma, simc_Weight, simc_fnucl;
-  // std::vector<std::string> simc = {"simc_sigma","simc_Weight","simc_fnucl"};
-  // std::vector<void*> simc_mem = {&simc_sigma,&simc_Weight,&simc_fnucl};
-  // setrootvar::setbranch(C,"MC",simc,simc_mem);
-
   //MC variables
   double mc_sigma, mc_fnucl, mc_ebeam;                    // mc_sigma => Cross-section weight
   std::vector<std::string> mc = {"mc_sigma","mc_fnucl"};  // Default: g4sbs gen.
@@ -135,23 +122,25 @@ int qelas_ana_simu (const char *configfilename,
   TFile *fout = new TFile(outFile.Data(),"RECREATE");
 
   // defining histograms
-  TH1F *h_W = util_pd::TH1FhW("h_W");
-  TH1F *h_W_cut = util_pd::TH1FhW("h_W_cut");
-  TH1F *h_W_acut = util_pd::TH1FhW("h_W_acut");
+  TH1D *h_W = util_pd::TH1DhW("h_W");
+  TH1D *h_W_cut = util_pd::TH1DhW("h_W_cut");
+  TH1D *h_W_acut = util_pd::TH1DhW("h_W_acut");
   TH1D *h_dpel = new TH1D("h_dpel",";p/p_{elastic}(#theta)-1;",100,-0.3,0.3);
   
-  TH1F *h_Q2 = util_pd::TH1FhQ2("h_Q2", conf);
-  vector<double> hdx_lim; jmgr->GetVectorFromKey<double>("h_dxHCAL_lims", hdx_lim);
-  vector<double> hdy_lim; jmgr->GetVectorFromKey<double>("h_dyHCAL_lims", hdy_lim);
-  TH1F *h_dxHCAL = new TH1F("h_dxHCAL","; x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
-  TH1F *h_dyHCAL = new TH1F("h_dyHCAL","; y_{HCAL} - y_{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
-  TH1F *h_dxHCAL_n = new TH1F("h_dxHCAL_n","mc_fnucl = n; x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
-  TH1F *h_dxHCAL_p = new TH1F("h_dxHCAL_p","mc_fnucl = p; x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
+  TH1D *h_Q2 = util_pd::TH1DhQ2("h_Q2", conf);
+  std::vector<double> hdx_lim; jmgr->GetVectorFromKey<double>("h_dxHCAL_lims", hdx_lim);
+  std::vector<double> hdy_lim; jmgr->GetVectorFromKey<double>("h_dyHCAL_lims", hdy_lim);
+  TH1D *h_dxHCAL = new TH1D("h_dxHCAL","; x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
+  TH1D *h_dxHCAL_nfc = new TH1D("h_dxHCAL_nfc","; x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
+  TH1D *h_dyHCAL = new TH1D("h_dyHCAL","; y_{HCAL} - y_{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
+  TH1D *h_dyHCAL_nfc = new TH1D("h_dyHCAL_nfc","; y_{HCAL} - y_{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
+  TH1D *h_dxHCAL_n = new TH1D("h_dxHCAL_n","mc_fnucl = n; x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
+  TH1D *h_dxHCAL_p = new TH1D("h_dxHCAL_p","mc_fnucl = p; x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
 
-  TH2F *h2_rcHCAL = util_pd::TH2FHCALface_rc("h2_rcHCAL");
-  TH2F *h2_dxdyHCAL = util_pd::TH2FdxdyHCAL("h2_dxdyHCAL");
-  TH2F *h2_xyHCAL_p = util_pd::TH2FHCALface_xy_simu("h2_xyHCAL_p");
-  TH2F *h2_xyHCAL_n = util_pd::TH2FHCALface_xy_simu("h2_xyHCAL_n");
+  TH2D *h2_rcHCAL = util_pd::TH2DHCALface_rc("h2_rcHCAL");
+  TH2D *h2_dxdyHCAL = util_pd::TH2DdxdyHCAL("h2_dxdyHCAL");
+  TH2D *h2_xyHCAL_p = util_pd::TH2DHCALface_xy_simu("h2_xyHCAL_p");
+  TH2D *h2_xyHCAL_n = util_pd::TH2DHCALface_xy_simu("h2_xyHCAL_n");
 
   // Defining interesting ROOT tree branches 
   TTree *Tout = new TTree("Tout", "");
@@ -219,17 +208,13 @@ int qelas_ana_simu (const char *configfilename,
   double ebeam = sbsconf.GetEbeam(); // gets overwritten in the event loop
 
   // HCAL cut definitions
-  vector<double> dx_p; jmgr->GetVectorFromKey<double>("dx_p", dx_p);
-  double sbs_kick = abs(dx_p[0]);
-  vector<double> dy_p; jmgr->GetVectorFromKey<double>("dy_p", dy_p);
-  double Nsigma_cut_dx_p = jmgr->GetValueFromKey<double>("Nsigma_cut_dx_p");
-  double Nsigma_cut_dy_p = jmgr->GetValueFromKey<double>("Nsigma_cut_dy_p");
-  vector<double> dx_n; jmgr->GetVectorFromKey<double>("dx_n", dx_n);
-  vector<double> dy_n; jmgr->GetVectorFromKey<double>("dy_n", dy_n);
-  double Nsigma_cut_dx_n = jmgr->GetValueFromKey<double>("Nsigma_cut_dx_n");
-  double Nsigma_cut_dy_n = jmgr->GetValueFromKey<double>("Nsigma_cut_dy_n");
-  vector<double> hcal_active_area = cut::hcal_active_area_simu(); // Exc. 1 blk from all 4 sides
-  vector<double> hcal_safety_margin = cut::hcal_safety_margin(dx_p[1], dx_n[1], dy_p[1], hcal_active_area);
+  std::vector<double> dx_p_cut; jmgr->GetVectorFromKey<double>("dx_p_cut", dx_p_cut);
+  double sbs_kick = abs(dx_p_cut[0]);
+  std::vector<double> dy_p_cut; jmgr->GetVectorFromKey<double>("dy_p_cut", dy_p_cut);
+  std::vector<double> dx_n_cut; jmgr->GetVectorFromKey<double>("dx_n_cut", dx_n_cut);
+  std::vector<double> dy_n_cut; jmgr->GetVectorFromKey<double>("dy_n_cut", dy_n_cut);
+  std::vector<double> hcal_active_area = cut::hcal_active_area_simu(1,1); // Exc. 1 blk from all 4 sides
+  std::vector<double> hcal_safety_margin = cut::hcal_safety_margin(dx_p_cut[1], dx_n_cut[1], dy_p_cut[1], hcal_active_area);
 
   // elastic cut limits
   double Wmin = jmgr->GetValueFromKey<double>("Wmin");
@@ -238,12 +223,12 @@ int qelas_ana_simu (const char *configfilename,
   // costruct axes of HCAL CoS in Hall CoS
   double hcal_voffset = jmgr->GetValueFromKey<double>("hcal_voffset");
   double hcal_hoffset = jmgr->GetValueFromKey<double>("hcal_hoffset");
-  vector<TVector3> HCAL_axes; kine::SetHCALaxes(sbsconf.GetSBStheta_rad(), HCAL_axes);
+  std::vector<TVector3> HCAL_axes; kine::SetHCALaxes(sbsconf.GetSBStheta_rad(), HCAL_axes);
   TVector3 HCAL_origin = sbsconf.GetHCALdist()*HCAL_axes[2] + hcal_voffset*HCAL_axes[0] + hcal_hoffset*HCAL_axes[1];
 
   // calculating MC normalizetion factors 
   double mc_omega, lumi;
-  vector<double> totNtriesnCh; util_pd::GetTotNtriesnCh(sjobs,totNtriesnCh);
+  std::vector<double> totNtriesnCh; util_pd::GetTotNtriesnCh(sjobs,totNtriesnCh);
 
   // looping through the tree ---------------------------------------
   std::cout << std::endl;
@@ -264,7 +249,7 @@ int qelas_ana_simu (const char *configfilename,
       // getting normalization factors per run
       /* sophisticated but slightly inefficient way */
       const char* rftemp = C->GetFile()->GetName();
-      auto it = std::find_if(sjobs.begin(), sjobs.end(), [=](SimuJob const& sj){return sj.rfname.compare(rftemp) == 0;});
+      auto it = std::find_if(sjobs.begin(), sjobs.end(), [&](SimuJob const& sj){return sj.rfname.compare(rftemp) == 0;});
       if (it != sjobs.end()) {lumi = it->lumi; mc_omega = it->genvol; if (gen.compare("g4sbs")==0) ebeam = it->ebeam;} 
       //lumi = sjobs[treeitr].lumi; mc_omega = sjobs[treeitr].genvol; treeitr++;
     } 
@@ -383,7 +368,7 @@ int qelas_ana_simu (const char *configfilename,
     T_mc_fnucl = int(mc_fnucl);
 
     // Expected position of the q vector at HCAL
-    vector<double> xyHCAL_exp; // xyHCAL_exp[0] = xHCAL_exp & xyHCAL_exp[1] = yHCAL_exp
+    std::vector<double> xyHCAL_exp; // xyHCAL_exp[0] = xHCAL_exp & xyHCAL_exp[1] = yHCAL_exp
     kine::GetxyHCALexpect(vertex, pNhat, HCAL_origin, HCAL_axes, xyHCAL_exp);
     double dx = xHCAL - xyHCAL_exp[0];  
     double dy = yHCAL - xyHCAL_exp[1]; 
@@ -401,7 +386,7 @@ int qelas_ana_simu (const char *configfilename,
     // p 
     double BdL = sbsfield * expconst::sbsdipolegap;
     double proton_thetabend = 0.3 * BdL / PNprime.Vect().Mag();  // p*theta = 0.3*BdL
-    double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist() - (sbsconf.GetSBSdist() + expconst::sbsdipolegap/2.0));
+    double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist()-(sbsconf.GetSBSdist()+expconst::sbsdipolegap/2.0));
     TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);
     T_thetapq_p = acos(p_dir.Unit().Dot(pNhat));
 
@@ -414,13 +399,15 @@ int qelas_ana_simu (const char *configfilename,
     bool FR_cut = cut::inHCAL_fiducial(xyHCAL_exp[0], xyHCAL_exp[1], sbs_kick, hcal_safety_margin);
     fiduCut = AR_cut && FR_cut;
     // HCAL cuts
-    pCut = pow((dx-dx_p[0]) / (dx_p[1]*Nsigma_cut_dx_p), 2) + pow((dy-dy_p[0]) / (dy_p[1]*Nsigma_cut_dy_p), 2) <= 1.;
-    nCut = pow((dx-dx_n[0]) / (dx_n[1]*Nsigma_cut_dx_n), 2) + pow((dy-dy_n[0]) / (dy_n[1]*Nsigma_cut_dy_n), 2) <= 1.;
+    pCut = pow((dx-dx_p_cut[0]) / (dx_p_cut[1]*dx_p_cut[2]), 2) + pow((dy-dy_p_cut[0]) / (dy_p_cut[1]*dy_p_cut[2]), 2) <= 1.;
+    nCut = pow((dx-dx_n_cut[0]) / (dx_n_cut[1]*dx_n_cut[2]), 2) + pow((dy-dy_n_cut[0]) / (dy_n_cut[1]*dy_n_cut[2]), 2) <= 1.;
 
     WCut = Wrecon >= Wmin && Wrecon <= Wmax;
 
     // W cut
     if (WCut) {
+      h_dxHCAL_nfc->Fill(dx, weight);
+      h_dyHCAL_nfc->Fill(dy, weight);
       // fiducial cut
       if (fiduCut) {
     	h_dxHCAL->Fill(dx, weight);
@@ -428,20 +415,22 @@ int qelas_ana_simu (const char *configfilename,
     	// dx dist. for p & n separately using MC info
     	if (int(mc_fnucl)==0) {
     	  h_dxHCAL_n->Fill(dx, weight);
+	  h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick, weight);
     	} else if (int(mc_fnucl)==1) {
     	  h_dxHCAL_p->Fill(dx, weight);
+	  h2_xyHCAL_n->Fill(xyHCAL_exp[1], xyHCAL_exp[0], weight);
     	} else {
     	  std::cerr << "*!* Invalid final state nuclei!" << std::endl; 
-    	  throw;
+    	  std::exit(1);
     	}
 
-    	h2_rcHCAL->Fill(cblkHCAL, rblkHCAL);
+    	h2_rcHCAL->Fill(cblkHCAL, rblkHCAL, weight);
     	// p & n spots
-    	h2_dxdyHCAL->Fill(dy, dx);
+    	h2_dxdyHCAL->Fill(dy, dx, weight);
 
     	// hit map to show p & n in fiducial region
-    	if (pCut) h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick);
-    	if (nCut) h2_xyHCAL_n->Fill(xyHCAL_exp[1], xyHCAL_exp[0]);
+    	// if (pCut) h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick);
+    	// if (nCut) h2_xyHCAL_n->Fill(xyHCAL_exp[1], xyHCAL_exp[0]);
       }
     }
 
@@ -459,48 +448,62 @@ int qelas_ana_simu (const char *configfilename,
   } // event loop
   std::cout << std::endl << std::endl;
 
-  TCanvas *c1 = new TCanvas("c1", "c1", 1200, 1000);
-  c1->Divide(2,2);
-
-  c1->cd(1); h2_dxdyHCAL->Draw("colz");
+  TCanvas *c1 = util_pd::TC("c1",2,2);
+  c1->cd(1); //
+  h2_dxdyHCAL->Draw("colz");
   TEllipse Ep_p;
   Ep_p.SetFillStyle(0); Ep_p.SetLineColor(2); Ep_p.SetLineWidth(2);
-  Ep_p.DrawEllipse(dy_p[0], dx_p[0], Nsigma_cut_dy_p*dy_p[1], Nsigma_cut_dx_p*dx_p[1], 0,360,0);
+  Ep_p.DrawEllipse(dy_p_cut[0], dx_p_cut[0], dy_p_cut[2]*dy_p_cut[1], dx_p_cut[2]*dx_p_cut[1], 0,360,0);
   TEllipse Ep_n;
   Ep_n.SetFillStyle(0); Ep_n.SetLineColor(3); Ep_n.SetLineWidth(2);
-  Ep_n.DrawEllipse(dy_n[0], dx_n[0], Nsigma_cut_dy_n*dy_n[1], Nsigma_cut_dx_n*dx_n[1], 0,360,0);
- 
-  c1->cd(2);
+  Ep_n.DrawEllipse(dy_n_cut[0], dx_n_cut[0], dy_n_cut[2]*dy_n_cut[1], dx_n_cut[2]*dx_n_cut[1], 0,360,0);
+  c1->cd(2); //
   h_W->Draw(); h_W->SetLineColor(1);
   h_W_cut->Draw("same"); h_W_cut->SetLineColor(2);
   h_W_acut->Draw("same");
-
-  c1->cd(3);
+  c1->cd(3); //
   h2_xyHCAL_p->Draw("colz");
-  util_pd::DrawArea(hcal_active_area);
-  util_pd::DrawArea(hcal_safety_margin,4);
-
-  c1->cd(4); 
+  util_pd::DrawArea(hcal_active_area,2,4,9);
+  util_pd::DrawArea(hcal_safety_margin,4,4,9);
+  c1->cd(4); //
   h2_xyHCAL_n->Draw("colz");
-  util_pd::DrawArea(hcal_active_area);
-  util_pd::DrawArea(hcal_safety_margin,4);
+  util_pd::DrawArea(hcal_active_area,2,4,9);
+  util_pd::DrawArea(hcal_safety_margin,4,4,9);
+  c1->Write();
 
-  TCanvas *c2 = new TCanvas("c2", "c2", 800, 600);
-  c2->Divide(2,1);
+  // TCanvas *c2 = new TCanvas("c2", "c2", 800, 600);
+  // c2->Divide(2,1);
+  // c2->cd(1);
+  // h_dxHCAL->Draw();
+  // c2->cd(2);
+  // h_dyHCAL->Draw();
 
-  c2->cd(1);
-  h_dxHCAL->Draw();
+  TCanvas *c2 = util_pd::TC("c2",2,2);
+  std::vector<double> hdxp_fitR; jmgr->GetVectorFromKey<double>("h_dxHCAL_p_fitR", hdxp_fitR);
+  std::vector<double> hdxn_fitR; jmgr->GetVectorFromKey<double>("h_dxHCAL_n_fitR", hdxn_fitR);
+  std::vector<double> hdy_fitR; jmgr->GetVectorFromKey<double>("h_dyHCAL_fitR", hdy_fitR);
+  gStyle->SetOptFit(1);
+  c2->cd(1); //
+  TF1 *fdxp = fit::fit_1gs_nbg(hdxp_fitR,h_dxHCAL);
+  TF1 *fdxn = fit::fit_1gs_nbg(hdxn_fitR,h_dxHCAL);
+  double dxpM = fdxp->GetParameter(1); double dxpS = fdxp->GetParameter(2);
+  double dxnM = fdxn->GetParameter(1); double dxnS = fdxn->GetParameter(2);
+  fdxp->Draw("same");
+  c2->cd(2); //
+  TF1 *fdy = fit::fit_1gs_nbg(hdy_fitR,h_dyHCAL);
+  double dyM = fdy->GetParameter(1); double dyS = fdy->GetParameter(2);
+  c2->cd(3); //
+  TF1 *fdxp_nfc = fit::fit_1gs_nbg(hdxp_fitR,h_dxHCAL_nfc);
+  TF1 *fdxn_nfc = fit::fit_1gs_nbg(hdxn_fitR,h_dxHCAL_nfc);
+  double dxpM_nfc = fdxp_nfc->GetParameter(1); double dxpS_nfc = fdxp_nfc->GetParameter(2);
+  double dxnM_nfc = fdxn_nfc->GetParameter(1); double dxnS_nfc = fdxn_nfc->GetParameter(2);
+  fdxp_nfc->Draw("same");
+  c2->cd(4); //
+  TF1 *fdy_nfc = fit::fit_1gs_nbg(hdy_fitR,h_dyHCAL_nfc);
+  double dyM_nfc = fdy->GetParameter(1); double dyS_nfc = fdy->GetParameter(2);
+  c2->Write();
 
-  c2->cd(2);
-  h_dyHCAL->Draw();
-
-  // outFile.ReplaceAll(".root",".png");
-  // c1->Print(outFile.Data(),"png");
-
-  // let's record the summary
-  TCanvas *c3 = new TCanvas("c3","Summary");
-  c3->cd();
-
+  TCanvas *c3 = util_pd::TC("c3",1,1);
   TPaveText *pt = new TPaveText(.05,.1,.95,.8);
   pt->AddText(Form("Configfile: %s",configfilename));
   pt->AddText(Form(" Analysis model: %d",model));
@@ -508,32 +511,40 @@ int qelas_ana_simu (const char *configfilename,
   pt->AddText(Form(" HCAL offsets: v = %.1f, h = %.1f",hcal_voffset,hcal_hoffset));
   pt->AddText(Form(" Global cuts: %s",gcut.c_str()));
   pt->AddText(Form(" Inbuilt W cut: %.2f <= W <= %.2f GeV/c",Wmin,Wmax));
-  pt->AddText(Form(" Inbuilt p cut (dx): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dx_p[0],dx_p[1],Nsigma_cut_dx_p));
-  pt->AddText(Form(" Inbuilt p cut (dy): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dy_p[0],dy_p[1],Nsigma_cut_dy_p));
-  pt->AddText(Form(" Inbuilt n cut (dx): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dx_n[0],dx_n[1],Nsigma_cut_dx_n));
-  pt->AddText(Form(" Inbuilt n cut (dy): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dy_n[0],dy_n[1],Nsigma_cut_dy_n));
+  pt->AddText(Form(" Inbuilt p cut (dx): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dx_p_cut[0],dx_p_cut[1],dx_p_cut[2]));
+  pt->AddText(Form(" Inbuilt p cut (dy): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dy_p_cut[0],dy_p_cut[1],dy_p_cut[2]));
+  pt->AddText(Form(" Inbuilt n cut (dx): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dx_n_cut[0],dx_n_cut[1],dx_n_cut[2]));
+  pt->AddText(Form(" Inbuilt n cut (dy): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dy_n_cut[0],dy_n_cut[1],dy_n_cut[2]));
   TText *t1 = pt->GetLineWith("Configfile");
   t1->SetTextColor(kBlue);
-  pt->Draw();
+  pt->Draw(); 
+  c3->Write();
 
-  cout << "------" << endl;
-  cout << " Output file : " << outFile << endl;
-  cout << "------" << endl << endl;
+  // outFile.ReplaceAll(".root",".png");
+  // c1->Print(outFile.Data(),"png");
+
+  std::cout << "\n----Fit info----" << "\n";
+  std::cout << "dxpM,dxpS,dxnM,dxnS,dyM,dyS,dxpM_nfc,dxpS_nfc,dxnM_nfc,dxnS_nfc,dyM_nfc,dyS_nfc" << "\n";
+  std::cout << dxpM<<","<<dxpS<<","<<dxnM<<","<<dxnS<<","<<dyM<<","<<dyS<<","<<dxpM_nfc<<","<<dxpS_nfc<<","<<dxnM_nfc<<","<<dxnS_nfc<<","<<dyM_nfc<<","<<dyS_nfc<<"\n";
+  std::cout << "----------------" << "\n\n"; 
+
+  std::cout << "------" << "\n";
+  std::cout << " Output file : " << outFile << "\n";
+  std::cout << "------" << "\n\n";
 
   sw->Stop();
-  cout << "CPU time elapsed = " << sw->CpuTime() << " s. Real time = " << sw->RealTime() << " s. " << endl << endl;
+  std::cout << "CPU time elapsed = " << sw->CpuTime() << " s. Real time = " << sw->RealTime() << " s. " << endl << endl;
 
-  c1->Write();
-  c2->Write();
-  c3->Write();
-  Tout->Write();
+  Tout->Write("", TObject::kOverwrite);
   h_W->Write();
   h_W_cut->Write();
   h_W_acut->Write();
   h_dpel->Write();
   h_Q2->Write();
   h_dxHCAL->Write();
+  h_dxHCAL_nfc->Write();
   h_dyHCAL->Write();
+  h_dyHCAL_nfc->Write();
   h_dxHCAL_p->Write();
   h_dxHCAL_n->Write();
   h2_rcHCAL->Write();
@@ -544,3 +555,51 @@ int qelas_ana_simu (const char *configfilename,
   delete jmgr;
   return 0;
 }
+
+
+/*
+  ////////////////////////////////////////////////////////
+  // Brief description of configuration file parameters //
+  ////////////////////////////////////////////////////////
+  1. Ntype : Struck nucleon type. (Valid options: n, p, np)
+     - n(p) => neutrons(protons) 
+     - np => Avg. of n and p masses. Use for LD2 data since the struck nucleon is not known apriori.
+  2. SBS_config : SBS configuration. (Valid options: 4,7,11,14,8,9)
+  3. SBS_magnet_percent : SBS magnet field current as a percentage of 2100A
+  4. model : Model of analysis. (Valid options: 0, 1, 2)
+     - 0 => uses reconstructed p as independent variable
+     - 1 => uses reconstructed angles as independent variable
+     - 2 => uses 4-vector calculation
+  5. generator : MC enevt generator (Valid options: g4sbs, simc)
+  6. prefix_to_filebase : <prefix>_sbs<sbsconfig>_sbs<sbsmagfield>p_<generator>_<process>.root
+  7. Njobs_to_ana : # MC jobs to analyze
+  8. rootfile_dir : Directory name w/ path containing the MC ROOT files to analyze
+  9. global_cut : set of global cuts to apply at the start of event processing
+  10. SBS_field : 
+  11. hcal_v(h)offset :
+  12. dx_p(n)_cut : deltax p(n) peak cut definitions. Needed to constitute p(n) spot cuts. 
+      - dx_p(n)_cut[0] => p(n) peak position, 
+      - dx_p(n)_cut[1] => p(n) peak RMS, 
+      - dx_p(n)_cut[2] => # sigma to include in the cut
+  13. dy_p(n)_cut : deltay p(n) peak cut definitions. Needed to constitute p(n) spot cuts.
+      - dy_p(n)_cut[0] => p(n) peak position, 
+      - dy_p(n)_cut[1] => p(n) peak RMS, 
+      - dy_p(n)_cut[2] => # sigma to include in the cut
+  14. h_dx(dy)HCAL_lims : h_dx(dy)HCAL histogram limits (Can be found in the output ROOT file)
+      - h_dx(dy)HCAL_lims[0] : No. of bins of h_dx(dy)HCAL histograms
+      - h_dx(dy)HCAL_lims[1] : xmin
+      - h_dx(dy)HCAL_lims[2] : xmax
+  15. h_dxHCAL_p(n)_fitR : Fit ranges for the proton(neutron) signal peak in deltax dist. (h_dxHCAL histogram)
+                           Algorithm fits the distribution twice for optimization.
+      - h_dxHCAL_p(n)_fitR[0] : xmin for 1st fit (crude). Try to avoid any secondary peak.
+      - h_dxHCAL_p(n)_fitR[1] : xmax for 1st fit (crude). Try to avoid any secondary peak.
+      - h_dxHCAL_p(n)_fitR[2] : # sigma below the peak for 2nd fit (fine)
+      - h_dxHCAL_p(n)_fitR[3] : # sigma above the peak for 2nd fit (fine)
+  16. h_dyHCAL_fitR : Fit ranges for the signal peak in deltay dist. (h_dxHCAL histogram)
+                      Algorithm fits the distribution twice for optimization.
+      - h_dyHCAL_fitR[0] : xmin for 1st fit (crude). Try to avoid any secondary peak.
+      - h_dyHCAL_fitR[1] : xmax for 1st fit (crude). Try to avoid any secondary peak.
+      - h_dyHCAL_fitR[2] : # sigma below the peak for 2nd fit (fine)
+      - h_dyHCAL_fitR[3] : # sigma above the peak for 2nd fit (fine)
+  17. Wmin(max) : W cut range.
+*/

@@ -1,6 +1,8 @@
 /* 
    This macro will perform elastic (LH2) analysis for GMn using MC data.
    E.g. Config. File: sbs14-sbs70p-simu/conf_elas_ana_simu.json
+   * A brief description of all the config. file parameters can be
+   found at the bottom of this script.
    -----
    P. Datta  Created  11-05-2022 
 */
@@ -199,13 +201,11 @@ int elas_ana_simu (const char *configfilename,
   double ebeam = sbsconf.GetEbeam(); // gets overwritten in the event loop
 
   // HCAL cut definitions
-  vector<double> dx_p; jmgr->GetVectorFromKey<double>("dx_p", dx_p);
-  double sbs_kick = abs(dx_p[0]);
-  vector<double> dy_p; jmgr->GetVectorFromKey<double>("dy_p", dy_p);
-  double Nsigma_cut_dx_p = jmgr->GetValueFromKey<double>("Nsigma_cut_dx_p");
-  double Nsigma_cut_dy_p = jmgr->GetValueFromKey<double>("Nsigma_cut_dy_p");
+  vector<double> dx_p_cut; jmgr->GetVectorFromKey<double>("dx_p_cut", dx_p_cut);
+  double sbs_kick = abs(dx_p_cut[0]);
+  vector<double> dy_p_cut; jmgr->GetVectorFromKey<double>("dy_p_cut", dy_p_cut);
   vector<double> hcal_active_area = cut::hcal_active_area_simu(1,1); // Exc. 1 blk from all 4 sides
-  vector<double> hcal_safety_margin = cut::hcal_safety_margin(dx_p[1], dx_p[1], dy_p[1], hcal_active_area);
+  vector<double> hcal_safety_margin = cut::hcal_safety_margin(dx_p_cut[1], dx_p_cut[1], dy_p_cut[1], hcal_active_area);
 
   // elastic cut limits
   double Wmin = jmgr->GetValueFromKey<double>("Wmin");
@@ -383,7 +383,7 @@ int elas_ana_simu (const char *configfilename,
     bool FR_cut = cut::inHCAL_fiducial(xyHCAL_exp[0], xyHCAL_exp[1], sbs_kick, hcal_safety_margin);
     fiduCut = AR_cut && FR_cut;
     // HCAL cuts
-    pCut = pow((dx-dx_p[0]) / (dx_p[1]*Nsigma_cut_dx_p), 2) + pow((dy-dy_p[0]) / (dy_p[1]*Nsigma_cut_dy_p), 2) <= 1.;
+    pCut = pow((dx-dx_p_cut[0]) / (dx_p_cut[1]*dx_p_cut[2]), 2) + pow((dy-dy_p_cut[0]) / (dy_p_cut[1]*dy_p_cut[2]), 2) <= 1.;
 
     WCut = Wrecon >= Wmin && Wrecon <= Wmax;
 
@@ -397,17 +397,18 @@ int elas_ana_simu (const char *configfilename,
 	// dx dist. for p & n separately using MC info
 	if (int(mc_fnucl)==1) {
 	  h_dxHCAL_p->Fill(dx, weight);
+	  h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick, weight);
 	} else {
 	  std::cerr << "*!* Invalid final state nuclei!" << std::endl; 
 	  std::exit(1);
 	}
 
-	h2_rcHCAL->Fill(cblkHCAL, rblkHCAL);
+	h2_rcHCAL->Fill(cblkHCAL, rblkHCAL, weight);
 	// p & n spots
-	h2_dxdyHCAL->Fill(dy, dx);
+	h2_dxdyHCAL->Fill(dy, dx, weight);
 
 	// hit map to show p & n in fiducial region
-	if (pCut) h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick);
+	//if (pCut) h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick, weight);
       }
     }
 
@@ -430,7 +431,7 @@ int elas_ana_simu (const char *configfilename,
   h2_dxdyHCAL->Draw("colz");
   TEllipse Ep_p;
   Ep_p.SetFillStyle(0); Ep_p.SetLineColor(2); Ep_p.SetLineWidth(2);
-  Ep_p.DrawEllipse(dy_p[0], dx_p[0], Nsigma_cut_dy_p*dy_p[1], Nsigma_cut_dx_p*dx_p[1], 0,360,0);
+  Ep_p.DrawEllipse(dy_p_cut[0], dx_p_cut[0], dy_p_cut[2]*dy_p_cut[1], dx_p_cut[2]*dx_p_cut[1], 0,360,0);
   c1->cd(2); //
   h_W->Draw(); h_W->SetLineColor(1);
   h_W_cut->Draw("same"); h_W_cut->SetLineColor(2);
@@ -467,8 +468,8 @@ int elas_ana_simu (const char *configfilename,
   pt->AddText(Form(" HCAL offsets: v = %.1f, h = %.1f",hcal_voffset,hcal_hoffset));
   pt->AddText(Form(" Global cuts: %s",gcut.c_str()));
   pt->AddText(Form(" Inbuilt W cut: %.2f <= W <= %.2f GeV/c",Wmin,Wmax));
-  pt->AddText(Form(" Inbuilt p cut (dx): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dx_p[0],dx_p[1],Nsigma_cut_dx_p));
-  pt->AddText(Form(" Inbuilt p cut (dy): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dy_p[0],dy_p[1],Nsigma_cut_dy_p));
+  pt->AddText(Form(" Inbuilt p cut (dx): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dx_p_cut[0],dx_p_cut[1],dx_p_cut[2]));
+  pt->AddText(Form(" Inbuilt p cut (dy): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dy_p_cut[0],dy_p_cut[1],dy_p_cut[2]));
   TText *t1 = pt->GetLineWith("Configfile");
   t1->SetTextColor(kBlue);
   pt->Draw(); 
@@ -508,3 +509,50 @@ int elas_ana_simu (const char *configfilename,
   delete jmgr;
   return 0;
 }
+
+/*
+  ////////////////////////////////////////////////////////
+  // Brief description of configuration file parameters //
+  ////////////////////////////////////////////////////////
+  1. Ntype : Struck nucleon type. (Valid options: n, p, np)
+     - n(p) => neutrons(protons) 
+     - np => Avg. of n and p masses. Use for LD2 data since the struck nucleon is not known apriori.
+  2. SBS_config : SBS configuration. (Valid options: 4,7,11,14,8,9)
+  3. SBS_magnet_percent : SBS magnet field current as a percentage of 2100A
+  4. model : Model of analysis. (Valid options: 0, 1, 2)
+     - 0 => uses reconstructed p as independent variable
+     - 1 => uses reconstructed angles as independent variable
+     - 2 => uses 4-vector calculation
+  5. generator : MC enevt generator (Valid options: g4sbs, simc)
+  6. prefix_to_filebase : <prefix>_sbs<sbsconfig>_sbs<sbsmagfield>p_<generator>_<process>.root
+  7. Njobs_to_ana : # MC jobs to analyze
+  8. rootfile_dir : Directory name w/ path containing the MC ROOT files to analyze
+  9. global_cut : set of global cuts to apply at the start of event processing
+  10. SBS_field : 
+  11. hcal_v(h)offset :
+  12. dx_p_cut : deltax p peak cut definitions. Needed to constitute p spot cuts. 
+      - dx_p_cut[0] => p peak position, 
+      - dx_p_cut[1] => p peak RMS, 
+      - dx_p_cut[2] => # sigma to include in the cut
+  13. dy_p_cut : deltay p peak cut definitions. Needed to constitute p spot cuts.
+      - dy_p_cut[0] => p peak position, 
+      - dy_p_cut[1] => p peak RMS, 
+      - dy_p_cut[2] => # sigma to include in the cut
+  14. h_dx(dy)HCAL_lims : h_dx(dy)HCAL histogram limits (Can be found in the output ROOT file)
+      - h_dx(dy)HCAL_lims[0] : No. of bins of h_dx(dy)HCAL histograms
+      - h_dx(dy)HCAL_lims[1] : xmin
+      - h_dx(dy)HCAL_lims[2] : xmax
+  15. h_dxHCAL_fitR : Fit ranges for the proton(neutron) signal peak in deltax dist. (h_dxHCAL histogram)
+                           Algorithm fits the distribution twice for optimization.
+      - h_dxHCAL_fitR[0] : xmin for 1st fit (crude). Try to avoid any secondary peak.
+      - h_dxHCAL_fitR[1] : xmax for 1st fit (crude). Try to avoid any secondary peak.
+      - h_dxHCAL_fitR[2] : # sigma below the peak for 2nd fit (fine)
+      - h_dxHCAL_fitR[3] : # sigma above the peak for 2nd fit (fine)
+  16. h_dyHCAL_fitR : Fit ranges for the signal peak in deltay dist. (h_dxHCAL histogram)
+                      Algorithm fits the distribution twice for optimization.
+      - h_dyHCAL_fitR[0] : xmin for 1st fit (crude). Try to avoid any secondary peak.
+      - h_dyHCAL_fitR[1] : xmax for 1st fit (crude). Try to avoid any secondary peak.
+      - h_dyHCAL_fitR[2] : # sigma below the peak for 2nd fit (fine)
+      - h_dyHCAL_fitR[3] : # sigma above the peak for 2nd fit (fine)
+  17. Wmin(max) : W cut range.
+*/
