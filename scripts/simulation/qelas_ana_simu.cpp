@@ -232,7 +232,7 @@ int qelas_ana_simu (const char *configfilename,
 
   // looping through the tree ---------------------------------------
   std::cout << std::endl;
-  long nevent = 0, nevents = C->GetEntries(); 
+  long nevent = 0, nevents = C->GetEntries(), ngoodevs = 0; 
   int treenum = 0, currenttreenum = 0, treeitr = 0;
   while (C->GetEntry(nevent++)) {
    
@@ -255,6 +255,7 @@ int qelas_ana_simu (const char *configfilename,
     } 
     bool passedgCut = GlobalCut->EvalInstance(0) != 0;   
     if (!passedgCut) continue;
+    ngoodevs++;
 
     // cross section weighted normalization factor
     weight = mc_sigma*mc_omega*lumi / totNtriesnCh[0];
@@ -471,13 +472,6 @@ int qelas_ana_simu (const char *configfilename,
   util_pd::DrawArea(hcal_safety_margin,4,4,9);
   c1->Write();
 
-  // TCanvas *c2 = new TCanvas("c2", "c2", 800, 600);
-  // c2->Divide(2,1);
-  // c2->cd(1);
-  // h_dxHCAL->Draw();
-  // c2->cd(2);
-  // h_dyHCAL->Draw();
-
   TCanvas *c2 = util_pd::TC("c2",2,2);
   std::vector<double> hdxp_fitR; jmgr->GetVectorFromKey<double>("h_dxHCAL_p_fitR", hdxp_fitR);
   std::vector<double> hdxn_fitR; jmgr->GetVectorFromKey<double>("h_dxHCAL_n_fitR", hdxn_fitR);
@@ -505,18 +499,33 @@ int qelas_ana_simu (const char *configfilename,
 
   TCanvas *c3 = util_pd::TC("c3",1,1);
   TPaveText *pt = new TPaveText(.05,.1,.95,.8);
+  pt->AddText(Form(" Date of creation: %s", util_pd::getDate().c_str()));
   pt->AddText(Form("Configfile: %s",configfilename));
+  pt->AddText(Form(" Analyzing %s generated QE events for SBS%d-SBS%dp settings",gen.c_str(),conf,sbsmag));
   pt->AddText(Form(" Analysis model: %d",model));
   pt->AddText(Form(" Total # events analyzed: %ld",nevents));
   pt->AddText(Form(" HCAL offsets: v = %.1f, h = %.1f",hcal_voffset,hcal_hoffset));
-  pt->AddText(Form(" Global cuts: %s",gcut.c_str()));
-  pt->AddText(Form(" Inbuilt W cut: %.2f <= W <= %.2f GeV/c",Wmin,Wmax));
-  pt->AddText(Form(" Inbuilt p cut (dx): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dx_p_cut[0],dx_p_cut[1],dx_p_cut[2]));
-  pt->AddText(Form(" Inbuilt p cut (dy): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dy_p_cut[0],dy_p_cut[1],dy_p_cut[2]));
-  pt->AddText(Form(" Inbuilt n cut (dx): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dx_n_cut[0],dx_n_cut[1],dx_n_cut[2]));
-  pt->AddText(Form(" Inbuilt n cut (dy): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dy_n_cut[0],dy_n_cut[1],dy_n_cut[2]));
-  TText *t1 = pt->GetLineWith("Configfile");
-  t1->SetTextColor(kBlue);
+  pt->AddText(Form(" Global cuts: "));
+  pt->AddText(Form(" %s",gcut.c_str()));
+  pt->AddText(Form(" # events passed global cuts: %ld", ngoodevs));
+  pt->AddText(" Elastic cuts: ");
+  pt->AddText(Form(" Inbuilt W cut: %.2f #leq W #leq %.2f GeV/c",Wmin,Wmax));
+  pt->AddText(Form(" Inbuilt p cut (#Deltax): Mean = %.4f, %.1f#sigma = %.4f",dx_p_cut[0],dx_p_cut[2],dx_p_cut[1]));
+  pt->AddText(Form(" Inbuilt p cut (#Deltay): Mean = %.4f, %.1f#sigma = %.4f",dy_p_cut[0],dy_p_cut[2],dy_p_cut[1]));
+  pt->AddText(Form(" Inbuilt n cut (#Deltax): Mean = %.4f, %.1f#sigma = %.4f",dx_n_cut[0],dx_n_cut[2],dx_n_cut[1]));
+  pt->AddText(Form(" Inbuilt n cut (#Deltay): Mean = %.4f, %.1f#sigma = %.4f",dy_n_cut[0],dy_n_cut[2],dy_n_cut[1]));
+  pt->AddText(" Fit info: ");
+  pt->AddText(" p & n peaks, w/ fiducial cut: dxpM,dxpS,dxnM,dxnS,dyM,dyS ");
+  pt->AddText(Form(" %.5f,%.5f,%.5f,%.5f,%.5f,%.5f",dxpM,dxpS,dxnM,dxnS,dyM,dyS));
+  pt->AddText(" p & n peaks, w/o fiducial cut: dxpM_nfc,dxpS_nfc,dxnM_nfc,dxnS_nfc,dyM_nfc,dyS_nfc ");
+  pt->AddText(Form(" %.5f,%.5f,%.5f,%.5f,%.5f,%.5f",dxpM_nfc,dxpS_nfc,dxnM_nfc,dxnS_nfc,dyM_nfc,dyS_nfc));
+  sw->Stop();
+  pt->AddText(Form("Macro processing time: CPU %.1fs | Real %.1fs",sw->CpuTime(),sw->RealTime()));
+  TText *t1 = pt->GetLineWith("Configfile"); t1->SetTextColor(kRed);
+  TText *t2 = pt->GetLineWith(" Global"); t2->SetTextColor(kBlue);
+  TText *t3 = pt->GetLineWith(" Elastic"); t3->SetTextColor(kBlue);
+  TText *t4 = pt->GetLineWith(" Fit info"); t4->SetTextColor(kBlue);
+  TText *t5 = pt->GetLineWith("Macro"); t5->SetTextColor(kGreen+3);
   pt->Draw(); 
   c3->Write();
 
@@ -532,8 +541,7 @@ int qelas_ana_simu (const char *configfilename,
   std::cout << " Output file : " << outFile << "\n";
   std::cout << "------" << "\n\n";
 
-  sw->Stop();
-  std::cout << "CPU time elapsed = " << sw->CpuTime() << " s. Real time = " << sw->RealTime() << " s. " << endl << endl;
+  std::cout << "CPU time elapsed = " << sw->CpuTime() << " s. Real time = " << sw->RealTime() << " s.\n\n";
 
   Tout->Write("", TObject::kOverwrite);
   h_W->Write();
