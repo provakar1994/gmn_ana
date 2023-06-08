@@ -3,15 +3,22 @@
 #/Users/puckett/GMN_ROOTFILES/PASS1_QA/SBS4/rootfiles/e1209019_fullreplay_11548*.root
 #/Users/puckett/GMN_ROOTFILES/SBS4/e1209019_fullreplay_11590*.root
 #/Users/puckett/GMN_ROOTFILES/SBS4/e1209019_fullreplay_11573*.root
-/w/halla-scshelf2102/sbs/sbs-gmn/pass0/SBS4/LH2/rootfiles/*11547*
+#/w/halla-scshelf2102/sbs/sbs-gmn/pass0/SBS4/LH2/rootfiles/*11547*
 endlist
 bb.tr.n==1&&bb.ps.e>0.2&&abs(bb.tr.vz)<.08&&bb.gem.track.nhits>3&&abs(bb.etot_over_p-0.92)<0.2&&bb.ps.e+bb.sh.e>1.7&&abs(bb.tr.r_x-0.9*bb.tr.r_th)<0.4
 endcut
+runsheet_dir ../../DB 
+rootfile_dir /w/halla-scshelf2102/sbs/sbs-gmn/pass0/SBS4/LH2/rootfiles
+target LH2
+nruns -1
+sbsconf 4
+sbsmag 30
+pass 0
 order 1
 useAlShield 0
 dEdx 0.00574
 dEdx_Al 0.0021
-ebeam 3.728
+ebeam 3.7393
 bbtheta 36.0 
 sbstheta 31.9
 hcaldist 11.0
@@ -20,9 +27,9 @@ rho_tgt 0.072
 celldiameter 4.064
 usehcalcut 1
 dx0 -0.7
-dy0 -0.029
-dxsigma 0.063
-dysigma 0.057
+dy0 -0.04
+dxsigma 0.067
+dysigma 0.061
 GEMpitch 10.0
 #fix_pth0 1
 #fix_pthx 1
@@ -31,8 +38,8 @@ fix_pthx 0
 #pth0 0.274932
 #pthx 0.101809
 bbdist 1.7988
-A_pth0 0.28982
-B_pth0 1.15051
+A_pth0 0.271495549
+B_pth0 1.02274415
 C_pth0 0.0
 Wmin 0.7
 Wmax 1.2

@@ -38,6 +38,10 @@
 #include <sstream>
 #include "TTreeFormula.h"
 
+#include "CodaRun.h"
+#include "Utilities.h"
+#include "SetROOTVar.h"
+
 double PI = TMath::Pi();
 
 double Mp = 0.938272;
@@ -64,9 +68,9 @@ void MakeMomentumCalibrationTree(const char *configfilename, const char *outputf
   TString currentline;
 
   while( currentline.ReadLine( configfile ) && !currentline.BeginsWith("endlist") ){
-    if( !currentline.BeginsWith("#") ){
-      C->Add(currentline);
-    }
+    // if( !currentline.BeginsWith("#") ){
+    //   C->Add(currentline);
+    // }
   }
 
   TCut globalcut="";
@@ -80,6 +84,15 @@ void MakeMomentumCalibrationTree(const char *configfilename, const char *outputf
   TTreeFormula *GlobalCut = new TTreeFormula("GlobalCut",globalcut,C);
   
   //int fitorder = 2;
+
+  string runsheet_dir = "";
+  string rootfile_dir = "";
+  string target = "";
+  int nruns = -1;
+
+  int sbsconf = -1;
+  int sbsmag = -1;
+  int pass = -1;
   
   double ebeam=1.916;
   double bbtheta = 51.0*TMath::DegToRad();
@@ -194,6 +207,35 @@ void MakeMomentumCalibrationTree(const char *configfilename, const char *outputf
 
       if( ntokens >= 2 ){
 	TString skey = ( (TObjString*) (*tokens)[0] )->GetString();
+
+	if( skey == "runsheet_dir" ){ //assumed to be given in GeV/(g/cm^2)
+	  TString stemp = ( (TObjString*) (*tokens)[1] )->GetString();
+	  runsheet_dir = stemp.Data();
+	}
+	if( skey == "rootfile_dir" ){ //assumed to be given in GeV/(g/cm^2)
+	  TString stemp = ( (TObjString*) (*tokens)[1] )->GetString();
+	  rootfile_dir = stemp.Data();
+	}
+	if( skey == "target" ){ //assumed to be given in GeV/(g/cm^2)
+	  TString stemp = ( (TObjString*) (*tokens)[1] )->GetString();
+	  target = stemp.Data();
+	}
+	if( skey == "nruns" ){ //assumed to be given in GeV/(g/cm^2)
+	  TString stemp = ( (TObjString*) (*tokens)[1] )->GetString();
+	  nruns = stemp.Atoi();
+	}
+	if( skey == "sbsconf" ){ //assumed to be given in GeV/(g/cm^2)
+	  TString stemp = ( (TObjString*) (*tokens)[1] )->GetString();
+	  sbsconf = stemp.Atoi();
+	}
+	if( skey == "sbsmag" ){ //assumed to be given in GeV/(g/cm^2)
+	  TString stemp = ( (TObjString*) (*tokens)[1] )->GetString();
+	  sbsmag = stemp.Atoi();
+	}
+	if( skey == "pass" ){ //assumed to be given in GeV/(g/cm^2)
+	  TString stemp = ( (TObjString*) (*tokens)[1] )->GetString();
+	  pass = stemp.Atoi();
+	}
 
 	if( skey == "oldcoeffs" ){ //this should be the name of a text file
 	  fname_oldcoeffs = ( (TObjString*) (*tokens)[1] )->GetString();
@@ -404,7 +446,8 @@ void MakeMomentumCalibrationTree(const char *configfilename, const char *outputf
       tokens->Delete();
     }
   }
-  
+ 
+
   //Note that both of these calculations neglect the Aluminum end windows and cell walls:
   
   MeanEloss = Ltgt/2.0 * rho_tgt * dEdx_tgt + uwallthick_LH2 * rho_Al * dEdx_Al; //hopefully the user has provided these quantities with correct units
@@ -424,9 +467,7 @@ void MakeMomentumCalibrationTree(const char *configfilename, const char *outputf
   cout << "Mean E loss (outgoing electron) = " << MeanEloss_outgoing << endl;
   cout << "Ebeam corrected (GeV) = " << ebeam - MeanEloss << endl;
  
-					   
-					   
-  
+			   
   // In order to get 
 
   //  TEventList *elist = new TEventList("elist","Event list for BigBite momentum calibration");
@@ -461,6 +502,10 @@ void MakeMomentumCalibrationTree(const char *configfilename, const char *outputf
   // double xHODO[maxHODOclusters],yHODO[maxHODOclusters];
   // double tmeanHODO[maxHODOclusters], tdiffHODO[maxHODOclusters];
   
+  // reading run info and parsing ROOT trees
+  vector<CodaRun> crun; util_pd::ReadRunList(runsheet_dir,nruns,sbsconf,target,pass,sbsmag,0,crun);
+  util_pd::LoadROOTTree(rootfile_dir,crun,1,0,C); 
+
   C->SetBranchStatus("*",0);
   //Minimal set of HCAL variables:
   C->SetBranchStatus("sbs.hcal.x",1);
@@ -538,6 +583,12 @@ void MakeMomentumCalibrationTree(const char *configfilename, const char *outputf
   C->SetBranchAddress("bb.ps.x",&xPS);
   C->SetBranchAddress("bb.sh.x",&xSH);
   C->SetBranchAddress("bb.sh.y",&ySH);
+
+  // fEvtHdr variables (N/A for simulation) 
+  UInt_t rnum, gevnum, trigbits;
+  std::vector<std::string> evhdrvar = {"fRun","fEvtNum","fTrigBits"};
+  std::vector<void*> evhdrvar_mem = {&rnum,&gevnum,&trigbits};
+  setrootvar::setbranch(C,"fEvtHdr",evhdrvar,evhdrvar_mem);
   
   int nparams = 0;
 
@@ -715,23 +766,29 @@ void MakeMomentumCalibrationTree(const char *configfilename, const char *outputf
   Tout->Branch( "Lneutron", &T_Lneutron, "Lneutron/D");
   Tout->Branch( "nTOFexpect", &T_nTOFexpect, "nTOFexpect/D");
 
-  long ntotal = C->GetEntries();
-  
-  long nevent=0;
-
+  long nevent=0, ntotal = C->GetEntries();
+  UInt_t runnum=0;
   //First pass: accumulate sums required for the fit: 
-  
   int treenum=0, currenttreenum=0; 
 
   while( C->GetEntry(nevent++) ){
-    if( nevent % 100000 == 0 ) {
-      cout << "event " << nevent << " of " << ntotal << endl;
-    }
+    // progress indicator 
+    if (nevent % 1000 == 0) std::cout << nevent << "/" << ntotal << "\r";
+    std::cout.flush();
     currenttreenum = C->GetTreeNumber();
 
     if( nevent == 1 || currenttreenum != treenum ){
       treenum = currenttreenum; 
       GlobalCut->UpdateFormulaLeaves();
+
+      // read ebeam once per run
+      if (nevent == 1 || rnum != runnum) {
+	runnum = rnum;
+	/* In search of a faster algorithm */
+	auto it = std::find_if(crun.begin(), crun.end(), [&](CodaRun const& cr) {return cr.runnum == runnum;});
+	if (it != crun.end()) ebeam = it->ebeam; 
+	else std::cerr << "**!** Run " << runnum << " is not in spreadsheet!" << std::endl;
+      }
     }
 
     bool passedglobal = GlobalCut->EvalInstance(0) != 0;
@@ -1139,6 +1196,12 @@ void MakeMomentumCalibrationTree(const char *configfilename, const char *outputf
   
   hW_old->Draw("SAME");
 
+  TLegend *l4=new TLegend(0.20,0.74,0.48,0.9);
+  l4->SetTextFont(42);
+  l4->AddEntry(hW_old,"Before Calib. (HCAL cut)","l");
+  l4->AddEntry(hW_new,"After Calib. (HCAL cut)","lf");
+  l4->AddEntry(hW_new_nocut,"After Calib.","lf");
+  l4->Draw();
   
   
   //File containing old optics coefficients: 
