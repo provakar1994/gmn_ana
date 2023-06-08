@@ -9,11 +9,13 @@ const int kNrows = 24; // # of HCAL rows
 const double hgap = 0.15494; //m, horizontal gap between the centers of two modules
 const double vgap = 0.15875; //m, vertical gap between the centers of two modules
 
-int main()
+int gen_xypos_DB(double const voffset = 0.75, double const hoffset = 0.0)
 {
-  double voffset = 0.45; //m
-  double hoffset = 0.0; //m
+  // double voffset = 0.45; //m
+  // double hoffset = 0.0; //m
 
+  std::cout << "Vertical offset  : " << voffset << "\n";
+  std::cout << "Horizontal offset: " << hoffset << "\n\n";
 
   /* Co-ordinate system convention (same as real data)
   1. +x points to hall floor
@@ -29,7 +31,8 @@ int main()
   std::cout << "sbs.hcal.xpos = " << std::endl;
   for(int row=0; row<kNrows; row++){
     for(int col=0; col<kNcols; col++){
-      std::cout << y_topRB+row*vgap << " ";
+      //std::cout << y_topRB+row*vgap << " "; //Rounds off unexpectedly!!
+      printf("%f ",y_topRB+row*vgap);
     }
     std::cout << std::endl;
   }
@@ -40,7 +43,8 @@ int main()
   std::cout << "sbs.hcal.ypos = " << std::endl;
   for(int row=0; row<kNrows; row++){
     for(int col=0; col<kNcols; col++){
-      std::cout << x_topRB+col*hgap << " ";
+      //std::cout << x_topRB+col*hgap << " ";
+      printf("%f ",x_topRB+col*hgap);
     }
     std::cout << std::endl;
   }
