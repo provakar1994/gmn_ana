@@ -24,9 +24,12 @@ namespace util_pd {
   /* #########################################
      ##                General              ##  
      ######################################### */
+  // returns TCanvas object with optimized size
   TCanvas *TC(std::string name,   // name of the canvas
  	      int rdiv,           // # divisions in row
 	      int cdiv);          // # divisions in column 
+
+  std::string getDate(); // returns today's date
 
   /* #################################################
      ##                HCAL Histograms              ##  

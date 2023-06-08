@@ -22,6 +22,17 @@ namespace util_pd {
     return c;
   }
 
+  std::string getDate()
+  /* returns today's date */
+  {
+    time_t now = time(0);
+    tm ltm = *localtime(&now);
+    std::string yyyy = std::to_string(1900 + ltm.tm_year);
+    std::string mm = std::to_string(1 + ltm.tm_mon);
+    std::string dd = std::to_string(ltm.tm_mday);
+    return mm + '/' + dd + '/' + yyyy;
+  }
+
   /* #################################################
      ##                HCAL Related                 ##  
      ################################################# */
