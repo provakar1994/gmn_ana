@@ -1257,10 +1257,10 @@ void MakeMomentumCalibrationTree(const char *configfilename, const char *outputf
   plotsfilename.ReplaceAll(".root",".pdf");
   
   c1->Print(plotsfilename.Data(),"pdf");
-  plotsfilename.ReplaceAll(".pdf",".png");
-  c1->Print(plotsfilename.Data(),"png");
+  // plotsfilename.ReplaceAll(".pdf",".png");
+  // c1->Print(plotsfilename.Data(),"png");
   
   // elist->Delete();
-
+  c1->Write();
   fout->Write();
 }
