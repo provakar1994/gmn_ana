@@ -8,6 +8,7 @@
 */
 #include <vector>
 #include <iostream>
+#include <unordered_map>
 
 #include "TCut.h"
 #include "TH1D.h"
@@ -230,6 +231,10 @@ int qelas_ana_simu (const char *configfilename,
   double mc_omega, lumi;
   std::vector<double> totNtriesnCh; util_pd::GetTotNtriesnCh(sjobs,totNtriesnCh);
 
+  // implementing hashtable with norm info for efficiency
+  std::unordered_map<std::string,SimuJob> mnorm;
+  for (auto & sjob: sjobs) mnorm[sjob.rfname] = sjob;
+
   // looping through the tree ---------------------------------------
   std::cout << std::endl;
   long nevent = 0, nevents = C->GetEntries(), ngoodevs = 0; 
@@ -249,9 +254,10 @@ int qelas_ana_simu (const char *configfilename,
       // getting normalization factors per run
       /* sophisticated but slightly inefficient way */
       const char* rftemp = C->GetFile()->GetName();
-      auto it = std::find_if(sjobs.begin(), sjobs.end(), [&](SimuJob const& sj){return sj.rfname.compare(rftemp) == 0;});
-      if (it != sjobs.end()) {lumi = it->lumi; mc_omega = it->genvol; if (gen.compare("g4sbs")==0) ebeam = it->ebeam;} 
-      //lumi = sjobs[treeitr].lumi; mc_omega = sjobs[treeitr].genvol; treeitr++;
+      SimuJob sjtemp = mnorm[rftemp];
+      lumi = sjtemp.lumi; mc_omega = sjtemp.genvol; ebeam = sjtemp.ebeam; 
+      // auto it = std::find_if(sjobs.begin(), sjobs.end(), [&](SimuJob const& sj){return sj.rfname.compare(rftemp) == 0;});
+      // if (it != sjobs.end()) {lumi = it->lumi; mc_omega = it->genvol; ebeam = it->ebeam;} //if (gen.compare("g4sbs")==0) ebeam = it->ebeam;} 
     } 
     bool passedgCut = GlobalCut->EvalInstance(0) != 0;   
     if (!passedgCut) continue;
