@@ -1,3 +1,10 @@
+/*
+  Momentum calibration script for pseudo-data.
+  -----
+  A. Puckett CREATED  <puckett@jlab.org>  (Real data version)
+  P. Datta   MODIFIED <pdbforce@jlab.org> (Adapted for pseudo-data)
+*/
+
 //#include "GEM_cosmic_tracks.C"
 #include "TChain.h"
 #include "TTree.h"
@@ -36,7 +43,7 @@ double PI = TMath::Pi();
 double Mp = 0.938272;
 double Mn = 0.939565;
 
-void momentum_calib_simu( const char *configfilename, const char *outputfilename="NewMomentumFit.root" ){
+void momentum_calib_simu( const char *configfilename, const char *outputfilename="pcsout/NewMomentumFit.root" ){
 
   gStyle->SetOptFit();
   
@@ -1085,7 +1092,12 @@ void momentum_calib_simu( const char *configfilename, const char *outputfilename
   
   hW_old->Draw("SAME");
 
-  
+  TLegend *l4=new TLegend(0.20,0.74,0.48,0.9);
+  l4->SetTextFont(42);
+  l4->AddEntry(hW_old,"Before Calib. (HCAL cut)","l");
+  l4->AddEntry(hW_new,"After Calib. (HCAL cut)","lf");
+  l4->AddEntry(hW_new_nocut,"After Calib.","lf");
+  l4->Draw();
   
   //File containing old optics coefficients: 
   ifstream foldcoeffs(fname_oldcoeffs.Data());
@@ -1136,10 +1148,10 @@ void momentum_calib_simu( const char *configfilename, const char *outputfilename
     fnewcoeffs << newcoeffs << endl;
   }
 
-  // TString plotsfilename = outputfilename;
-  // plotsfilename.ReplaceAll(".root",".pdf");
+  TString plotsfilename = outputfilename;
+  plotsfilename.ReplaceAll(".root",".pdf");
   
-  // c1->Print(plotsfilename.Data(),"pdf");
+  c1->Print(plotsfilename.Data(),"pdf");
   // plotsfilename.ReplaceAll(".pdf",".png");
   // c1->Print(plotsfilename.Data(),"png");
  

@@ -1,4 +1,5 @@
-/lustre19/expphy/volatile/halla/sbs/pdbforce/g4sbs_output/digi_sbs4_lh2/rep*
+#/lustre19/expphy/volatile/halla/sbs/pdbforce/g4sbs_output/digi_sbs4_lh2/rep*
+/lustre19/expphy/volatile/halla/sbs/pdbforce/g4sbs_output/fscan/sbspfmap_sbs4_sbs50p_g4sbs_heep/replayed_fmap_sf66_sbs4_sbs50p_g4sbs_heep_job_0.root
 endlist
 bb.tr.n==1&&bb.ps.e>0.2&&abs(bb.tr.vz)<.08&&sbs.hcal.e>0.025&&abs(bb.etot_over_p-0.92)<0.2&&bb.ps.e+bb.sh.e>1.7
 endcut
@@ -6,7 +7,7 @@ order 1
 useAlShield 0
 dEdx 0.00574
 dEdx_Al 0.0021
-ebeam 3.728
+ebeam 3.7393
 bbtheta 36.0 
 sbstheta 31.9
 hcaldist 11.0
@@ -14,10 +15,10 @@ Ltgt 15.0
 rho_tgt 0.072
 celldiameter 4.064
 usehcalcut 1
-dx0 -0.93
-dy0 0.01
-dxsigma 0.069
-dysigma 0.061
+dx0 -1.4947
+dy0 0.0153
+dxsigma 0.105
+dysigma 0.062
 GEMpitch 10.0
 #fix_pth0 1
 #fix_pthx 1
@@ -26,9 +27,9 @@ fix_pthx 0
 #pth0 0.274932
 #pthx 0.101809
 bbdist 1.80
-A_pth0 0.27676
-B_pth0 1.1976
-C_pth0 0.4764
+A_pth0 0.27618452
+B_pth0 0.93026782
+C_pth0 0.0
 Wmin 0.6
 Wmax 1.2
 dpel_min -0.05
