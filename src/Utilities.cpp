@@ -323,12 +323,12 @@ namespace util_pd {
     /* Acknowledgement: Based on a function written by David Flay. */
     // split a string by a delimiter
     std::stringstream ss(myStr);
-    std::vector<std::string> result;
     while( ss.good() ){
       std::string substr;
       std::getline(ss, substr, delim);
-      out.push_back(substr);
+      if (!substr.empty()) out.push_back(substr);
     }
+    if (out.empty()) std::cerr << "WARNING! No substrings found!\n";
     return 0;
   }
   //______________________________________________________________________________
