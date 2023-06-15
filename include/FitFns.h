@@ -1,22 +1,22 @@
 #ifndef FIT_FNS_H
 #define FIT_FNS_H
 
-#include "TH1D.h"
+#include "TH1F.h"
 
 class FitFn {
  private:
   int fpoly{0};       // order of polynomial
-  TH1D *fhs1{nullptr};   // Signal histo 1
-  TH1D *fhs2{nullptr};   // Signal histo 2
-  TH1D *fhbg{nullptr};   // Background histo
+  TH1F *fhs1{nullptr};   // Signal histo 1
+  TH1F *fhs2{nullptr};   // Signal histo 2
+  TH1F *fhbg{nullptr};   // Background histo
 
  public:
   FitFn() {}
-  FitFn(TH1D *hs1): fhs1(hs1) {}
-  FitFn(TH1D *hs1, int poly): fhs1(hs1),fpoly(poly) {}
-  FitFn(TH1D *hs1, TH1D *hs2): fhs1(hs1),fhs2(hs2) {}
-  FitFn(TH1D *hs1, TH1D *hs2, TH1D *hbg): fhs1(hs1),fhs2(hs2),fhbg(hbg) {}
-  FitFn(TH1D *hs1, TH1D *hs2, int poly): fhs1(hs1),fhs2(hs2),fpoly(poly) {}
+  FitFn(TH1F *hs1): fhs1(hs1) {}
+  FitFn(TH1F *hs1, int poly): fhs1(hs1),fpoly(poly) {}
+  FitFn(TH1F *hs1, TH1F *hs2): fhs1(hs1),fhs2(hs2) {}
+  FitFn(TH1F *hs1, TH1F *hs2, TH1F *hbg): fhs1(hs1),fhs2(hs2),fhbg(hbg) {}
+  FitFn(TH1F *hs1, TH1F *hs2, int poly): fhs1(hs1),fhs2(hs2),fpoly(poly) {}
 
   // fits using just 1 signal histo (1 param)
   double ffn_1hs_nbg (double *x, double *par) const {

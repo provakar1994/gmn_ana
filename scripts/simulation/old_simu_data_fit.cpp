@@ -7,8 +7,8 @@
 #include "TChain.h"
 #include "TTree.h"
 #include "TFile.h"
-#include "TH1D.h"
-#include "TH2D.h"
+#include "TH1F.h"
+#include "TH2F.h"
 #include "TVector3.h"
 #include "TRotation.h"
 #include "TEventList.h"
@@ -444,17 +444,17 @@ void old_simu_data_fit( const char *configfilename,
   TFile *fout = new TFile(outputfilename,"RECREATE");
 
   //defining all the interesting histograms  
-  TH1D *h_W = new TH1D("h_W",";W (GeV);",250,0,2);
-  TH1D *h_dpel = new TH1D("h_dpel",";p/p_{elastic}(#theta)-1;",250,-0.25,0.25);
+  TH1F *h_W = new TH1F("h_W",";W (GeV);",250,0,2);
+  TH1F *h_dpel = new TH1F("h_dpel",";p/p_{elastic}(#theta)-1;",250,-0.25,0.25);
 
-  TH1D *h_dxHCAL_n = new TH1D("h_dxHCAL_n","Simulation n; x_{HCAL} - x_{exp} (m);", 90, -2.5,2.0);
-  TH1D *h_dxHCAL_p = new TH1D("h_dxHCAL_p","Simulation p; x_{HCAL} - x_{exp} (m);", 90, -2.5,2.0);
-  TH1D *h_n = new TH1D("h_n","Simulation n; x_{HCAL} - x_{exp} (m);", 90, -2.5,2.0);
-  TH1D *h_p = new TH1D("h_p","Simulation p; x_{HCAL} - x_{exp} (m);", 90, -2.5,2.0);
-  TH1D *h_comb_MC_ap = new TH1D("h_comb_MC_ap","Simulation; x_{HCAL} - x_{exp} (m);", 90, -2.5,2.0);
-  TH1D *h_comb_MC = new TH1D("h_comb_MC","Simulation; x_{HCAL} - x_{exp} (m);", 90, -2.5,2.0);
+  TH1F *h_dxHCAL_n = new TH1F("h_dxHCAL_n","Simulation n; x_{HCAL} - x_{exp} (m);", 90, -2.5,2.0);
+  TH1F *h_dxHCAL_p = new TH1F("h_dxHCAL_p","Simulation p; x_{HCAL} - x_{exp} (m);", 90, -2.5,2.0);
+  TH1F *h_n = new TH1F("h_n","Simulation n; x_{HCAL} - x_{exp} (m);", 90, -2.5,2.0);
+  TH1F *h_p = new TH1F("h_p","Simulation p; x_{HCAL} - x_{exp} (m);", 90, -2.5,2.0);
+  TH1F *h_comb_MC_ap = new TH1F("h_comb_MC_ap","Simulation; x_{HCAL} - x_{exp} (m);", 90, -2.5,2.0);
+  TH1F *h_comb_MC = new TH1F("h_comb_MC","Simulation; x_{HCAL} - x_{exp} (m);", 90, -2.5,2.0);
 
-  TH1D *h_dxHCAL_data;
+  TH1F *h_dxHCAL_data;
   fdata->GetObject("h_dxHCAL_data",h_dxHCAL_data);
   
   long nevent=0;

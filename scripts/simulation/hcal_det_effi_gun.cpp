@@ -10,7 +10,7 @@
 #include <iostream>
 
 #include "TCut.h"
-#include "TH1D.h"
+#include "TH1F.h"
 #include "TLatex.h"
 #include "TChain.h"
 #include "TVector3.h"
@@ -21,7 +21,7 @@
 #include "../../include/gmn_ana.h"
 #include "../../dflay/src/JSONManager.cxx"
 
-TH1D* MakeHisto(int, int, double, double, std::string);
+TH1F* MakeHisto(int, int, double, double, std::string);
 
 int hcal_det_effi_gun(const char *configfilename, std::string filebase="siout/hcal_det_effi")
 {
@@ -65,20 +65,20 @@ int hcal_det_effi_gun(const char *configfilename, std::string filebase="siout/hc
   TFile *fout = new TFile(outFile.c_str(), "RECREATE");
 
   // defining histograms
-  TH1D *h_dxHCAL = new TH1D("h_dxHCAL",Form("%s gun; x_{HCAL} - x_{exp} (m);",Ntype.c_str()), 250, -2.5, 2.5);
-  TH1D *h_dyHCAL = new TH1D("h_dyHCAL",Form("%s gun; y_{HCAL} - y_{exp} (m);",Ntype.c_str()), 250, -1.25, 1.25);
+  TH1F *h_dxHCAL = new TH1F("h_dxHCAL",Form("%s gun; x_{HCAL} - x_{exp} (m);",Ntype.c_str()), 250, -2.5, 2.5);
+  TH1F *h_dyHCAL = new TH1F("h_dyHCAL",Form("%s gun; y_{HCAL} - y_{exp} (m);",Ntype.c_str()), 250, -1.25, 1.25);
   TH2F *h2_xy = new TH2F("h2_xy",Form("%s gun",Ntype.c_str()),12,-0.92837,0.92837,24,-2.35183,1.45182);
   TH2F *h2_xy_exp = new TH2F("h2_xy_exp",Form("%s gun",Ntype.c_str()),12,-0.92837,0.92837,24,-2.35183,1.45182);
 
   std::vector<double> h_eHCAL_lims; jmgr->GetVectorFromKey<double>("h_eHCAL_lims",h_eHCAL_lims);
-  TH1D *h_eHCAL = new TH1D("h_eHCAL",Form("%s gun; HCAL Cluster Energy (GeV);",Ntype.c_str()),int(h_eHCAL_lims[0]),h_eHCAL_lims[1],h_eHCAL_lims[2]);
+  TH1F *h_eHCAL = new TH1F("h_eHCAL",Form("%s gun; HCAL Cluster Energy (GeV);",Ntype.c_str()),int(h_eHCAL_lims[0]),h_eHCAL_lims[1],h_eHCAL_lims[2]);
 
   std::vector<double> h_pN_lims; jmgr->GetVectorFromKey<double>("h_pN_lims",h_pN_lims);
   TH2F *h2_eHCAL_pN = new TH2F("h2_eHCAL_pN",Form("%s gun;Nucleon Momentum (GeV/c);HCAL Cluster Energy (GeV)",Ntype.c_str()),int(h_pN_lims[0]),h_pN_lims[1],h_pN_lims[2],int(h_eHCAL_lims[0]),h_eHCAL_lims[1],h_eHCAL_lims[2]);
   TProfile *h2_eHCAL_pN_prof = new TProfile("h2_eHCAL_pN_prof",Form("%s gun;Nucleon Momentum (GeV/c);HCAL Cluster Energy (GeV)",Ntype.c_str()),int(h_pN_lims[0]),h_pN_lims[1],h_pN_lims[2],h_eHCAL_lims[1],h_eHCAL_lims[2]);
   TH2F *h2_eHCAL_pN_cut = new TH2F("h2_eHCAL_pN_cut",Form("%s gun | Threshold = E_{mean} / 4. per bin;Nucleon Momentum (GeV/c);HCAL Cluster Energy (GeV)",Ntype.c_str()),int(h_pN_lims[0]),h_pN_lims[1],h_pN_lims[2],int(h_eHCAL_lims[0]),h_eHCAL_lims[1],h_eHCAL_lims[2]);
 
-  TH1D *h_effi = new TH1D("h_effi",Form("%s gun; Nucleon Momentum (GeV/c); Efficiency (p)",Ntype.c_str()),int(h_pN_lims[0]),h_pN_lims[1],h_pN_lims[2]);
+  TH1F *h_effi = new TH1F("h_effi",Form("%s gun; Nucleon Momentum (GeV/c); Efficiency (p)",Ntype.c_str()),int(h_pN_lims[0]),h_pN_lims[1],h_pN_lims[2]);
 
   TTree *Tout = new TTree("Tout", "Active area cut implemented before filling");
   double T_pN;         Tout->Branch("pN", &T_pN, "pN/D");                      // nucleon momentum
@@ -93,8 +93,8 @@ int hcal_det_effi_gun(const char *configfilename, std::string filebase="siout/hc
   TVector3 HCAL_origin = sbsconf.GetHCALdist()*HCAL_axes[2];   
 
   // define the histograms
-  TH1D *h_eHCAL_array[int(h_pN_lims[0])];
-  TH1D *h_eHCAL_array_cut[int(h_pN_lims[0])];
+  TH1F *h_eHCAL_array[int(h_pN_lims[0])];
+  TH1F *h_eHCAL_array_cut[int(h_pN_lims[0])];
   for (int ibin=0; ibin<int(h_pN_lims[0]); ibin++) {
     double hmax = h_eHCAL_lims[2];
     // variable ranges for splitted histograms
@@ -263,9 +263,9 @@ int hcal_det_effi_gun(const char *configfilename, std::string filebase="siout/hc
 
 
 // ---------------- Create generic histogram function ----------------
-TH1D* MakeHisto(int ibin, int bins, double min, double max, std::string suf="")
+TH1F* MakeHisto(int ibin, int bins, double min, double max, std::string suf="")
 {
-  TH1D *h = new TH1D(TString::Format("h_eHCAL%s_%d", suf.c_str(), ibin),
+  TH1F *h = new TH1F(TString::Format("h_eHCAL%s_%d", suf.c_str(), ibin),
 		     TString::Format("h_eHCAL%s_%d", suf.c_str(), ibin), bins, min, max);
   // h->SetStats(0);
   // h->SetLineWidth(2);

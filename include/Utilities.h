@@ -7,8 +7,8 @@
 #include <iostream>
 #include <dirent.h>
 
-#include "TH1D.h"
-#include "TH2D.h"
+#include "TH1F.h"
+#include "TH2F.h"
 #include "TLine.h"
 #include "TChain.h"
 #include "TLatex.h"
@@ -34,10 +34,10 @@ namespace util_pd {
   /* #################################################
      ##                HCAL Histograms              ##  
      ################################################# */
-  TH2D *TH2DHCALface_rc(std::string name);      // returns TH2D for HCAL face (row,col)
-  TH2D *TH2DHCALface_xy_data(std::string name); // returns TH2D for HCAL face (x,y) [Data]
-  TH2D *TH2DHCALface_xy_simu(std::string name); // returns TH2D for HCAL face (x,y) [Simu]
-  TH2D *TH2DdxdyHCAL(std::string name);         // returns TH2D for dxdyHCAL
+  TH2F *TH2FHCALface_rc(std::string name);      // returns TH2F for HCAL face (row,col)
+  TH2F *TH2FHCALface_xy_data(std::string name); // returns TH2F for HCAL face (x,y) [Data]
+  TH2F *TH2FHCALface_xy_simu(std::string name); // returns TH2F for HCAL face (x,y) [Simu]
+  TH2F *TH2FdxdyHCAL(std::string name);         // returns TH2F for dxdyHCAL
 
   // draws rectangular cut regions
   void DrawArea(std::vector<double> dimensions,      // a vector with extreme points
@@ -49,8 +49,8 @@ namespace util_pd {
   /* #################################################
      ##              Kinematic Histograms           ##  
      ################################################# */
-  TH1D *TH1DhW(std::string name);   // returns W histogram
-  TH1D *TH1DhQ2(std::string name,   // returns Q2 histogram
+  TH1F *TH1FhW(std::string name);   // returns W histogram
+  TH1F *TH1FhQ2(std::string name,   // returns Q2 histogram
 		int conf);   // SBS config
 
   /* ###########################################################

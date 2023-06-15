@@ -122,7 +122,7 @@ int hcal_det_effi_simu(const char *configfilename,
   TFile *fout = new TFile(outFile.c_str(), "RECREATE");
 
   // defining histograms
-  TH1D *h_W = new TH1D("h_W",";W (GeV);", 250, 0., 2.);
+  TH1F *h_W = new TH1F("h_W",";W (GeV);", 250, 0., 2.);
   TH1F *h_Q2 = new TH1F("h_Q2", "Q^{2} distribution", 100, 0., 5.);
   TH1F *h_dxHCAL = new TH1F("h_dxHCAL","; x_{HCAL} - x_{exp} (m);", 250, -2.5, 2.5);
   TH1F *h_dyHCAL = new TH1F("h_dyHCAL","; y_{HCAL} - y_{exp} (m);", 250, -1.25, 1.25);

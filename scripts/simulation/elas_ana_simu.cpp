@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "TCut.h"
-#include "TH1D.h"
+#include "TH1F.h"
 #include "TFile.h"
 #include "TLatex.h"
 #include "TChain.h"
@@ -120,23 +120,23 @@ int elas_ana_simu (const char *configfilename,
   TFile *fout = new TFile(outFile.Data(),"RECREATE");
 
   // defining histograms
-  TH1D *h_W = util_pd::TH1DhW("h_W");
-  TH1D *h_W_cut = util_pd::TH1DhW("h_W_cut");
-  TH1D *h_W_acut = util_pd::TH1DhW("h_W_acut");
-  TH1D *h_dpel = new TH1D("h_dpel",";p/p_{elastic}(#theta)-1;",100,-0.3,0.3);
+  TH1F *h_W = util_pd::TH1FhW("h_W");
+  TH1F *h_W_cut = util_pd::TH1FhW("h_W_cut");
+  TH1F *h_W_acut = util_pd::TH1FhW("h_W_acut");
+  TH1F *h_dpel = new TH1F("h_dpel",";p/p_{elastic}(#theta)-1;",100,-0.3,0.3);
   
-  TH1D *h_Q2 = util_pd::TH1DhQ2("h_Q2", conf);
+  TH1F *h_Q2 = util_pd::TH1FhQ2("h_Q2", conf);
   std::vector<double> hdx_lim; jmgr->GetVectorFromKey<double>("h_dxHCAL_lims", hdx_lim);
   std::vector<double> hdy_lim; jmgr->GetVectorFromKey<double>("h_dyHCAL_lims", hdy_lim);
-  TH1D *h_dxHCAL = new TH1D("h_dxHCAL","; x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
-  TH1D *h_dxHCAL_nfc = new TH1D("h_dxHCAL_nfc","; x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
-  TH1D *h_dyHCAL = new TH1D("h_dyHCAL","; y_{HCAL} - y_{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
-  TH1D *h_dyHCAL_nfc = new TH1D("h_dyHCAL_nfc","; y_{HCAL} - y_{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
-  TH1D *h_dxHCAL_p = new TH1D("h_dxHCAL_p","mc_fnucl = p; x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
+  TH1F *h_dxHCAL = new TH1F("h_dxHCAL","; x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
+  TH1F *h_dxHCAL_nfc = new TH1F("h_dxHCAL_nfc","; x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
+  TH1F *h_dyHCAL = new TH1F("h_dyHCAL","; y_{HCAL} - y_{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
+  TH1F *h_dyHCAL_nfc = new TH1F("h_dyHCAL_nfc","; y_{HCAL} - y_{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
+  TH1F *h_dxHCAL_p = new TH1F("h_dxHCAL_p","mc_fnucl = p; x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
 
-  TH2D *h2_rcHCAL = util_pd::TH2DHCALface_rc("h2_rcHCAL");
-  TH2D *h2_dxdyHCAL = util_pd::TH2DdxdyHCAL("h2_dxdyHCAL");
-  TH2D *h2_xyHCAL_p = util_pd::TH2DHCALface_xy_simu("h2_xyHCAL_p");
+  TH2F *h2_rcHCAL = util_pd::TH2FHCALface_rc("h2_rcHCAL");
+  TH2F *h2_dxdyHCAL = util_pd::TH2FdxdyHCAL("h2_dxdyHCAL");
+  TH2F *h2_xyHCAL_p = util_pd::TH2FHCALface_xy_simu("h2_xyHCAL_p");
 
   // Defining interesting ROOT tree branches 
   TTree *Tout = new TTree("Tout", "");

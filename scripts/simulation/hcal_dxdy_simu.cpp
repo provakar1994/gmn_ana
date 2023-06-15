@@ -8,8 +8,8 @@
 #include "TChain.h"
 #include "TTree.h"
 #include "TFile.h"
-#include "TH1D.h"
-#include "TH2D.h"
+#include "TH1F.h"
+#include "TH2F.h"
 #include "TVector3.h"
 #include "TRotation.h"
 #include "TEventList.h"
@@ -467,68 +467,68 @@ void hcal_dxdy_simu( const char *configfilename,
   TFile *fout = new TFile(outputfilename,"RECREATE");
 
   //defining all the interesting histograms
-  TH1D *h_coin_time = new TH1D("h_coin_time",";HCAL trigTime - BBCAL trigTime (ns);",150,450,600);
+  TH1F *h_coin_time = new TH1F("h_coin_time",";HCAL trigTime - BBCAL trigTime (ns);",150,450,600);
   
-  TH1D *h_W = new TH1D("h_W",";W (GeV);",250,0,2);
-  TH1D *h_W_n_cut = new TH1D("h_W_n_cut",";W (GeV);",250,0,2);
-  TH1D *h_W_p_cut = new TH1D("h_W_p_cut",";W (GeV);",250,0,2);
+  TH1F *h_W = new TH1F("h_W",";W (GeV);",250,0,2);
+  TH1F *h_W_n_cut = new TH1F("h_W_n_cut",";W (GeV);",250,0,2);
+  TH1F *h_W_p_cut = new TH1F("h_W_p_cut",";W (GeV);",250,0,2);
 
-  TH1D *h_dpel = new TH1D("h_dpel",";p/p_{elastic}(#theta)-1;",250,-0.25,0.25);
-  TH1D *h_dpel_n_cut = new TH1D("h_dpel_n_cut",";p/p_{elastic}(#theta)-1;",250,-0.25,0.25);
-  TH1D *h_dpel_p_cut = new TH1D("h_dpel_p_cut",";p/p_{elastic}(#theta)-1;",250,-0.25,0.25);
+  TH1F *h_dpel = new TH1F("h_dpel",";p/p_{elastic}(#theta)-1;",250,-0.25,0.25);
+  TH1F *h_dpel_n_cut = new TH1F("h_dpel_n_cut",";p/p_{elastic}(#theta)-1;",250,-0.25,0.25);
+  TH1F *h_dpel_p_cut = new TH1F("h_dpel_p_cut",";p/p_{elastic}(#theta)-1;",250,-0.25,0.25);
 
-  TH1D *h_dxHCAL = new TH1D("h_dxHCAL","; x_{HCAL} - x_{exp} (m);", 250, -2.5,2.5);
-  TH1D *h_dyHCAL = new TH1D("h_dyHCAL","; y_{HCAL} - y_{exp} (m);", 250, -1.25,1.25);
+  TH1F *h_dxHCAL = new TH1F("h_dxHCAL","; x_{HCAL} - x_{exp} (m);", 250, -2.5,2.5);
+  TH1F *h_dyHCAL = new TH1F("h_dyHCAL","; y_{HCAL} - y_{exp} (m);", 250, -1.25,1.25);
 
-  TH1D *h_dxHCAL_cut = new TH1D("h_dxHCAL_cut","; x_{HCAL} - x_{exp} (m);", 250, -2.5,2.5);
-  // TH1D *h_dxHCAL_cut_1 = new TH1D("h_dxHCAL_cut_1","; x_{HCAL} - x_{exp} (m);", 250, -2.5,2.5);
-  // TH1D *h_dxHCAL_cut_2 = new TH1D("h_dxHCAL_cut_2","; x_{HCAL} - x_{exp} (m);", 250, -2.5,2.5);
-  // TH1D *h_dxHCAL_cut_3 = new TH1D("h_dxHCAL_cut_3","; x_{HCAL} - x_{exp} (m);", 250, -2.5,2.5);
-  // TH1D *h_dxHCAL_cut_4 = new TH1D("h_dxHCAL_cut_4","; x_{HCAL} - x_{exp} (m);", 250, -2.5,2.5);
-  // TH1D *h_dxHCAL_cut_5 = new TH1D("h_dxHCAL_cut_5","; x_{HCAL} - x_{exp} (m);", 250, -2.5,2.5);
-  TH1D *h_dyHCAL_cut = new TH1D("h_dyHCAL_cut","; y_{HCAL} - y_{exp} (m);", 250, -1.25,1.25);  
+  TH1F *h_dxHCAL_cut = new TH1F("h_dxHCAL_cut","; x_{HCAL} - x_{exp} (m);", 250, -2.5,2.5);
+  // TH1F *h_dxHCAL_cut_1 = new TH1F("h_dxHCAL_cut_1","; x_{HCAL} - x_{exp} (m);", 250, -2.5,2.5);
+  // TH1F *h_dxHCAL_cut_2 = new TH1F("h_dxHCAL_cut_2","; x_{HCAL} - x_{exp} (m);", 250, -2.5,2.5);
+  // TH1F *h_dxHCAL_cut_3 = new TH1F("h_dxHCAL_cut_3","; x_{HCAL} - x_{exp} (m);", 250, -2.5,2.5);
+  // TH1F *h_dxHCAL_cut_4 = new TH1F("h_dxHCAL_cut_4","; x_{HCAL} - x_{exp} (m);", 250, -2.5,2.5);
+  // TH1F *h_dxHCAL_cut_5 = new TH1F("h_dxHCAL_cut_5","; x_{HCAL} - x_{exp} (m);", 250, -2.5,2.5);
+  TH1F *h_dyHCAL_cut = new TH1F("h_dyHCAL_cut","; y_{HCAL} - y_{exp} (m);", 250, -1.25,1.25);  
 
-  TH2D *h2_dxdyHCAL = new TH2D("h2_dxdyHCAL","; y_{HCAL} - y_{exp} (m); x_{HCAL} - x_{exp} (m)",
+  TH2F *h2_dxdyHCAL = new TH2F("h2_dxdyHCAL","; y_{HCAL} - y_{exp} (m); x_{HCAL} - x_{exp} (m)",
 			       250, -1.25,1.25, 250,-2.5,2.5);
-  TH2D *h2_dxdyHCAL_cut = new TH2D("h2_dxdyHCAL_cut","; y_{HCAL} - y_{exp} (m); x_{HCAL} - x_{exp} (m)",
+  TH2F *h2_dxdyHCAL_cut = new TH2F("h2_dxdyHCAL_cut","; y_{HCAL} - y_{exp} (m); x_{HCAL} - x_{exp} (m)",
 				   250, -1.25,1.25, 250,-2.5,2.5);
   
-  TH2D *h2_xyHCAL = new TH2D("h2_xyHCAL",";y_{HCAL} (m);x_{HCAL} (m)",12,-0.9,0.9,24,-2.165,1.435);
-  TH2D *h2_xyHCAL_W_cut = new TH2D("h2_xyHCAL_W_cut",";y_{HCAL} (m);x_{HCAL} (m)"
+  TH2F *h2_xyHCAL = new TH2F("h2_xyHCAL",";y_{HCAL} (m);x_{HCAL} (m)",12,-0.9,0.9,24,-2.165,1.435);
+  TH2F *h2_xyHCAL_W_cut = new TH2F("h2_xyHCAL_W_cut",";y_{HCAL} (m);x_{HCAL} (m)"
 				   ,12,-0.9,0.9,24,-2.165,1.435);
-  TH2D *h2_xyHCAL_p_cut = new TH2D("h2_xyHCAL_p_cut","x_{HCAL} vs y_{HCAL} w/ W, p spot, & Fiducial cut;y_{HCAL} (m);x_{HCAL} (m)"
+  TH2F *h2_xyHCAL_p_cut = new TH2F("h2_xyHCAL_p_cut","x_{HCAL} vs y_{HCAL} w/ W, p spot, & Fiducial cut;y_{HCAL} (m);x_{HCAL} (m)"
 				   ,12,-0.9,0.9,24,-2.165,1.435);
-  TH2D *h2_xyHCAL_n_cut = new TH2D("h2_xyHCAL_n_cut","x_{HCAL} vs y_{HCAL} w/ W, n spot, & Fiducial cut;y_{HCAL} (m);x_{HCAL} (m)"
-				   ,12,-0.9,0.9,24,-2.165,1.435);
-
-  TH2D *h2_xyBB_p_exp = new TH2D("h2_xyBB_p_exp","x_{exp}-0.65 vs y_{exp} w/ W & Fiducial cut (exp. p pos.);y_{exp} (m);x_{exp}-0.65 (m)"
-				   ,12,-0.9,0.9,24,-2.165,1.435);
-  TH2D *h2_xyBB_n_exp = new TH2D("h2_xyBB_n_exp","x_{exp} vs y_{exp} w/ W & Fiducial cut (exp. n pos.);y_{exp} (m);x_{exp} (m)"
+  TH2F *h2_xyHCAL_n_cut = new TH2F("h2_xyHCAL_n_cut","x_{HCAL} vs y_{HCAL} w/ W, n spot, & Fiducial cut;y_{HCAL} (m);x_{HCAL} (m)"
 				   ,12,-0.9,0.9,24,-2.165,1.435);
 
-  TH2D *h2_W_vs_dxHCAL = new TH2D("h2_W_vs_dxHCAL","; x_{HCAL} - x_{exp} (m); W (GeV)", 250,-2.5,2.5,250,0,2);
+  TH2F *h2_xyBB_p_exp = new TH2F("h2_xyBB_p_exp","x_{exp}-0.65 vs y_{exp} w/ W & Fiducial cut (exp. p pos.);y_{exp} (m);x_{exp}-0.65 (m)"
+				   ,12,-0.9,0.9,24,-2.165,1.435);
+  TH2F *h2_xyBB_n_exp = new TH2F("h2_xyBB_n_exp","x_{exp} vs y_{exp} w/ W & Fiducial cut (exp. n pos.);y_{exp} (m);x_{exp} (m)"
+				   ,12,-0.9,0.9,24,-2.165,1.435);
 
-  // TH2D *h2_dpel_xfp = new TH2D("h2_dpel_xfp", "; xfp (m); p/p_{elastic}(#theta)-1",
+  TH2F *h2_W_vs_dxHCAL = new TH2F("h2_W_vs_dxHCAL","; x_{HCAL} - x_{exp} (m); W (GeV)", 250,-2.5,2.5,250,0,2);
+
+  // TH2F *h2_dpel_xfp = new TH2F("h2_dpel_xfp", "; xfp (m); p/p_{elastic}(#theta)-1",
   // 			       250,-0.75,0.75,250,-0.125,0.125);
-  // TH2D *h2_dpel_yfp = new TH2D("h2_dpel_yfp", "; yfp (m); p/p_{elastic}(#theta)-1",
+  // TH2F *h2_dpel_yfp = new TH2F("h2_dpel_yfp", "; yfp (m); p/p_{elastic}(#theta)-1",
   // 			       250,-0.25,0.25,250,-0.125,0.125);
-  // TH2D *h2_dpel_xpfp = new TH2D("h2_dpel_xpfp", "; xpfp (m); p/p_{elastic}(#theta)-1",
+  // TH2F *h2_dpel_xpfp = new TH2F("h2_dpel_xpfp", "; xpfp (m); p/p_{elastic}(#theta)-1",
   // 				250,-0.4,0.4,250,-0.125,0.125);
-  // TH2D *h2_dpel_ypfp = new TH2D("h2_dpel_ypfp", "; ypfp (m); p/p_{elastic}(#theta)-1",
+  // TH2F *h2_dpel_ypfp = new TH2F("h2_dpel_ypfp", "; ypfp (m); p/p_{elastic}(#theta)-1",
   // 				250,-0.15,0.15,250,-0.125,0.125);
-  // TH2D *h2_dpel_xptar = new TH2D("h2_dpel_xptar", "; xptar; p/p_{elastic}(#theta)-1",
+  // TH2F *h2_dpel_xptar = new TH2F("h2_dpel_xptar", "; xptar; p/p_{elastic}(#theta)-1",
   // 				 250,-0.4,0.4,250,-0.125,0.125);
-  // TH2D *h2_dpel_yptar = new TH2D("h2_dpel_yptar", "; yptar; p/p_{elastic}(#theta)-1",
+  // TH2F *h2_dpel_yptar = new TH2F("h2_dpel_yptar", "; yptar; p/p_{elastic}(#theta)-1",
   // 				 250,-0.15,0.15,250,-0.125,0.125);
-  // TH2D *h2_dpel_ytar = new TH2D("h2_dpel_ytar", "; ytar; p/p_{elastic}(#theta)-1",
+  // TH2F *h2_dpel_ytar = new TH2F("h2_dpel_ytar", "; ytar; p/p_{elastic}(#theta)-1",
   // 				250,-0.15,0.15,250,-0.125,0.125);
-  // TH2D *h2_W_xfp = new TH2D("h2_W_xfp", "; xfp (m); W",250,-0.75,0.75,250,0,2);
-  // TH2D *h2_W_yfp = new TH2D("h2_W_yfp", "; yfp (m); W",250,-0.25,0.25,250,0,2);
-  // TH2D *h2_W_xpfp = new TH2D("h2_W_xpfp", "; xpfp (m); W",250,-0.4,0.4,250,0,2);
-  // TH2D *h2_W_ypfp = new TH2D("h2_W_ypfp", "; ypfp (m); W",250,-0.15,0.15,250,0,2);
-  // TH2D *h2_W_xptar = new TH2D("h2_W_xptar", "; xptar; W",250,-0.4,0.4,250,0,2);
-  // TH2D *h2_W_yptar = new TH2D("h2_W_yptar", "; yptar; W",250,-0.15,0.15,250,0,2);
-  // TH2D *h2_W_ytar = new TH2D("h2_W_ytar", "; ytar; W",250,-0.15,0.15,250,0,2);
+  // TH2F *h2_W_xfp = new TH2F("h2_W_xfp", "; xfp (m); W",250,-0.75,0.75,250,0,2);
+  // TH2F *h2_W_yfp = new TH2F("h2_W_yfp", "; yfp (m); W",250,-0.25,0.25,250,0,2);
+  // TH2F *h2_W_xpfp = new TH2F("h2_W_xpfp", "; xpfp (m); W",250,-0.4,0.4,250,0,2);
+  // TH2F *h2_W_ypfp = new TH2F("h2_W_ypfp", "; ypfp (m); W",250,-0.15,0.15,250,0,2);
+  // TH2F *h2_W_xptar = new TH2F("h2_W_xptar", "; xptar; W",250,-0.4,0.4,250,0,2);
+  // TH2F *h2_W_yptar = new TH2F("h2_W_yptar", "; yptar; W",250,-0.15,0.15,250,0,2);
+  // TH2F *h2_W_ytar = new TH2F("h2_W_ytar", "; ytar; W",250,-0.15,0.15,250,0,2);
 
   
   TTree *Tout = new TTree("Tout","Tree containing variables for momentum calibration");

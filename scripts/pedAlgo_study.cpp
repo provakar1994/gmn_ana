@@ -9,7 +9,7 @@
 
 #include <iostream>
 #include <vector>
-#include <TH1D.h>
+#include <TH1F.h>
 #include <TFile.h>
 #include <TEventList.h>
 
@@ -67,19 +67,19 @@ void pedAlgo_study(const char* rfile="",TCut cut="",
   ml_data.open(data_file);
   ml_data << "Event No., True nucleon momentum (GeV/c), n(0) or p(1), ADC, (pedestal subtracted), (pC), for, all, 288, channels, ...," << endl;
 
-  TH1D *h_e_SH = new TH1D("h_e_SH","CLuster energy (GeV)",300,0,5);
-  TH1D *h_a_SH = new TH1D("h_a_SH","ADC integral(pC) with Pedestal",600,0,600);
-  TH1D *h_a_p_SH = new TH1D("h_a_p_SH","ADC integral(pC)",400,0,400);
-  TH1D *h_a_c_SH = new TH1D("h_a_c_SH","ADC integral(GeV)",200,0,4);
-  TH1D *h_a_amp_SH = new TH1D("h_a_amp_SH","ADC amplitude(mV) with Pedestal",800,0,800);
-  TH1D *h_a_amp_p_SH = new TH1D("h_a_amp_p_SH","ADC amplitude(mV)",600,0,600);
+  TH1F *h_e_SH = new TH1F("h_e_SH","CLuster energy (GeV)",300,0,5);
+  TH1F *h_a_SH = new TH1F("h_a_SH","ADC integral(pC) with Pedestal",600,0,600);
+  TH1F *h_a_p_SH = new TH1F("h_a_p_SH","ADC integral(pC)",400,0,400);
+  TH1F *h_a_c_SH = new TH1F("h_a_c_SH","ADC integral(GeV)",200,0,4);
+  TH1F *h_a_amp_SH = new TH1F("h_a_amp_SH","ADC amplitude(mV) with Pedestal",800,0,800);
+  TH1F *h_a_amp_p_SH = new TH1F("h_a_amp_p_SH","ADC amplitude(mV)",600,0,600);
   
-  TH1D *h_e_PS = new TH1D("h_e_PS","CLuster energy (GeV)",300,0,4);
-  TH1D *h_a_PS = new TH1D("h_a_PS","ADC integral(pC) with Pedestal",300,0,300);
-  TH1D *h_a_p_PS = new TH1D("h_a_p_PS","ADC integral(pC)",300,0,300);
-  TH1D *h_a_c_PS = new TH1D("h_a_c_PS","ADC integral(GeV)",200,0,4);
-  TH1D *h_a_amp_PS = new TH1D("h_a_amp_PS","ADC amplitude(mV) with Pedestal",600,0,600);
-  TH1D *h_a_amp_p_PS = new TH1D("h_a_amp_p_PS","ADC amplitude(mV)",400,0,400);
+  TH1F *h_e_PS = new TH1F("h_e_PS","CLuster energy (GeV)",300,0,4);
+  TH1F *h_a_PS = new TH1F("h_a_PS","ADC integral(pC) with Pedestal",300,0,300);
+  TH1F *h_a_p_PS = new TH1F("h_a_p_PS","ADC integral(pC)",300,0,300);
+  TH1F *h_a_c_PS = new TH1F("h_a_c_PS","ADC integral(GeV)",200,0,4);
+  TH1F *h_a_amp_PS = new TH1F("h_a_amp_PS","ADC amplitude(mV) with Pedestal",600,0,600);
+  TH1F *h_a_amp_p_PS = new TH1F("h_a_amp_p_PS","ADC amplitude(mV)",400,0,400);
 
   double temp[288];
   for(int i=0; i<288; i++){

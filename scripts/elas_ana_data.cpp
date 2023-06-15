@@ -145,7 +145,7 @@ int elas_ana_data (const char *configfilename,
   TH1F *h_W = util_pd::TH1FhW("h_W");
   TH1F *h_W_cut = util_pd::TH1FhW("h_W_cut");
   TH1F *h_W_acut = util_pd::TH1FhW("h_W_acut");
-  TH1D *h_dpel = new TH1D("h_dpel",";p/p_{elastic}(#theta)-1;",100,-0.3,0.3);
+  TH1F *h_dpel = new TH1F("h_dpel",";p/p_{elastic}(#theta)-1;",100,-0.3,0.3);
   
   TH1F *h_Q2 = util_pd::TH1FhQ2("h_Q2", conf);
   vector<double> hdx_lim; jmgr->GetVectorFromKey<double>("h_dxHCAL_lims", hdx_lim);
