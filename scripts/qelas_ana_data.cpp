@@ -94,8 +94,8 @@ int qelas_ana_data (const char *configfilename,
   setrootvar::setbranch(C, "bb.ps", bbpsclvar, bbpsclvar_mem);
  
   // hcal clus var
-  double eHCAL, xHCAL, yHCAL, rblkHCAL, cblkHCAL, idblkHCAL, atimeHCAL, tdcHCAL;
-  std::vector<std::string> hcalclvar = {"e","x","y","rowblk","colblk","idblk","atimeblk","tdctimeblk"};
+  double eHCAL, xHCAL, yHCAL, rblkHCAL, cblkHCAL, idblkHCAL, atimeHCAL, tdcHCAL[maxNtr];
+  std::vector<std::string> hcalclvar = {"e","x","y","rowblk","colblk","idblk","atimeblk","clus_blk.tdctime"};
   std::vector<void*> hcalclvar_mem = {&eHCAL,&xHCAL,&yHCAL,&rblkHCAL,&cblkHCAL,&idblkHCAL,&atimeHCAL,&tdcHCAL};
   setrootvar::setbranch(C, "sbs.hcal", hcalclvar, hcalclvar_mem);
 
@@ -148,7 +148,7 @@ int qelas_ana_data (const char *configfilename,
   TH1F *h_W = util_pd::TH1FhW("h_W");
   TH1F *h_W_cut = util_pd::TH1FhW("h_W_cut");
   TH1F *h_W_acut = util_pd::TH1FhW("h_W_acut");
-  TH1D *h_dpel = new TH1D("h_dpel",";p/p_{elastic}(#theta)-1;",100,-0.3,0.3);
+  TH1F *h_dpel = new TH1F("h_dpel",";p/p_{elastic}(#theta)-1;",100,-0.3,0.3);
   
   TH1F *h_Q2 = util_pd::TH1FhQ2("h_Q2", conf);
   vector<double> hdx_lim; jmgr->GetVectorFromKey<double>("h_dxHCAL_lims", hdx_lim);
@@ -247,7 +247,7 @@ int qelas_ana_data (const char *configfilename,
   vector<double> dy_n; jmgr->GetVectorFromKey<double>("dy_n", dy_n);
   double Nsigma_cut_dx_n = jmgr->GetValueFromKey<double>("Nsigma_cut_dx_n");
   double Nsigma_cut_dy_n = jmgr->GetValueFromKey<double>("Nsigma_cut_dy_n");
-  vector<double> hcal_active_area = cut::hcal_active_area_data(); // Exc. 1 blk from all 4 sides
+  vector<double> hcal_active_area = cut::hcal_active_area_data(1,1); // Exc. 1 blk from all 4 sides
   vector<double> hcal_safety_margin = cut::hcal_safety_margin(dx_p[1], dx_n[1], dy_p[1], hcal_active_area);
 
   // reading W cut limits
@@ -278,7 +278,7 @@ int qelas_ana_data (const char *configfilename,
       while (rnumS!=rnum) {
 	if (index==neventsS) {
 	  std::cout << Form("Run %u | GevNum %u | GevNumS %llu",rnum,gevnum,gevnumS) << std::endl;
-	  throw std::runtime_error("S tree index out of bounds! INVESTIGATE!");
+	  throw std::runtime_error("S tree index out of bounds! *INVESTIGATE!");
 	}
 	S->GetEntry(index); index++;
 	tsegnumS = segnumS; tgevnumS = gevnumS;
@@ -288,12 +288,12 @@ int qelas_ana_data (const char *configfilename,
       while (gevnum>gevnumS && rnumS==rnum) {
 	if (index==neventsS) {
 	  std::cout << Form("Run %u | GevNum %u | GevNumS %llu",rnum,gevnum,gevnumS) << std::endl;
-	  throw std::runtime_error("S tree index out of bounds! INVESTIGATE!");
+	  throw std::runtime_error("S tree index out of bounds! **INVESTIGATE!");
 	}
 	tsegnumS = segnumS; tgevnumS = gevnumS;
 	tdnewcnt = dnewcnt; tdnewcurr = dnewcurr;
 	S->GetEntry(index); index++;
-	if (verbose==-2) std::cout << tgevnumS << " " << gevnum << " " << segnumS << std::endl;
+	if (verbose==-2) std::cout << rnum << " " << tgevnumS << " " << gevnum << " " << segnumS << "\n";
       }
     }
 
@@ -439,7 +439,7 @@ int qelas_ana_data (const char *configfilename,
     T_cblkHCAL = cblkHCAL;
     T_idblkHCAL = idblkHCAL;
     T_atimeHCAL = atimeHCAL;
-    T_tdcHCAL = tdcHCAL;
+    T_tdcHCAL = tdcHCAL[0];
 
     T_ncltmeanHODO = ncltmeanHODO;
     T_cltmeanHODO = cltmeanHODO[0];
@@ -530,13 +530,13 @@ int qelas_ana_data (const char *configfilename,
 
   c1->cd(3);
   h2_xyHCAL_p->Draw("colz");
-  util_pd::DrawArea(hcal_active_area);
-  util_pd::DrawArea(hcal_safety_margin,4);
+  util_pd::DrawArea(hcal_active_area,2,4,9);
+  util_pd::DrawArea(hcal_safety_margin,4,4,9);
 
   c1->cd(4); 
   h2_xyHCAL_n->Draw("colz");
-  util_pd::DrawArea(hcal_active_area);
-  util_pd::DrawArea(hcal_safety_margin,4);
+  util_pd::DrawArea(hcal_active_area,2,4,9);
+  util_pd::DrawArea(hcal_safety_margin,4,4,9);
 
   // let's record the summary
   TCanvas *c2 = new TCanvas("c2","Summary");
