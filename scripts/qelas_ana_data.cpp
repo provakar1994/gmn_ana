@@ -23,6 +23,7 @@
 static const std::string target = "LD2";
 
 int qelas_ana_data (const char *configfilename,
+		    int pass, //replay pass
                     int verbose=-1,  //<-1=>Debug, =-1=>Test
                     int verbosefn=0, //>0=>Debug
 		    /* verbose==verbosefn==0 => Production*/
@@ -35,24 +36,24 @@ int qelas_ana_data (const char *configfilename,
 
   // reading input config file ---------------------------------------
   JSONManager *jmgr = new JSONManager(configfilename);
+  std::string key = "pass" + std::to_string(pass);
 
   // seting up the desired SBS configuration
-  int conf = jmgr->GetValueFromKey<int>("SBS_config");
-  int sbsmag = jmgr->GetValueFromKey<int>("SBS_magnet_percent"); 
-  int pass = jmgr->GetValueFromKey<int>("replay_pass"); 
+  int conf = jmgr->GetValueFromSubKey<int>(key,"SBS_config");
+  int sbsmag = jmgr->GetValueFromSubKey<int>(key,"SBS_magnet_percent"); 
   SBSconfig sbsconf(conf, sbsmag);
   cout << sbsconf;
 
   // reading run info and parsing ROOT trees
-  std::string runsheet_dir = jmgr->GetValueFromKey_str("runsheet_dir");
-  int nruns = jmgr->GetValueFromKey<int>("Nruns_to_ana"); // # of runs to analyze
+  std::string runsheet_dir = jmgr->GetValueFromSubKey_str(key,"runsheet_dir");
+  int nruns = jmgr->GetValueFromSubKey<int>(key,"Nruns_to_ana"); // # of runs to analyze
   vector<CodaRun> crun; util_pd::ReadRunList(runsheet_dir,nruns,conf,target,pass,sbsmag,verbosefn,crun);
-  std::string rootfile_dir = jmgr->GetValueFromKey_str("rootfile_dir");
+  std::string rootfile_dir = jmgr->GetValueFromSubKey_str(key,"rootfile_dir");
   TChain *C = new TChain("T"); util_pd::LoadROOTTree(rootfile_dir,crun,1,verbosefn,C); 
  
   // reading scaler tree
   TChain *S = new TChain("Tout"); 
-  int get_scaler_info = jmgr->GetValueFromKey<int>("get_scaler_info");
+  int get_scaler_info = jmgr->GetValueFromSubKey<int>(key,"get_scaler_info");
   if (get_scaler_info) {
     S->Add(Form("epics/epout/scalerdata_prun_SBS%d_%s.root",conf,target.c_str()));
     if (S->GetEntries()==0) throw std::runtime_error("No scaler event found!");
@@ -62,18 +63,18 @@ int qelas_ana_data (const char *configfilename,
   // model 0 => uses reconstructed p as independent variable
   // model 1 => uses reconstructed angles as independent variable
   // model 2 => uses 4-vector calculation
-  int model = jmgr->GetValueFromKey<int>("model");
+  int model = jmgr->GetValueFromSubKey<int>(key,"model");
   if (model == 0) std::cout << "Using model 0 [recon. p as indep. var.] for analysis.." << std::endl;
   else if (model == 1) std::cout << "Using model 1 [recon. angle as indep. var.] for analysis.." << std::endl;
   else if (model == 2) std::cout << "Using model 2 [4-vector calculation] for analysis.." << std::endl;
   else { std::cerr << "Enter a valid model number! **!**" << std::endl; throw; }
 
   // choosing nucleon type 
-  std::string Ntype = jmgr->GetValueFromKey_str("Ntype");
+  std::string Ntype = jmgr->GetValueFromSubKey_str(key,"Ntype");
 
   // setting up global cuts
-  std::string gcut = jmgr->GetValueFromKey_str("global_cut"); TCut globalcut = gcut.c_str();
-  TTreeFormula *GlobalCut = new TTreeFormula("GlobalCut", globalcut, C);
+  std::string gcut = jmgr->GetValueFromSubKey_str(key,"global_cut"); TCut globalcut = gcut.c_str();
+  TTreeFormula *GlobalCut = new TTreeFormula("GlobalCut",globalcut,C);
 
   // setting up ROOT tree branch addresses ---------------------------------------
   int maxNtr=1000;
@@ -151,11 +152,11 @@ int qelas_ana_data (const char *configfilename,
   TH1F *h_dpel = new TH1F("h_dpel",";p/p_{elastic}(#theta)-1;",100,-0.3,0.3);
   
   TH1F *h_Q2 = util_pd::TH1FhQ2("h_Q2", conf);
-  vector<double> hdx_lim; jmgr->GetVectorFromKey<double>("h_dxHCAL_lims", hdx_lim);
-  vector<double> hdy_lim; jmgr->GetVectorFromKey<double>("h_dyHCAL_lims", hdy_lim);
+  vector<double> hdx_lim; jmgr->GetVectorFromSubKey<double>(key,"h_dxHCAL_lims",hdx_lim);
+  vector<double> hdy_lim; jmgr->GetVectorFromSubKey<double>(key,"h_dyHCAL_lims",hdy_lim);
   TH1F *h_dxHCAL = new TH1F("h_dxHCAL","W & fiducial cuts;x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
   TH1F *h_dyHCAL = new TH1F("h_dyHCAL","W & fiducial cuts;y_{HCAL} - y_{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
-  TH1F *h_coin_time = new TH1F("h_coin_time", "Coincidence time (ns)", 200, 380, 660);
+  TH1F *h_coin_time = new TH1F("h_coin_time","Coincidence time (ns)",200,380,660);
 
   TH2F *h2_rcHCAL = util_pd::TH2FHCALface_rc("h2_rcHCAL");
   TH2F *h2_dxdyHCAL = util_pd::TH2FdxdyHCAL("h2_dxdyHCAL");
@@ -238,25 +239,25 @@ int qelas_ana_data (const char *configfilename,
   // Do the energy loss calculation here ...........
 
   // reading HCAL cut definitions
-  vector<double> dx_p; jmgr->GetVectorFromKey<double>("dx_p", dx_p);
+  vector<double> dx_p; jmgr->GetVectorFromSubKey<double>(key,"dx_p",dx_p);
   double sbs_kick = abs(dx_p[0]);
-  vector<double> dy_p; jmgr->GetVectorFromKey<double>("dy_p", dy_p);
-  double Nsigma_cut_dx_p = jmgr->GetValueFromKey<double>("Nsigma_cut_dx_p");
-  double Nsigma_cut_dy_p = jmgr->GetValueFromKey<double>("Nsigma_cut_dy_p");
-  vector<double> dx_n; jmgr->GetVectorFromKey<double>("dx_n", dx_n);
-  vector<double> dy_n; jmgr->GetVectorFromKey<double>("dy_n", dy_n);
-  double Nsigma_cut_dx_n = jmgr->GetValueFromKey<double>("Nsigma_cut_dx_n");
-  double Nsigma_cut_dy_n = jmgr->GetValueFromKey<double>("Nsigma_cut_dy_n");
+  vector<double> dy_p; jmgr->GetVectorFromSubKey<double>(key,"dy_p",dy_p);
+  double Nsigma_cut_dx_p = jmgr->GetValueFromSubKey<double>(key,"Nsigma_cut_dx_p");
+  double Nsigma_cut_dy_p = jmgr->GetValueFromSubKey<double>(key,"Nsigma_cut_dy_p");
+  vector<double> dx_n; jmgr->GetVectorFromSubKey<double>(key,"dx_n",dx_n);
+  vector<double> dy_n; jmgr->GetVectorFromSubKey<double>(key,"dy_n",dy_n);
+  double Nsigma_cut_dx_n = jmgr->GetValueFromSubKey<double>(key,"Nsigma_cut_dx_n");
+  double Nsigma_cut_dy_n = jmgr->GetValueFromSubKey<double>(key,"Nsigma_cut_dy_n");
   vector<double> hcal_active_area = cut::hcal_active_area_data(1,1); // Exc. 1 blk from all 4 sides
   vector<double> hcal_safety_margin = cut::hcal_safety_margin(dx_p[1], dx_n[1], dy_p[1], hcal_active_area);
 
   // reading W cut limits
-  double Wmin = jmgr->GetValueFromKey<double>("Wmin");
-  double Wmax = jmgr->GetValueFromKey<double>("Wmax");
+  double Wmin = jmgr->GetValueFromSubKey<double>(key,"Wmin");
+  double Wmax = jmgr->GetValueFromSubKey<double>(key,"Wmax");
 
   // costruct axes of HCAL CoS in Hall CoS
-  double hcal_voffset = jmgr->GetValueFromKey<double>("hcal_voffset");
-  double hcal_hoffset = jmgr->GetValueFromKey<double>("hcal_hoffset");
+  double hcal_voffset = jmgr->GetValueFromSubKey<double>(key,"hcal_voffset");
+  double hcal_hoffset = jmgr->GetValueFromSubKey<double>(key,"hcal_hoffset");
   vector<TVector3> HCAL_axes; kine::SetHCALaxes(sbsconf.GetSBStheta_rad(), HCAL_axes);
   TVector3 HCAL_origin = sbsconf.GetHCALdist()*HCAL_axes[2] + hcal_voffset*HCAL_axes[0] + hcal_hoffset*HCAL_axes[1];
 
