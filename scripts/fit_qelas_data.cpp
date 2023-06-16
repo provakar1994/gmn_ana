@@ -42,7 +42,7 @@ int fit_qelas_data (const char *configfilename, std::string filebase="pdout/fit_
   int conf = jmgr->GetValueFromKey<int>("SBS_config");
   int sbsmag = jmgr->GetValueFromKey<int>("SBS_magnet_percent");
   SBSconfig sbsconf(conf, sbsmag);
-  sbsconf.Print();
+  std::cout << sbsconf;
 
   // creating the name of input file
   int model = jmgr->GetValueFromKey<int>("model");
@@ -111,7 +111,7 @@ int fit_qelas_data (const char *configfilename, std::string filebase="pdout/fit_
   vector<double> dy_n; jmgr->GetVectorFromKey<double>("dy_n", dy_n);
   double Nsigma_cut_dx_n = jmgr->GetValueFromKey<double>("Nsigma_cut_dx_n");
   double Nsigma_cut_dy_n = jmgr->GetValueFromKey<double>("Nsigma_cut_dy_n");
-  vector<double> hcal_active_area = cut::hcal_active_area_data(); // Exc. 1 blk from all 4 sides
+  vector<double> hcal_active_area = cut::hcal_active_area_data(1,1); // Exc. 1 blk from all 4 sides
   vector<double> hcal_safety_margin = cut::hcal_safety_margin(dx_p[1], dx_n[1], dy_p[1], hcal_active_area);
 
   // looping through the tree ---------------------------------------
@@ -321,26 +321,26 @@ int fit_qelas_data (const char *configfilename, std::string filebase="pdout/fit_
   celEnv->cd(1);
   h2_xyHCAL_p->SetTitle(Form("p | SBS-%d",sbsconf.GetSBSconf()));
   h2_xyHCAL_p->Draw("colz");
-  util_pd::DrawArea(hcal_active_area);
-  util_pd::DrawArea(hcal_safety_margin,4);
+  util_pd::DrawArea(hcal_active_area,2,4,9);
+  util_pd::DrawArea(hcal_safety_margin,4,4,9);
 
   celEnv->cd(2);
   h2_xyHCAL_n->SetTitle(Form("n | SBS-%d",sbsconf.GetSBSconf()));
   h2_xyHCAL_n->Draw("colz");
-  util_pd::DrawArea(hcal_active_area);
-  util_pd::DrawArea(hcal_safety_margin,4);
+  util_pd::DrawArea(hcal_active_area,2,4,9);
+  util_pd::DrawArea(hcal_safety_margin,4,4,9);
 
   celEnv->cd(3);
   h2_xyHCAL_p_nf->SetTitle(Form("p | SBS-%d (No Fiducial Cut)",sbsconf.GetSBSconf()));
   h2_xyHCAL_p_nf->Draw("colz");
-  util_pd::DrawArea(hcal_active_area);
-  util_pd::DrawArea(hcal_safety_margin,4);
+  util_pd::DrawArea(hcal_active_area,2,4,9);
+  util_pd::DrawArea(hcal_safety_margin,4,4,9);
 
   celEnv->cd(4);
   h2_xyHCAL_n_nf->SetTitle(Form("n | SBS-%d (No Fiducial Cut)",sbsconf.GetSBSconf()));
   h2_xyHCAL_n_nf->Draw("colz");
-  util_pd::DrawArea(hcal_active_area);
-  util_pd::DrawArea(hcal_safety_margin,4);
+  util_pd::DrawArea(hcal_active_area,2,4,9);
+  util_pd::DrawArea(hcal_safety_margin,4,4,9);
 
   // time to summarize the findings
   double nCount_ploss = (nCount_nf-nCount)*100.0 / nCount_nf;
