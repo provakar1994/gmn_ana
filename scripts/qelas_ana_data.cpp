@@ -258,8 +258,7 @@ int qelas_ana_data (const char *configfilename,
   vector<double> hcal_safety_margin = cut::hcal_safety_margin(dx_p_cut[1],dx_n_cut[1],dy_p_cut[1],hcal_active_area);
 
   // reading W cut limits
-  double Wmin = jmgr->GetValueFromSubKey<double>(key,"Wmin");
-  double Wmax = jmgr->GetValueFromSubKey<double>(key,"Wmax");
+  std::vector<double> W_cutR; jmgr->GetVectorFromSubKey<double>(key,"W_cutR",W_cutR);
 
   // costruct axes of HCAL CoS in Hall CoS
   double hcal_voffset = jmgr->GetValueFromSubKey<double>(key,"hcal_voffset");
@@ -487,7 +486,7 @@ int qelas_ana_data (const char *configfilename,
     pCut = pow((dx-dx_p_cut[0]) / (dx_p_cut[1]*dx_p_cut[2]), 2) + pow((dy-dy_p_cut[0]) / (dy_p_cut[1]*dy_p_cut[2]), 2) <= 1.;
     nCut = pow((dx-dx_n_cut[0]) / (dx_n_cut[1]*dx_n_cut[2]), 2) + pow((dy-dy_n_cut[0]) / (dy_n_cut[1]*dy_n_cut[2]), 2) <= 1.;
     // defining W cut
-    WCut = Wrecon >= Wmin && Wrecon <= Wmax;
+    WCut = Wrecon >= W_cutR[0] && Wrecon <= W_cutR[1];
 
     // W cut
     if (WCut) {
@@ -597,7 +596,7 @@ int qelas_ana_data (const char *configfilename,
   if (!tmpstr.empty()) pt->AddText(Form(" %s",tmpstr.c_str()));
   pt->AddText(Form(" # events passed global cuts: %ld",ngoodevs));
   pt->AddText(" Elastic cuts: ");
-  pt->AddText(Form(" Inbuilt W cut: %.2f #leq W #leq %.2f GeV/c",Wmin,Wmax));
+  pt->AddText(Form(" Inbuilt W cut: %.2f #leq W #leq %.2f GeV/c",W_cutR[0],W_cutR[1]));
   pt->AddText(Form(" Inbuilt p cut (#Deltax): Mean = %.4f, %.1f#sigma = %.4f",dx_p_cut[0],dx_p_cut[2],dx_p_cut[1]));
   pt->AddText(Form(" Inbuilt p cut (#Deltay): Mean = %.4f, %.1f#sigma = %.4f",dy_p_cut[0],dy_p_cut[2],dy_p_cut[1]));
   pt->AddText(Form(" Inbuilt n cut (#Deltax): Mean = %.4f, %.1f#sigma = %.4f",dx_n_cut[0],dx_n_cut[2],dx_n_cut[1]));
@@ -688,5 +687,7 @@ int qelas_ana_data (const char *configfilename,
       - h_dyHCAL_fitR[1] : xmax for 1st fit (crude). Try to avoid any secondary peak.
       - h_dyHCAL_fitR[2] : # sigma below the peak for 2nd fit (fine)
       - h_dyHCAL_fitR[3] : # sigma above the peak for 2nd fit (fine)
-  17. Wmin(max) : W cut range.
+  17. W_cutR : W cut range.
+      - W_cutR[0] : lower limit
+      - W_cutR[1] : upper limit
 */

@@ -10,6 +10,7 @@
     "runsheet_dir"       : "../DB",
     "rootfile_dir"       : "/lustre19/expphy/volatile/halla/sbs/pdbforce/sbs4fana/30p/data/ld2",
     "global_cut"         : "fEvtHdr.fTrigBits==1&&bb.tr.n>0&&bb.gem.track.nhits>2&&abs(bb.tr.vz[0])<0.08&&abs(bb.tr.r_x-0.9*bb.tr.r_th)<0.4&&bb.tr.p[0]>1.6&&bb.ps.e>0.2",
+    "W_cutR"             : [0.7,1.2],
     "hcal_voffset"       : 0.0,
     "hcal_hoffset"       : 0.0,
     "dx_p_cut"           : [-0.752521,0.204515,1],
@@ -21,8 +22,6 @@
     "h_dxHCAL_p_fitR"    : [-2,-0.33,0.8,0.6],
     "h_dxHCAL_n_fitR"    : [-0.33,0.5,0.4,0.8],
     "h_dyHCAL_fitR"      : [-1,1,0.6,0.8],
-    "Wmin"               : 0.7,
-    "Wmax"               : 1.2,
     "README"             : "configfile for analysis using pass2 data. Created: 06/15/23"
 },
 "pass0":
@@ -36,6 +35,7 @@
     "runsheet_dir"       : "../DB",
     "rootfile_dir"       : "/w/halla-scshelf2102/sbs/sbs-gmn/pass0/SBS4/LD2/rootfiles",
     "global_cut"         : "bb.tr.n>0&&bb.gem.track.nhits>2&&abs(bb.tr.vz[0])<0.08&&bb.tr.p[0]>1.6&&bb.ps.e>0.15",
+    "W_cutR"             : [0.7,1.2],
     "hcal_voffset"       : -0.2897,
     "hcal_hoffset"       : 0.0723,
     "dx_p_cut"           : [-0.644,0.19,1],
@@ -47,8 +47,6 @@
     "h_dxHCAL_p_fitR"    : [-2,-0.33,0.8,0.8],
     "h_dxHCAL_n_fitR"    : [-0.33,0.5,0.8,0.8],
     "h_dyHCAL_fitR"      : [-1,1,0.8,0.8],
-    "Wmin"               : 0.7,
-    "Wmax"               : 1.2,
     "README"             : "configfile for analysis using pass0 data."
 }
 }
