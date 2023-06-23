@@ -314,7 +314,7 @@ int qelas_ana_data (const char *configfilename,
       if (nevent == 1 || rnum != runnum) {
 	runnum = rnum; nseg=1;
 	/* In search of a faster algorithm */
-	auto it = std::find_if(crun.begin(), crun.end(), [=](CodaRun const& cr) {return cr.runnum == runnum;});
+	auto it = std::find_if(crun.begin(), crun.end(), [&](CodaRun const& cr) {return cr.runnum == runnum;});
 	if (it != crun.end()) {
 	  ebeam = it->ebeam; 
 	  ebeam_std = it->ebeam_std;
@@ -468,7 +468,7 @@ int qelas_ana_data (const char *configfilename,
     TVector3 n_dir = (HCAL_pos - vertex);
     T_thetapq_n = acos(n_dir.Unit().Dot(pNhat));
     // p 
-    double BdL = (sbsmag / 100.) * expconst::sbsmaxfield * expconst::sbsdipolegap;
+    double BdL = (sbsmag / 100.) * 2.; //expconst::sbsmaxfield * expconst::sbsdipolegap;
     double proton_thetabend = 0.3 * BdL / PNprime.Vect().Mag();  // p*theta = 0.3*BdL
     double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist() - (sbsconf.GetSBSdist() + expconst::sbsdipolegap/2.0));
     TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);

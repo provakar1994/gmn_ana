@@ -7,10 +7,10 @@
     "simu_file_prefix"     : "hoff75cm_385sf",
     "generator"            : "simc",
     "coinT_cut"            : "abs((atimeHCAL-atimeSH)-51.)<6.",
-    "cuts_for_signal_data" : "WCut&&fiduCut&&abs(dy)<0.3",
-    "cuts_for_signal_simu" : "WCut&&fiduCut&&abs(dy)<0.3",
-    "cuts_for_bg"          : "WCut&&fiduCut&&dy>0.6",
-    "Order_of_poly_bg"     : 6,
-    "h_dx"                 : [120, -3.5, 2.5],
-    "dx_fit_range"         : [-3.5, 2.5]
+    "cuts_for_signal_data" : "WCut&&fiduCut",
+    "cuts_for_signal_simu" : "WCut&&fiduCut",
+    "cuts_for_bg"          : "!WCut",
+    "Order_of_poly_bg"     : 4,
+    "h_dy"                 : [150, -1.5, 1.5],
+    "dy_fit_range"         : [-1.5, 1.5]
 }

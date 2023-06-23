@@ -41,6 +41,37 @@ namespace fit {
     return f1;    
   }
 
+  TF1* fit_1hs_1pbg_THI (std::vector<double> const & fit_range,
+			 TH1F* ht,             // total histo to fit 
+			 TH1F* hs,             // 1st signal histo for fit
+			 int Opoly,            // Order of poly to fit bg
+			 std::vector<TH1F*> &ho)    // Output: ht,hs,hbg
+  /* TH Interpolation fit using 1 signal histo & 1 poly bg (1+Opoly+1 pars) */
+  {
+    const int npars = 1+Opoly+1;
+    std::vector<double> setpars{1}; for (int i=1;i<npars;i++) setpars.push_back(0);
+
+    TH1F *ht_cp = (TH1F*)ht->Clone(); 
+    TH1F *hs_cp1 = (TH1F*)hs->Clone(); 
+ 
+    FitFn *ffn = new FitFn(hs_cp1,Opoly);
+    TF1 *f1 = new TF1("f1",ffn,&FitFn::ffn_1hs_1pbg,fit_range[0],fit_range[1],npars);
+    f1->SetNpx(2000);
+    f1->SetParameters(&setpars[0]);
+    f1->SetParName(0,"Norm");
+    set_poly_par_names(f1,1,Opoly);
+
+    ht_cp->Fit(f1);
+    std::vector<double> pars;
+    for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
+
+    TH1F *hs_cp2 = (TH1F*)hs_cp1->Clone(); hs_cp2->Scale(pars[0]);
+    TH1F *hbg = (TH1F*)ht_cp->Clone(); hbg->Add(ht_cp,hs_cp2,1,-1); 
+    ho = {ht_cp,hs_cp2,hbg};
+    
+    return f1;
+  }
+
   TF1* fit_2hs_nbg_THI (std::vector<double> const & fit_range,
 			TH1F* ht,             // total histo to fit 
 			TH1F* hs1,            // 1st signal histo for fit
