@@ -111,20 +111,20 @@ int fit_dy (const char *configfilename, std::string filebase="pdout/test_fit_dy"
   // hsp0_c->Draw("same");
   // hsn0_c->Draw("same");
   ho[1]->Draw("same"); customize_hs(ho[1]); customize_dy(ho[1]);
-  // legend
-  TLegend *legend=new TLegend(0.10,0.77,0.38,0.9);
-  legend->SetTextFont(42);
-  //legend->SetTextSize(0.02);
-  legend->AddEntry(ho[0],"Data","l");
-  legend->AddEntry(f1,"Global Fit","l");
-  legend->AddEntry(ho[1],"Signal","lep");
-  // legend->AddEntry(psignal,"p Signal Fit","l");
-  // legend->AddEntry(nsignal,"n Signal Fit","l");
-  // legend->AddEntry(bg,"Background fit","l");
-  legend->Draw();
+  // l0
+  TLegend *l0=new TLegend(0.10,0.77,0.38,0.9);
+  l0->SetTextFont(42);
+  //l0->SetTextSize(0.02);
+  l0->AddEntry(ho[0],"Data","l");
+  l0->AddEntry(f1,"Global Fit","l");
+  l0->AddEntry(ho[1],"Signal","lep");
+  // l0->AddEntry(psignal,"p Signal Fit","l");
+  // l0->AddEntry(nsignal,"n Signal Fit","l");
+  // l0->AddEntry(bg,"Background fit","l");
+  l0->Draw();
 
-  // TCanvas *c3 = util_pd::TC("c3",1,1);
-  // c3->cd(); gStyle->SetOptFit(1);
+  // TCanvas *c1 = util_pd::TC("c1",1,1);
+  // c1->cd(); gStyle->SetOptFit(1);
   // vector<TH1F*> ho1;
   // TF1 *f2 = fit::fit_2hs_1hbg_THI(dy_fit_range,
   // 				  h_dyHCAL_data,h_dyHCAL_simu_p,h_dyHCAL_simu_n,h_dyHCAL_bg,
@@ -134,20 +134,20 @@ int fit_dy (const char *configfilename, std::string filebase="pdout/test_fit_dy"
   // // hsp0_c->Draw("same");
   // // hsn0_c->Draw("same");
   // ho1[2]->Draw("same"); customize_hbg(ho1[2]); customize_dy(ho1[2]);
-  // // l3
-  // TLegend *l3=new TLegend(0.10,0.77,0.38,0.9);
-  // l3->SetTextFont(42);
-  // //l3->SetTextSize(0.02);
-  // l3->AddEntry(ho1[0],"Data","l");
-  // l3->AddEntry(f2,"Global Fit (MC + Data bg.)","l");
-  // l3->AddEntry(ho1[1],"Signal (from MC)","lep");
-  // // l3->AddEntry(psignal,"p Signal Fit","l");
-  // // l3->AddEntry(nsignal,"n Signal Fit","l");
-  // l3->AddEntry(ho1[2],"Bg. (from Data)","lep");
-  // l3->Draw();
+  // // l2
+  // TLegend *l2=new TLegend(0.10,0.77,0.38,0.9);
+  // l2->SetTextFont(42);
+  // //l2->SetTextSize(0.02);
+  // l2->AddEntry(ho1[0],"Data","l");
+  // l2->AddEntry(f2,"Global Fit (MC + Data bg.)","l");
+  // l2->AddEntry(ho1[1],"Signal (from MC)","lep");
+  // // l2->AddEntry(psignal,"p Signal Fit","l");
+  // // l2->AddEntry(nsignal,"n Signal Fit","l");
+  // l2->AddEntry(ho1[2],"Bg. (from Data)","lep");
+  // l2->Draw();
 
-  TCanvas *c4 = util_pd::TC("c4",1,1);
-  c4->cd(); gStyle->SetOptFit(1);
+  TCanvas *c2 = util_pd::TC("c2",1,1);
+  c2->cd(); gStyle->SetOptFit(1);
   vector<TH1F*> ho2;
   TF1 *f3 = fit::fit_1hs_1pbg_THI(dy_fit_range,
   				  h_dyHCAL_data_CT,h_dyHCAL_simu,Opoly,
@@ -157,17 +157,17 @@ int fit_dy (const char *configfilename, std::string filebase="pdout/test_fit_dy"
   // hsp0_c->Draw("same");
   // hsn0_c->Draw("same");
   ho2[2]->Draw("same"); customize_hbg(ho2[2]);
-  // l4
-  TLegend *l4=new TLegend(0.10,0.77,0.39,0.9);
-  l4->SetTextFont(42);
-  //l4->SetTextSize(0.02);
-  l4->AddEntry(ho2[0],"Data","l");
-  l4->AddEntry(f3,"Global Fit (MC + poly. bg.)","l");
-  l4->AddEntry(ho2[1],"Signal (from MC)","lep");
-  // l4->AddEntry(psignal,"p Signal Fit","l");
-  // l4->AddEntry(nsignal,"n Signal Fit","l");
-  l4->AddEntry(ho2[2],Form("Bg. (%d^{th} order poly.)",Opoly),"lep");
-  l4->Draw();
+  // l2
+  TLegend *l2=new TLegend(0.10,0.77,0.39,0.9);
+  l2->SetTextFont(42);
+  //l2->SetTextSize(0.02);
+  l2->AddEntry(ho2[0],"Data","l");
+  l2->AddEntry(f3,"Global Fit (MC + poly. bg.)","l");
+  l2->AddEntry(ho2[1],"Signal (from MC)","lep");
+  // l2->AddEntry(psignal,"p Signal Fit","l");
+  // l2->AddEntry(nsignal,"n Signal Fit","l");
+  l2->AddEntry(ho2[2],Form("Bg. (%d^{th} order poly.)",Opoly),"lep");
+  l2->Draw();
 
   return 0;
 }

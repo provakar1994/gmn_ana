@@ -31,7 +31,7 @@ namespace fit {
     f1->SetParameters(&setpars[0]);
     f1->SetParName(0,"Norm");
 
-    ht_cp->Fit(f1); 
+    ht_cp->Fit(f1,"R"); 
     std::vector<double> pars;
     for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
 
@@ -61,7 +61,7 @@ namespace fit {
     f1->SetParName(0,"Norm");
     set_poly_par_names(f1,1,Opoly);
 
-    ht_cp->Fit(f1);
+    ht_cp->Fit(f1,"R");
     std::vector<double> pars;
     for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
 
@@ -93,7 +93,7 @@ namespace fit {
     f1->SetParName(0,"Norm");
     f1->SetParName(1,"R");
 
-    ht_cp->Fit(f1); 
+    ht_cp->Fit(f1,"R"); 
     std::vector<double> pars;
     for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
 
@@ -129,7 +129,7 @@ namespace fit {
     f1->SetParName(1,"R");
     f1->SetParName(2,"B");
 
-    ht_cp->Fit(f1);
+    ht_cp->Fit(f1,"R");
     std::vector<double> pars;
     for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
 
@@ -162,7 +162,7 @@ namespace fit {
     f1->SetParName(0,"Norm");
     set_poly_par_names(f1,1,Opoly);
 
-    ht_cp->Fit(f1); 
+    ht_cp->Fit(f1,"R"); 
     std::vector<double> pars;
     for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
 
@@ -196,7 +196,7 @@ namespace fit {
     f1->SetParName(1,"R");
     set_poly_par_names(f1,2,Opoly);
 
-    ht_cp->Fit(f1);
+    ht_cp->Fit(f1,"R");
     std::vector<double> pars;
     for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
 
