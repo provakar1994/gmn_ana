@@ -179,6 +179,16 @@ int qelas_ana_data (const char *configfilename,
   bool WCut;            Tout->Branch("WCut", &WCut, "WCut/O");
   bool pCut;            Tout->Branch("pCut", &pCut, "pCut/O");
   bool nCut;            Tout->Branch("nCut", &nCut, "nCut/O");
+  // -- a few variations
+  bool pCut_1p5sig;     Tout->Branch("pCut_1p5sig", &pCut_1p5sig, "pCut_1p5sig/O");
+  bool nCut_1p5sig;     Tout->Branch("nCut_1p5sig", &nCut_1p5sig, "nCut_1p5sig/O");
+  bool pCut_2sig;       Tout->Branch("pCut_2sig", &pCut_2sig, "pCut_2sig/O");
+  bool nCut_2sig;       Tout->Branch("nCut_2sig", &nCut_2sig, "nCut_2sig/O");
+  bool pCut_2p5sig;     Tout->Branch("pCut_2p5sig", &pCut_2p5sig, "pCut_2p5sig/O");
+  bool nCut_2p5sig;     Tout->Branch("nCut_2p5sig", &nCut_2p5sig, "nCut_2p5sig/O");
+  bool pCut_3sig;       Tout->Branch("pCut_3sig", &pCut_3sig, "pCut_3sig/O");
+  bool nCut_3sig;       Tout->Branch("nCut_3sig", &nCut_3sig, "nCut_3sig/O");
+  // --
   bool fiduCut;         Tout->Branch("fiduCut", &fiduCut, "fiduCut/O");
   //run info
   UInt_t T_rnum;        Tout->Branch("rnum", &T_rnum, "rnum/i");
@@ -470,7 +480,7 @@ int qelas_ana_data (const char *configfilename,
     // p 
     double BdL = (sbsmag / 100.) * 2.; //expconst::sbsmaxfield * expconst::sbsdipolegap;
     double proton_thetabend = 0.3 * BdL / PNprime.Vect().Mag();  // p*theta = 0.3*BdL
-    double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist() - (sbsconf.GetSBSdist() + expconst::sbsdipolegap/2.0));
+    double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist()-(sbsconf.GetSBSdist()+expconst::sbsdipolegap/2.0));
     TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);
     T_thetapq_p = acos(p_dir.Unit().Dot(pNhat));
 
@@ -483,8 +493,18 @@ int qelas_ana_data (const char *configfilename,
     bool FR_cut = cut::inHCAL_fiducial(xyHCAL_exp[0], xyHCAL_exp[1], sbs_kick, hcal_safety_margin);
     fiduCut = AR_cut && FR_cut;
     // defining HCAL cuts
-    pCut = pow((dx-dx_p_cut[0]) / (dx_p_cut[1]*dx_p_cut[2]), 2) + pow((dy-dy_p_cut[0]) / (dy_p_cut[1]*dy_p_cut[2]), 2) <= 1.;
-    nCut = pow((dx-dx_n_cut[0]) / (dx_n_cut[1]*dx_n_cut[2]), 2) + pow((dy-dy_n_cut[0]) / (dy_n_cut[1]*dy_n_cut[2]), 2) <= 1.;
+    pCut = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]),2) <= 1.;
+    nCut = pow((dx-dx_n_cut[0])/(dx_n_cut[1]*dx_n_cut[2]),2) + pow((dy-dy_n_cut[0])/(dy_n_cut[1]*dy_n_cut[2]),2) <= 1.;
+    // a few variations
+    pCut_1p5sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]),2) <= 1.5;
+    nCut_1p5sig = pow((dx-dx_n_cut[0])/(dx_n_cut[1]*dx_n_cut[2]),2) + pow((dy-dy_n_cut[0])/(dy_n_cut[1]*dy_n_cut[2]),2) <= 1.5;
+    pCut_2sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]),2) <= 2.;
+    nCut_2sig = pow((dx-dx_n_cut[0])/(dx_n_cut[1]*dx_n_cut[2]),2) + pow((dy-dy_n_cut[0])/(dy_n_cut[1]*dy_n_cut[2]),2) <= 2.;
+    pCut_2p5sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]),2) <= 2.5;
+    nCut_2p5sig = pow((dx-dx_n_cut[0])/(dx_n_cut[1]*dx_n_cut[2]),2) + pow((dy-dy_n_cut[0])/(dy_n_cut[1]*dy_n_cut[2]),2) <= 2.5;
+    pCut_3sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]),2) <= 3.;
+    nCut_3sig = pow((dx-dx_n_cut[0])/(dx_n_cut[1]*dx_n_cut[2]),2) + pow((dy-dy_n_cut[0])/(dy_n_cut[1]*dy_n_cut[2]),2) <= 3.;
+
     // defining W cut
     WCut = Wrecon >= W_cutR[0] && Wrecon <= W_cutR[1];
 
