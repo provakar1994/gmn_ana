@@ -136,12 +136,12 @@ int qelas_ana_simu (const char *configfilename,
   TH1F *h_Q2 = util_pd::TH1FhQ2("h_Q2", conf);
   std::vector<double> hdx_lim; jmgr->GetVectorFromKey<double>("h_dxHCAL_lims", hdx_lim);
   std::vector<double> hdy_lim; jmgr->GetVectorFromKey<double>("h_dyHCAL_lims", hdy_lim);
-  TH1F *h_dxHCAL = new TH1F("h_dxHCAL","; x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
-  TH1F *h_dxHCAL_nfc = new TH1F("h_dxHCAL_nfc","; x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
-  TH1F *h_dyHCAL = new TH1F("h_dyHCAL","; y_{HCAL} - y_{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
-  TH1F *h_dyHCAL_nfc = new TH1F("h_dyHCAL_nfc","; y_{HCAL} - y_{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
-  TH1F *h_dxHCAL_n = new TH1F("h_dxHCAL_n","mc_fnucl = n; x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
-  TH1F *h_dxHCAL_p = new TH1F("h_dxHCAL_p","mc_fnucl = p; x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
+  TH1F *h_dxHCAL = new TH1F("h_dxHCAL","W & fiducial cuts;x_{HCAL}^{obs} - x_{HCAL}^{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
+  TH1F *h_dxHCAL_nfc = new TH1F("h_dxHCAL_nfc","W cut;x_{HCAL}^{obs} - x_{HCAL}^{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
+  TH1F *h_dyHCAL = new TH1F("h_dyHCAL","W & fiducial cuts;y_{HCAL}^{obs} - y_{HCAL}^{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
+  TH1F *h_dyHCAL_nfc = new TH1F("h_dyHCAL_nfc","W cut;y_{HCAL}^{obs} - y_{HCAL}^{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
+  TH1F *h_dxHCAL_n = new TH1F("h_dxHCAL_n","mc_fnucl = n;x_{HCAL}^{obs} - x_{HCAL}^{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
+  TH1F *h_dxHCAL_p = new TH1F("h_dxHCAL_p","mc_fnucl = p;x_{HCAL}^{obs} - x_{HCAL}^{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
 
   TH2F *h2_rcHCAL = util_pd::TH2FHCALface_rc("h2_rcHCAL");
   TH2F *h2_dxdyHCAL = util_pd::TH2FdxdyHCAL("h2_dxdyHCAL");
@@ -604,47 +604,47 @@ int qelas_ana_simu (const char *configfilename,
   ////////////////////////////////////////////////////////
   // Brief description of configuration file parameters //
   ////////////////////////////////////////////////////////
-  1. Ntype : Struck nucleon type. (Valid options: n, p, np)
+  ** Ntype : Struck nucleon type. (Valid options: n, p, np)
      - n(p) => neutrons(protons) 
      - np => Avg. of n and p masses. Use for LD2 data since the struck nucleon is not known apriori.
-  2. SBS_config : SBS configuration. (Valid options: 4,7,11,14,8,9)
-  3. SBS_magnet_percent : SBS magnet field current as a percentage of 2100A
-  4. model : Model of analysis. (Valid options: 0, 1, 2)
+  ** SBS_config : SBS configuration. (Valid options: 4,7,11,14,8,9)
+  ** SBS_magnet_percent : SBS magnet field current as a percentage of 2100A
+  ** model : Model of analysis. (Valid options: 0, 1, 2)
      - 0 => uses reconstructed p as independent variable
      - 1 => uses reconstructed angles as independent variable
      - 2 => uses 4-vector calculation
-  5. generator : MC enevt generator (Valid options: g4sbs, simc)
-  6. prefix_to_filebase : <prefix>_sbs<sbsconfig>_sbs<sbsmagfield>p_<generator>_<process>.root
-  7. Njobs_to_ana : # MC jobs to analyze
-  8. rootfile_dir : Directory name w/ path containing the MC ROOT files to analyze
-  9. global_cut : set of global cuts to apply at the start of event processing
-  10. SBS_field : 
-  11. hcal_v(h)offset :
-  12. dx_p(n)_cut : deltax p(n) peak cut definitions. Needed to constitute p(n) spot cuts. 
-      - dx_p(n)_cut[0] => p(n) peak position, 
-      - dx_p(n)_cut[1] => p(n) peak RMS, 
-      - dx_p(n)_cut[2] => # sigma to include in the cut
-  13. dy_p(n)_cut : deltay p(n) peak cut definitions. Needed to constitute p(n) spot cuts.
-      - dy_p(n)_cut[0] => p(n) peak position, 
-      - dy_p(n)_cut[1] => p(n) peak RMS, 
-      - dy_p(n)_cut[2] => # sigma to include in the cut
-  14. h_dx(dy)HCAL_lims : h_dx(dy)HCAL histogram limits (Can be found in the output ROOT file)
-      - h_dx(dy)HCAL_lims[0] : No. of bins of h_dx(dy)HCAL histograms
-      - h_dx(dy)HCAL_lims[1] : xmin
-      - h_dx(dy)HCAL_lims[2] : xmax
-  15. h_dxHCAL_p(n)_fitR : Fit ranges for the proton(neutron) signal peak in deltax dist. (h_dxHCAL histogram)
-                           Algorithm fits the distribution twice for optimization.
-      - h_dxHCAL_p(n)_fitR[0] : xmin for 1st fit (crude). Try to avoid any secondary peak.
-      - h_dxHCAL_p(n)_fitR[1] : xmax for 1st fit (crude). Try to avoid any secondary peak.
-      - h_dxHCAL_p(n)_fitR[2] : # sigma below the peak for 2nd fit (fine)
-      - h_dxHCAL_p(n)_fitR[3] : # sigma above the peak for 2nd fit (fine)
-  16. h_dyHCAL_fitR : Fit ranges for the signal peak in deltay dist. (h_dxHCAL histogram)
-                      Algorithm fits the distribution twice for optimization.
-      - h_dyHCAL_fitR[0] : xmin for 1st fit (crude). Try to avoid any secondary peak.
-      - h_dyHCAL_fitR[1] : xmax for 1st fit (crude). Try to avoid any secondary peak.
-      - h_dyHCAL_fitR[2] : # sigma below the peak for 2nd fit (fine)
-      - h_dyHCAL_fitR[3] : # sigma above the peak for 2nd fit (fine)
-  17. W_cutR : W cut range.
-      - W_cutR[0] : lower limit
-      - W_cutR[1] : upper limit
+  ** generator : MC enevt generator (Valid options: g4sbs, simc)
+  ** prefix_to_filebase : <prefix>_sbs<sbsconfig>_sbs<sbsmagfield>p_<generator>_<process>.root
+  ** Njobs_to_ana : # MC jobs to analyze
+  ** rootfile_dir : Directory name w/ path containing the MC ROOT files to analyze
+  ** global_cut : set of global cuts to apply at the start of event processing
+  ** SBS_field : 
+  ** hcal_v(h)offset :
+  ** dx_p(n)_cut : deltax p(n) peak cut definitions. Needed to constitute p(n) spot cuts. 
+     - dx_p(n)_cut[0] => p(n) peak position, 
+     - dx_p(n)_cut[1] => p(n) peak RMS, 
+     - dx_p(n)_cut[2] => # sigma to include in the cut
+  ** dy_p(n)_cut : deltay p(n) peak cut definitions. Needed to constitute p(n) spot cuts.
+     - dy_p(n)_cut[0] => p(n) peak position, 
+     - dy_p(n)_cut[1] => p(n) peak RMS, 
+     - dy_p(n)_cut[2] => # sigma to include in the cut
+  ** h_dx(dy)HCAL_lims : h_dx(dy)HCAL histogram limits (Can be found in the output ROOT file)
+     - h_dx(dy)HCAL_lims[0] : No. of bins of h_dx(dy)HCAL histograms
+     - h_dx(dy)HCAL_lims[1] : xmin
+     - h_dx(dy)HCAL_lims[2] : xmax
+  ** h_dxHCAL_p(n)_fitR : Fit ranges for the proton(neutron) signal peak in deltax dist. (h_dxHCAL histogram)
+                          Algorithm fits the distribution twice for optimization.
+     - h_dxHCAL_p(n)_fitR[0] : xmin for 1st fit (crude). Try to avoid any secondary peak.
+     - h_dxHCAL_p(n)_fitR[1] : xmax for 1st fit (crude). Try to avoid any secondary peak.
+     - h_dxHCAL_p(n)_fitR[2] : # sigma below the peak for 2nd fit (fine)
+     - h_dxHCAL_p(n)_fitR[3] : # sigma above the peak for 2nd fit (fine)
+  ** h_dyHCAL_fitR : Fit ranges for the signal peak in deltay dist. (h_dxHCAL histogram)
+                     Algorithm fits the distribution twice for optimization.
+     - h_dyHCAL_fitR[0] : xmin for 1st fit (crude). Try to avoid any secondary peak.
+     - h_dyHCAL_fitR[1] : xmax for 1st fit (crude). Try to avoid any secondary peak.
+     - h_dyHCAL_fitR[2] : # sigma below the peak for 2nd fit (fine)
+     - h_dyHCAL_fitR[3] : # sigma above the peak for 2nd fit (fine)
+  ** W_cutR : W cut range.
+     - W_cutR[0] : lower limit
+     - W_cutR[1] : upper limit
 */

@@ -1,17 +1,26 @@
 /* 
    This macro will perform elastic analysis for GMn using LH2 data.
    E.g. Config. File: sbs14-sbs70p/conf_elas_ana_data.json
+   * A brief description of all the config. file parameters can be
+   found at the bottom of this script.
    -----
    P. Datta  Created  02-01-2023 
 */
+
+// TO-DO
+// 1. Energy loss calculations
+
 #include <vector>
 #include <iostream>
 
 #include "TCut.h"
 #include "TH1F.h"
+#include "TFile.h"
 #include "TLatex.h"
 #include "TChain.h"
+#include "TCanvas.h"
 #include "TVector3.h"
+#include "TEllipse.h"
 #include "TStopwatch.h"
 #include "TTreeFormula.h"
 #include "TLorentzVector.h"
@@ -23,9 +32,11 @@
 static const std::string target = "LH2";
 
 int elas_ana_data (const char *configfilename,
+		    int pass, //replay pass
                     int verbose=-1,  //<0=>Debug
                     int verbosefn=0, //>0=>Debug
-                    std::string filebase="pdout/test_elas_ana_data")
+		    /* verbose==verbosefn==0 => Production */
+                    std::string filebase="pdout/test_elas_ana")
 {
   gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
 
@@ -34,24 +45,24 @@ int elas_ana_data (const char *configfilename,
 
   // reading input config file ---------------------------------------
   JSONManager *jmgr = new JSONManager(configfilename);
+  std::string key = "pass" + std::to_string(pass);
 
   // seting up the desired SBS configuration
-  int conf = jmgr->GetValueFromKey<int>("SBS_config");
-  int sbsmag = jmgr->GetValueFromKey<int>("SBS_magnet_percent");
-  int pass = jmgr->GetValueFromKey<int>("replay_pass"); 
+  int conf = jmgr->GetValueFromSubKey<int>(key,"SBS_config");
+  int sbsmag = jmgr->GetValueFromSubKey<int>(key,"SBS_magnet_percent");
   SBSconfig sbsconf(conf, sbsmag);
   cout << sbsconf;
 
   // reading run info and parsing ROOT trees
-  std::string runsheet_dir = jmgr->GetValueFromKey_str("runsheet_dir");
-  int nruns = jmgr->GetValueFromKey<int>("Nruns_to_ana"); // # of runs to analyze
+  std::string runsheet_dir = jmgr->GetValueFromSubKey_str(key,"runsheet_dir");
+  int nruns = jmgr->GetValueFromSubKey<int>(key,"Nruns_to_ana"); // # of runs to analyze
   vector<CodaRun> crun; util_pd::ReadRunList(runsheet_dir,nruns,conf,target,pass,sbsmag,verbosefn,crun);
-  std::string rootfile_dir = jmgr->GetValueFromKey_str("rootfile_dir");
+  std::string rootfile_dir = jmgr->GetValueFromSubKey_str(key,"rootfile_dir");
   TChain *C = new TChain("T"); util_pd::LoadROOTTree(rootfile_dir,crun,1,verbosefn,C); 
  
   // reading scaler tree
   TChain *S = new TChain("Tout"); 
-  int get_scaler_info = jmgr->GetValueFromKey<int>("get_scaler_info");
+  int get_scaler_info = jmgr->GetValueFromSubKey<int>(key,"get_scaler_info");
   if (get_scaler_info) {
     S->Add(Form("epics/epout/scalerdata_prun_SBS%d_%s.root",conf,target.c_str()));
     if (S->GetEntries()==0) throw std::runtime_error("No scaler event found!");
@@ -61,19 +72,19 @@ int elas_ana_data (const char *configfilename,
   // model 0 => uses reconstructed p as independent variable
   // model 1 => uses reconstructed angles as independent variable
   // model 2 => uses 4-vector calculation
-  int model = jmgr->GetValueFromKey<int>("model");
+  int model = jmgr->GetValueFromSubKey<int>(key,"model");
   if (model == 0) std::cout << "Using model 0 [recon. p as indep. var.] for analysis.." << std::endl;
   else if (model == 1) std::cout << "Using model 1 [recon. angle as indep. var.] for analysis.." << std::endl;
   else if (model == 2) std::cout << "Using model 2 [4-vector calculation] for analysis.." << std::endl;
   else { std::cerr << "Enter a valid model number! **!**" << std::endl; throw; }
 
   // choosing nucleon type 
-  std::string Ntype = jmgr->GetValueFromKey_str("Ntype");
+  std::string Ntype = jmgr->GetValueFromSubKey_str(key,"Ntype");
 
   // setting up global cuts
-  std::string gcut = jmgr->GetValueFromKey_str("global_cut");
-  TCut globalcut = gcut.c_str();
-  TTreeFormula *GlobalCut = new TTreeFormula("GlobalCut", globalcut, C);
+  std::string gcut = jmgr->GetValueFromSubKey_str(key,"global_cut");
+  std::vector<std::string> gCutList; util_pd::SplitString('&',gcut,gCutList);
+  TTreeFormula *GlobalCut = new TTreeFormula("GlobalCut",(TCut)gcut.c_str(),C);
 
   // setting up ROOT tree branch addresses ---------------------------------------
   int maxNtr=1000;
@@ -82,16 +93,21 @@ int elas_ana_data (const char *configfilename,
   // double HALLA_p;
   // setrootvar::setbranch(C, "HALLA_p", "", &HALLA_p);
 
-  // bbcal clus var
-  double eSH, xSH, ySH, rblkSH, cblkSH, idblkSH, atimeSH, ePS, rblkPS, cblkPS, idblkPS, atimePS;
-  std::vector<std::string> bbcalclvar = {"sh.e","sh.x","sh.y","sh.rowblk","sh.colblk","sh.idblk","sh.atimeblk",
-					 "ps.e","ps.rowblk","ps.colblk","ps.idblk","ps.atimeblk"};
-  std::vector<void*> bbcalclvar_mem = {&eSH,&xSH,&ySH,&rblkSH,&cblkSH,&idblkSH,&atimeSH,&ePS,&rblkPS,&cblkPS,&idblkPS,&atimePS};
-  setrootvar::setbranch(C, "bb", bbcalclvar, bbcalclvar_mem);
-  
+  // bbsh clus var
+  double eSH, xSH, ySH, rblkSH, cblkSH, idblkSH, atimeSH;
+  std::vector<std::string> bbshclvar = {"e","x","y","rowblk","colblk","idblk","atimeblk"};
+  std::vector<void*> bbshclvar_mem = {&eSH,&xSH,&ySH,&rblkSH,&cblkSH,&idblkSH,&atimeSH};
+  setrootvar::setbranch(C, "bb.sh", bbshclvar, bbshclvar_mem);
+
+  // bbps clus var
+  double ePS, rblkPS, cblkPS, idblkPS, atimePS;
+  std::vector<std::string> bbpsclvar = {"e","rowblk","colblk","idblk","atimeblk"};
+  std::vector<void*> bbpsclvar_mem = {&ePS,&rblkPS,&cblkPS,&idblkPS,&atimePS};
+  setrootvar::setbranch(C, "bb.ps", bbpsclvar, bbpsclvar_mem);
+   
   // hcal clus var
-  double eHCAL, xHCAL, yHCAL, rblkHCAL, cblkHCAL, idblkHCAL, atimeHCAL, tdcHCAL;
-  std::vector<std::string> hcalclvar = {"e","x","y","rowblk","colblk","idblk","atimeblk","tdctimeblk"};
+  double eHCAL, xHCAL, yHCAL, rblkHCAL, cblkHCAL, idblkHCAL, atimeHCAL, tdcHCAL[maxNtr];
+  std::vector<std::string> hcalclvar = {"e","x","y","rowblk","colblk","idblk","atimeblk","clus_blk.tdctime"};
   std::vector<void*> hcalclvar_mem = {&eHCAL,&xHCAL,&yHCAL,&rblkHCAL,&cblkHCAL,&idblkHCAL,&atimeHCAL,&tdcHCAL};
   setrootvar::setbranch(C, "sbs.hcal", hcalclvar, hcalclvar_mem);
 
@@ -120,8 +136,8 @@ int elas_ana_data (const char *configfilename,
   // fEvtHdr variables (N/A for simulation) 
   UInt_t rnum, gevnum, trigbits;
   std::vector<std::string> evhdrvar = {"fRun","fEvtNum","fTrigBits"};
-  std::vector<void*> evhdrmem = {&rnum,&gevnum,&trigbits};
-  setrootvar::setbranch(C,"fEvtHdr",evhdrvar,evhdrmem);
+  std::vector<void*> evhdrvar_mem = {&rnum,&gevnum,&trigbits};
+  setrootvar::setbranch(C,"fEvtHdr",evhdrvar,evhdrvar_mem);
 
   // turning on the remaining branches we use for the globalcut
   C->SetBranchStatus("bb.etot_over_p", 1);
@@ -136,9 +152,8 @@ int elas_ana_data (const char *configfilename,
   if (get_scaler_info) setrootvar::setbranch(S,"",streevar,streevar_mem);
 
   // defining the outputfile
-  if (verbose==0 && verbosefn==0) filebase = "pdout/elas_ana_data";
-  TString outFile = Form("%s_sbs%d_sbs%dp_model%d_pass%d.root", 
-			 filebase.c_str(), sbsconf.GetSBSconf(), sbsconf.GetSBSmag(), model, pass);
+  if (verbose==0 && verbosefn==0) filebase = "pdout/elas_ana";
+  TString outFile = Form("%s_data_sbs%d_sbs%dp_model%d_pass%d.root",filebase.c_str(),conf,sbsmag,model,pass);
   TFile *fout = new TFile(outFile.Data(), "RECREATE");
 
   // defining histograms
@@ -148,11 +163,13 @@ int elas_ana_data (const char *configfilename,
   TH1F *h_dpel = new TH1F("h_dpel",";p/p_{elastic}(#theta)-1;",100,-0.3,0.3);
   
   TH1F *h_Q2 = util_pd::TH1FhQ2("h_Q2", conf);
-  vector<double> hdx_lim; jmgr->GetVectorFromKey<double>("h_dxHCAL_lims", hdx_lim);
-  vector<double> hdy_lim; jmgr->GetVectorFromKey<double>("h_dyHCAL_lims", hdy_lim);
-  TH1F *h_dxHCAL = new TH1F("h_dxHCAL","; x_{HCAL} - x_{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
-  TH1F *h_dyHCAL = new TH1F("h_dyHCAL","; y_{HCAL} - y_{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
-  TH1F *h_coin_time = new TH1F("h_coin_time", "Coincidence time (ns)", 200, 380, 660);
+  vector<double> hdx_lim; jmgr->GetVectorFromSubKey<double>(key,"h_dxHCAL_lims", hdx_lim);
+  vector<double> hdy_lim; jmgr->GetVectorFromSubKey<double>(key,"h_dyHCAL_lims", hdy_lim);
+  TH1F *h_dxHCAL = new TH1F("h_dxHCAL","W & fiducial cuts;x_{HCAL}^{obs} - x_{HCAL}^{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
+  TH1F *h_dxHCAL_nfc = new TH1F("h_dxHCAL_nfc","W cut;x_{HCAL}^{obs} - x_{HCAL}^{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
+  TH1F *h_dyHCAL = new TH1F("h_dyHCAL","W & fiducial cuts;y_{HCAL}^{obs} - y_{HCAL}^{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
+  TH1F *h_dyHCAL_nfc = new TH1F("h_dyHCAL_nfc","W cut;y_{HCAL}^{obs} - y_{HCAL}^{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
+  TH1F *h_coin_time = new TH1F("h_coin_time","BBCAL-HCAL trigger coincidence time (ns)",200,380,660);
 
   TH2F *h2_rcHCAL = util_pd::TH2FHCALface_rc("h2_rcHCAL");
   TH2F *h2_dxdyHCAL = util_pd::TH2FdxdyHCAL("h2_dxdyHCAL");
@@ -160,9 +177,16 @@ int elas_ana_data (const char *configfilename,
  
   // Defining interesting ROOT tree branches 
   TTree *Tout = new TTree("Tout", "");
+  Tout->SetMaxTreeSize(4000000000LL);
   //cuts
   bool WCut;              Tout->Branch("WCut", &WCut, "WCut/B");
   bool pCut;              Tout->Branch("pCut", &pCut, "pCut/B");
+  // -- a few variations
+  bool pCut_1p5sig;       Tout->Branch("pCut_1p5sig", &pCut_1p5sig, "pCut_1p5sig/O");
+  bool pCut_2sig;         Tout->Branch("pCut_2sig", &pCut_2sig, "pCut_2sig/O");
+  bool pCut_2p5sig;       Tout->Branch("pCut_2p5sig", &pCut_2p5sig, "pCut_2p5sig/O");
+  bool pCut_3sig;         Tout->Branch("pCut_3sig", &pCut_3sig, "pCut_3sig/O");
+  // --
   bool fiduCut;           Tout->Branch("fiduCut", &fiduCut, "fiduCut/B");
   //run info
   UInt_t T_rnum;          Tout->Branch("rnum", &T_rnum, "rnum/i");
@@ -233,27 +257,24 @@ int elas_ana_data (const char *configfilename,
   // Do the energy loss calculation here ...........
 
   // HCAL cut definitions
-  vector<double> dx_p; jmgr->GetVectorFromKey<double>("dx_p", dx_p);
-  double sbs_kick = abs(dx_p[0]);
-  vector<double> dy_p; jmgr->GetVectorFromKey<double>("dy_p", dy_p);
-  double Nsigma_cut_dx_p = jmgr->GetValueFromKey<double>("Nsigma_cut_dx_p");
-  double Nsigma_cut_dy_p = jmgr->GetValueFromKey<double>("Nsigma_cut_dy_p");
-  vector<double> hcal_active_area = cut::hcal_active_area_data(); // Exc. 1 blk from all 4 sides
-  vector<double> hcal_safety_margin = cut::hcal_safety_margin(dx_p[1], dx_p[1], dy_p[1], hcal_active_area);
+  vector<double> dx_p_cut; jmgr->GetVectorFromSubKey<double>(key,"dx_p_cut", dx_p_cut);
+  double sbs_kick = abs(dx_p_cut[0]);
+  vector<double> dy_p_cut; jmgr->GetVectorFromSubKey<double>(key,"dy_p_cut", dy_p_cut);
+  vector<double> hcal_active_area = cut::hcal_active_area_data(1,1); // Exc. 1 blk from all 4 sides
+  vector<double> hcal_safety_margin = cut::hcal_safety_margin(dx_p_cut[1],dx_p_cut[1],dy_p_cut[1],hcal_active_area);
 
-  // elastic cut limits
-  double Wmin = jmgr->GetValueFromKey<double>("Wmin");
-  double Wmax = jmgr->GetValueFromKey<double>("Wmax");
+  // reading W cut limits
+  std::vector<double> W_cutR; jmgr->GetVectorFromSubKey<double>(key,"W_cutR",W_cutR);
 
   // costruct axes of HCAL CoS in Hall CoS
-  double hcal_voffset = jmgr->GetValueFromKey<double>("hcal_voffset");
-  double hcal_hoffset = jmgr->GetValueFromKey<double>("hcal_hoffset");
-  vector<TVector3> HCAL_axes; kine::SetHCALaxes(sbsconf.GetSBStheta_rad(), HCAL_axes);
+  double hcal_voffset = jmgr->GetValueFromSubKey<double>(key,"hcal_voffset");
+  double hcal_hoffset = jmgr->GetValueFromSubKey<double>(key,"hcal_hoffset");
+  vector<TVector3> HCAL_axes; kine::SetHCALaxes(sbsconf.GetSBStheta_rad(),HCAL_axes);
   TVector3 HCAL_origin = sbsconf.GetHCALdist()*HCAL_axes[2] + hcal_voffset*HCAL_axes[0] + hcal_hoffset*HCAL_axes[1];
 
   // looping through the tree ---------------------------------------
   std::cout << std::endl;
-  long nevent=0, nevents=C->GetEntries(), neventsS=S->GetEntries(), index=0, tgevnumS; 
+  long nevent=0, nevents=C->GetEntries(), neventsS=S->GetEntries(), index=0, tgevnumS, ngoodevs = 0; 
   int treenum=0, currenttreenum=0; UInt_t runnum=0, nseg, tsegnumS;
   double ebeam=sbsconf.GetEbeam(), ebeam_std=0.; 
   double tdnewcurr=0., tdnewcnt=0;  
@@ -308,6 +329,7 @@ int elas_ana_data (const char *configfilename,
     } 
     bool passedgCut = GlobalCut->EvalInstance(0) != 0;   
     if (!passedgCut) continue;
+    ngoodevs++;
 
     // coin time cut (N/A for simulation)  !! Not a reliable cut - loosing a lot of elastics
     double bbcal_time=0., hcal_time=0.;
@@ -429,7 +451,7 @@ int elas_ana_data (const char *configfilename,
     T_cblkHCAL = cblkHCAL;
     T_idblkHCAL = idblkHCAL;
     T_atimeHCAL = atimeHCAL;
-    T_tdcHCAL = tdcHCAL;
+    T_tdcHCAL = tdcHCAL[0];
 
     T_ncltmeanHODO = ncltmeanHODO;
     T_cltmeanHODO = cltmeanHODO[0];
@@ -451,7 +473,7 @@ int elas_ana_data (const char *configfilename,
     TVector3 nodef_dir = (HCAL_pos - vertex).Unit();
     T_thetapq_nodef = acos(nodef_dir.Dot(pNhat));
     // p 
-    double BdL = (sbsmag / 100.) * expconst::sbsmaxfield * expconst::sbsdipolegap;
+    double BdL = (sbsmag / 100.) * 1.98; //expconst::sbsmaxfield * expconst::sbsdipolegap;
     double proton_thetabend = 0.3 * BdL / PNprime.Vect().Mag();  // p*theta = 0.3*BdL
     double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist() - (sbsconf.GetSBSdist() + expconst::sbsdipolegap/2.0));
     TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);
@@ -468,12 +490,20 @@ int elas_ana_data (const char *configfilename,
     bool FR_cut = cut::inHCAL_fiducial(xyHCAL_exp[0], xyHCAL_exp[1], sbs_kick, hcal_safety_margin);
     fiduCut = AR_cut && FR_cut; 
     // defining HCAL cuts
-    pCut = pow((dx-dx_p[0]) / (dx_p[1]*Nsigma_cut_dx_p), 2) + pow((dy-dy_p[0]) / (dy_p[1]*Nsigma_cut_dy_p), 2) <= 1.;
+    pCut = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]),2) <= 1.;
+    // a few variations
+    pCut_1p5sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]),2) <= 1.5;
+    pCut_2sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]),2) <= 2.;
+    pCut_2p5sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]),2) <= 2.5;
+    pCut_3sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]),2) <= 3.;
+
     // defining W cut
-    WCut = Wrecon >= Wmin && Wrecon <= Wmax;
+    WCut = Wrecon >= W_cutR[0] && Wrecon <= W_cutR[1];
 
     // W cut
     if (WCut) {
+      h_dxHCAL_nfc->Fill(dx);
+      h_dyHCAL_nfc->Fill(dy);
       // fiducial cut (Should we use it for LH2 data?)
       if (fiduCut) {
 	h_dxHCAL->Fill(dx);
@@ -502,74 +532,156 @@ int elas_ana_data (const char *configfilename,
   // calculating total charge analyzed
   double totcharge = util_pd::GetTotCharge(crun);
 
-  TCanvas *c1 = new TCanvas("c1", "c1", 1200, 1000);
-  c1->Divide(2,2);
-
-  c1->cd(1); h2_dxdyHCAL->Draw("colz");
+  /////////////////////////////////
+  // Generating diagnostic plots //
+  /////////////////////////////////
+  TString outPlot = outFile; outPlot.ReplaceAll(".root",".pdf");
+  /**** Canvas 1 (p&n spots) ****/
+  TCanvas *c1 = util_pd::TC("c1",2,2);
+  c1->cd(1); //
+  h2_dxdyHCAL->Draw("colz");
   TEllipse Ep_p;
   Ep_p.SetFillStyle(0); Ep_p.SetLineColor(2); Ep_p.SetLineWidth(2);
-  Ep_p.DrawEllipse(dy_p[0], dx_p[0], Nsigma_cut_dy_p*dy_p[1], Nsigma_cut_dx_p*dx_p[1], 0,360,0);
- 
-  c1->cd(2);
+  Ep_p.DrawEllipse(dy_p_cut[0], dx_p_cut[0], dy_p_cut[2]*dy_p_cut[1], dx_p_cut[2]*dx_p_cut[1], 0,360,0);
+  c1->cd(2); //
   h_W->Draw(); h_W->SetLineColor(1);
   h_W_cut->Draw("same"); h_W_cut->SetLineColor(2);
   h_W_acut->Draw("same");
-
-  c1->cd(3);
-  h_dxHCAL->Draw();
-
-  c1->cd(4);
+  c1->cd(3); //
   h2_xyHCAL_p->Draw("colz");
-  util_pd::DrawArea(hcal_active_area);
-  util_pd::DrawArea(hcal_safety_margin,4);
+  util_pd::DrawArea(hcal_active_area,2,4,9);
+  util_pd::DrawArea(hcal_safety_margin,4,4,9);
+  c1->SaveAs(Form("%s[",outPlot.Data())); c1->SaveAs(Form("%s",outPlot.Data())); c1->Write();
+  //**** -- ***//
 
-  // let's record the summary
-  TCanvas *c2 = new TCanvas("c2","Summary");
-  c2->cd();
+  /**** Canvas 2 (dx & dy) ****/
+  TCanvas *c2 = util_pd::TC("c2",2,2);
+  std::vector<double> hdxp_fitR; jmgr->GetVectorFromSubKey<double>(key,"h_dxHCAL_p_fitR", hdxp_fitR);
+  std::vector<double> hdy_fitR; jmgr->GetVectorFromSubKey<double>(key,"h_dyHCAL_fitR", hdy_fitR);
+  gStyle->SetOptFit(1);
+  c2->cd(1); //
+  TF1 *fdxp = fit::fit_1gs_nbg(hdxp_fitR,h_dxHCAL);
+  double dxpM = fdxp->GetParameter(1); double dxpS = fdxp->GetParameter(2);
+  c2->cd(2); //
+  TF1 *fdy = fit::fit_1gs_nbg(hdy_fitR,h_dyHCAL);
+  double dypM = fdy->GetParameter(1); double dypS = fdy->GetParameter(2);
+  c2->cd(3); //
+  TF1 *fdxp_nfc = fit::fit_1gs_nbg(hdxp_fitR,h_dxHCAL_nfc);
+  double dxpM_nfc = fdxp_nfc->GetParameter(1); double dxpS_nfc = fdxp_nfc->GetParameter(2);
+  c2->cd(4); //
+  TF1 *fdy_nfc = fit::fit_1gs_nbg(hdy_fitR,h_dyHCAL_nfc);
+  double dypM_nfc = fdy->GetParameter(1); double dypS_nfc = fdy->GetParameter(2);
+  c2->SaveAs(Form("%s",outPlot.Data())); c2->Write();
+  //**** -- ***//
 
+  /**** Summary Canvas ****/
+  TCanvas *cSummary = new TCanvas("cSummary","Summary");
+  cSummary->cd();
   TPaveText *pt = new TPaveText(.05,.1,.95,.8);
+  pt->AddText(Form(" Date of creation: %s", util_pd::getDate().c_str()));
   pt->AddText(Form("Configfile: %s",configfilename));
+  pt->AddText(Form(" Analyzing QE events for SBS%d-SBS%dp settings",conf,sbsmag));
   pt->AddText(Form(" Analysis model: %d",model));
-  pt->AddText(Form(" Total charge : %f C",totcharge));
-  pt->AddText(Form(" Total # events analyzed: %ld",nevents));
-  pt->AddText(Form(" Total # runs analyzed: %d",nruns));
-  pt->AddText(Form(" First run no.: %d | Last run no.: %d",crun[0].runnum,crun[nruns-1].runnum));
-  pt->AddText(Form(" HCAL offsets: v = %.4f, h = %.4f",hcal_voffset,hcal_hoffset));
-  pt->AddText(Form(" Global cuts: %s",gcut.c_str()));
-  pt->AddText(Form(" Inbuilt W cut: %.2f <= W <= %.2f GeV/c",Wmin,Wmax));
-  pt->AddText(Form(" Inbuilt p cut (dx): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dx_p[0],dx_p[1],Nsigma_cut_dx_p));
-  pt->AddText(Form(" Inbuilt p cut (dy): mean = %.4f, sigma = %.4f, Nsigma = %.1f",dy_p[0],dy_p[1],Nsigma_cut_dy_p));
-  TText *t1 = pt->GetLineWith("Configfile");
-  t1->SetTextColor(kBlue);
-  pt->Draw();
+  pt->AddText(Form(" Total # events analyzed: %ld, Total charge: %.7fC",nevents,totcharge));
+  pt->AddText(Form(" HCAL offsets: v = %.1f, h = %.1f",hcal_voffset,hcal_hoffset));
+  pt->AddText(Form(" Global cuts: "));
+  std::string tmpstr = "";
+  for (std::size_t i=0; i<gCutList.size(); i++) {
+    if (i>0 && i%3==0) {pt->AddText(Form(" %s",tmpstr.c_str())); tmpstr="";}
+    tmpstr += gCutList[i] + ", "; 
+  }
+  if (!tmpstr.empty()) pt->AddText(Form(" %s",tmpstr.c_str()));
+  pt->AddText(Form(" # events passed global cuts: %ld",ngoodevs));
+  pt->AddText(" Elastic cuts: ");
+  pt->AddText(Form(" Inbuilt W cut: %.2f #leq W #leq %.2f GeV/c",W_cutR[0],W_cutR[1]));
+  pt->AddText(Form(" Inbuilt p cut (#Deltax): Mean = %.4f, %.1f#sigma = %.4f",dx_p_cut[0],dx_p_cut[2],dx_p_cut[1]));
+  pt->AddText(Form(" Inbuilt p cut (#Deltay): Mean = %.4f, %.1f#sigma = %.4f",dy_p_cut[0],dy_p_cut[2],dy_p_cut[1]));
+  pt->AddText(" Fit info: ");
+  pt->AddText(" p peak, w/ fiducial cut: dxpM,dxpS,dypM,dypS ");
+  pt->AddText(Form(" %.5f,%.5f,%.5f,%.5f",dxpM,dxpS,dypM,dypS));
+  pt->AddText(" p peak, w/o fiducial cut: dxpM_nfc,dxpS_nfc,dypM_nfc,dypS_nfc ");
+  pt->AddText(Form(" %.5f,%.5f,%.5f,%.5f",dxpM_nfc,dxpS_nfc,dypM_nfc,dypS_nfc));
+  sw->Stop();
+  pt->AddText(Form("Macro processing time: CPU %.1fs | Real %.1fs",sw->CpuTime(),sw->RealTime()));
+  TText *t1 = pt->GetLineWith("Configfile"); t1->SetTextColor(kRed);
+  TText *t2 = pt->GetLineWith(" Global"); t2->SetTextColor(kBlue);
+  TText *t3 = pt->GetLineWith(" Elastic"); t3->SetTextColor(kBlue);
+  TText *t4 = pt->GetLineWith(" Fit info"); t4->SetTextColor(kBlue);
+  TText *t5 = pt->GetLineWith("Macro"); t5->SetTextColor(kGreen+3);
+  pt->Draw(); 
+  cSummary->SaveAs(Form("%s",outPlot.Data())); cSummary->SaveAs(Form("%s]",outPlot.Data())); cSummary->Write();  
+  //**** -- ***//
 
-  // outFile.ReplaceAll(".root",".png");
-  // c1->Print(outFile.Data(),"png");
+  std::cout << "\n----Fit info----" << "\n";
+  std::cout << "dxpM,dxpS,dypM,dypS,dxpM_nfc,dxpS_nfc,dypM_nfc,dypS_nfc" << "\n";
+  std::cout << dxpM<<","<<dxpS<<","<<dypM<<","<<dypS<<","<<dxpM_nfc<<","<<dxpS_nfc<<","<<dypM_nfc<<","<<dypS_nfc<<"\n";
+  std::cout << "----------------" << "\n\n";
 
   std::cout << "------" << std::endl;
   std::cout << " Total charge : " << totcharge << " C" << std::endl;
-  std::cout << " Output file  : " << outFile << std::endl;
+  std::cout << " Summary plots  : " << outPlot << std::endl;
+  std::cout << " Output ROOT file  : " << outFile << std::endl;
   std::cout << "------" << std::endl << std::endl;
 
-  sw->Stop();
-  std::cout << "CPU time elapsed = " << sw->CpuTime() 
-	    << " s. Real time = " << sw->RealTime() << " s. " << std::endl << std::endl;
+  std::cout << "CPU time = " << sw->CpuTime() << "s. Real time = " << sw->RealTime() << "s.\n\n";
 
-  c1->Write();
-  c2->Write();
-  h_W->Write();
-  h_W_cut->Write();
-  h_W_acut->Write();
-  h_dpel->Write();
+  Tout->Write("",TObject::kOverwrite);
   h_Q2->Write();
-  h_dxHCAL->Write();
-  h_dyHCAL->Write();
-  h2_rcHCAL->Write();
-  h2_dxdyHCAL->Write();
+  h_dpel->Write(); h_W->Write();
+  h_W_cut->Write(); h_W_acut->Write();
+  h_dxHCAL->Write(); h_dyHCAL->Write();
+  h2_rcHCAL->Write(); h2_dxdyHCAL->Write();
   h2_xyHCAL_p->Write();
   h_coin_time->Write();
-  Tout->Write();
   sw->Delete();
   delete jmgr;
   return 0;
 }
+
+/*
+  ////////////////////////////////////////////////////////
+  // Brief description of configuration file parameters //
+  ////////////////////////////////////////////////////////
+  ** Ntype : Struck nucleon type. (Valid options: n, p, np)
+     - n(p) => neutrons(protons) 
+     - np => Avg. of n and p masses. Use for LD2 data since the struck nucleon is not known apriori.
+  ** SBS_config : SBS configuration. (Valid options: 4,7,11,14,8,9)
+  ** SBS_magnet_percent : SBS magnet field current as a percentage of 2100A
+  ** model : Model of analysis. (Valid options: 0, 1, 2)
+     - 0 => uses reconstructed p as independent variable
+     - 1 => uses reconstructed angles as independent variable
+     - 2 => uses 4-vector calculation
+  ** Nruns_to_ana : # CODA runs to analyze
+  ** get_scaler_info : If true, writes out matching scaler tree variables in the output ROOT tree
+  ** rootfile_dir : Directory name w/ path containing the MC ROOT files to analyze
+  ** global_cut : set of global cuts to apply at the start of event processing
+  ** SBS_field : 
+  ** hcal_v(h)offset :
+  ** dx_p_cut : deltax p peak cut definitions. Needed to constitute p spot cuts. 
+     - dx_p_cut[0] => p peak position, 
+     - dx_p_cut[1] => p peak RMS, 
+     - dx_p_cut[2] => # sigma to include in the cut
+  ** dy_p_cut : deltay p peak cut definitions. Needed to constitute p spot cuts.
+     - dy_p_cut[0] => p peak position, 
+     - dy_p_cut[1] => p peak RMS, 
+     - dy_p_cut[2] => # sigma to include in the cut
+  ** h_dx(dy)HCAL_lims : h_dx(dy)HCAL histogram limits (Can be found in the output ROOT file)
+     - h_dx(dy)HCAL_lims[0] : No. of bins of h_dx(dy)HCAL histograms
+     - h_dx(dy)HCAL_lims[1] : xmin
+     - h_dx(dy)HCAL_lims[2] : xmax
+  ** h_dxHCAL_p_fitR : Fit ranges for the proton(neutron) signal peak in deltax dist. (h_dxHCAL histogram)
+                       Algorithm fits the distribution twice for optimization.
+     - h_dxHCAL_p_fitR[0] : xmin for 1st fit (crude). Try to avoid any secondary peak.
+     - h_dxHCAL_p_fitR[1] : xmax for 1st fit (crude). Try to avoid any secondary peak.
+     - h_dxHCAL_p_fitR[2] : # sigma below the peak for 2nd fit (fine)
+     - h_dxHCAL_p_fitR[3] : # sigma above the peak for 2nd fit (fine)
+  ** h_dyHCAL_fitR : Fit ranges for the signal peak in deltay dist. (h_dxHCAL histogram)
+                     Algorithm fits the distribution twice for optimization.
+     - h_dyHCAL_fitR[0] : xmin for 1st fit (crude). Try to avoid any secondary peak.
+     - h_dyHCAL_fitR[1] : xmax for 1st fit (crude). Try to avoid any secondary peak.
+     - h_dyHCAL_fitR[2] : # sigma below the peak for 2nd fit (fine)
+     - h_dyHCAL_fitR[3] : # sigma above the peak for 2nd fit (fine)
+  ** W_cutR : W cut range.
+     - W_cutR[0] : lower limit
+     - W_cutR[1] : upper limit
+*/
