@@ -84,26 +84,27 @@ namespace cut {
     return safety_margin;
   }
   //___________________________________________________________________
-  bool inHCAL_fiducial (double xHCAL_exp, double yHCAL_exp, double delx_shift, std::vector<double> hcal_safety_margin) {
+  bool inHCAL_safety_margin (std::string target, double xHCAL_exp, double yHCAL_exp, double delx_shift, std::vector<double> hcal_safety_margin) {
     // returns "True" if expected nucleon pos. in HCAL is within "Fiducial" region
-    bool inFidu = false;
+    bool inSM = false;
     // active area dimensions
     double xHCAL_t = hcal_safety_margin[0];
     double xHCAL_b = hcal_safety_margin[1];
     double yHCAL_r = hcal_safety_margin[2];
     double yHCAL_l = hcal_safety_margin[3];
     // first check whether neutrons are in fiducial region or not
-    bool inFidu_n = yHCAL_exp>yHCAL_r && yHCAL_exp<yHCAL_l && xHCAL_exp>xHCAL_t && xHCAL_exp<xHCAL_b;
+    bool inSM_n = xHCAL_exp>xHCAL_t && xHCAL_exp<xHCAL_b;  //yHCAL_exp cuts the same for n & p
 
     // Now, check whether the protons are in fiducial region or not
     // calculate expected xHCAL_exp for proton [considering SBS magnet kick]
     double xHCAL_exp_p = xHCAL_exp - delx_shift;  // "-" sign due to the fact that protons are upbending
-    bool inFidu_p = xHCAL_exp_p>xHCAL_t && xHCAL_exp_p<xHCAL_b;  //yHCAL_exp cuts the same for n & p
+    bool inSM_p = yHCAL_exp>yHCAL_r && yHCAL_exp<yHCAL_l && xHCAL_exp_p>xHCAL_t && xHCAL_exp_p<xHCAL_b;
 
     // We return "True" if both isFidu_n and isFidu_p are satisfied
-    inFidu = inFidu_n && inFidu_p;
-    //inFidu = yHCAL_exp>yHCAL_r && yHCAL_exp<yHCAL_l && xHCAL_exp<xHCAL_b && xHCAL_exp_p>xHCAL_t;
-    return inFidu;
+    if (target.compare("LD2")==0) inSM = inSM_n && inSM_p;
+    else if (target.compare("LH2")==0) inSM = inSM_p; // there aren't any neutrons 
+    //inSM = yHCAL_exp>yHCAL_r && yHCAL_exp<yHCAL_l && xHCAL_exp<xHCAL_b && xHCAL_exp_p>xHCAL_t;
+    return inSM;
   } 
 
 }

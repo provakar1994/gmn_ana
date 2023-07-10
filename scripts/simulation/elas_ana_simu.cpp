@@ -158,6 +158,8 @@ int elas_ana_simu (const char *configfilename,
   bool pCut_2p5sig;       Tout->Branch("pCut_2p5sig", &pCut_2p5sig, "pCut_2p5sig/O");
   bool pCut_3sig;         Tout->Branch("pCut_3sig", &pCut_3sig, "pCut_3sig/O");
   // --
+  bool SMCut;             Tout->Branch("SMCut", &SMCut, "SMCut/B");
+  bool ARCut;             Tout->Branch("ARCut", &ARCut, "ARCut/B");
   bool fiduCut;         Tout->Branch("fiduCut", &fiduCut, "fiduCut/B");
   //MC related
   double weight;        Tout->Branch("weight", &weight, "weight/D");  
@@ -395,17 +397,16 @@ int elas_ana_simu (const char *configfilename,
     T_thetapq_p = acos(p_dir.Unit().Dot(pNhat));
 
     // HCAL active area and safety margin cuts [Fiducial region]
-    /* Does using fiducial cut for LH2 data make sense?. */
-    bool AR_cut = cut::inHCAL_activeA(xHCAL, yHCAL, hcal_active_area);
-    bool FR_cut = cut::inHCAL_fiducial(xyHCAL_exp[0], xyHCAL_exp[1], sbs_kick, hcal_safety_margin);
-    fiduCut = AR_cut && FR_cut;
+    ARCut = cut::inHCAL_activeA(xHCAL,yHCAL,hcal_active_area);
+    SMCut = cut::inHCAL_safety_margin(target,xyHCAL_exp[0],xyHCAL_exp[1],sbs_kick,hcal_safety_margin);
+    fiduCut = ARCut && SMCut; 
     // defining HCAL cuts
     pCut = pow((dx-dx_p_cut[0]) / (dx_p_cut[1]*dx_p_cut[2]), 2) + pow((dy-dy_p_cut[0]) / (dy_p_cut[1]*dy_p_cut[2]), 2) <= 1.;
     // a few variations
-    pCut_1p5sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]),2) <= 1.5;
-    pCut_2sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]),2) <= 2.;
-    pCut_2p5sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]),2) <= 2.5;
-    pCut_3sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]),2) <= 3.;
+    pCut_1p5sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]*1.5),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]*1.5),2) <= 1.;
+    pCut_2sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]*2.),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]*2.),2) <= 1.;
+    pCut_2p5sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]*2.5),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]*2.5),2) <= 1.;
+    pCut_3sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]*3.),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]*3.),2) <= 1.;
 
     // defining W cut
     WCut = Wrecon >= W_cutR[0] && Wrecon <= W_cutR[1];

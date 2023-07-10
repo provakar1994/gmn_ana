@@ -39,10 +39,11 @@ namespace cut {
 					  std::vector<double> hcal_active_area);  // HCAL active area co-ordinates
 
   // Returns "True" if expected nucleon pos. in HCAL is within "Fiducial" region
-  bool inHCAL_fiducial (double xHCAL_exp,                        // m, expected vert. (x) pos of recoil N at HCAL
-			double yHCAL_exp,                        // m, expected horiz. (y) pos of recoil N at HCAL
-			double delx_shift,                       // m, amount of SBS magnet kick
-			std::vector<double> hcal_safety_margin); // HCAL safety margin co-ordinates
+  bool inHCAL_safety_margin (std::string target,                      // LH2 or LD2
+			     double xHCAL_exp,                        // m, expected vert. (x) pos of recoil N at HCAL
+			     double yHCAL_exp,                        // m, expected horiz. (y) pos of recoil N at HCAL
+			     double delx_shift,                       // m, amount of SBS magnet kick
+			     std::vector<double> hcal_safety_margin); // HCAL safety margin co-ordinates
 
   /* ######################## */
 }
