@@ -500,7 +500,7 @@ int elas_ana_simu (const char *configfilename,
   pt->AddText(Form(" Analyzing %s generated QE events for SBS%d-SBS%dp settings",gen.c_str(),conf,sbsmag));
   pt->AddText(Form(" Analysis model: %d",model));
   pt->AddText(Form(" Total # events analyzed: %ld",nevents));
-  pt->AddText(Form(" HCAL offsets: v = %.1f, h = %.1f",hcal_voffset,hcal_hoffset));
+  pt->AddText(Form(" HCAL offsets: v = %.4f, h = %.4f",hcal_voffset,hcal_hoffset));
   pt->AddText(Form(" Global cuts: "));
     std::string tmpstr = "";
   for (std::size_t i=0; i<gCutList.size(); i++) {

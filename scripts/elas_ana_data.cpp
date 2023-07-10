@@ -582,8 +582,9 @@ int elas_ana_data (const char *configfilename,
   pt->AddText(Form("Configfile: %s",configfilename));
   pt->AddText(Form(" Analyzing QE events for SBS%d-SBS%dp settings",conf,sbsmag));
   pt->AddText(Form(" Analysis model: %d",model));
-  pt->AddText(Form(" Total # events analyzed: %ld, Total charge: %.7fC",nevents,totcharge));
-  pt->AddText(Form(" HCAL offsets: v = %.1f, h = %.1f",hcal_voffset,hcal_hoffset));
+  pt->AddText(Form(" Total # events analyzed: %ld, Total # runs: %d",nevents,nruns));
+  pt->AddText(Form(" Total charge: %.7fC",totcharge));
+  pt->AddText(Form(" HCAL offsets: v = %.4f, h = %.4f",hcal_voffset,hcal_hoffset));
   pt->AddText(Form(" Global cuts: "));
   std::string tmpstr = "";
   for (std::size_t i=0; i<gCutList.size(); i++) {
