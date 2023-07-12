@@ -437,12 +437,14 @@ int elas_ana_simu (const char *configfilename,
     }
 
     // fiducial cut but no W cut
-    if (fiduCut) { 
+    if (Wrecon>0) { 
+      if (fiduCut) { 
 	h_W->Fill(Wrecon, weight);
-      if (pCut) { 
-	h_W_cut->Fill(Wrecon);
-      } else {
-	h_W_acut->Fill(Wrecon);
+	if (pCut) { 
+	  h_W_cut->Fill(Wrecon);
+	} else {
+	  h_W_acut->Fill(Wrecon);
+	}
       }
     }
       

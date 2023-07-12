@@ -516,12 +516,14 @@ int elas_ana_data (const char *configfilename,
     }
 
     // fiducial cut but no W cut
-    if (fiduCut) {
-      h_W->Fill(Wrecon);
-      if (pCut) { 
-	h_W_cut->Fill(Wrecon);
-      } else {
-	h_W_acut->Fill(Wrecon);
+    if (Wrecon>0) {      
+      if (fiduCut) {
+	h_W->Fill(Wrecon);
+	if (pCut) { 
+	  h_W_cut->Fill(Wrecon);
+	} else {
+	  h_W_acut->Fill(Wrecon);
+	}
       }
     }
 
