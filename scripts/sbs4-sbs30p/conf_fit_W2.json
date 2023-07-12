@@ -1,16 +1,40 @@
 {
+"elas":
+{
     "SBS_config"           : 4,
     "SBS_magnet_percent"   : 30,
     "model"                : 2,
     "pass"                 : 2,
-    "data_file_prefix"     : "",
+    "data_file_prefix"     : "test",
     "simu_file_prefix"     : "hoff75cm_385sf",
     "generator"            : "simc",
     "coinT_cut"            : "abs((atimeHCAL-atimeSH)-51.)<6.",
-    "cuts_for_signal_data" : "pCut||nCut",
-    "cuts_for_signal_simu" : "1",
+    "cuts_for_signal_data" : "pCut_3sig&&SMCut",
+    "cuts_for_signal_simu" : "SMCut",
     "cuts_for_bg"          : "1",
+    "W2_peak_offset_for_MC": -0.016,
     "Order_of_poly_bg"     : 4,
     "h_W2"                 : [150,0.0,2.5],
-    "W2_fit_range"         : [0.3,1.3]
+    "W2_fit_range"         : [0.3,1.4],
+    "NOTEs"                : ["0.3<W2<1.3 worked well for fit range, Opoly 6"]
+},
+"qelas":
+{
+    "SBS_config"           : 4,
+    "SBS_magnet_percent"   : 30,
+    "model"                : 2,
+    "pass"                 : 2,
+    "data_file_prefix"     : "test",
+    "simu_file_prefix"     : "hoff75cm_385sf",
+    "generator"            : "simc",
+    "coinT_cut"            : "abs((atimeHCAL-atimeSH)-51.)<6.",
+    "cuts_for_signal_data" : "pCut_3sig&&SMCut",
+    "cuts_for_signal_simu" : "SMCut",
+    "cuts_for_bg"          : "1",
+    "W2_peak_offset_for_MC": 0,
+    "Order_of_poly_bg"     : 4,
+    "h_W2"                 : [150,0.0,2.5],
+    "W2_fit_range"         : [0.3,1.4],
+    "NOTEs"                : ["0.3<W2<1.3 worked well for fit range, Opoly 6"]
+}
 }

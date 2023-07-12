@@ -21,10 +21,6 @@
 #include "../include/gmn_ana.h"
 #include "../dflay/src/JSONManager.cxx"
 
-// TLegend* TL_fithistos(std::vector<TH1F*> const & ho){
-//   TLegend *l = new TLegend;
-// }
-
 void customize_dx(TH1F* h)
 {
   h->GetXaxis()->SetTitle("x_{HCAL}^{obs} - x_{HCAL}^{exp} (m)");
