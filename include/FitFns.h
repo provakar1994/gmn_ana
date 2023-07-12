@@ -5,7 +5,9 @@
 
 class FitFn {
  private:
-  int fpoly{0};       // order of polynomial
+  int fpoly{0};          // order of polynomial
+  double frp1{0};        // 1st reject point (lower limit)
+  double frp2{0};        // 2nd reject point (upper limit)
   TH1F *fhs1{nullptr};   // Signal histo 1
   TH1F *fhs2{nullptr};   // Signal histo 2
   TH1F *fhbg{nullptr};   // Background histo
@@ -13,10 +15,32 @@ class FitFn {
  public:
   FitFn() {}
   FitFn(TH1F *hs1): fhs1(hs1) {}
+  FitFn(int poly): fpoly(poly) {}
+  FitFn(int poly, double rp1, double rp2): fpoly(poly),frp1(rp1),frp2(rp2) {}
   FitFn(TH1F *hs1, int poly): fhs1(hs1),fpoly(poly) {}
   FitFn(TH1F *hs1, TH1F *hs2): fhs1(hs1),fhs2(hs2) {}
   FitFn(TH1F *hs1, TH1F *hs2, TH1F *hbg): fhs1(hs1),fhs2(hs2),fhbg(hbg) {}
   FitFn(TH1F *hs1, TH1F *hs2, int poly): fhs1(hs1),fhs2(hs2),fpoly(poly) {}
+
+  // returns Gaussian fit function (Doesn't work!)
+  double ffn_gaus (double *x, double *par) const {
+    return par[0]*std::exp(-0.5*std::pow((x[0]-par[1])/par[2],2.));
+  }
+
+  // returns polynomial fit function of order fpoly
+  double ffn_poly (double *x, double *par) const {
+    double poly = 0; for (int i=0; i<fpoly+1; i++) poly += par[i]*pow(x[0],i);
+    return poly;
+  }
+
+  // returns polynomial fit fn of order fpoly considering the reject points (Sideband method)
+  double ffn_1pbg_sb_2rp(double *x, double *par) const {
+  if (x[0]>frp1 && x[0]<frp2){
+    TF1::RejectPoint();
+    return 0;
+  }
+    return ffn_poly(x,par);
+  }
 
   // fits using just 1 signal histo (1 param)
   double ffn_1hs_nbg (double *x, double *par) const {
@@ -27,8 +51,7 @@ class FitFn {
   // fits using 1 signal histo and 1 poly bg (1+poly params)
   double ffn_1hs_1pbg (double *x, double *par) const {
     double Norm = par[0];
-    double bg = 0; for (int i=1; i<fpoly+2; i++) bg += par[i]*pow(x[0],i-1);
-    return Norm*fhs1->Interpolate(x[0]) + bg;
+    return Norm*fhs1->Interpolate(x[0]) + ffn_poly(x,&par[1]);
   }
 
   // fits using just 2 signal histos (2 params)
@@ -50,13 +73,7 @@ class FitFn {
   double ffn_2hs_1pbg (double *x, double *par) const {
     double Norm = par[0];
     double R = par[1];
-    double bg = 0; for (int i=2; i<fpoly+3; i++) bg += par[i]*pow(x[0],i-2);
-    return Norm*(fhs1->Interpolate(x[0])+R*fhs2->Interpolate(x[0])) + bg;
-  }
-
-  // returns Gaussian fit function (Doesn't work!)
-  double ffn_gaus (double *x, double *par) const {
-    return par[0]*std::exp(-0.5*std::pow((x[0]-par[1])/par[2],2.));
+    return Norm*(fhs1->Interpolate(x[0])+R*fhs2->Interpolate(x[0])) + ffn_poly(x,&par[2]);
   }
 };
 

@@ -13,10 +13,56 @@ namespace fit {
     }
   }
 
+  std::vector<double> GetFitParams(TF1 * const f1)
+  /* Returns a vector filled with fit pramater values from f1 */
+  {
+    int npars = f1->GetNumberFreeParameters();
+    std::vector<double> pars;
+    for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
+    return pars;
+  }
+
+  std::vector<double> GetFitParamErrors(TF1 * const f1)
+  /* Returns a vector filled with fit pramater errors from f1 */
+  {
+    int npars = f1->GetNumberFreeParameters();
+    std::vector<double> parerrs;
+    for (int i=0;i<npars;i++) {parerrs.push_back(f1->GetParError(i));}
+    return parerrs;
+  }
+
+  TF1* fit_1pbg_SB (std::vector<double> const & fit_range,
+		    std::vector<double> const & reject_points,
+		    int Opoly,          // Order of poly to fit bg
+		    std::vector<double> const & initial_guesses,
+		    TH1F* ht)           // total histo to fit
+  /* Side band (SB) fit using 1 polynomial and 2 reject points (Opoly+1 pars) */
+  {
+    const int npars = Opoly+1;
+
+    TH1F *ht_cp = (TH1F*)ht->Clone(); 
+
+    FitFn *ffn = new FitFn(Opoly,reject_points[0],reject_points[1]);
+    TF1* f1 = new TF1("f1",ffn,&FitFn::ffn_1pbg_sb_2rp,fit_range[0],fit_range[1],Opoly+1);
+    f1->SetNpx(1000);
+    f1->SetParameters(&initial_guesses[0]);
+
+    ht_cp->Fit(f1,"R");
+    std::vector<double> pars;
+    for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
+
+    TF1* bg = new TF1("bg",ffn,&FitFn::ffn_poly,fit_range[0],fit_range[1],Opoly+1);
+    bg->SetNpx(500);
+    bg->SetParameters(&pars[0]);
+    bg->SetLineColor(kGreen+2);
+
+    return bg;
+  }
+
   TF1* fit_1hs_nbg_THI (std::vector<double> const & fit_range,
-  		    TH1F* ht,           // total histo to fit 
-  		    TH1F* hs,           // signal histo for
-  		    std::vector<TH1F*> &ho)  // Output: ht,hs (fitted w/ proper scaling)
+			TH1F* ht,           // total histo to fit 
+			TH1F* hs,           // signal histo for
+			std::vector<TH1F*> &ho)  // Output: ht,hs (fitted w/ proper scaling)
   /* TH Interpolation fit using 1 signal histo & no background (1 par) */
   {
     const int npars = 1;
@@ -212,7 +258,7 @@ namespace fit {
   TF1* fit_1gs_nbg (std::vector<double> const & fit_range, // [0]=>xmin,[1]=>xmax (for 1st fit)
                                                            // [2]=>nSLow,[3]=>nSHi (for 2nd fit)
   		    TH1F const * ht)                       // input histogram
-  /* Fitting signal peak using a Gaussian (3 pars) */
+  /* Fitting signal peak using a Gaussian (3 pars). Fits twice for optimization. */
   {
     int const npars = 3;
     
