@@ -1,11 +1,11 @@
 /*
-  This macro will fit dx in various different ways.
+  This macro will fit W2 distribution in various different ways.
   Plan:
   1. MC signal, no bg
-  2. MC signal + bg from data
-  3. MC signal + poly bg
+  2. MC signal + poly bg
+  3. Signal from data + poly bg
   -------
-  P. Datta Created 05-02-2023 (Based on a script written by AJRP)
+  P. Datta Created 05-02-2023
 */
 
 #include "TH1F.h"

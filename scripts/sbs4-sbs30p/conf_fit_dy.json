@@ -1,4 +1,24 @@
 {
+"elas":
+{
+    "SBS_config"           : 4,
+    "SBS_magnet_percent"   : 30,
+    "model"                : 2,
+    "pass"                 : 2,
+    "data_file_prefix"     : "test",
+    "simu_file_prefix"     : "hoff75cm_385sf",
+    "generator"            : "simc",
+    "coinT_cut"            : "abs((atimeHCAL-atimeSH)-51.)<6.",
+    "cuts_for_signal_data" : "W2>=0.3&&W2<=1.4&&fiduCut",
+    "cuts_for_signal_simu" : "W2>=0.3&&W2<=1.4&&fiduCut",
+    "cuts_for_bg"          : "!WCut",
+    "dy_peak_offset_for_MC": 0,
+    "Order_of_poly_bg"     : 4,
+    "h_dy"                 : [150, -1.5, 1.5],
+    "dy_fit_range"         : [-1.5, 1.5]
+},
+"qelas":
+{
     "SBS_config"           : 4,
     "SBS_magnet_percent"   : 30,
     "model"                : 2,
@@ -10,7 +30,9 @@
     "cuts_for_signal_data" : "WCut&&fiduCut",
     "cuts_for_signal_simu" : "WCut&&fiduCut",
     "cuts_for_bg"          : "!WCut",
-    "Order_of_poly_bg"     : 4,
+    "dy_peak_offset_for_MC": -0.006,
+    "Order_of_poly_bg"     : 5,
     "h_dy"                 : [150, -1.5, 1.5],
     "dy_fit_range"         : [-1.5, 1.5]
+}
 }
