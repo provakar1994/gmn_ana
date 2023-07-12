@@ -22,7 +22,7 @@ class FitFn {
   FitFn(TH1F *hs1, TH1F *hs2, TH1F *hbg): fhs1(hs1),fhs2(hs2),fhbg(hbg) {}
   FitFn(TH1F *hs1, TH1F *hs2, int poly): fhs1(hs1),fhs2(hs2),fpoly(poly) {}
 
-  // returns Gaussian fit function (Doesn't work!)
+  // returns Gaussian fit function
   double ffn_gaus (double *x, double *par) const {
     return par[0]*std::exp(-0.5*std::pow((x[0]-par[1])/par[2],2.));
   }
@@ -35,10 +35,10 @@ class FitFn {
 
   // returns polynomial fit fn of order fpoly considering the reject points (Sideband method)
   double ffn_1pbg_sb_2rp(double *x, double *par) const {
-  if (x[0]>frp1 && x[0]<frp2){
-    TF1::RejectPoint();
-    return 0;
-  }
+    if (x[0]>frp1 && x[0]<frp2){
+      TF1::RejectPoint();
+      return 0;
+    }
     return ffn_poly(x,par);
   }
 
@@ -48,7 +48,7 @@ class FitFn {
     return Norm*fhs1->Interpolate(x[0]);
   }
 
-  // fits using 1 signal histo and 1 poly bg (1+poly params)
+  // fits using 1 signal histo and 1 poly bg (1+fpoly+1 params)
   double ffn_1hs_1pbg (double *x, double *par) const {
     double Norm = par[0];
     return Norm*fhs1->Interpolate(x[0]) + ffn_poly(x,&par[1]);
@@ -69,7 +69,7 @@ class FitFn {
     return Norm*(fhs1->Interpolate(x[0])+R*fhs2->Interpolate(x[0])+B*fhbg->Interpolate(x[0]));
   }
 
-  // fits using 2 signal histos and 1 poly bg (2+poly params)
+  // fits using 2 signal histos and 1 poly bg (2+fpoly+1 params)
   double ffn_2hs_1pbg (double *x, double *par) const {
     double Norm = par[0];
     double R = par[1];

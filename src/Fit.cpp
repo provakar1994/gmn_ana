@@ -48,12 +48,13 @@ namespace fit {
     f1->SetParameters(&initial_guesses[0]);
 
     ht_cp->Fit(f1,"R");
-    std::vector<double> pars;
-    for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
+    // std::vector<double> pars;
+    // for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
 
     TF1* bg = new TF1("bg",ffn,&FitFn::ffn_poly,fit_range[0],fit_range[1],Opoly+1);
     bg->SetNpx(500);
-    bg->SetParameters(&pars[0]);
+    // bg->SetParameters(&pars[0]);
+    bg->SetParameters(&GetFitParams(f1)[0]);
     bg->SetLineColor(kGreen+2);
 
     return bg;
@@ -78,10 +79,10 @@ namespace fit {
     f1->SetParName(0,"Norm");
 
     ht_cp->Fit(f1,"R"); 
-    std::vector<double> pars;
-    for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
+    // std::vector<double> pars;
+    // for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
 
-    TH1F *hs_cp2 = (TH1F*)hs_cp1->Clone(); hs_cp2->Scale(pars[0]);
+    TH1F *hs_cp2 = (TH1F*)hs_cp1->Clone(); hs_cp2->Scale(GetFitParams(f1)[0]); //hs_cp2->Scale(pars[0]);
     ho = {ht_cp,hs_cp2};
     
     return f1;    
@@ -108,10 +109,10 @@ namespace fit {
     set_poly_par_names(f1,1,Opoly);
 
     ht_cp->Fit(f1,"R");
-    std::vector<double> pars;
-    for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
+    // std::vector<double> pars;
+    // for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
 
-    TH1F *hs_cp2 = (TH1F*)hs_cp1->Clone(); hs_cp2->Scale(pars[0]);
+    TH1F *hs_cp2 = (TH1F*)hs_cp1->Clone(); hs_cp2->Scale(GetFitParams(f1)[0]); //hs_cp2->Scale(pars[0]);
     TH1F *hbg = (TH1F*)ht_cp->Clone(); hbg->Add(ht_cp,hs_cp2,1,-1); 
     ho = {ht_cp,hs_cp2,hbg};
     
@@ -140,8 +141,8 @@ namespace fit {
     f1->SetParName(1,"R");
 
     ht_cp->Fit(f1,"R"); 
-    std::vector<double> pars;
-    for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
+    std::vector<double> pars = GetFitParams(f1);
+    //for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
 
     TH1F *hs1_cp2 = (TH1F*)hs1_cp1->Clone(); hs1_cp2->Scale(pars[0]);
     TH1F *hs2_cp2 = (TH1F*)hs2_cp1->Clone(); hs2_cp2->Scale(pars[0]*pars[1]);
@@ -176,8 +177,8 @@ namespace fit {
     f1->SetParName(2,"B");
 
     ht_cp->Fit(f1,"R");
-    std::vector<double> pars;
-    for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
+    std::vector<double> pars = GetFitParams(f1);
+    //for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
 
     TH1F *hs1_cp2 = (TH1F*)hs1_cp1->Clone(); hs1_cp2->Scale(pars[0]);
     TH1F *hs2_cp2 = (TH1F*)hs2_cp1->Clone(); hs2_cp2->Scale(pars[0]*pars[1]);
@@ -209,10 +210,10 @@ namespace fit {
     set_poly_par_names(f1,1,Opoly);
 
     ht_cp->Fit(f1,"R"); 
-    std::vector<double> pars;
-    for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
+    // std::vector<double> pars;
+    // for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
 
-    TH1F *hs_cp2 = (TH1F*)hs_cp1->Clone(); hs_cp2->Scale(pars[0]);
+    TH1F *hs_cp2 = (TH1F*)hs_cp1->Clone(); hs_cp2->Scale(GetFitParams(f1)[0]);
     TH1F *hbg = (TH1F*)ht_cp->Clone(); hbg->Add(ht_cp,hs_cp2,1,-1); 
     ho = {ht_cp,hs_cp2,hbg};
     
@@ -243,8 +244,8 @@ namespace fit {
     set_poly_par_names(f1,2,Opoly);
 
     ht_cp->Fit(f1,"R");
-    std::vector<double> pars;
-    for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
+    std::vector<double> pars = GetFitParams(f1);
+    //for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
 
     TH1F *hs1_cp2 = (TH1F*)hs1_cp1->Clone(); hs1_cp2->Scale(pars[0]);
     TH1F *hs2_cp2 = (TH1F*)hs2_cp1->Clone(); hs2_cp2->Scale(pars[0]*pars[1]);
@@ -286,8 +287,8 @@ namespace fit {
     f1->SetParameter(2,sigma);
 
     ht_cp->Fit(f1,"R");
-    std::vector<double> pars1;
-    for (int i=0;i<npars;i++) {pars1.push_back(f1->GetParameter(i));}
+    std::vector<double> pars1 = GetFitParams(f1);
+    //for (int i=0;i<npars;i++) {pars1.push_back(f1->GetParameter(i));}
 
     // Second fit with tailored range
     double llim = pars1[1] - fit_range[2]*pars1[2];
