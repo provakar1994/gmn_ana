@@ -145,8 +145,6 @@ int qelas_ana_simu (const char *configfilename,
 
   TH2F *h2_rcHCAL = util_pd::TH2FHCALface_rc("h2_rcHCAL");
   TH2F *h2_dxdyHCAL = util_pd::TH2FdxdyHCAL("h2_dxdyHCAL");
-  TH2F *h2_xyHCAL_p = util_pd::TH2FHCALface_xy_simu("h2_xyHCAL_p");
-  TH2F *h2_xyHCAL_n = util_pd::TH2FHCALface_xy_simu("h2_xyHCAL_n");
 
   // Defining interesting ROOT tree branches 
   TTree *Tout = new TTree("Tout", "");
@@ -234,6 +232,8 @@ int qelas_ana_simu (const char *configfilename,
   std::vector<double> dy_n_cut; jmgr->GetVectorFromKey<double>("dy_n_cut", dy_n_cut);
   std::vector<double> hcal_active_area = cut::hcal_active_area_simu(1,1); // Exc. 1 blk from all 4 sides
   std::vector<double> hcal_safety_margin = cut::hcal_safety_margin(dx_p_cut[1], dx_n_cut[1], dy_p_cut[1], hcal_active_area);
+  TH2F *h2_xyHCAL_p = util_pd::TH2FHCALface_xy_simu("h2_xyHCAL_p",sbs_kick);
+  TH2F *h2_xyHCAL_n = util_pd::TH2FHCALface_xy_simu("h2_xyHCAL_n",0);
 
   // reading W cut limits
   std::vector<double> W_cutR; jmgr->GetVectorFromKey<double>("W_cutR",W_cutR);
@@ -468,11 +468,11 @@ int qelas_ana_simu (const char *configfilename,
     // fiducial cut but no W cut
     if (Wrecon>0) { 
       if (fiduCut) {
-	h_W->Fill(Wrecon);
+	h_W->Fill(Wrecon,weight);
 	if (pCut || nCut) { 
-	  h_W_cut->Fill(Wrecon);
+	  h_W_cut->Fill(Wrecon,weight);
 	} else {
-	  h_W_acut->Fill(Wrecon);
+	  h_W_acut->Fill(Wrecon,weight);
 	}
       }
     }
