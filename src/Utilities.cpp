@@ -713,7 +713,7 @@ namespace util_pd {
   }
   //______________________________________________________________________________
   void GetTotNtriesnCh(std::vector<SimuJob> sjobs, // Input: List of SimuJob objects
-		       std::vector<double> &data)       // Output: data[0]=>Tot. Ch., data[1]=>Tot. ntries
+		       std::vector<double> &data)  // Output: data[0]=>Tot. Ch., data[1]=>Tot. ntries
   /* Calc. # tries & tot. Ch. from SimuJob objects */
   {
     double totntries=0.,totcharge=0.;
@@ -722,5 +722,35 @@ namespace util_pd {
       totcharge += job.charge;
     }
     data = {totntries,totcharge};
+  }
+  //______________________________________________________________________________
+  void GetMeanEloss(std::string const target,  // Target type
+		    SBSconfig const conf,      // SBSconf object
+		    std::vector<double> &data) // Output: data[0]=>before scattering, data[1]=>after scattering,
+  /* Calculates mean energy loss in the target before and after scattering  */
+  {
+    double tgt_rho, tgt_dEdx, tgt_uwinthick, tgt_celldiam, tgt_cellthick; 
+    if (target.compare("LH2")==0) {
+      tgt_rho = expconst::lh2_TgtRho;
+      tgt_dEdx = expconst::lh2_dEdx;
+      tgt_uwinthick = expconst::lh2_uWinThick;
+      tgt_celldiam = expconst::lh2_CellDiam;
+      tgt_cellthick = expconst::lh2_CellThick;
+    }else if (target.compare("LD2")==0) {
+      tgt_rho = expconst::ld2_TgtRho;
+      tgt_dEdx = expconst::ld2_dEdx;
+      tgt_uwinthick = expconst::ld2_uWinThick;
+      tgt_celldiam = expconst::ld2_CellDiam;
+      tgt_cellthick = expconst::ld2_CellThick;
+    }else
+      throw std::invalid_argument("[util_pd::GetMeanEloss] Given target type is invalid!");
+      
+    // Al shield was in place or not
+    bool Al_shield_in = conf.GetSBSconf()<8 ? false : true;
+
+    double MeanEloss_before = expconst::tgtlen*0.5*tgt_rho*tgt_dEdx + tgt_uwinthick*expconst::Al_Rho*expconst::Al_dEdx;
+    double MeanEloss_after = tgt_celldiam/2.0/sin(conf.GetBBtheta_rad())*tgt_rho*tgt_dEdx + tgt_cellthick/sin(conf.GetBBtheta_rad())*expconst::Al_Rho*expconst::Al_dEdx;
+    if (Al_shield_in) MeanEloss_after += expconst::Al_ShieldThick*expconst::Al_Rho*expconst::Al_dEdx;
+    data = {MeanEloss_before,MeanEloss_after};
   }
 }
