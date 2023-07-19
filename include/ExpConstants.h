@@ -52,24 +52,46 @@ namespace expconst {
   /* static const double hcaloffset_h_simu = 0.0;   //m, horiz. offset of HCAL origin w.r.t DB (simu) */
   
   // Constant for the entire experiment
+  /*
+    NOTES:
+    *. Target cell dimensions:
+       - Cell diameter is still a guess. Using the value Andrew used.
+       - Cell thickness is also a guess. Again using what Andrew used.
+    *. Target density: Look at ~/OneDrive - University of Connecticut/workPD/proj/gmn-ana-resources/target
+    *. Stopping power: 
+       - Useful website by NIST ESTAR: https://physics.nist.gov/PhysRefData/Star/Text/ESTAR.html 
+       - According to the website stopping power of hydrogen ranges from 5.74 to 5.82 MeV*cm2/g in the scattered
+         e- energy of interest (2.1-3.6 GeV) for our analysis.
+       - Above website don't have data on deuterium but I found a master's thesis from 1952 that shows that the 
+         stopping power of deuterium is pretty close to hydrogen. https://open.library.ubc.ca/media/stream/pdf/831/1.0085416/1
+  */
   // target
-  static const double tarlen = 15.0;  //cm 
+  static const double tgtlen = 15.0;  //cm 
   // LH2
-  static const double lh2tarrho = 0.0723;     //g/cc, target density
-  static const double lh2cthick = 0.02;       //cm, target cell thickness
-  static const double lh2uwallthick = 0.0145; //cm, upstream wall thickness
-  static const double lh2dwallthick = 0.015;  //cm, downstream wall thickness
+  static const double lh2_TgtRho = 0.0725;      //g/cc, target density
+  static const double lh2_CellThick = 0.02;     //cm, target cell thickness (Andrew's guess)
+  static const double lh2_CellDiam  = 1.6*2.54; //cm, target cell diameter (Andrew's guess)
+  static const double lh2_uWinThick = 0.0145;   //cm, upstream window thickness
+  static const double lh2_dWinThick = 0.0158;   //cm, downstream window (tip) thickness
+  static const double lh2_dWallThick = 0.0143;  //cm, downstream wall thickness
+  static const double lh2_dEdx = 0.005771;      //GeV*cm2/g, collisional stopping power (2.5GeV energy), NIST ESTAR 
   // LD2
-  static const double ld2tarrho = 0.169;      //g/cc, target density
-
+  static const double ld2_TgtRho = 0.167;       //g/cc, target density
+  static const double ld2_CellThick = 0.02;     //cm, target cell thickness (Andrew's guess)
+  static const double ld2_CellDiam  = 1.6*2.54; //cm, target cell diameter (Andrew's guess)
+  static const double ld2_uWinThick = 0.0125;   //cm, upstream window thickness
+  static const double ld2_dWinThick = 0.0138;   //cm, downstream window (tip) thickness
+  static const double ld2_dWallThick = 0.0136;  //cm, downstream wall thickness
+  static const double ld2_dEdx = 0.005771;      //GeV*cm2/g, collisional stopping power (2GeV energy), NIST ESTAR 
   // magnet
   static const double bbmaxcurr = 750;   //A, 100% BB magnet current
   static const double sbsmaxcurr = 2100; //A, 100% SBS magnet current
   static const double sbsdipolegap = (48.0*2.54) / 100.;  // ~1.22 m
   static const double sbsmaxfield = 3.1*atan(0.85 / (11.0-2.25-(sbsdipolegap/2.))) / (0.3*sbsdipolegap*0.7); // ~1.26 T (?)
-
-  // shieldling
-  static const double Alrho = 2.7; //g/cc
+  // shieldling (Installed during SBS-11)
+  static const double Al_Rho = 2.7;              //g/cc
+  static const double Al_dEdx = 0.0021;          //GeV*cm2/g, collisional stopping power (1-4GeV energy), NIST ESTAR 
+  static const double Al_ShieldThick = 2.54/8.0; //cm, 1/8th inch
 
   // Following quantities vary with configuration
   double ebeam(int config);     //GeV
