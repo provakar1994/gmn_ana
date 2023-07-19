@@ -8,7 +8,7 @@
 */
 
 // TO-DO
-// 1. Energy loss calculations
+// 1. Energy loss calculations - Done (Cell diameter and thickness are guesses)
 
 #include <vector>
 #include <iostream>
@@ -255,7 +255,9 @@ int elas_ana_data (const char *configfilename,
   double T_bbT_trig;      Tout->Branch("bbT_trig", &T_bbT_trig, "bbT_trig/D");
   double T_coinT_trig;    Tout->Branch("coinT_trig", &T_coinT_trig, "coinT_trig/D");
 
-  // Do the energy loss calculation here ...........
+  // Energy loss corrections
+  std::vector<double> MeanEloss; util_pd::GetMeanEloss(target,sbsconf,MeanEloss);
+  std::cout << Form("Mean energy loss in target (GeV): %f (before), %f (after)",MeanEloss[0],MeanEloss[1]) << std::endl;
 
   // HCAL cut definitions
   vector<double> dx_p_cut; jmgr->GetVectorFromSubKey<double>(key,"dx_p_cut", dx_p_cut);
@@ -346,8 +348,8 @@ int elas_ana_data (const char *configfilename,
     // constructing the 4 vectors
     /* Reaction    : e + e' -> p + p'
        Conservation: Pe + Peprime = Pp + Ppprime */
-    double ebeam_corr = ebeam; //- MeanEloss;
-    double precon = p[0]; //+ MeanEloss_outgoing
+    double ebeam_corr = ebeam - MeanEloss[0];
+    double precon = p[0] + MeanEloss[1];
     TVector3 vertex(0, 0, vz[0]);
     TLorentzVector Pe(0,0,ebeam_corr,ebeam_corr);   // incoming e- 4-vector
     TLorentzVector Peprime(px[0] * (precon/p[0]),   // scattered e- 4-vector
