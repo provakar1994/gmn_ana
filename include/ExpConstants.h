@@ -2,6 +2,8 @@
 #define EXP_CONSTANTS_H
 
 #include <iostream>
+#include <unordered_map>
+
 #include "TMath.h"
 #include "TString.h"
 
@@ -74,7 +76,7 @@ namespace expconst {
   static const double lh2_uWinThick = 0.0145;   //cm, upstream window thickness
   static const double lh2_dWinThick = 0.0158;   //cm, downstream window (tip) thickness
   static const double lh2_dWallThick = 0.0143;  //cm, downstream wall thickness
-  static const double lh2_dEdx = 0.005771;      //GeV*cm2/g, collisional stopping power (2.5GeV energy), NIST ESTAR 
+  //static const double lh2_dEdx = 0.005771;      //GeV*cm2/g, collisional stopping power (2.5GeV energy), NIST ESTAR 
   // LD2
   static const double ld2_TgtRho = 0.167;       //g/cc, target density
   static const double ld2_CellThick = 0.02;     //cm, target cell thickness (Andrew's guess)
@@ -82,25 +84,35 @@ namespace expconst {
   static const double ld2_uWinThick = 0.0125;   //cm, upstream window thickness
   static const double ld2_dWinThick = 0.0138;   //cm, downstream window (tip) thickness
   static const double ld2_dWallThick = 0.0136;  //cm, downstream wall thickness
-  static const double ld2_dEdx = 0.005771;      //GeV*cm2/g, collisional stopping power (2GeV energy), NIST ESTAR 
+  //static const double ld2_dEdx = 0.005771;      //GeV*cm2/g, collisional stopping power (2GeV energy), NIST ESTAR 
   // magnet
   static const double bbmaxcurr = 750;   //A, 100% BB magnet current
   static const double sbsmaxcurr = 2100; //A, 100% SBS magnet current
   static const double sbsdipolegap = (48.0*2.54) / 100.;  // ~1.22 m
   static const double sbsmaxfield = 3.1*atan(0.85 / (11.0-2.25-(sbsdipolegap/2.))) / (0.3*sbsdipolegap*0.7); // ~1.26 T (?)
-  // shieldling (Installed during SBS-11)
+  // Polyethylene (PE) shield near scattering chamber (Installed during SBS-11). See Utilities::GetElossInTgt for more info.
+  static const double PE_Rho = 0.91;         //g/cc
+  static const double PE_ShieldThick = 1.0;  //cm, 10 mm
+  // Al shield near scattering chamber (Installed during SBS-11). See Utilities::GetElossInTgt for more info.
   static const double Al_Rho = 2.7;              //g/cc
-  static const double Al_dEdx = 0.0021;          //GeV*cm2/g, collisional stopping power (1-4GeV energy), NIST ESTAR 
   static const double Al_ShieldThick = 2.54/8.0; //cm, 1/8th inch
+  //static const double Al_dEdx = 0.0021;          //GeV*cm2/g, collisional stopping power (1-4GeV energy), NIST ESTAR 
 
   // Following quantities vary with configuration
   double ebeam(int config);     //GeV
+  double pcentral(int config);  //GeV
   double bbtheta(int config);   //deg
   double bbdist(int config);    //m
   double sbstheta(int config);  //deg
   double sbsdist(int config);   //m
   double hcaltheta(int config); //deg
   double hcaldist(int config);  //m
+  double GetdEdxCollH(int const config,                 // SBS config
+		      bool const is_before_scattering); // 1=>YES, 0=>NO (i.e. after scattering)
+  double GetdEdxCollAl(int const config, bool const is_before_scattering);  //GeV*cm2/g
+  double GetdEdxCollPE(int const config, bool const is_before_scattering);  //GeV*cm2/g
+  /* double dEdx_coll_bs(int config, std::string material); //GeV*cm2/g */
+  /* double dEdx_coll_as(int config, std::string material); //GeV*cm2/g */
 }
 
 // a class for SBS config

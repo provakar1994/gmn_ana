@@ -146,8 +146,12 @@ namespace util_pd {
 		       std::vector<double> &data); // Output: data[0]=>Tot. Ntries, data[1]=>Tot. Charge
 
   /* Calculates mean energy loss in the target before and after scattering  */
-  void GetMeanEloss(std::string const target,   // Target type
-		    SBSconfig const conf,       // SBSconf object
-		    std::vector<double> &data); // Output: data[0]=>before scattering, data[1]=>after scattering,
+  void GetElossInTgt(std::string const target,  // Target type
+		     int const rnum,            // Run number
+		     int const sbsconf,         // SBS configuration
+		     double const vz,           // m, vertex z co-ordinate
+		     double const etheta,       // rad, scattering angle
+		     int const verbose,         // verbosity
+		     std::vector<double> &data);// Output: data[0]=>before scattering, data[1]=>after scattering,
 }
 #endif

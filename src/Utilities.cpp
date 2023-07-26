@@ -724,33 +724,63 @@ namespace util_pd {
     data = {totntries,totcharge};
   }
   //______________________________________________________________________________
-  void GetMeanEloss(std::string const target,  // Target type
-		    SBSconfig const conf,      // SBSconf object
+  void GetElossInTgt(std::string const target, // Target type
+		    int const rnum,            // Run number
+		    int const sbsconf,         // SBS configuration
+		    double const vz,           // m, vertex z co-ordinate
+		    double const etheta,       // rad, scattering angle
+		    int const verbose,         // verbosity
 		    std::vector<double> &data) // Output: data[0]=>before scattering, data[1]=>after scattering,
-  /* Calculates mean energy loss in the target before and after scattering  */
+  /* Calculates energy loss in the target before and after scattering */
   {
-    double tgt_rho, tgt_dEdx, tgt_uwinthick, tgt_celldiam, tgt_cellthick; 
+    double tgt_rho, tgt_dEdx_bs, tgt_dEdx_as, tgt_uwinthick, tgt_celldiam, tgt_cellthick; 
+    double Al_dEdx_bs = expconst::GetdEdxCollAl(sbsconf,1), Al_dEdx_as = expconst::GetdEdxCollAl(sbsconf,0);
+    double PE_dEdx_bs = expconst::GetdEdxCollPE(sbsconf,1), PE_dEdx_as = expconst::GetdEdxCollPE(sbsconf,0); 
     if (target.compare("LH2")==0) {
       tgt_rho = expconst::lh2_TgtRho;
-      tgt_dEdx = expconst::lh2_dEdx;
+      //tgt_dEdx = expconst::lh2_dEdx;
+      tgt_dEdx_bs = expconst::GetdEdxCollH(sbsconf,1);
+      tgt_dEdx_as = expconst::GetdEdxCollH(sbsconf,0);
       tgt_uwinthick = expconst::lh2_uWinThick;
       tgt_celldiam = expconst::lh2_CellDiam;
       tgt_cellthick = expconst::lh2_CellThick;
     }else if (target.compare("LD2")==0) {
       tgt_rho = expconst::ld2_TgtRho;
-      tgt_dEdx = expconst::ld2_dEdx;
+      //tgt_dEdx = expconst::ld2_dEdx;
+      tgt_dEdx_bs = expconst::GetdEdxCollH(sbsconf,1);
+      tgt_dEdx_as = expconst::GetdEdxCollH(sbsconf,0);
       tgt_uwinthick = expconst::ld2_uWinThick;
       tgt_celldiam = expconst::ld2_CellDiam;
       tgt_cellthick = expconst::ld2_CellThick;
     }else
-      throw std::invalid_argument("[util_pd::GetMeanEloss] Given target type is invalid!");
+      throw std::invalid_argument("[util_pd::GetElossInTgt] Given target type is invalid!");
       
-    // Al shield was in place or not
-    bool Al_shield_in = conf.GetSBSconf()<8 ? false : true;
+    // Scattering chamber shielding 
+    /* NOTE: 
+       1. Additional shielding beside the scattering chamber was installed during SBS11 to reduce 
+          background rates in the front tracker (I think).
+       2. Initially, Bogdan just put a 10mm plastic shielding leaning on the scattering chamber!
+          Bogdan did that on 12/04/2021 at 18:20. https://logbooks.jlab.org/entry/3956556
+	  First run after the installation: 12556
+	  - Andrew suggested to assume the material to be acrylic or polyethylene. I am going with
+	    polyethylene (PE). 
+       3. Then on 12/08/2021, Andrew (tech) replaced the plastic shielding with a permanent 1/8th
+          inch thick Al shield. https://logbooks.jlab.org/entry/3958901 
+	  First run after the installation: 12675
+    */
+    bool PE_shield_in = (rnum<12556 || rnum>=12675) ? false : true;
+    bool Al_shield_in = rnum<12675 ? false : true;
 
-    double MeanEloss_before = expconst::tgtlen*0.5*tgt_rho*tgt_dEdx + tgt_uwinthick*expconst::Al_Rho*expconst::Al_dEdx;
-    double MeanEloss_after = tgt_celldiam/2.0/sin(conf.GetBBtheta_rad())*tgt_rho*tgt_dEdx + tgt_cellthick/sin(conf.GetBBtheta_rad())*expconst::Al_Rho*expconst::Al_dEdx;
-    if (Al_shield_in) MeanEloss_after += expconst::Al_ShieldThick*expconst::Al_Rho*expconst::Al_dEdx;
-    data = {MeanEloss_before,MeanEloss_after};
+    double Eloss_bf = (vz+0.08)*100.0*tgt_rho*tgt_dEdx_bs + tgt_uwinthick*expconst::Al_Rho*Al_dEdx_bs;
+    double Eloss_af = tgt_celldiam/2.0/sin(etheta)*tgt_rho*tgt_dEdx_as + tgt_cellthick/sin(etheta)*expconst::Al_Rho*Al_dEdx_as;
+    if (PE_shield_in) Eloss_af += expconst::PE_ShieldThick*expconst::PE_Rho*PE_dEdx_as;
+    if (Al_shield_in) Eloss_af += expconst::Al_ShieldThick*expconst::Al_Rho*Al_dEdx_as;
+    data = {Eloss_bf,Eloss_af};
+
+    if (verbose>1) {
+      std::cout << Form("\netheta = %.1f deg, effective vz = %.3f m \n",etheta*TMath::RadToDeg(),vz+0.08);
+      std::cout << Form("Plastic shield in place = %d, Al shield in place = %d \n",PE_shield_in,Al_shield_in);
+      std::cout << Form("Mean energy loss (MeV) %.1f (before), %.1f (after) \n",Eloss_bf*1E3,Eloss_af*1E3);
+    }
   }
 }
