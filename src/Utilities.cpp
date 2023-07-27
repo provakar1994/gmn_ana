@@ -738,7 +738,6 @@ namespace util_pd {
     double PE_dEdx_bs = expconst::GetdEdxCollPE(sbsconf,1), PE_dEdx_as = expconst::GetdEdxCollPE(sbsconf,0); 
     if (target.compare("LH2")==0) {
       tgt_rho = expconst::lh2_TgtRho;
-      //tgt_dEdx = expconst::lh2_dEdx;
       tgt_dEdx_bs = expconst::GetdEdxCollH(sbsconf,1);
       tgt_dEdx_as = expconst::GetdEdxCollH(sbsconf,0);
       tgt_uwinthick = expconst::lh2_uWinThick;
@@ -746,7 +745,6 @@ namespace util_pd {
       tgt_cellthick = expconst::lh2_CellThick;
     }else if (target.compare("LD2")==0) {
       tgt_rho = expconst::ld2_TgtRho;
-      //tgt_dEdx = expconst::ld2_dEdx;
       tgt_dEdx_bs = expconst::GetdEdxCollH(sbsconf,1);
       tgt_dEdx_as = expconst::GetdEdxCollH(sbsconf,0);
       tgt_uwinthick = expconst::ld2_uWinThick;
@@ -754,6 +752,11 @@ namespace util_pd {
       tgt_cellthick = expconst::ld2_CellThick;
     }else
       throw std::invalid_argument("[util_pd::GetElossInTgt] Given target type is invalid!");
+
+    // Scaling vz properly
+    double vz_scaled = vz*1E2 + expconst::tgtlen*0.5; //cm
+    if (vz_scaled<0) vz_scaled = 0.;  // handling unphysical values
+    else if (vz_scaled>expconst::tgtlen) vz_scaled = expconst::tgtlen;
       
     // Scattering chamber shielding 
     /* NOTE: 
@@ -771,14 +774,14 @@ namespace util_pd {
     bool PE_shield_in = (rnum<12556 || rnum>=12675) ? false : true;
     bool Al_shield_in = rnum<12675 ? false : true;
 
-    double Eloss_bf = (vz+0.08)*100.0*tgt_rho*tgt_dEdx_bs + tgt_uwinthick*expconst::Al_Rho*Al_dEdx_bs;
+    double Eloss_bf = vz_scaled*tgt_rho*tgt_dEdx_bs + tgt_uwinthick*expconst::Al_Rho*Al_dEdx_bs;
     double Eloss_af = tgt_celldiam/2.0/sin(etheta)*tgt_rho*tgt_dEdx_as + tgt_cellthick/sin(etheta)*expconst::Al_Rho*Al_dEdx_as;
     if (PE_shield_in) Eloss_af += expconst::PE_ShieldThick*expconst::PE_Rho*PE_dEdx_as;
     if (Al_shield_in) Eloss_af += expconst::Al_ShieldThick*expconst::Al_Rho*Al_dEdx_as;
     data = {Eloss_bf,Eloss_af};
 
     if (verbose>1) {
-      std::cout << Form("\netheta = %.1f deg, effective vz = %.3f m \n",etheta*TMath::RadToDeg(),vz+0.08);
+      std::cout << Form("\netheta = %.1f deg, vz = %.3f m, vz_scaled = %.3f m \n",etheta*TMath::RadToDeg(),vz,vz_scaled*1E-2);
       std::cout << Form("Plastic shield in place = %d, Al shield in place = %d \n",PE_shield_in,Al_shield_in);
       std::cout << Form("Mean energy loss (MeV) %.1f (before), %.1f (after) \n",Eloss_bf*1E3,Eloss_af*1E3);
     }
