@@ -78,6 +78,32 @@ int elas_ana_data (const char *configfilename,
   else if (model == 2) std::cout << "Using model 2 [4-vector calculation] for analysis.." << std::endl;
   else { std::cerr << "Enter a valid model number! **!**" << std::endl; throw; }
 
+  // Choosing best HCAL cluster
+  /*
+   Algorithms:
+   1. Default: Cluster w/ highest energy.
+   2. Atime: HE cluster passing HCAL/SH ADC coincidence time. 
+   3. Smallest thpq: Clusters with smallest thpq_p that passed ADC coin time and sampling fraction cuts
+   -----
+   How-to access in Tout:
+   1. Use HCAL_acl variables with index = 0.
+   2. Use any default HCAL variable.
+   3. Use HCAL_acl variables with index = idclHCAL_sthpq_p.
+   -----
+   Flag(s):
+   > hcal_acl_ON: False=>Don't loop through all the HCAL cls. Keep using the default HE clusters.
+   -----
+   NOTE:
+   > HE clusters ("Default algo") always have index=0.
+   > While using "Atime algo", for events that have no cluster in time we fall back to index=0.
+   > While using the 3rd algorithm, for events that have no cls. passing coin. time cut and sampling
+     fraction cut we update the index according to "Atime_algo". 
+   > For the 3rd algo, one can choose smallest min(thpq_p,thpq_n) instead of smallest thpq_p. But the 
+     later gave better results. 
+  */
+  bool hcal_acl_ON = jmgr->GetValueFromSubKey<int>(key,"hcal_acl_ON");
+  double hcal_sF_cutR = jmgr->GetValueFromSubKey<double>(key,"hcal_samp_frac_cutR");
+
   // choosing nucleon type 
   std::string Ntype = jmgr->GetValueFromSubKey_str(key,"Ntype");
 
@@ -87,7 +113,7 @@ int elas_ana_data (const char *configfilename,
   TTreeFormula *GlobalCut = new TTreeFormula("GlobalCut",(TCut)gcut.c_str(),C);
 
   // setting up ROOT tree branch addresses ---------------------------------------
-  int maxNtr=1000;
+  int maxNtr = jmgr->GetValueFromSubKey<int>(key,"max_N_tracks");
   C->SetBranchStatus("*",0);
   // beam energy - Probably we should take an average over 100 events
   // double HALLA_p;
@@ -110,6 +136,16 @@ int elas_ana_data (const char *configfilename,
   std::vector<std::string> hcalclvar = {"e","x","y","rowblk","colblk","idblk","atimeblk","clus_blk.tdctime"};
   std::vector<void*> hcalclvar_mem = {&eHCAL,&xHCAL,&yHCAL,&rblkHCAL,&cblkHCAL,&idblkHCAL,&atimeHCAL,&tdcHCAL};
   setrootvar::setbranch(C, "sbs.hcal", hcalclvar, hcalclvar_mem);
+
+  // hcal all clus vars
+  int maxNHCALcl = jmgr->GetValueFromSubKey<int>(key,"max_N_HCAL_clusters");
+  int idblkHCAL_aclN; double idblkHCAL_acl[maxNHCALcl], rblkHCAL_acl[maxNHCALcl], cblkHCAL_acl[maxNHCALcl];
+  double nblkHCAL_acl[maxNHCALcl], eblkHCAL_acl[maxNHCALcl], atimeblkHCAL_acl[maxNHCALcl], tdcblkHCAL_acl[maxNHCALcl]; 
+  double eHCAL_acl[maxNHCALcl], xHCAL_acl[maxNHCALcl], yHCAL_acl[maxNHCALcl];
+  std::vector<std::string> hcalclvar_acl = {"id","id","nblk","eblk","e","x","y","row","col","atime","tdctime"};
+  std::vector<void*> hcalclvar_acl_mem = {&idblkHCAL_acl,&idblkHCAL_aclN,&nblkHCAL_acl,&eblkHCAL_acl,&eHCAL_acl,
+					  &xHCAL_acl,&yHCAL_acl,&rblkHCAL_acl,&cblkHCAL_acl,&atimeblkHCAL_acl,&tdcblkHCAL_acl};
+  setrootvar::setbranch(C, "sbs.hcal.clus", hcalclvar_acl, hcalclvar_acl_mem, 1);
 
   // bbhodo clus var
   int ncltmeanHODO; 
@@ -169,10 +205,20 @@ int elas_ana_data (const char *configfilename,
   TH1F *h_dxHCAL_nfc = new TH1F("h_dxHCAL_nfc","W cut;x_{HCAL}^{obs} - x_{HCAL}^{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
   TH1F *h_dyHCAL = new TH1F("h_dyHCAL","W & fiducial cuts;y_{HCAL}^{obs} - y_{HCAL}^{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
   TH1F *h_dyHCAL_nfc = new TH1F("h_dyHCAL_nfc","W cut;y_{HCAL}^{obs} - y_{HCAL}^{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
-  TH1F *h_coin_time = new TH1F("h_coin_time","BBCAL-HCAL trigger coincidence time (ns)",200,380,660);
+  TH1F *h_coinT_trig = new TH1F("h_coinT_trig","BBCAL-HCAL trigger coincidence time (ns)",200,380,660);
 
   TH2F *h2_rcHCAL = util_pd::TH2FHCALface_rc("h2_rcHCAL");
   TH2F *h2_dxdyHCAL = util_pd::TH2FdxdyHCAL("h2_dxdyHCAL");
+
+  TH1F *h_hcl_inTime_idcl = new TH1F("h_hcl_inTime_idcl","Index of HCAL cl. in time (HCAL/SH ADC coin)",maxNHCALcl,0,maxNHCALcl);
+  TH1F *h_hcl_inTime_idcl_WCut = new TH1F("h_hcl_inTime_idcl_WCut","Index of HCAL cl. in time (HCAL/SH ADC coin) | WCut",maxNHCALcl,0,maxNHCALcl);
+
+  TH2F *h2_hclHE_eng_vs_idcl = new TH2F("h2_hclHE_eng_vs_idcl","Eng. of HE block vs cl. index | HCAL",maxNHCALcl,0,maxNHCALcl,200,0,1);
+  TH2F *h2_hclHE_atime_vs_idcl = new TH2F("h2_hclHE_atime_vs_idcl","ADC time of HE block vs cl. index | HCAL",maxNHCALcl,0,maxNHCALcl,250,25,75);
+  TH2F *h2_hclHE_tdc_vs_idcl = new TH2F("h2_hclHE_tdc_vs_idcl","TDC of HE block vs cl. index | HCAL",maxNHCALcl,0,maxNHCALcl,350,-100,-30);
+
+  TH2F *h2_hcl_eng_vs_idcl = new TH2F("h2_hcl_eng_vs_idcl","Cl. energy vs cl. index | HCAL",maxNHCALcl,0,maxNHCALcl,200,0,1);
+  TH2F *h2_hcl_nblk_vs_idcl = new TH2F("h2_hcl_nblk_vs_idcl","Cl. multiplicity vs cl. index | HCAL",maxNHCALcl,0,maxNHCALcl,10,0,10);
  
   // Defining interesting ROOT tree branches 
   TTree *Tout = new TTree("Tout", "");
@@ -189,11 +235,13 @@ int elas_ana_data (const char *configfilename,
   bool SMCut;             Tout->Branch("SMCut", &SMCut, "SMCut/B");
   bool ARCut;             Tout->Branch("ARCut", &ARCut, "ARCut/B");
   bool fiduCut;           Tout->Branch("fiduCut", &fiduCut, "fiduCut/B");
+  bool coinTADCCut;       Tout->Branch("coinTADCCut", &coinTADCCut, "coinTADCCut/B"); //HCAL/SH ADC coin time cut
   //run info
   UInt_t T_rnum;          Tout->Branch("rnum", &T_rnum, "rnum/i");
   UInt_t T_segnum;        Tout->Branch("segnum", &T_segnum, "segnum/i");
   ULong64_t T_gevnum;     Tout->Branch("gevnum", &T_gevnum, "gevnum/l");
   double T_ebeam;         Tout->Branch("ebeam", &T_ebeam, "ebeam/D");
+  double T_ebeam_corr;    Tout->Branch("ebeam_corr", &T_ebeam_corr, "ebeam_corr/D");
   double T_ebeam_std;     Tout->Branch("ebeam_std", &T_ebeam_std, "ebeam_std/D");
   //bcm/scaler
   //UInt_t T_segnumS;     if (get_scaler_info) Tout->Branch("segnumS", &T_segnumS, "segnumS/i");
@@ -208,11 +256,12 @@ int elas_ana_data (const char *configfilename,
   double T_ephi;          Tout->Branch("ephi", &T_ephi, "ephi/D");
   double T_etheta;        Tout->Branch("etheta", &T_etheta, "etheta/D");
   double T_pcentral;      Tout->Branch("pcentral", &T_pcentral, "pcentral/D");
-  double T_thetapq_p;     Tout->Branch("thetapq_p", &T_thetapq_p, "thetapq_p/D");
-  double T_thetapq_nodef; Tout->Branch("thetapq_nodef", &T_thetapq_nodef, "thetapq_nodef/D");
+  double T_thpq_p;        Tout->Branch("thpq_p", &T_thpq_p, "thpq_p/D");
+  double T_thpq_n;        Tout->Branch("thpq_n", &T_thpq_n, "thpq_n/D"); //n=>no deflection
   //track
   double T_vz;            Tout->Branch("vz", &T_vz, "vz/D");
   double T_trP;           Tout->Branch("trP", &T_trP, "trP/D");
+  double T_trP_corr;      Tout->Branch("trP_corr", &T_trP_corr, "trP_corr/D");
   double T_trX;           Tout->Branch("trX", &T_trX, "trX/D");
   double T_trY;           Tout->Branch("trY", &T_trY, "trY/D");
   double T_trTh;          Tout->Branch("trTh", &T_trTh, "trTh/D");
@@ -234,7 +283,7 @@ int elas_ana_data (const char *configfilename,
   double T_cblkSH;        Tout->Branch("cblkSH", &T_cblkSH, "cblkSH/D"); 
   double T_idblkSH;       Tout->Branch("idblkSH", &T_idblkSH, "idblkSH/D"); 
   double T_atimeSH;       Tout->Branch("atimeSH", &T_atimeSH, "atimeSH/D"); 
-  //HCAL
+  //HCAL (HE HCAL cluster in time)
   double T_eHCAL;         Tout->Branch("eHCAL", &T_eHCAL, "eHCAL/D"); 
   double T_xHCAL;         Tout->Branch("xHCAL", &T_xHCAL, "xHCAL/D"); 
   double T_yHCAL;         Tout->Branch("yHCAL", &T_yHCAL, "yHCAL/D"); 
@@ -248,6 +297,17 @@ int elas_ana_data (const char *configfilename,
   double T_dx;            Tout->Branch("dx", &T_dx, "dx/D"); 
   double T_dy;            Tout->Branch("dy", &T_dy, "dy/D");
   double T_ToF;           Tout->Branch("ToF", &T_ToF, "ToF/D");
+  //HCAL (All clusters)
+  int T_idblkHCAL_aclN;   Tout->Branch("idblkHCAL_aclN", &T_idblkHCAL_aclN, "idblkHCAL_aclN/I"); 
+  int T_idclHCAL_sthpq_p; if (hcal_acl_ON) Tout->Branch("idclHCAL_sthpq_p", &T_idclHCAL_sthpq_p, "idclHCAL_sthpq_p/I"); //stores HCAL cl. index with smallest thpq value
+  double T_idblkHCAL_acl[maxNHCALcl];    if (hcal_acl_ON) Tout->Branch("idblkHCAL_acl", &T_idblkHCAL_acl, "idblkHCAL_acl[idblkHCAL_aclN]/D"); 
+  double T_nblkHCAL_acl[maxNHCALcl];     if (hcal_acl_ON) Tout->Branch("nblkHCAL_acl", &T_nblkHCAL_acl, "nblkHCAL_acl[idblkHCAL_aclN]/D"); 
+  double T_eblkHCAL_acl[maxNHCALcl];     if (hcal_acl_ON) Tout->Branch("eblkHCAL_acl", &T_eblkHCAL_acl, "eblkHCAL_acl[idblkHCAL_aclN]/D"); 
+  double T_atimeblkHCAL_acl[maxNHCALcl]; if (hcal_acl_ON) Tout->Branch("atimeblkHCAL_acl", &T_atimeblkHCAL_acl, "atimeblkHCAL_acl[idblkHCAL_aclN]/D"); 
+  double T_tdcblkHCAL_acl[maxNHCALcl];   if (hcal_acl_ON) Tout->Branch("tdcblkHCAL_acl", &T_tdcblkHCAL_acl, "tdcblkHCAL_acl[idblkHCAL_aclN]/D"); 
+  double T_eHCAL_acl[maxNHCALcl];        if (hcal_acl_ON) Tout->Branch("eHCAL_acl", &T_eHCAL_acl, "eHCAL_acl[idblkHCAL_aclN]/D"); 
+  double T_xHCAL_acl[maxNHCALcl];        if (hcal_acl_ON) Tout->Branch("xHCAL_acl", &T_xHCAL_acl, "xHCAL_acl[idblkHCAL_aclN]/D"); 
+  double T_yHCAL_acl[maxNHCALcl];        if (hcal_acl_ON) Tout->Branch("yHCAL_acl", &T_yHCAL_acl, "yHCAL_acl[idblkHCAL_aclN]/D");
   //HODO
   int T_ncltmeanHODO;     Tout->Branch("ncltmeanHODO", &T_ncltmeanHODO, "ncltmeanHODO/I"); 
   double T_cltmeanHODO;   Tout->Branch("cltmeanHODO", &T_cltmeanHODO, "cltmeanHODO/D"); 
@@ -255,9 +315,11 @@ int elas_ana_data (const char *configfilename,
   double T_bbT_trig;      Tout->Branch("bbT_trig", &T_bbT_trig, "bbT_trig/D");
   double T_coinT_trig;    Tout->Branch("coinT_trig", &T_coinT_trig, "coinT_trig/D");
 
-  // Energy loss corrections
-  std::vector<double> MeanEloss; util_pd::GetMeanEloss(target,sbsconf,MeanEloss);
-  std::cout << Form("Mean energy loss in target (GeV): %f (before), %f (after)",MeanEloss[0],MeanEloss[1]) << std::endl;
+  // reading W cut limits
+  std::vector<double> W_cutR; jmgr->GetVectorFromSubKey<double>(key,"W_cutR",W_cutR);
+
+  // reading HCAL/SH ADC coincidence time cut limits
+  std::vector<double> coinTADC_cutR; jmgr->GetVectorFromSubKey<double>(key,"coinT_ADC_cutR",coinTADC_cutR);
 
   // HCAL cut definitions
   vector<double> dx_p_cut; jmgr->GetVectorFromSubKey<double>(key,"dx_p_cut", dx_p_cut);
@@ -267,9 +329,6 @@ int elas_ana_data (const char *configfilename,
   vector<double> hcal_safety_margin = cut::hcal_safety_margin(dx_p_cut[1],dx_p_cut[1],dy_p_cut[1],hcal_active_area);
   TH2F *h2_xyHCAL_p = util_pd::TH2FHCALface_xy_data("h2_xyHCAL_p",sbs_kick);
 
-  // reading W cut limits
-  std::vector<double> W_cutR; jmgr->GetVectorFromSubKey<double>(key,"W_cutR",W_cutR);
-
   // costruct axes of HCAL CoS in Hall CoS
   double hcal_voffset = jmgr->GetValueFromSubKey<double>(key,"hcal_voffset");
   double hcal_hoffset = jmgr->GetValueFromSubKey<double>(key,"hcal_hoffset");
@@ -278,6 +337,7 @@ int elas_ana_data (const char *configfilename,
 
   // looping through the tree ---------------------------------------
   std::cout << std::endl;
+  std::vector<double> ElossInTgt; // array to hold energy loss correction values per event
   long nevent=0, nevents=C->GetEntries(), neventsS=S->GetEntries(), index=0, tgevnumS, ngoodevs = 0; 
   int treenum=0, currenttreenum=0; UInt_t runnum=0, nseg, tsegnumS;
   double ebeam=sbsconf.GetEbeam(), ebeam_std=0.; 
@@ -343,19 +403,21 @@ int elas_ana_data (const char *configfilename,
     }
     double coin_time = hcal_time - bbcal_time;
     T_bbT_trig = bbcal_time;  
-    T_coinT_trig = coin_time; h_coin_time->Fill(coin_time);
+    T_coinT_trig = coin_time; h_coinT_trig->Fill(coin_time);
 
     // constructing the 4 vectors
     /* Reaction    : e + e' -> p + p'
        Conservation: Pe + Peprime = Pp + Ppprime */
-    double ebeam_corr = ebeam - MeanEloss[0];
-    double precon = p[0] + MeanEloss[1];
+    TLorentzVector Peprime_course{px[0],py[0],pz[0],p[0]};
+    util_pd::GetElossInTgt(target,rnum,conf,vz[0],kine::etheta(Peprime_course),verbosefn,ElossInTgt);
+    double ebeam_corr = ebeam - ElossInTgt[0];
+    double trP_corr = p[0] + ElossInTgt[1];
     TVector3 vertex(0, 0, vz[0]);
     TLorentzVector Pe(0,0,ebeam_corr,ebeam_corr);   // incoming e- 4-vector
-    TLorentzVector Peprime(px[0] * (precon/p[0]),   // scattered e- 4-vector
-			   py[0] * (precon/p[0]),
-			   pz[0] * (precon/p[0]),
-			   precon);                 
+    TLorentzVector Peprime(px[0] * (trP_corr/p[0]), // scattered e- 4-vector
+			   py[0] * (trP_corr/p[0]),
+			   pz[0] * (trP_corr/p[0]),
+			   trP_corr);                 
     TLorentzVector PN;                              // target nucleon 4-vector
     kine::SetPN(Ntype, PN);
     TLorentzVector PNprime;                         // Recoil nucleon 4-vector
@@ -402,6 +464,9 @@ int elas_ana_data (const char *configfilename,
     double Wrecon = sqrt(max(0., W2recon));
     double dpel = Peprime.E()/pcentral - 1.0; h_dpel->Fill(dpel);
 
+    // defining W cut
+    WCut = Wrecon >= W_cutR[0] && Wrecon <= W_cutR[1];
+
     T_nu = nu;
     T_Q2 = Q2recon;
     T_W2 = W2recon;
@@ -414,7 +479,8 @@ int elas_ana_data (const char *configfilename,
     T_rnum = rnum;
     T_segnum = nseg;
     T_gevnum = gevnum;
-    T_ebeam = Pe.E();
+    T_ebeam = ebeam;
+    T_ebeam_corr = Pe.E();
     T_ebeam_std = ebeam_std;
     if (get_scaler_info) {
       //T_segnumS = tsegnumS;
@@ -424,6 +490,7 @@ int elas_ana_data (const char *configfilename,
 
     T_vz = vz[0];
     T_trP = p[0];
+    T_trP_corr = trP_corr;
     T_trX = xTr[0];
     T_trY = yTr[0];
     T_trTh = thTr[0];
@@ -448,47 +515,117 @@ int elas_ana_data (const char *configfilename,
     T_idblkSH = idblkSH;
     T_atimeSH = atimeSH;
 
-    T_eHCAL = eHCAL;
-    T_xHCAL = xHCAL;
-    T_yHCAL = yHCAL;
-    T_rblkHCAL = rblkHCAL;
-    T_cblkHCAL = cblkHCAL;
-    T_idblkHCAL = idblkHCAL;
-    T_atimeHCAL = atimeHCAL;
-    T_tdcHCAL = tdcHCAL[0];
-
     T_ncltmeanHODO = ncltmeanHODO;
     T_cltmeanHODO = cltmeanHODO[0];
 
     // Expected position of the q vector at HCAL
     vector<double> xyHCAL_exp; // xyHCAL_exp[0] = xHCAL_exp & xyHCAL_exp[1] = yHCAL_exp
     kine::GetxyHCALexpect(vertex, pNhat, HCAL_origin, HCAL_axes, xyHCAL_exp);
-    double dx = xHCAL - xyHCAL_exp[0];  
-    double dy = yHCAL - xyHCAL_exp[1]; 
-
     T_xHCAL_exp = xyHCAL_exp[0];
     T_yHCAL_exp = xyHCAL_exp[1];
-    T_dx = dx;
-    T_dy = dy;
 
-    // Calculating thetapq (both w & w/o deflection due to SBS dipole)
-    // assuming no deflection
-    TVector3 HCAL_pos = HCAL_origin + xHCAL*HCAL_axes[0] + yHCAL*HCAL_axes[1];
-    TVector3 nodef_dir = (HCAL_pos - vertex).Unit();
-    T_thetapq_nodef = acos(nodef_dir.Dot(pNhat));
-    // p 
+    // Calculating proton deflection angle
     double BdL = (sbsmag / 100.) * 1.98; //expconst::sbsmaxfield * expconst::sbsdipolegap;
     double proton_thetabend = 0.3 * BdL / PNprime.Vect().Mag();  // p*theta = 0.3*BdL
-    double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist() - (sbsconf.GetSBSdist() + expconst::sbsdipolegap/2.0));
-    TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);
-    T_thetapq_p = acos(p_dir.Unit().Dot(pNhat));
+    double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist()-(sbsconf.GetSBSdist()+expconst::sbsdipolegap/2.0));
 
-    // calculate ToF
+    // Looping through ALL HCAL clusters
+    int inTime_idcl = -1;   //HCAL cl. index that is within HCAL/SH ADC coin. time
+    int sthpq_p_idcl = -1;  //HCAL cl. index with smallest thpq_p value 
+    double temp_thpq = 1e6;
+    if (hcal_acl_ON) {
+      for (int ihcl=0; ihcl<idblkHCAL_aclN; ihcl++) {
+      
+	// picking the HE cluster that is in time (i.e. HCAL/SH ADC coin time)
+	// ** utilizing the fact that the clusters are already sorted by energy
+	bool coinT_cut = abs(atimeblkHCAL_acl[ihcl]-atimeSH-coinTADC_cutR[0])<=coinTADC_cutR[2]*coinTADC_cutR[1];
+	if (inTime_idcl==-1 && coinT_cut) {
+	  inTime_idcl = ihcl;
+	}
+
+	T_idblkHCAL_acl[ihcl] = idblkHCAL_acl[ihcl];
+	T_nblkHCAL_acl[ihcl] = nblkHCAL_acl[ihcl];
+	T_eblkHCAL_acl[ihcl] = eblkHCAL_acl[ihcl];
+	T_atimeblkHCAL_acl[ihcl] = atimeblkHCAL_acl[ihcl];
+	T_tdcblkHCAL_acl[ihcl] = tdcblkHCAL_acl[ihcl];
+
+	T_eHCAL_acl[ihcl] = eHCAL_acl[ihcl];
+	T_xHCAL_acl[ihcl] = xHCAL_acl[ihcl];
+	T_yHCAL_acl[ihcl] = yHCAL_acl[ihcl];
+
+	if (inTime_idcl!=-1) h_hcl_inTime_idcl->Fill(inTime_idcl);
+	if (WCut) {
+	  if (inTime_idcl!=-1) h_hcl_inTime_idcl_WCut->Fill(inTime_idcl);
+      
+	  // HE block related variables
+	  h2_hclHE_eng_vs_idcl->Fill(ihcl,eblkHCAL_acl[ihcl]);
+	  h2_hclHE_atime_vs_idcl->Fill(ihcl,atimeblkHCAL_acl[ihcl]);
+	  h2_hclHE_tdc_vs_idcl->Fill(ihcl,tdcblkHCAL_acl[ihcl]);
+      
+	  // Cluster variables
+	  h2_hcl_eng_vs_idcl->Fill(ihcl,eHCAL_acl[ihcl]);
+	  h2_hcl_nblk_vs_idcl->Fill(ihcl,nblkHCAL_acl[ihcl]);
+	}
+
+	bool sFrac_cut = eHCAL_acl[ihcl]/(ebeam_corr-trP_corr)>hcal_sF_cutR;
+	if (coinT_cut && sFrac_cut) {
+
+	  // Calculating thpq (both w & w/o deflection due to SBS dipole)
+	  // assuming no deflection (using "n" for no deflection)
+	  TVector3 HCAL_pos = HCAL_origin + xHCAL_acl[ihcl]*HCAL_axes[0] + yHCAL_acl[ihcl]*HCAL_axes[1];
+	  TVector3 n_dir = (HCAL_pos - vertex).Unit();
+	  double thpq_n = acos(n_dir.Dot(pNhat));
+	  // p
+	  TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);
+	  double thpq_p = acos(p_dir.Unit().Dot(pNhat));
+	  if (min(thpq_p,thpq_n) < temp_thpq) sthpq_p_idcl = ihcl;
+	  temp_thpq = min(thpq_p,thpq_n);
+	  // if (thpq_p < temp_thpq) sthpq_p_idcl = ihcl; //finding the cl. id. with smallest thpq_p value
+	  // temp_thpq = thpq_p;
+	}
+      }
+      if (inTime_idcl==-1) inTime_idcl = 0; // couldn't find any cl. in time, switching to HE cls. (index=0)
+      if (sthpq_p_idcl==-1) sthpq_p_idcl = inTime_idcl;
+    } 
+    else {
+      inTime_idcl = 0;
+      sthpq_p_idcl = 0;
+    }
+
+    // HCAL/SH SDC coincidence time cut
+    coinTADCCut = abs(atimeblkHCAL_acl[inTime_idcl]-atimeSH-coinTADC_cutR[0])<=coinTADC_cutR[2]*coinTADC_cutR[1];
+
+    double dx = xHCAL_acl[inTime_idcl] - xyHCAL_exp[0];  
+    double dy = yHCAL_acl[inTime_idcl] - xyHCAL_exp[1]; 
+
+    // Storing HE HCAL cl variables that are in time (HCAL/SH ADC coin time)
+    T_dx = dx;
+    T_dy = dy;
+    T_eHCAL = eHCAL_acl[inTime_idcl];
+    T_xHCAL = xHCAL_acl[inTime_idcl];
+    T_yHCAL = yHCAL_acl[inTime_idcl];
+    T_rblkHCAL = rblkHCAL_acl[inTime_idcl];
+    T_cblkHCAL = cblkHCAL_acl[inTime_idcl];
+    T_idblkHCAL = idblkHCAL_acl[inTime_idcl];
+    T_atimeHCAL = atimeblkHCAL_acl[inTime_idcl];
+    T_tdcHCAL = tdcblkHCAL_acl[inTime_idcl];
+    T_idblkHCAL_aclN = idblkHCAL_aclN;
+    T_idclHCAL_sthpq_p = sthpq_p_idcl;
+
+    // Calculating thpq (both w & w/o deflection due to SBS dipole)
+    // assuming no deflection (using "n" for no deflection)
+    TVector3 HCAL_pos = HCAL_origin + xHCAL_acl[inTime_idcl]*HCAL_axes[0] + yHCAL_acl[inTime_idcl]*HCAL_axes[1];
+    TVector3 n_dir = (HCAL_pos - vertex).Unit();
+    T_thpq_n = acos(n_dir.Dot(pNhat));
+    // p 
+    TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);
+    T_thpq_p = acos(p_dir.Unit().Dot(pNhat));
+    // Calculate ToF
     double ToF = (p_dir.Mag() / constant::c) * sqrt(1. + pow((constant::Mp/PNprime.Vect().Mag()), 2));
-    T_ToF = ToF*1e9; //ns
+    T_ToF = ToF*1e9; //ns 
 
     // HCAL active area and safety margin cuts [Fiducial region]
-    ARCut = cut::inHCAL_activeA(xHCAL,yHCAL,hcal_active_area);
+    ARCut = cut::inHCAL_activeA(xHCAL_acl[inTime_idcl],yHCAL_acl[inTime_idcl],hcal_active_area);
     SMCut = cut::inHCAL_safety_margin(target,xyHCAL_exp[0],xyHCAL_exp[1],sbs_kick,hcal_safety_margin);
     fiduCut = ARCut && SMCut; 
     // defining HCAL cuts
@@ -499,18 +636,15 @@ int elas_ana_data (const char *configfilename,
     pCut_2p5sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]*2.5),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]*2.5),2) <= 1.;
     pCut_3sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]*3.),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]*3.),2) <= 1.;
 
-    // defining W cut
-    WCut = Wrecon >= W_cutR[0] && Wrecon <= W_cutR[1];
-
     // W cut
-    if (WCut) {
+    if (WCut&&idblkHCAL_aclN!=0) {
       h_dxHCAL_nfc->Fill(dx);
       h_dyHCAL_nfc->Fill(dy);
       // fiducial cut (Should we use it for LH2 data?)
       if (fiduCut) {
 	h_dxHCAL->Fill(dx);
 	h_dyHCAL->Fill(dy);
-	h2_rcHCAL->Fill(cblkHCAL, rblkHCAL);
+	h2_rcHCAL->Fill(cblkHCAL_acl[inTime_idcl], rblkHCAL_acl[inTime_idcl]);
 	h2_dxdyHCAL->Fill(dy, dx);
 
 	if (pCut) h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick);
@@ -589,6 +723,8 @@ int elas_ana_data (const char *configfilename,
   pt->AddText(Form(" Total # events analyzed: %ld, Total # runs: %d",nevents,nruns));
   pt->AddText(Form(" Total charge: %.7fC",totcharge));
   pt->AddText(Form(" HCAL offsets: v = %.4f, h = %.4f",hcal_voffset,hcal_hoffset));
+  char const * hcl_algo_flag = hcal_acl_ON ? "Atime" : "Default";
+  pt->AddText(Form(" Best HCAL cluster choice algorithm: %s",hcl_algo_flag));
   pt->AddText(Form(" Global cuts: "));
   std::string tmpstr = "";
   for (std::size_t i=0; i<gCutList.size(); i++) {
@@ -601,6 +737,7 @@ int elas_ana_data (const char *configfilename,
   pt->AddText(Form(" Inbuilt W cut: %.2f #leq W #leq %.2f GeV/c",W_cutR[0],W_cutR[1]));
   pt->AddText(Form(" Inbuilt p cut (#Deltax): Mean = %.4f, %.1f#sigma = %.4f",dx_p_cut[0],dx_p_cut[2],dx_p_cut[1]));
   pt->AddText(Form(" Inbuilt p cut (#Deltay): Mean = %.4f, %.1f#sigma = %.4f",dy_p_cut[0],dy_p_cut[2],dy_p_cut[1]));
+  pt->AddText(Form(" Inbuilt coin. time cut: |atimeHCAL-atimeSH-%.1f| #leq %.1f*%.3f",coinTADC_cutR[0],coinTADC_cutR[2],coinTADC_cutR[1]));
   pt->AddText(" Fit info: ");
   pt->AddText(" p peak, w/ fiducial cut: dxpM,dxpS,dypM,dypS ");
   pt->AddText(Form(" %.5f,%.5f,%.5f,%.5f",dxpM,dxpS,dypM,dypS));
@@ -637,7 +774,12 @@ int elas_ana_data (const char *configfilename,
   h_dxHCAL->Write(); h_dyHCAL->Write();
   h2_rcHCAL->Write(); h2_dxdyHCAL->Write();
   h2_xyHCAL_p->Write();
-  h_coin_time->Write();
+  h_coinT_trig->Write();
+  if (hcal_acl_ON) {
+    h_hcl_inTime_idcl->Write(); h_hcl_inTime_idcl_WCut->Write();
+    h2_hclHE_eng_vs_idcl->Write(); h2_hclHE_atime_vs_idcl->Write(); h2_hclHE_tdc_vs_idcl->Write();
+    h2_hcl_eng_vs_idcl->Write(); h2_hcl_nblk_vs_idcl->Write();
+  }
   sw->Delete();
   delete jmgr;
   return 0;
@@ -660,8 +802,19 @@ int elas_ana_data (const char *configfilename,
   ** get_scaler_info : If true, writes out matching scaler tree variables in the output ROOT tree
   ** rootfile_dir : Directory name w/ path containing the MC ROOT files to analyze
   ** global_cut : set of global cuts to apply at the start of event processing
-  ** SBS_field : 
-  ** hcal_v(h)offset :
+  ** W_cutR : W cut range.
+     - W_cutR[0] : lower limit
+     - W_cutR[1] : upper limit
+  ** coinT_ADC_cutR : HCAL/SH ADC coin time cut range.
+     - coinT_ADC_cutR[0] : Mean
+     - coinT_ADC_cutR[1] : Sigma
+     - coinT_ADC_cutR[2] : # sigmas to cut on
+  ** SBS_field : yet to be added!!
+  ** max_N_tracks : # tracks in an event
+  ** max_N_HCAL_clusters : # HCAL clusters being stored per event
+  ** hcal_acl_ON : flag to turn on HCAL best cl. choice algorithms
+  ** hcal_samp_frac_cutR : lower limit of HCAL sampling fraction cut (only used if hcal_acl_ON is true)
+  ** hcal_v(h)offset : vertical(horizontal) offsets of HCAL
   ** dx_p_cut : deltax p peak cut definitions. Needed to constitute p spot cuts. 
      - dx_p_cut[0] => p peak position, 
      - dx_p_cut[1] => p peak RMS, 
@@ -686,7 +839,4 @@ int elas_ana_data (const char *configfilename,
      - h_dyHCAL_fitR[1] : xmax for 1st fit (crude). Try to avoid any secondary peak.
      - h_dyHCAL_fitR[2] : # sigma below the peak for 2nd fit (fine)
      - h_dyHCAL_fitR[3] : # sigma above the peak for 2nd fit (fine)
-  ** W_cutR : W cut range.
-     - W_cutR[0] : lower limit
-     - W_cutR[1] : upper limit
 */
