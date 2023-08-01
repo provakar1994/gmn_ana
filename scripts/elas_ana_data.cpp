@@ -78,7 +78,7 @@ int elas_ana_data (const char *configfilename,
   else if (model == 2) std::cout << "Using model 2 [4-vector calculation] for analysis.." << std::endl;
   else { std::cerr << "Enter a valid model number! **!**" << std::endl; throw; }
 
-  // Choosing best HCAL cluster
+  // Choosing the best HCAL cluster
   /*
    Algorithms:
    1. Default: Cluster w/ highest energy.
@@ -567,21 +567,22 @@ int elas_ana_data (const char *configfilename,
 	  h2_hcl_nblk_vs_idcl->Fill(ihcl,nblkHCAL_acl[ihcl]);
 	}
 
+	// picking the cluster that has smallest thpq and passes coinT_cut and sFrac_cut
 	bool sFrac_cut = eHCAL_acl[ihcl]/(ebeam_corr-trP_corr)>hcal_sF_cutR;
 	if (coinT_cut && sFrac_cut) {
-
 	  // Calculating thpq (both w & w/o deflection due to SBS dipole)
 	  // assuming no deflection (using "n" for no deflection)
 	  TVector3 HCAL_pos = HCAL_origin + xHCAL_acl[ihcl]*HCAL_axes[0] + yHCAL_acl[ihcl]*HCAL_axes[1];
-	  TVector3 n_dir = (HCAL_pos - vertex).Unit();
-	  double thpq_n = acos(n_dir.Dot(pNhat));
+	  // TVector3 n_dir = (HCAL_pos - vertex).Unit();
+	  // double thpq_n = acos(n_dir.Dot(pNhat));
 	  // p
 	  TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);
 	  double thpq_p = acos(p_dir.Unit().Dot(pNhat));
-	  if (min(thpq_p,thpq_n) < temp_thpq) sthpq_p_idcl = ihcl;
-	  temp_thpq = min(thpq_p,thpq_n);
-	  // if (thpq_p < temp_thpq) sthpq_p_idcl = ihcl; //finding the cl. id. with smallest thpq_p value
-	  // temp_thpq = thpq_p;
+	  // finding the cl. id. with smallest thpq_p value
+	  if (thpq_p < temp_thpq) sthpq_p_idcl = ihcl;
+	  temp_thpq = thpq_p;
+	  // if (min(thpq_p,thpq_n) < temp_thpq) sthpq_p_idcl = ihcl;
+	  // temp_thpq = min(thpq_p,thpq_n);
 	}
       }
       if (inTime_idcl==-1) inTime_idcl = 0; // couldn't find any cl. in time, switching to HE cls. (index=0)
