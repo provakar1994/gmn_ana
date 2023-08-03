@@ -547,7 +547,7 @@ namespace util_pd {
 			  int sbsconf,               // SBS configuration
 			  int sbsmag,                // SBS magnet current (in %)
 			  std::string generator,     // simc / g4sbs
-			  std::string target,        // target type
+			  std::string process,       // reaction process being simulated
 			  int &njobs,                // # jobs to analyze per process
 			  int verbose,               // verbosity
 			  std::vector<SimuJob> &sjobs)    // Output: Vector of SimuJob objects
@@ -569,26 +569,17 @@ namespace util_pd {
     TString filebase = Form("sbs%d_sbs%dp_%s",sbsconf,sbsmag,generator.c_str());
     if (!prefix.empty()) filebase = (TString)prefix + "_" + filebase;
 
-    // Define the name of the summary file and corresponding process based on generator and target
-    std::vector<TString> simu_logfile, process;
-    if (target.compare("LH2") == 0) {
-      TString temp = Form("%s_heep_summary.csv",filebase.Data());
-      simu_logfile.push_back(temp); process.push_back("heep");
-    } 
-    else if (target.compare("LD2") == 0) {
-      TString temp = "";
-      if (generator.compare("simc") == 0) {
-	temp = Form("%s_deep_summary.csv",filebase.Data());
-	simu_logfile.push_back(temp); process.push_back("deep");
-	temp = Form("%s_deen_summary.csv",filebase.Data());
-	simu_logfile.push_back(temp); process.push_back("deen");
-      } else {
-	temp = Form("%s_deeN_summary.csv",filebase.Data());
-	simu_logfile.push_back(temp); process.push_back("deeN");
-      }
+    // Define the name of the summary file
+    std::vector<TString> simu_logfile, processes;
+    if (generator.compare("simc")==0 && process.compare("deeN")==0) {
+      TString temp = Form("%s_deep_summary.csv",filebase.Data());
+      simu_logfile.push_back(temp); processes.push_back("deep");
+      temp = Form("%s_deen_summary.csv",filebase.Data());
+      simu_logfile.push_back(temp); processes.push_back("deen");
+    }else {
+      TString temp = Form("%s_%s_summary.csv",filebase.Data(),process.c_str());
+      simu_logfile.push_back(temp); processes.push_back(process);
     }
-    else
-      throw std::invalid_argument("[util_pd::ReadSimuJobSummary] Given target type is invalid!");
 
     // Reading the summary spreadsheet
     if (njobs < 0) njobs = 1e4;         // replay all runs if njobs < 0
@@ -615,9 +606,9 @@ namespace util_pd {
 	  SimuJob temp_sj;
 	  int jobid = stoi(temp[0]);
 	  TString sfname = Form("%s/%s_%s_job_%d.root",logfile_dir.c_str(),
-				filebase.Data(),process[ifile].Data(),jobid); 
+				filebase.Data(),processes[ifile].Data(),jobid); 
 	  TString rfname = Form("%s/replayed_%s_%s_job_%d.root",logfile_dir.c_str(),
-				filebase.Data(),process[ifile].Data(),jobid); 
+				filebase.Data(),processes[ifile].Data(),jobid); 
 	  // handling the sicrepancy in summary file by generator
 	  data.push_back(sfname.Data());
 	  data.push_back(rfname.Data());
@@ -774,16 +765,16 @@ namespace util_pd {
     bool PE_shield_in = (rnum<12556 || rnum>=12675) ? false : true;
     bool Al_shield_in = rnum<12675 ? false : true;
 
-    double Eloss_bf = vz_scaled*tgt_rho*tgt_dEdx_bs + tgt_uwinthick*expconst::Al_Rho*Al_dEdx_bs;
-    double Eloss_af = tgt_celldiam/2.0/sin(etheta)*tgt_rho*tgt_dEdx_as + tgt_cellthick/sin(etheta)*expconst::Al_Rho*Al_dEdx_as;
-    if (PE_shield_in) Eloss_af += expconst::PE_ShieldThick*expconst::PE_Rho*PE_dEdx_as;
-    if (Al_shield_in) Eloss_af += expconst::Al_ShieldThick*expconst::Al_Rho*Al_dEdx_as;
-    data = {Eloss_bf,Eloss_af};
+    double Eloss_bs = vz_scaled*tgt_rho*tgt_dEdx_bs + tgt_uwinthick*expconst::Al_Rho*Al_dEdx_bs;
+    double Eloss_as = tgt_celldiam/2.0/sin(etheta)*tgt_rho*tgt_dEdx_as + tgt_cellthick/sin(etheta)*expconst::Al_Rho*Al_dEdx_as;
+    if (PE_shield_in) Eloss_as += expconst::PE_ShieldThick*expconst::PE_Rho*PE_dEdx_as;
+    if (Al_shield_in) Eloss_as += expconst::Al_ShieldThick*expconst::Al_Rho*Al_dEdx_as;
+    data = {Eloss_bs,Eloss_as};
 
     if (verbose>1) {
       std::cout << Form("\netheta = %.1f deg, vz = %.3f m, vz_scaled = %.3f m \n",etheta*TMath::RadToDeg(),vz,vz_scaled*1E-2);
       std::cout << Form("Plastic shield in place = %d, Al shield in place = %d \n",PE_shield_in,Al_shield_in);
-      std::cout << Form("Mean energy loss (MeV) %.1f (before), %.1f (after) \n",Eloss_bf*1E3,Eloss_af*1E3);
+      std::cout << Form("Mean energy loss (MeV) %.1f (before), %.1f (after) \n",Eloss_bs*1E3,Eloss_as*1E3);
     }
   }
 }

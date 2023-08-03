@@ -119,7 +119,7 @@ namespace util_pd {
 			  int sbsconf,               // SBS configuration
 			  int sbsmag,                // SBS magnet current (in %)
 			  std::string generator,     // simc / g4sbs
-			  std::string target,        // target type
+			  std::string process,       // reaction process being simulated
 			  int &njobs,                // # jobs to analyze per process
 			  int verbose,               // verbosity
 			  std::vector<SimuJob> &sjobs);   // Output: Vector of SimuJob objects
