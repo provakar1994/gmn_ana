@@ -110,6 +110,15 @@ int qelas_ana_data (const char *configfilename,
   std::vector<void*> hcalclvar_mem = {&eHCAL,&xHCAL,&yHCAL,&rblkHCAL,&cblkHCAL,&idblkHCAL,&atimeHCAL,&tdcHCAL};
   setrootvar::setbranch(C, "sbs.hcal", hcalclvar, hcalclvar_mem);
 
+  // hcal clus var [2]
+  int maxHCALcl = 50;
+  int idHCAL_clN; double idHCAL_cl[maxHCALcl];
+  double nblkHCAL_cl[maxHCALcl], eblkHCAL_cl[maxHCALcl], atimeblkHCAL_cl[maxHCALcl], tdcblkHCAL_cl[maxHCALcl]; 
+  double eHCAL_cl[maxHCALcl], HCAL_cl[maxHCALcl], yHCAL_cl[maxHCALcl], rblkHCAL_cl[maxHCALcl], cblkHCAL_cl[maxHCALcl];
+  std::vector<std::string> hcalclvar_cl = {"id","id","nblk","eblk","e","x","y","rowblk","colblk","atimeblk","tdctime"};
+  std::vector<void*> hcalclvar_cl_mem = {&idHCAL_cl,&idHCAL_clN,&nblkHCAL_cl,&eblkHCAL_cl,&eHCAL_cl,&xHCAL_cl,&yHCAL_cl,&rblkHCAL_cl,&cblkHCAL_cl,&atimeblkHCAL_cl,&tdcblkHCAL_cl};
+  setrootvar::setbranch(C, "sbs.hcal.clus", hcalclvar_cl, hcalclvar_cl_mem, 1);
+
   // bbhodo clus var
   int ncltmeanHODO; 
   double cltmeanHODO[maxNtr];
@@ -198,6 +207,7 @@ int qelas_ana_data (const char *configfilename,
   UInt_t T_segnum;      Tout->Branch("segnum", &T_segnum, "segnum/i");
   ULong64_t T_gevnum;   Tout->Branch("gevnum", &T_gevnum, "gevnum/l");
   double T_ebeam;       Tout->Branch("ebeam", &T_ebeam, "ebeam/D");
+  double T_ebeam_corr;  Tout->Branch("ebeam_corr", &T_ebeam_corr, "ebeam_corr/D");
   double T_ebeam_std;   Tout->Branch("ebeam_std", &T_ebeam_std, "ebeam_std/D");
   //bcm/scaler
   //UInt_t T_segnumS;   if (get_scaler_info) Tout->Branch("segnumS", &T_segnumS, "segnumS/i");
@@ -217,6 +227,7 @@ int qelas_ana_data (const char *configfilename,
   //track
   double T_vz;          Tout->Branch("vz", &T_vz, "vz/D");
   double T_trP;         Tout->Branch("trP", &T_trP, "trP/D");
+  double T_trP_corr;    Tout->Branch("trP_corr", &T_trP_corr, "trP_corr/D");
   double T_trX;         Tout->Branch("trX", &T_trX, "trX/D");
   double T_trY;         Tout->Branch("trY", &T_trY, "trY/D");
   double T_trTh;        Tout->Branch("trTh", &T_trTh, "trTh/D");
@@ -259,10 +270,6 @@ int qelas_ana_data (const char *configfilename,
   double T_bbT_trig;    Tout->Branch("bbT_trig", &T_bbT_trig, "bbT_trig/D");
   double T_coinT_trig;  Tout->Branch("coinT_trig", &T_coinT_trig, "coinT_trig/D");
 
-  // Energy loss corrections
-  std::vector<double> MeanEloss; util_pd::GetMeanEloss(target,sbsconf,MeanEloss);
-  std::cout << Form("Mean energy loss in target (GeV): %f (before), %f (after)",MeanEloss[0],MeanEloss[1]) << std::endl;
-
   // reading HCAL cut definitions
   vector<double> dx_p_cut; jmgr->GetVectorFromSubKey<double>(key,"dx_p_cut",dx_p_cut);
   double sbs_kick = abs(dx_p_cut[0]);
@@ -285,6 +292,7 @@ int qelas_ana_data (const char *configfilename,
 
   // looping through the events ---------------------------------------
   std::cout << std::endl;
+  std::vector<double> ElossInTgt; // array to hold energy loss correction values per event
   long nevent=0, nevents=C->GetEntries(), neventsS=S->GetEntries(), index=0, tgevnumS, ngoodevs = 0; 
   int treenum=0, currenttreenum=0; UInt_t runnum=0, nseg, tsegnumS;
   double ebeam=sbsconf.GetEbeam(), ebeam_std=0.; 
@@ -356,14 +364,16 @@ int qelas_ana_data (const char *configfilename,
     // constructing the 4 vectors
     /* Reaction    : e + e' -> N + N'
        Conservation: Pe + Peprime = PN + PNprime */
-    double ebeam_corr = ebeam - MeanEloss[0];
-    double precon = p[0] + MeanEloss[1];
+    TLorentzVector Peprime_course{px[0],py[0],pz[0],p[0]};
+    util_pd::GetElossInTgt(target,rnum,conf,vz[0],kine::etheta(Peprime_course),verbosefn,ElossInTgt);
+    double ebeam_corr = ebeam - ElossInTgt[0];
+    double trP_corr = p[0] + ElossInTgt[1];
     TVector3 vertex(0, 0, vz[0]);
     TLorentzVector Pe(0,0,ebeam_corr,ebeam_corr);   // incoming e- 4-vector
-    TLorentzVector Peprime(px[0] * (precon/p[0]),   // scattered e- 4-vector
-			   py[0] * (precon/p[0]),
-			   pz[0] * (precon/p[0]),
-			   precon);                 
+    TLorentzVector Peprime(px[0] * (trP_corr/p[0]), // scattered e- 4-vector
+			   py[0] * (trP_corr/p[0]),
+			   pz[0] * (trP_corr/p[0]),
+			   trP_corr);                 
     TLorentzVector PN;                              // target nucleon 4-vector
     kine::SetPN(Ntype, PN);
     TLorentzVector PNprime;                         // Recoil nucleon 4-vector
@@ -422,7 +432,8 @@ int qelas_ana_data (const char *configfilename,
     T_rnum = rnum;
     T_segnum = nseg;
     T_gevnum = gevnum;
-    T_ebeam = Pe.E();
+    T_ebeam = ebeam;
+    T_ebeam_corr = Pe.E();
     T_ebeam_std = ebeam_std;
     if (get_scaler_info) {
       //T_segnumS = tsegnumS;
@@ -432,6 +443,7 @@ int qelas_ana_data (const char *configfilename,
 
     T_vz = vz[0];
     T_trP = p[0];
+    T_trP_corr = trP_corr;
     T_trX = xTr[0];
     T_trY = yTr[0];
     T_trTh = thTr[0];
