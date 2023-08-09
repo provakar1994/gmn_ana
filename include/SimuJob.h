@@ -19,19 +19,6 @@ typedef struct SimuJob {
 
   // sets data by reading MC job summary (exclusively for util::ReadSimuJobSummary function)
   void SetDataSimuJob(std::vector<std::string> const &data) {
-    /* sfname    = data[0]; */
-    /* rfname    = data[1]; */
-    /* generator = data[2]; */
-    /* ngenreq   = stod(data[3]); */
-    /* ntried    = stod(data[4]); */
-    /* genvol    = stod(data[5]); */
-    /* lumi      = stod(data[6]); */
-    /* if (generator.compare("simc")==0) */
-    /*   charge  = stod(data[7])/1000.; */
-    /* if (generator.compare("g4sbs")==0) { */
-    /*   ebeam   = stod(data[7]);       */
-    /*   ibeam   = stod(data[8])*1e-6;       */
-    /* } */
     sfname    = data[0];
     rfname    = data[1];
     generator = data[2];
@@ -49,21 +36,6 @@ typedef struct SimuJob {
 
   // define an ostream operator to print to screen conveniently
   friend std::ostream& operator <<(std::ostream &out, const SimuJob& sjob) {
-    /* out << " ------------" << std::endl; */
-    /* out << " Simu. file name    : " << sjob.sfname << std::endl; */
-    /* out << " Replayed file name : " << sjob.rfname << std::endl; */
-    /* out << " Generator          : " << sjob.generator << std::endl; */
-    /* out << " # events requested : " << sjob.ngenreq << std::endl; */
-    /* out << " # events tried     : " << sjob.ntried << std::endl; */
-    /* out << " Generation vol.    : " << sjob.genvol << std::endl; */
-    /* out << " Luminosity         : " << sjob.lumi << std::endl; */
-    /* if (sjob.generator.compare("simc")==0) */
-    /*   out << " Charge (C)         : " << sjob.charge << std::endl; */
-    /* if (sjob.generator.compare("g4sbs")==0) { */
-    /*   out << " Ebeam (GeV)        : " << sjob.ebeam << std::endl; */
-    /*   out << " Ibeam (A)          : " << sjob.ibeam << std::endl; */
-    /* } */
-    /* out << " ------------" << std::endl << std::endl; */
     out << " ------------" << std::endl;
     out << " Simu. file name    : " << sjob.sfname << std::endl;
     out << " Replayed file name : " << sjob.rfname << std::endl;

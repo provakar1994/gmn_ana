@@ -613,24 +613,10 @@ namespace util_pd {
 	  data.push_back(sfname.Data());
 	  data.push_back(rfname.Data());
 	  data.push_back(generator);
-	  // if (generator.compare("simc") == 0) {
-	  //   data.push_back(temp[1]); //ngenreq
-	  //   data.push_back(temp[2]); //nthrown
-	  //   data.push_back(temp[5]); //genvol(MeV*sr2)
-	  //   data.push_back(temp[4]); //lumi(ub^-1)
-	  //   data.push_back(temp[3]); //charge(mC)
-	  // }else	if (generator.compare("g4sbs") == 0) {
-	  //   data.push_back(temp[1]); //ngenreq
-	  //   data.push_back(temp[2]); //nthrown
-	  //   data.push_back(temp[5]); //genvol(sr)
-	  //   data.push_back(temp[6]); //lumi(Hz/cm2)
-	  //   data.push_back(temp[3]); //ebeam(GeV) 
-	  //   data.push_back(temp[4]); //ibeam(A)
-	  // }
 	  data.push_back(temp[1]); //ngenreq
 	  data.push_back(temp[2]); //nthrown
-	  data.push_back(temp[3]); //genvol(MeV*sr2)
-	  data.push_back(temp[4]); //lumi(ub^-1)
+	  data.push_back(temp[3]); //genvol
+	  data.push_back(temp[4]); //lumi
 	  data.push_back(temp[5]); //ebeam(GeV)
 	  if (generator.compare("simc") == 0) data.push_back(temp[6]);  //charge(mC)
 	  if (generator.compare("g4sbs") == 0) data.push_back(temp[6]); //ibeam(muA)
@@ -646,7 +632,7 @@ namespace util_pd {
 	  std::cout << "Last job info:" << std::endl << sjobs[sjobs.size()-1];
 	}
       }else
-	throw std::runtime_error("[util_pd::ReadSimuJobSummary] Summary file doesn't exist");
+	throw std::runtime_error(Form("[util_pd::ReadSimuJobSummary] Summary file, %s, doesn't exist",logfile_temp.Data()));
       simu_log.close();
     }
     std::cout << std::endl;
