@@ -722,8 +722,8 @@ namespace util_pd {
       tgt_cellthick = expconst::lh2_CellThick;
     }else if (target.compare("LD2")==0) {
       tgt_rho = expconst::ld2_TgtRho;
-      tgt_dEdx_bs = expconst::GetdEdxCollH(sbsconf,1);
-      tgt_dEdx_as = expconst::GetdEdxCollH(sbsconf,0);
+      tgt_dEdx_bs = expconst::GetdEdxCollH(sbsconf,1) * 0.5; // Z/A =1 for H2 & 0.5 for D2 (See expconst::GetdEdxCollH)
+      tgt_dEdx_as = expconst::GetdEdxCollH(sbsconf,0) * 0.5; // Z/A =1 for H2 & 0.5 for D2 (See expconst::GetdEdxCollH)
       tgt_uwinthick = expconst::ld2_uWinThick;
       tgt_celldiam = expconst::ld2_CellDiam;
       tgt_cellthick = expconst::ld2_CellThick;

@@ -61,11 +61,14 @@ namespace expconst {
        - Cell thickness is also a guess. Again using what Andrew used.
     *. Target density: Look at ~/OneDrive - University of Connecticut/workPD/proj/gmn-ana-resources/target
     *. Stopping power: 
-       - Useful website by NIST ESTAR: https://physics.nist.gov/PhysRefData/Star/Text/ESTAR.html 
-       - According to the website stopping power of hydrogen ranges from 5.74 to 5.82 MeV*cm2/g in the scattered
-         e- energy of interest (2.1-3.6 GeV) for our analysis.
-       - Above website don't have data on deuterium but I found a master's thesis from 1952 that shows that the 
-         stopping power of deuterium is pretty close to hydrogen. https://open.library.ubc.ca/media/stream/pdf/831/1.0085416/1
+       - Useful website by NIST ESTAR: https://physics.nist.gov/PhysRefData/Star/Text/ESTAR.html
+       - <-dE/dx> depends on Z/A (this is the only part that is directly nuclear). For H2, Z/A is 1 whereas for
+         D2, Z/A is 0.5. Hence, it should be a reasonable to scale the dE/dx values of H2 by 0.5 before using 
+	 them for D2. Here are some reading material on the subject:
+	 - https://pdg.lbl.gov/2023/reviews/rpp2022-rev-passage-particles-matter.pdf
+	 - https://pdg.lbl.gov/2023/reviews/rpp2022-rev-atomic-nuclear-prop.pdf
+	 - https://pdg.lbl.gov/2023/AtomicNuclearProperties/index.html
+	 - Powerpoint presentation titled "eloss_in_tgt".
   */
   // target
   static const double tgtlen = 15.0;  //cm 
@@ -110,9 +113,7 @@ namespace expconst {
   double GetdEdxCollH(int const config,                 // SBS config
 		      bool const is_before_scattering); // 1=>YES, 0=>NO (i.e. after scattering)
   double GetdEdxCollAl(int const config, bool const is_before_scattering);  //GeV*cm2/g
-  double GetdEdxCollPE(int const config, bool const is_before_scattering);  //GeV*cm2/g
-  /* double dEdx_coll_bs(int config, std::string material); //GeV*cm2/g */
-  /* double dEdx_coll_as(int config, std::string material); //GeV*cm2/g */
+  double GetdEdxCollPE(int const config, bool const is_before_scattering);  //GeV*cm2/gx
 }
 
 // a class for SBS config

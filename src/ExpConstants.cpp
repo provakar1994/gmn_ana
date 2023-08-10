@@ -183,8 +183,13 @@ namespace expconst {
      central elastically scattered e-. See Utilities::GetElossInTgt for more info.
     *. Stopping power: 
        - Useful website by NIST ESTAR: https://physics.nist.gov/PhysRefData/Star/Text/ESTAR.html
-       - Above website don't have data on deuterium but I found a master's thesis from 1952 that shows that the 
-         stopping power of deuterium is pretty close to hydrogen. https://open.library.ubc.ca/media/stream/pdf/831/1.0085416/1
+       - <-dE/dx> depends on Z/A (this is the only part that is directly nuclear). For H2, Z/A is 1 whereas for
+         D2, Z/A is 0.5. Hence, it should be a reasonable to scale the dE/dx values of H2 by 0.5 before using 
+	 them for D2. Here are some reading material on the subject:
+	 - https://pdg.lbl.gov/2023/reviews/rpp2022-rev-passage-particles-matter.pdf
+	 - https://pdg.lbl.gov/2023/reviews/rpp2022-rev-atomic-nuclear-prop.pdf
+	 - https://pdg.lbl.gov/2023/AtomicNuclearProperties/index.html
+	 - Powerpoint presentation titled "eloss_in_tgt".
   */
 
   //--------------------------------------------
@@ -277,107 +282,6 @@ namespace expconst {
       return m[config];
     }
   }
-
-
-  // //--------------------------------------------
-  // double dEdx_coll_bs(int config, std::string material)
-  // /* Returns collision stopping power before scattering based on SBS configuration. Calculating
-  //    dEdx based on beam energy (mimics before scattering situation).
-  //   *. Stopping power: 
-  //      - Useful website by NIST ESTAR: https://physics.nist.gov/PhysRefData/Star/Text/ESTAR.html
-  //      - Above website don't have data on deuterium but I found a master's thesis from 1952 that shows that the 
-  //        stopping power of deuterium is pretty close to hydrogen. https://open.library.ubc.ca/media/stream/pdf/831/1.0085416/1
-  // */
-  // {
-  //   if (material.compare("Al")==0) {
-  //     std::unordered_map<int,double> m = {{1,  2.069E-3},
-  // 					  {4,  2.118E-3},
-  // 					  {7,  2.174E-3},
-  // 					  {11, 2.190E-3},
-  // 					  {14, 2.153E-3},
-  // 					  {8,  2.153E-3},
-  // 					  {9,  2.124E-3}};
-  //     if (m.find(config)==m.end()) 
-  // 	throw std::invalid_argument("[ExpConstants::dEdx_coll_bs] ERROR Invalid SBS config!! Valid options are: 4,7,11,14,8,9");
-  //     return m[config];
-      
-  //   }else if (material.compare("H")==0) {
-  //     std::unordered_map<int,double> m = {{1,  5.713E-3},
-  // 					  {4,  5.833E-3},
-  // 					  {7,  5.947E-3},
-  // 					  {11, 5.981E-3},
-  // 					  {14, 5.904E-3},
-  // 					  {8,  5.904E-3},
-  // 					  {9,  5.844E-3}};
-  //     if (m.find(config)==m.end()) 
-  // 	throw std::invalid_argument("[ExpConstants::dEdx_coll_bs] ERROR Invalid SBS config!! Valid options are: 4,7,11,14,8,9");
-  //     return m[config];
-
-  //   }else if (material.compare("PE")==0) { // Polyethylene
-  //     std::unordered_map<int,double> m = {{1,  2.526E-3},
-  // 					  {4,  2.585E-3},
-  // 					  {7,  2.651E-3},
-  // 					  {11, 2.670E-3},
-  // 					  {14, 2.626E-3},
-  // 					  {8,  2.626E-3},
-  // 					  {9,  2.591E-3}};
-  //     if (m.find(config)==m.end()) 
-  // 	throw std::invalid_argument("[ExpConstants::dEdx_coll_bs] ERROR Invalid SBS config!! Valid options are: 4,7,11,14,8,9");
-  //     return m[config];
-
-  //   }else {
-  //     throw std::invalid_argument("[ExpConstants::dEdx_coll_bs] Enter a valid material type!");
-  //   } 
-  // }
-  // //--------------------------------------------
-  // double dEdx_coll_as(int config, std::string material)
-  // /* Returns collision stopping power after scattering based on SBS configuration. Calculating
-  //    dEdx based on the central scattered elastic e- energy (mimics before scattering situation).
-  //   *. Stopping power: 
-  //      - Useful website by NIST ESTAR: https://physics.nist.gov/PhysRefData/Star/Text/ESTAR.html
-  //      - Above website don't have data on deuterium but I found a master's thesis from 1952 that shows that the 
-  //        stopping power of deuterium is pretty close to hydrogen. https://open.library.ubc.ca/media/stream/pdf/831/1.0085416/1
-  // */
-  // {
-  //   if (material.compare("Al")==0) {
-  //     std::unordered_map<int,double> m = {{1,  2.027E-3},
-  // 					  {4,  2.076E-3},
-  // 					  {7,  2.093E-3},
-  // 					  {11, 2.093E-3},
-  // 					  {14, 2.072E-3},
-  // 					  {8,  2.115E-3},
-  // 					  {9,  2.057E-3}};
-  //     if (m.find(config)==m.end()) 
-  // 	throw std::invalid_argument("[ExpConstants::dEdx_coll_as] ERROR Invalid SBS config!! Valid options are: 4,7,11,14,8,9");
-  //     return m[config];
-
-  //   }else if (material.compare("H")==0) { // Hydrogen/Deuterium
-  //     std::unordered_map<int,double> m = {{1,  5.645E-3},
-  // 					  {4,  5.746E-3},
-  // 					  {7,  5.781E-3},
-  // 					  {11, 5.781E-3},
-  // 					  {14, 5.737E-3},
-  // 					  {8,  5.826E-3},
-  // 					  {9,  5.706E-3}};
-  //     if (m.find(config)==m.end()) 
-  // 	throw std::invalid_argument("[ExpConstants::dEdx_coll_as] ERROR Invalid SBS config!! Valid options are: 4,7,11,14,8,9");
-  //     return m[config];
-
-  //   }else if (material.compare("PE")==0) { // Polyethylene
-  //     std::unordered_map<int,double> m = {{1,  2.477E-3},
-  // 					  {4,  2.535E-3},
-  // 					  {7,  2.555E-3},
-  // 					  {11, 2.555E-3},
-  // 					  {14, 2.530E-3},
-  // 					  {8,  2.581E-3},
-  // 					  {9,  2.512E-3}};
-  //     if (m.find(config)==m.end()) 
-  // 	throw std::invalid_argument("[ExpConstants::dEdx_coll_as] ERROR Invalid SBS config!! Valid options are: 4,7,11,14,8,9");
-  //     return m[config];
-
-  //   }else
-  //     throw std::invalid_argument("[ExpConstants::dEdx_coll_as] Enter a valid material type!");
-  // }
 
 } //::expconst
 
