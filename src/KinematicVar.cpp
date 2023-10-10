@@ -3,19 +3,39 @@
 namespace kine {
 
   //--------------------------------------------
-  double pcentral(double ebeam, double etheta, std::string Ntype) {
+  double M_N(std::string Ntype) {
     double temp = 0.;
     if (Ntype.compare("p") == 0) 
-      temp = ebeam/(1. + (ebeam/constant::Mp)*(1.0 - cos(etheta)));
+      temp = constant::Mp;
     else if (Ntype.compare("n") == 0) 
-      temp = ebeam/(1. + (ebeam/constant::Mn)*(1.0 - cos(etheta)));
-    else if (Ntype.compare("np") == 0) {
-      double Nmass = 0.5*(constant::Mn + constant::Mp);
-      temp = ebeam/(1. + (ebeam/Nmass)*(1.0 - cos(etheta)));
-    }
+      temp = constant::Mn;
+    else if (Ntype.compare("np") == 0) 
+      temp = 0.5*(constant::Mn + constant::Mp);
     else
-      std::cerr << "[KinematicVar::pcentral] Enter a valid nucleon type! **!**" << std::endl;
+      std::cerr << "[KinematicVar::M_N] Enter a valid nucleon type! **!**" << std::endl;
     return temp;
+  }
+  //--------------------------------------------
+  double pcentral(double ebeam, double etheta, std::string Ntype) {
+    // double temp = 0.;
+    // if (Ntype.compare("p") == 0) 
+    //   temp = ebeam/(1. + (ebeam/constant::Mp)*(1.0 - cos(etheta)));
+    // else if (Ntype.compare("n") == 0) 
+    //   temp = ebeam/(1. + (ebeam/constant::Mn)*(1.0 - cos(etheta)));
+    // else if (Ntype.compare("np") == 0) {
+    //   double Nmass = 0.5*(constant::Mn + constant::Mp);
+    //   temp = ebeam/(1. + (ebeam/Nmass)*(1.0 - cos(etheta)));
+    // }
+    // else
+    //   std::cerr << "[KinematicVar::pcentral] Enter a valid nucleon type! **!**" << std::endl;
+    // return temp;
+    return ebeam/(1. + (ebeam/kine::M_N(Ntype))*(1.0 - cos(etheta)));
+  }
+  //--------------------------------------------
+  double pcentral(SBSconfig sbsconf, std::string Ntype) {
+    double ebeam = sbsconf.GetEbeam();
+    double etheta = sbsconf.GetBBtheta_rad();
+    return ebeam/(1. + (ebeam/kine::M_N(Ntype))*(1.0 - cos(etheta)));
   }
   //--------------------------------------------
   double etheta(TLorentzVector Peprime) {
@@ -27,27 +47,29 @@ namespace kine {
   }
   //--------------------------------------------
   void SetPN(std::string Ntype, TLorentzVector &PN) {
-    if (Ntype.compare("p") == 0) 
-      PN.SetPxPyPzE(0., 0., 0., constant::Mp);
-    else if (Ntype.compare("n") == 0) 
-      PN.SetPxPyPzE(0., 0., 0., constant::Mn);
-    else if (Ntype.compare("np") == 0) 
-      PN.SetPxPyPzE(0., 0., 0., 0.5*(constant::Mn+constant::Mp));
-    else
-      std::cerr << "[KinematicVar::pcentral] Enter a valid nucleon type! **!**" << std::endl;
+    // if (Ntype.compare("p") == 0) 
+    //   PN.SetPxPyPzE(0., 0., 0., constant::Mp);
+    // else if (Ntype.compare("n") == 0) 
+    //   PN.SetPxPyPzE(0., 0., 0., constant::Mn);
+    // else if (Ntype.compare("np") == 0) 
+    //   PN.SetPxPyPzE(0., 0., 0., 0.5*(constant::Mn+constant::Mp));
+    // else
+    //   std::cerr << "[KinematicVar::pcentral] Enter a valid nucleon type! **!**" << std::endl;
+    PN.SetPxPyPzE(0., 0., 0., kine::M_N(Ntype));
   } 
   //--------------------------------------------
   double pN_expect(double nu, std::string Ntype) {
-    if (Ntype.compare("p") == 0)                      
-      return sqrt(pow(nu, 2.) + 2. * constant::Mp * nu);
-    else if (Ntype.compare("n") == 0)      
-      return sqrt(pow(nu, 2.) + 2. * constant::Mn * nu);
-    else if (Ntype.compare("np") == 0)      
-      return sqrt(pow(nu, 2.) + 2. * 0.5*(constant::Mn+constant::Mp) * nu);
-    else {
-      std::cerr << "[KinematicVar::pN_expect] Enter a valid nucleon type! **!**" << std::endl;
-      return -1;
-    }
+    // if (Ntype.compare("p") == 0)                      
+    //   return sqrt(pow(nu, 2.) + 2. * constant::Mp * nu);
+    // else if (Ntype.compare("n") == 0)      
+    //   return sqrt(pow(nu, 2.) + 2. * constant::Mn * nu);
+    // else if (Ntype.compare("np") == 0)      
+    //   return sqrt(pow(nu, 2.) + 2. * 0.5*(constant::Mn+constant::Mp) * nu);
+    // else {
+    //   std::cerr << "[KinematicVar::pN_expect] Enter a valid nucleon type! **!**" << std::endl;
+    //   return -1;
+    // }
+    return sqrt(pow(nu, 2.) + 2. * kine::M_N(Ntype) * nu);
   }
   //--------------------------------------------
   TVector3 qVect_unit(double Ntheta, double Nphi) {
@@ -119,17 +141,44 @@ namespace kine {
     return 2.0*ebeam*eeprime*(1.0-cos(etheta));
   }
   //--------------------------------------------
+  double Q2(SBSconfig sbsconf, std::string Ntype) {
+    double ebeam = sbsconf.GetEbeam();
+    double etheta = sbsconf.GetBBtheta_rad();
+    double eeprime = kine::pcentral(ebeam,etheta,Ntype);
+    return 2.0*ebeam*eeprime*(1.0-cos(etheta));
+  }
+  //--------------------------------------------
+  double tau(double Q2, std::string Ntype) {
+    return Q2 / (4.0*pow(kine::M_N(Ntype),2));
+  }
+  //--------------------------------------------
+  double tau(SBSconfig sbsconf, std::string Ntype) {
+    return kine::Q2(sbsconf,Ntype) / (4.0*pow(kine::M_N(Ntype),2));
+  }
+  //--------------------------------------------
+  double epsilon(double etheta, double Q2, std::string Ntype) {
+    double tau = kine::tau(Q2,Ntype);
+    return pow(1. + 2.*(1.+tau)*pow(tan(0.5*etheta),2) , -1);
+  }
+  //--------------------------------------------
+  double epsilon(SBSconfig sbsconf, std::string Ntype) {
+    double etheta = sbsconf.GetBBtheta_rad();
+    double tau = kine::tau(sbsconf,Ntype);
+    return pow(1. + 2.*(1.+tau)*pow(tan(0.5*etheta),2) , -1);
+  }
+  //--------------------------------------------
   double W2(double ebeam, double eeprime, double Q2, std::string Ntype) {
-    double temp = 0.;
-    if (Ntype.compare("p") == 0) 
-      temp = pow(constant::Mp,2.0) + 2.0*constant::Mp*(ebeam-eeprime) - Q2;
-    else if (Ntype.compare("n") == 0) 
-      temp = pow(constant::Mn,2.0) + 2.0*constant::Mn*(ebeam-eeprime) - Q2;
-    else if (Ntype.compare("np") == 0) 
-      temp = pow(0.5*(constant::Mn+constant::Mp),2.0) + 2.0*0.5*(constant::Mn+constant::Mp)*(ebeam-eeprime) - Q2;
-    else
-      std::cerr << "[KinematicVar::W2] Enter a valid nucleon type! **!**" << std::endl;
-    return temp;
+    // double temp = 0.;
+    // if (Ntype.compare("p") == 0) 
+    //   temp = pow(constant::Mp,2.0) + 2.0*constant::Mp*(ebeam-eeprime) - Q2;
+    // else if (Ntype.compare("n") == 0) 
+    //   temp = pow(constant::Mn,2.0) + 2.0*constant::Mn*(ebeam-eeprime) - Q2;
+    // else if (Ntype.compare("np") == 0) 
+    //   temp = pow(0.5*(constant::Mn+constant::Mp),2.0) + 2.0*0.5*(constant::Mn+constant::Mp)*(ebeam-eeprime) - Q2;
+    // else
+    //   std::cerr << "[KinematicVar::W2] Enter a valid nucleon type! **!**" << std::endl;
+    // return temp;
+    return pow(kine::M_N(Ntype),2.0) + 2.0*kine::M_N(Ntype)*(ebeam-eeprime) - Q2;
   }
   //--------------------------------------------
   double W(double ebeam, double eeprime, double Q2, std::string Ntype) {

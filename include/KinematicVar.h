@@ -18,8 +18,12 @@
 
 namespace kine{
 
+  // choosing proper nucleon mass depending on its type
+  double M_N(std::string Ntype);    // Options: "p", "n", & "np"
+
   // central scattered e- momentum
-  double pcentral(double ebeam, double etheta, std::string Ntype);       // GeV 
+  double pcentral(double ebeam, double etheta, std::string Ntype);       // GeV (Use for per event calc.) 
+  double pcentral(SBSconfig sbsconf, std::string Ntype);
   double etheta(TLorentzVector Peprime);  // Scattering angle (rad)
   double ephi(TLorentzVector Peprime);    // Angle of scattering plane (rad)
 
@@ -55,8 +59,12 @@ namespace kine{
 		       TVector3 HCAL_origin,            // HCAL origin vector [in Hall CoS]
 		       std::vector<TVector3> HCAL_axes,      // HCAL CoS axes [in Hall CoS]
 		       std::vector<double> &xyHCALexpect);   // expected x and y positions (Output)       
-
-  double Q2(double ebeam, double eeprime, double etheta);                // GeV, GeV, rad
+  double Q2(double ebeam, double eeprime, double etheta);                // GeV, GeV, rad (Use for per event calc.)
+  double Q2(SBSconfig sbsconf, std::string Ntype);                       
+  double tau(double Q2, std::string Ntype);                              // GeV2 (Use for per event calc.)
+  double tau(SBSconfig sbsconf, std::string Ntype);
+  double epsilon(double etheta, double Q2, std::string Ntype);           // rad, GeV2 (Use for per event calc.)
+  double epsilon(SBSconfig sbsconf, std::string Ntype);
   double W2(double ebeam, double eeprime, double Q2, std::string Ntype); // GeV, GeV, GeV2
   double W(double ebeam, double eeprime, double Q2, std::string Ntype);  // GeV, GeV, GeV2
 
