@@ -31,6 +31,8 @@ namespace constant {
   static const double H2_Amass = 1.00784; // u
   static const double D2_Amass = 2.013553212745; // u
 
+  static const double alpha = 1./137.;    // fine structure constant
+
 }
 
 #endif

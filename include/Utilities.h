@@ -17,6 +17,7 @@
 
 #include "CodaRun.h"
 #include "SimuJob.h"
+#include "Constants.h"
 #include "ExpConstants.h"
 
 namespace util_pd {
@@ -153,5 +154,8 @@ namespace util_pd {
 		     double const etheta,       // rad, scattering angle
 		     int const verbose,         // verbosity
 		     std::vector<double> &data);// Output: data[0]=>before scattering, data[1]=>after scattering,
+
+  /* Luminosity calculation for g4sbs data */
+  double Luminosity(double ibeam, std::string targetType);               // ibeam shoud be in A
 }
 #endif

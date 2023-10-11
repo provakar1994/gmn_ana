@@ -763,4 +763,18 @@ namespace util_pd {
       std::cout << Form("Mean energy loss (MeV) %.1f (before), %.1f (after) \n",Eloss_bs*1E3,Eloss_as*1E3);
     }
   }
+  //______________________________________________________________________________
+  double Luminosity(double ibeam,           // beam current in A
+		    std::string targetType) // Valid options - "LH2" and "LD2"
+  /* Calculates luminosity for g4sbs data */
+  {
+    double lumi = 0.;
+    if (targetType.compare("LH2") == 0)
+      lumi = ((ibeam/constant::qe)*expconst::tgtlen*expconst::lh2_TgtRho*(constant::N_A/constant::H2_Amass));
+    else if (targetType.compare("LD2") == 0)
+      lumi = ((ibeam/constant::qe)*expconst::tgtlen*expconst::ld2_TgtRho*(constant::N_A/constant::D2_Amass));
+    else
+      std::cerr << "[KinematicVar::Luminosity] Enter a valid target type! **!**" << std::endl;
+    return lumi;
+  }
 }

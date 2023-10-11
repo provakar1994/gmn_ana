@@ -118,16 +118,137 @@ namespace kine {
   double W(double ebeam, double eeprime, double Q2, std::string Ntype) {
     return std::max(0., sqrt(kine::W2(ebeam, eeprime, Q2, Ntype)));
   }
+
+
+  /* ###########################################
+     ## Functions to calculate cross-sections ##  
+     ########################################### */
   //--------------------------------------------
-  double Luminosity(double ibeam, std::string targetType) {
-    double lumi = 0.;
-    if (targetType.compare("LH2") == 0)
-      lumi = ((ibeam/constant::qe)*expconst::tgtlen*expconst::lh2_TgtRho*(constant::N_A/constant::H2_Amass));
-    else if (targetType.compare("LD2") == 0)
-      lumi = ((ibeam/constant::qe)*expconst::tgtlen*expconst::ld2_TgtRho*(constant::N_A/constant::D2_Amass));
-    else
-      std::cerr << "[KinematicVar::Luminosity] Enter a valid target type! **!**" << std::endl;
-    return lumi;
+  double sigmaRutherford(double ebeam, double etheta) { 
+    /* Rutherford scattering in relativistic limit */
+    return pow(constant::alpha,2) / (4.*pow(ebeam,2)*pow(sin(0.5*etheta),4));
+  }
+  //--------------------------------------------
+  double sigmaMott(double ebeam, double eeprime, double etheta) {
+    /* Mott cross-section */
+    double rf_cs = kine::sigmaRutherford(ebeam,etheta);
+    return rf_cs*(eeprime/ebeam)*pow(cos(0.5*etheta),2);
+  }
+  //--------------------------------------------
+  double sigmaMott(SBSconfig sbsconf, std::string Ntype) {
+    /* Mott cross-section */
+    double ebeam = sbsconf.GetEbeam();
+    double etheta = sbsconf.GetBBtheta_rad();
+    double eeprime = kine::pcentral(ebeam,etheta,Ntype);
+    double rf_cs = kine::sigmaRutherford(ebeam,etheta);
+    return rf_cs*(eeprime/ebeam)*pow(cos(0.5*etheta),2);
+  }
+  //--------------------------------------------
+  double sigmaReduced(double tau, double epsilon, double GE, double GM) {
+    /* Calculates redused cross-section */
+    return  epsilon*GE*GE + tau*GM*GM;
+  }
+  //--------------------------------------------
+  double sigmaBorn(double ebeam, double eeprime, double etheta, double GE, double GM, std::string Ntype) {
+    /* Calculates Born cross-section using Rosenbluth formula */
+    double sigmaMott = kine::sigmaMott(ebeam,eeprime,etheta);
+    double Q2 = kine::Q2(ebeam,eeprime,etheta);
+    double tau = kine::tau(Q2,Ntype);
+    double epsilon = kine::epsilon(etheta,Q2,Ntype);
+    double sigmaReduced = kine::sigmaReduced(tau,epsilon,GE,GM);
+    return sigmaMott * sigmaReduced * pow(epsilon*(1.+tau),-1);
+  }
+  //--------------------------------------------
+  double sigmaBorn(SBSconfig sbsconf, double GE, double GM, std::string Ntype) {
+    /* Calculates Born cross-section using Rosenbluth formula */
+    double ebeam = sbsconf.GetEbeam();
+    double etheta = sbsconf.GetBBtheta_rad();
+    double eeprime = kine::pcentral(ebeam,etheta,Ntype);
+    double sigmaMott = kine::sigmaMott(ebeam,eeprime,etheta);
+    double Q2 = kine::Q2(ebeam,eeprime,etheta);
+    double tau = kine::tau(Q2,Ntype);
+    double epsilon = kine::epsilon(etheta,Q2,Ntype);
+    double sigmaReduced = kine::sigmaReduced(tau,epsilon,GE,GM);
+    return sigmaMott * sigmaReduced * pow(epsilon*(1.+tau),-1);
+  }
+  //--------------------------------------------
+  double sigmaBorn_wo_Mott(double etheta, double Q2, double GE, double GM, std::string Ntype) {
+    /* Born cross-section w/o the Mott CS term */
+    double tau = kine::tau(Q2,Ntype);
+    double epsilon = kine::epsilon(etheta,Q2,Ntype);
+    double sigmaReduced = kine::sigmaReduced(tau,epsilon,GE,GM);
+    return sigmaReduced * pow(epsilon*(1.+tau),-1);
+  }
+  //--------------------------------------------
+  double sigmaBorn_ratio(double ebeam, double eeprime, double etheta, double GEp, double GMp, double GEn, double GMn) {
+    /* Calculates Born cross-section ratio */
+    double sigmBorn_p = kine::sigmaBorn(ebeam,eeprime,etheta,GEp,GMp,"p");
+    double sigmBorn_n = kine::sigmaBorn(ebeam,eeprime,etheta,GEn,GMn,"n");
+    return sigmBorn_n / sigmBorn_p;
+  }
+  //--------------------------------------------
+  double sigmaBorn_ratio(SBSconfig sbsconf, double GEp, double GMp, double GEn, double GMn) {
+    /* Calculates Born cross-section ratio */
+    double sigmBorn_p = kine::sigmaBorn(sbsconf,GEp,GMp,"p");
+    double sigmBorn_n = kine::sigmaBorn(sbsconf,GEn,GMn,"n");
+    return sigmBorn_n / sigmBorn_p;
+  }
+  //--------------------------------------------
+  double sigmaBorn_ratio(double etheta, double Q2, double GEp, double GMp, double GEn, double GMn) {
+    /* Calculates Born cross-section ratio assuming the Mott CS is the same for both p and n */
+    double sigmaBorn_p_wo_Mott = kine::sigmaBorn_wo_Mott(etheta,Q2,GEp,GMp,"p");
+    double sigmaBorn_n_wo_Mott = kine::sigmaBorn_wo_Mott(etheta,Q2,GEn,GMn,"n");
+    return sigmaBorn_n_wo_Mott / sigmaBorn_p_wo_Mott;
+  }
+
+  /* #######################################################
+     ## Functions to extract GMn from Born CS ratio ##  
+     ####################################################### */
+  //--------------------------------------------
+  double ExtractGMn(double ebeam, double eeprime, double etheta, double GEp, double GMp, double GEn, double ratio) {
+    /* Calculates GMn from a given ratio */
+    double Q2 = kine::Q2(ebeam,eeprime,etheta);
+    double tau_p = kine::tau(Q2,"p");
+    double tau_n = kine::tau(Q2,"n");
+    double epsilon_p = kine::epsilon(etheta,Q2,"p");
+    double epsilon_n = kine::epsilon(etheta,Q2,"n");
+    double sigmaReduced_p = kine::sigmaReduced(tau_p,epsilon_p,GEp,GMp);
+    // defining some terms for convenience
+    double term1 = epsilon_n*(1.+tau_n) / (epsilon_p*(1.+tau_p));
+
+    return - pow(term1*(sigmaReduced_p/tau_n)*ratio - (epsilon_n/tau_n)*GEn*GEn , 0.5);
+  }
+  //--------------------------------------------
+  double ExtractGMn(SBSconfig sbsconf, double GEp, double GMp, double GEn, double ratio) {
+    /* Calculates GMn from a given ratio */
+    double ebeam = sbsconf.GetEbeam();
+    double etheta = sbsconf.GetBBtheta_rad();
+    double eeprime_p = kine::pcentral(ebeam,etheta,"p");
+    double eeprime_n = kine::pcentral(ebeam,etheta,"n");
+    double Q2_p = kine::Q2(ebeam,eeprime_p,etheta);
+    double Q2_n = kine::Q2(ebeam,eeprime_n,etheta);
+    double tau_p = kine::tau(Q2_p,"p");
+    double tau_n = kine::tau(Q2_n,"n");
+    double epsilon_p = kine::epsilon(etheta,Q2_p,"p");
+    double epsilon_n = kine::epsilon(etheta,Q2_n,"n");
+    double sigmaReduced_p = kine::sigmaReduced(tau_p,epsilon_p,GEp,GMp);
+    // defining some terms for convenience
+    double term1 = epsilon_n*(1.+tau_n) / (epsilon_p*(1.+tau_p));
+
+    return - pow(term1*(sigmaReduced_p/tau_n)*ratio - (epsilon_n/tau_n)*GEn*GEn , 0.5);
+  }
+  //--------------------------------------------
+  double ExtractGMn(double etheta, double Q2, double GEp, double GMp, double GEn, double ratio) {
+    /* Calculates GMn from a given ratio */
+    double tau_p = kine::tau(Q2,"p");
+    double tau_n = kine::tau(Q2,"n");
+    double epsilon_p = kine::epsilon(etheta,Q2,"p");
+    double epsilon_n = kine::epsilon(etheta,Q2,"n");
+    double sigmaReduced_p = kine::sigmaReduced(tau_p,epsilon_p,GEp,GMp);
+    // defining some terms for convenience
+    double term1 = epsilon_n*(1.+tau_n) / (epsilon_p*(1.+tau_p));
+
+    return - pow(term1*(sigmaReduced_p/tau_n)*ratio - (epsilon_n/tau_n)*GEn*GEn , 0.5);
   }
 
 } //::kine

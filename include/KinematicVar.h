@@ -59,8 +59,27 @@ namespace kine{
   double W2(double ebeam, double eeprime, double Q2, std::string Ntype); // GeV, GeV, GeV2
   double W(double ebeam, double eeprime, double Q2, std::string Ntype);  // GeV, GeV, GeV2
 
-  double Luminosity(double ibeam, std::string targetType);               // A
-  
+  /* #####################################
+     ## Functions to get Cross-sections ##  
+     ##################################### */
+  double sigmaRutherford(double ebeam, double etheta);                   // GeV, rad
+  double sigmaMott(double ebeam, double eeprime, double etheta);         // GeV, GeV, rad (Use for per event calc.)
+  double sigmaMott(SBSconfig sbsconf, std::string Ntype);
+  double sigmaReduced(double tau, double epsilon, double GE, double GM); 
+  double sigmaBorn(double ebeam, double eeprime, double etheta, double GE, double GM, std::string Ntype);
+  double sigmaBorn(SBSconfig sbsconf, double GE, double GM, std::string Ntype);
+  double sigmaBorn_wo_Mott(double etheta, double Q2, double GE, double GM, std::string Ntype); // w/o sigmaMott term
+  double sigmaBorn_ratio(double ebeam, double eeprime, double etheta, double GEp, double GMp, double GEn, double GMn);
+  double sigmaBorn_ratio(SBSconfig sbsconf, double GEp, double GMp, double GEn, double GMn);
+  // the following fn calculates the Born CS ratio assuming Mott CS are the same for p and n
+  double sigmaBorn_ratio(double etheta, double Q2, double GEp, double GMp, double GEn, double GMn);
+ 
+  /* #######################################################
+     ## Functions to extract GMn from Born CS ratio ##  
+     ####################################################### */
+  double ExtractGMn(double ebeam, double eeprime, double etheta, double GEp, double GMp, double GEn, double ratio);
+  double ExtractGMn(SBSconfig sbsconf, double GEp, double GMp, double GEn, double ratio);
+  double ExtractGMn(double etheta, double Q2, double GEp, double GMp, double GEn, double ratio);
 }
 
 #endif
