@@ -16,6 +16,9 @@ void EMFFFits::StripGDandMu(G_t const kG, double const Q2, double & value) {
   }
 }
 
+// ######################
+// ## Kelly Fit (2004) ##
+// ######################
 int Kelly2004::KellyFit(const int kID, const double kQ2, double *GNGD_Fit, double* GNGD_Err) {
   // ** Link to the original paper:
   // https://journals.aps.org/prc/pdf/10.1103/PhysRevC.70.068202
@@ -56,7 +59,50 @@ int Kelly2004::KellyFit(const int kID, const double kQ2, double *GNGD_Fit, doubl
   return 0;
 }
 
+// #######################
+// ## Seamus Fit (20??) ##
+// #######################
+int Seamus20XX::SeamusFit(const int kID, const double kQ2, double *GNGD_Fit, double* GNGD_Err) {
+  // This is the fit that is implemented in g4sbs, presumably by Seamus Riordan,
+  // for GEn parametrization. In the code it has been indicated as "Our fit"! I
+  // couldn't find any corresponding paper related to this parametrization. Asking
+  // Andrew and Googling didn't help as well. For the sake of consistency, I 
+  // implemented the same parametrization in SIMC generator as well.
+  
+  // GEp->kID=1, GMp->kID=2, GEn->kID=3, GMn->kID=4
+  if (kID!=3) {
+    std::cerr<<"*** ERROR***, Seamus fit only supports kID=3 ie GEn"<<std::endl;
+    GNGD_Fit[0] = -1000;  GNGD_Err[0] = -1000;
+    return -1;
+  }
+  
+  ////////////////////////////////////////////////
+  //// a_i & b_i Parameters for Form Factor Values
+  /////////////////////////////////////////////////*{{{*/
+  const double GN_Coef_Fit[4][6] ={
+    {-1000, -1000, -1000, -1000, -1000, -1000}, /*Not available!*/
+    {-1000, -1000, -1000, -1000, -1000, -1000}, /*Not available!*/
+    {1.52, 2.629, 3.055, 5.222, 0.04, 11.438}, /*GEn/GD*/
+    {-1000, -1000, -1000, -1000, -1000, -1000} /*Not available!*/
+  };/*}}}*/
 
+  //// Applying parametrization formula
+  double tau = kID<3 ? kine::tau(kQ2,"p") : kine::tau(kQ2,"n");
+  double numerator = 0.;
+  double denominator = 1.;
+  for (int i=0; i<3; i++) numerator += GN_Coef_Fit[kID-1][i]*pow(tau,i+1);
+  for (int i=3; i<6; i++) denominator += GN_Coef_Fit[kID-1][i]*pow(tau,i-2);
+
+  GNGD_Fit[0] = numerator / denominator;
+  GNGD_Err[0] = -1000.;
+
+  return 0;
+  
+}
+
+// ###################
+// ## Ye Fit (2017) ##
+// ###################
 int Ye2017::YeFit(const int kID, const double kQ2, double *GNGD_Fit, double* GNGD_Err) {
   // ** Link to the original paper:
   // https://www.sciencedirect.com/science/article/pii/S0370269317309152?via%3Dihub
