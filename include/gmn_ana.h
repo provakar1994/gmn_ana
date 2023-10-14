@@ -11,6 +11,7 @@
 #include "FitFns.h"
 #include "CodaRun.h"
 #include "SimuJob.h"
+#include "EMFFFits.h"
 #include "Constants.h"
 #include "Utilities.h"
 #include "SetROOTVar.h"

@@ -19,6 +19,7 @@ SET(src
   SetROOTVar.cpp
   KinematicVar.cpp
   ExpConstants.cpp
+  EMFFFits.cpp
 )	
 
 # headers
