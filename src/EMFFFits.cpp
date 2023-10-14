@@ -16,6 +16,21 @@ void EMFFFits::StripGDandMu(G_t const kG, double const Q2, double & value) {
   }
 }
 
+G_t EMFFFits::StrToG_t(const std::string& str) {
+  /* Returns G_t object according to input string */
+  if (str == "GEp") {
+    return G_t::kGEp;
+  } else if (str == "GMp") {
+    return G_t::kGMp;
+  } else if (str == "GEn") {
+    return G_t::kGEn;
+  } else if (str == "GMn") {
+    return G_t::kGMn;
+  } else {
+    throw std::invalid_argument("Invalid string for conversion to enum");
+  }
+}
+
 // ######################
 // ## Kelly Fit (2004) ##
 // ######################

@@ -30,8 +30,9 @@ class EMFFFits {
   virtual double GetFF(G_t kG, double Q2) = 0;
   virtual std::vector<double> GetFFwErr(G_t kG, double const Q2) = 0;
   // Utility fns
-  double GetGDip(double const Q2) {return pow(1./(1. + Q2/0.71), 2);}
-  void StripGDandMu(G_t const kG, double const Q2, double & value);
+  static double GetGDip(double const Q2) {return pow(1./(1. + Q2/0.71), 2);}
+  static void StripGDandMu(G_t const kG, double const Q2, double & value);
+  static G_t StrToG_t(const std::string& str);
 };
 
 //##############################
