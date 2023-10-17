@@ -3,7 +3,7 @@
    run in a given SBS configuration and then generate 2 CSV files. 
    One file will contain:
    1)runnum, 2)segnum, 3)index, 4)sevnum, 5)gevnum 6)dnew.cnt, 7)dnew.current, 8)cum. charge
-   ** charge calculated with gain factor: 3317.99 +/- 31.69 Hz/uA
+   ** charge calculated with gain factor: 3317.99 +/- 31.69 Hz/uA (https://sbs.jlab.org/DocDB/0001/000164/002/dflay_bcm-ana-update_02-21-22.pdf)
    Another will contain:
    1)runnum, 2)tot. charge
    -----

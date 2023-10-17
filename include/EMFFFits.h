@@ -105,5 +105,26 @@ class Ye2017 : public EMFFFits {
   int YeFit(const int kID, const double kQ2, double *GNGD_Fit, double *GNGD_Err);
 };
 
+//##############################
+class Christy2022 : public EMFFFits {
+  // M. E. Christy et al: PHYSICAL REVIEW LETTERS 128, 102002 (2022)
+ public:
+  Christy2022(){};
+  double GetFF(G_t const kG, double const Q2) override {
+    double GNGD_Fit[1], GNGD_Err[1];
+    const int kID = static_cast<int>(kG);
+    int err = ChristyFit(kID, Q2, GNGD_Fit, GNGD_Err);
+    StripGDandMu(kG,Q2,GNGD_Fit[0]);
+    return GNGD_Fit[0];
+  }
+  std::vector<double> GetFFwErr(G_t kG, double const Q2) override {
+    /* Output: GetFFnErr[0] = Fit value, GetFFnErr[1] = Fit error */
+    std::cout << "WARNING: Error calculation is yet to be added for Christy Fit (2017)\n";
+    std::vector<double> result{Christy2022::GetFF(kG,Q2),-1000};
+    return result;
+  }
+ private:
+  int ChristyFit(const int kID, const double kQ2, double *GNGD_Fit, double *GNGD_Err);
+};
 
 #endif

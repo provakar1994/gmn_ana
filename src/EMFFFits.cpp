@@ -154,9 +154,9 @@ int Ye2017::YeFit(const int kID, const double kQ2, double *GNGD_Fit, double* GNG
   /////////////////////////////////////////////////*{{{*/
   const double GN_Coef_Fit[4][13] ={
     {0.239163298067, -1.10985857441, 1.44438081306, 0.479569465603, -2.28689474187,  1.12663298498, 1.25061984354,-3.63102047159, 4.08221702379,  0.504097346499,  -5.08512046051,  3.96774254395,-0.981529071103}, /*GEp*/
-    {0.264142994136, -1.09530612212, 1.21855378178, 0.661136493537, -1.40567892503, -1.35641843888, 1.44702915534, 4.2356697359, -5.33404565341, -2.91630052096,    8.70740306757, -5.70699994375, 1.28081437589}, /*GMp*/
+    {0.264142994136, -1.09530612212, 1.21855378178, 0.661136493537, -1.40567892503, -1.35641843888, 1.44702915534, 4.2356697359, -5.33404565341, -2.91630052096,    8.70740306757, -5.70699994375, 1.28081437589}, /*GMp/mu_p*/
     {0.048919981379,-0.064525053912,-0.240825897382,0.392108744873, 0.300445258602,-0.661888687179,-0.175639769687, 0.624691724461,-0.077684299367,-0.236003975259, 0.090401973470, 0.0, 0.0}, /*GEn*/
-    {0.257758326959,-1.079540642058, 1.182183812195,0.711015085833,-1.348080936796,-1.662444025208, 2.624354426029, 1.751234494568,-4.922300878888, 3.197892727312,-0.712072389946, 0.0, 0.0} /*GMn*/
+    {0.257758326959,-1.079540642058, 1.182183812195,0.711015085833,-1.348080936796,-1.662444025208, 2.624354426029, 1.751234494568,-4.922300878888, 3.197892727312,-0.712072389946, 0.0, 0.0} /*GMn/mu_n*/
   };/*}}}*/
 
     ////////////////////////////////////////////////
@@ -219,6 +219,49 @@ int Ye2017::YeFit(const int kID, const double kQ2, double *GNGD_Fit, double* GNG
   }
   GNGD_Err[0] = pow(10.,(lnGNGD_Err));    //LOG10(dG/G(0)/GD);
   /*}}}*/
+
+  return 0;
+}
+
+// ########################
+// ## Christy Fit (2022) ##
+// ########################
+int Christy2022::ChristyFit(const int kID, const double kQ2, double *GNGD_Fit, double* GNGD_Err) {
+  // ** Link to the original paper:
+  // https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.128.102002
+
+  // GEp->kID=1, GMp->kID=2, GEn->kID=3, GMn->kID=4
+  if (kID>2) {
+    std::cerr<<"*** ERROR***, Christy fit only supports kID=1 & 2 ie GEp & GMp"<<std::endl;
+    GNGD_Fit[0] = -1000;  GNGD_Err[0] = -1000;
+    return -1;
+  }
+
+  ////////////////////////////////////////////////
+  //// a_i, b_i, & c_i Parameters for Form Factor Values
+  /////////////////////////////////////////////////*{{{*/
+  const double GN_Coef_Fit[2][4] ={
+    {0.072, 10.73, 19.81, 4.75}, /*GMp/mu_p*/
+    {-0.46, 0.12, -1000, -1000}  /*RS ie (mu_p*GEp/GMp)^2*/ /*c1 and c2*/
+  };/*}}}*/
+
+  //// Applying parametrization formula
+  double tau = kine::tau(kQ2,"p");
+  double numerator = 1.;
+  double denominator = 1.;
+  // Calculating GMp first
+  numerator += GN_Coef_Fit[0][0]*tau;
+  for (int i=1; i<4; i++) denominator += GN_Coef_Fit[0][i]*pow(tau,i);
+  double GMp_ov_mun = numerator / denominator; 
+  // Now calculating RS and then GEp
+  double RS = 1.;
+  for (int i=0; i<2; i++) RS += GN_Coef_Fit[1][i]*pow(tau,i+1);
+  double GEp = sqrt(RS)*GMp_ov_mun;
+
+  // Returning EMFF values
+  if (kID-1==1) GNGD_Fit[0] = GMp_ov_mun / EMFFFits::GetGDip(kQ2);
+  else GNGD_Fit[0] = GEp / EMFFFits::GetGDip(kQ2);
+  GNGD_Err[0] = -1000.;
 
   return 0;
 }

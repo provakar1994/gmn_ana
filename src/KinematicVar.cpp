@@ -216,7 +216,7 @@ namespace kine {
     // defining some terms for convenience
     double term1 = epsilon_n*(1.+tau_n) / (epsilon_p*(1.+tau_p));
 
-    return - pow(term1*(sigmaReduced_p/tau_n)*ratio - (epsilon_n/tau_n)*GEn*GEn , 0.5);
+    return - pow((term1*sigmaReduced_p*ratio - epsilon_n*GEn*GEn)/tau_n , 0.5);
   }
   //--------------------------------------------
   double ExtractGMn(SBSconfig sbsconf, double GEp, double GMp, double GEn, double ratio) {
@@ -235,7 +235,7 @@ namespace kine {
     // defining some terms for convenience
     double term1 = epsilon_n*(1.+tau_n) / (epsilon_p*(1.+tau_p));
 
-    return - pow(term1*(sigmaReduced_p/tau_n)*ratio - (epsilon_n/tau_n)*GEn*GEn , 0.5);
+    return - pow((term1*sigmaReduced_p*ratio - epsilon_n*GEn*GEn)/tau_n , 0.5);
   }
   //--------------------------------------------
   double ExtractGMn(double etheta, double Q2, double GEp, double GMp, double GEn, double ratio) {
@@ -248,7 +248,7 @@ namespace kine {
     // defining some terms for convenience
     double term1 = epsilon_n*(1.+tau_n) / (epsilon_p*(1.+tau_p));
 
-    return - pow(term1*(sigmaReduced_p/tau_n)*ratio - (epsilon_n/tau_n)*GEn*GEn , 0.5);
+    return - pow((term1*sigmaReduced_p*ratio - epsilon_n*GEn*GEn)/tau_n , 0.5);
   }
 
 } //::kine
