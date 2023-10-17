@@ -64,16 +64,18 @@ int fit_dy (const char *configfilename,
   std::string gen = jmgr->GetValueFromSubKey_str(key,"generator");
   std::string dfprefix = jmgr->GetValueFromSubKey_str(key,"data_file_prefix");
   std::string sfprefix = jmgr->GetValueFromSubKey_str(key,"simu_file_prefix");
-  char const * dfp = dfprefix.empty() ? "" : (dfprefix + "_").c_str();
-  char const * sfp = sfprefix.empty() ? "" : (sfprefix + "_").c_str();
+  dfprefix = dfprefix.empty() ? "" : dfprefix + "_";
+  sfprefix = sfprefix.empty() ? "" : sfprefix + "_";
+  // char const * dfp = dfprefix.empty() ? "" : (dfprefix + "_").c_str();
+  // char const * sfp = sfprefix.empty() ? "" : (sfprefix + "_").c_str();
 
   // defining output files
   TString outFile = Form("%s_sbs%d_sbs%dp_model%d.root",filebase.c_str(),conf,sbsmag,model);
 
   // reading ROOT files as df
   ROOT::EnableImplicitMT();
-  ROOT::RDataFrame data_rdf("Tout",Form("pdout/%s%s_ana_data_sbs%d_sbs%dp_model%d_pass%d.root",dfp,key,conf,sbsmag,model,pass));
-  ROOT::RDataFrame simu_rdf("Tout",Form("simulation/siout/%s%s_ana_%s_sbs%d_sbs%dp_model%d.root",sfp,key,gen.c_str(),conf,sbsmag,model));
+  ROOT::RDataFrame data_rdf("Tout",Form("pdout/%s%s_ana_data_sbs%d_sbs%dp_model%d_pass%d.root",dfprefix.c_str(),key,conf,sbsmag,model,pass));
+  ROOT::RDataFrame simu_rdf("Tout",Form("simulation/siout/%s%s_ana_%s_sbs%d_sbs%dp_model%d.root",sfprefix.c_str(),key,gen.c_str(),conf,sbsmag,model));
 
   // Applying cuts
   std::string cuts_for_signal_data = jmgr->GetValueFromSubKey_str(key,"cuts_for_signal_data");
