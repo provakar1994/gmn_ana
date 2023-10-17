@@ -70,16 +70,18 @@ int fit_dx (const char *configfilename,
   std::string gen = jmgr->GetValueFromSubKey_str(key,"generator");
   std::string dfprefix = jmgr->GetValueFromSubKey_str(key,"data_file_prefix");
   std::string sfprefix = jmgr->GetValueFromSubKey_str(key,"simu_file_prefix");
-  char const * dfp = dfprefix.empty() ? "" : (dfprefix + "_").c_str();
-  char const * sfp = sfprefix.empty() ? "" : (sfprefix + "_").c_str();
+  dfprefix = dfprefix.empty() ? "" : dfprefix + "_";
+  sfprefix = sfprefix.empty() ? "" : sfprefix + "_";
+  // char const * dfp = dfprefix.empty() ? "" : (dfprefix + "_").c_str();
+  // char const * sfp = sfprefix.empty() ? "" : (sfprefix + "_").c_str();
 
   // defining output files
   TString outFile = Form("%s_sbs%d_sbs%dp_model%d.root",filebase.c_str(),conf,sbsmag,model);
 
   // reading ROOT files as df
   ROOT::EnableImplicitMT();
-  ROOT::RDataFrame data_rdf("Tout",Form("pdout/%s%s_ana_data_sbs%d_sbs%dp_model%d_pass%d.root",dfp,key,conf,sbsmag,model,pass));
-  ROOT::RDataFrame simu_rdf("Tout",Form("simulation/siout/%s%s_ana_%s_sbs%d_sbs%dp_model%d.root",sfp,key,gen.c_str(),conf,sbsmag,model));
+  ROOT::RDataFrame data_rdf("Tout",Form("pdout/%s%s_ana_data_sbs%d_sbs%dp_model%d_pass%d.root",dfprefix.c_str(),key,conf,sbsmag,model,pass));
+  ROOT::RDataFrame simu_rdf("Tout",Form("simulation/siout/%s%s_ana_%s_sbs%d_sbs%dp_model%d.root",sfprefix.c_str(),key,gen.c_str(),conf,sbsmag,model));
 
   // Applying cuts
   std::string cuts_for_signal_data = jmgr->GetValueFromSubKey_str(key,"cuts_for_signal_data");
@@ -155,7 +157,9 @@ int fit_dx (const char *configfilename,
 				    ho2);
     ho2[0]->Draw(); customize_ht(ho2[0]); customize_dx(ho2[0]);
     ho2[1]->Draw("same"); customize_hs(ho2[1]); customize_dx(ho2[1]);
+    //cout << " *** " << ho2[1]->Integral() << "\n";
     ho2[2]->Draw("same"); customize_hbg(ho2[2]);
+    //cout << " *** " << ho2[2]->Integral() << "\n";
     // drawing the polynomial background as well
     FitFn *ffn = new FitFn(Opoly);
     TF1* bg2 = new TF1("bg2",ffn,&FitFn::ffn_poly,dx_fit_range[0],dx_fit_range[1],Opoly+1);
@@ -242,7 +246,9 @@ int fit_dx (const char *configfilename,
 				    ho1);
     ho1[0]->Draw(); customize_ht(ho1[0]); customize_dx(ho1[0]);
     ho1[1]->Draw("same"); customize_hs(ho1[1]); customize_dx(ho1[1]);
+    //cout << " *** " << ho1[1]->Integral() << "\n";
     ho1[2]->Draw("same"); customize_hbg(ho1[2]); customize_dx(ho1[2]);
+    //cout << " *** " << ho1[2]->Integral() << "\n";
     TLegend *l1=new TLegend(0.10,0.77,0.38,0.9);
     l1->SetTextFont(42);
     l1->AddEntry(ho1[0],"Data","l");
