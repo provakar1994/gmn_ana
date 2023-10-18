@@ -16,14 +16,31 @@ namespace kine {
     return temp;
   }
   //--------------------------------------------
-  double pcentral(double ebeam, double etheta, std::string Ntype) {
+  double pelas(double ebeam, double etheta, std::string Ntype) {
+    /* Scattered e- momentum using elastic kinematics.
+       Neglecting electron rest mass, hence E = p */
     return ebeam/(1. + (ebeam/kine::M_N(Ntype))*(1.0 - cos(etheta)));
   }
   //--------------------------------------------
-  double pcentral(SBSconfig sbsconf, std::string Ntype) {
+  double pelas(SBSconfig sbsconf, std::string Ntype) {
+    /* Scattered e- momentum using elastic kinematics.
+       Neglecting electron rest mass, hence E = p */
     double ebeam = sbsconf.GetEbeam();
     double etheta = sbsconf.GetBBtheta_rad();
     return ebeam/(1. + (ebeam/kine::M_N(Ntype))*(1.0 - cos(etheta)));
+  }
+  //--------------------------------------------
+  double thelas(double ebeam, double epprime, std::string Ntype) {
+    /* e- scattering angle using elastic kinematics. */
+    return acos((kine::M_N(Ntype)/ebeam)*(1.-(ebeam/epprime))+1.);
+  }
+  //--------------------------------------------
+  double thelas(SBSconfig sbsconf, std::string Ntype) {
+    /* Scattered e- momentum using elastic kinematics. */
+    double ebeam = sbsconf.GetEbeam();
+    double etheta = sbsconf.GetBBtheta_rad();
+    double epprime = pelas(sbsconf,Ntype);
+    return acos((kine::M_N(Ntype)/ebeam)*(1.-(ebeam/epprime))+1.);
   }
   //--------------------------------------------
   double etheta(TLorentzVector Peprime) {
@@ -88,7 +105,7 @@ namespace kine {
   double Q2(SBSconfig sbsconf, std::string Ntype) {
     double ebeam = sbsconf.GetEbeam();
     double etheta = sbsconf.GetBBtheta_rad();
-    double eeprime = kine::pcentral(ebeam,etheta,Ntype);
+    double eeprime = kine::pelas(ebeam,etheta,Ntype);
     return 2.0*ebeam*eeprime*(1.0-cos(etheta));
   }
   //--------------------------------------------
@@ -109,6 +126,17 @@ namespace kine {
     double etheta = sbsconf.GetBBtheta_rad();
     double tau = kine::tau(sbsconf,Ntype);
     return pow(1. + 2.*(1.+tau)*pow(tan(0.5*etheta),2) , -1);
+  }
+  //--------------------------------------------
+  double epsilon_general(double etheta, double Q2, double nu) {
+    /* Doesn't assume Q2=2*M_N*nu ie elastic kinematics */
+    return pow(1. + 2.*(1.+nu*nu/Q2)*pow(tan(0.5*etheta),2) , -1);
+  }
+  //--------------------------------------------
+  double W2_general(double ebeam, double eeprime, double etheta, std::string Ntype) {
+    /* Calculating W2 from 4-momentum conservation (No elastic assumptions) */
+    double Q2 = 2.0*ebeam*eeprime*(1.0-cos(etheta));
+    return pow(kine::M_N(Ntype),2.) + 2.*kine::M_N(Ntype)*(ebeam-eeprime) - Q2;
   }
   //--------------------------------------------
   double W2(double ebeam, double eeprime, double Q2, std::string Ntype) {
@@ -139,7 +167,7 @@ namespace kine {
     /* Mott cross-section */
     double ebeam = sbsconf.GetEbeam();
     double etheta = sbsconf.GetBBtheta_rad();
-    double eeprime = kine::pcentral(ebeam,etheta,Ntype);
+    double eeprime = kine::pelas(ebeam,etheta,Ntype);
     double rf_cs = kine::sigmaRutherford(ebeam,etheta);
     return rf_cs*(eeprime/ebeam)*pow(cos(0.5*etheta),2);
   }
@@ -163,7 +191,7 @@ namespace kine {
     /* Calculates Born cross-section using Rosenbluth formula */
     double ebeam = sbsconf.GetEbeam();
     double etheta = sbsconf.GetBBtheta_rad();
-    double eeprime = kine::pcentral(ebeam,etheta,Ntype);
+    double eeprime = kine::pelas(ebeam,etheta,Ntype);
     double sigmaMott = kine::sigmaMott(ebeam,eeprime,etheta);
     double Q2 = kine::Q2(ebeam,eeprime,etheta);
     double tau = kine::tau(Q2,Ntype);
@@ -223,8 +251,8 @@ namespace kine {
     /* Calculates GMn from a given ratio */
     double ebeam = sbsconf.GetEbeam();
     double etheta = sbsconf.GetBBtheta_rad();
-    double eeprime_p = kine::pcentral(ebeam,etheta,"p");
-    double eeprime_n = kine::pcentral(ebeam,etheta,"n");
+    double eeprime_p = kine::pelas(ebeam,etheta,"p");
+    double eeprime_n = kine::pelas(ebeam,etheta,"n");
     double Q2_p = kine::Q2(ebeam,eeprime_p,etheta);
     double Q2_n = kine::Q2(ebeam,eeprime_n,etheta);
     double tau_p = kine::tau(Q2_p,"p");
