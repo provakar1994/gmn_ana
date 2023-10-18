@@ -299,6 +299,7 @@ int elas_ana_data (const char *configfilename,
   double T_ToF;           Tout->Branch("ToF", &T_ToF, "ToF/D");
   //HCAL (All clusters)
   int T_idblkHCAL_aclN;   Tout->Branch("idblkHCAL_aclN", &T_idblkHCAL_aclN, "idblkHCAL_aclN/I"); 
+  int T_idclHCAL_intime; if (hcal_acl_ON) Tout->Branch("idclHCAL_intime", &T_idclHCAL_intime, "idclHCAL_intime/I"); //stores HCAL cl. that are in BBCAL/HCAL ADC coin time
   int T_idclHCAL_sthpq_p; if (hcal_acl_ON) Tout->Branch("idclHCAL_sthpq_p", &T_idclHCAL_sthpq_p, "idclHCAL_sthpq_p/I"); //stores HCAL cl. index with smallest thpq value
   double T_idblkHCAL_acl[maxNHCALcl];    if (hcal_acl_ON) Tout->Branch("idblkHCAL_acl", &T_idblkHCAL_acl, "idblkHCAL_acl[idblkHCAL_aclN]/D"); 
   double T_nblkHCAL_acl[maxNHCALcl];     if (hcal_acl_ON) Tout->Branch("nblkHCAL_acl", &T_nblkHCAL_acl, "nblkHCAL_acl[idblkHCAL_aclN]/D"); 
@@ -611,6 +612,7 @@ int elas_ana_data (const char *configfilename,
     T_atimeHCAL = atimeblkHCAL_acl[inTime_idcl];
     T_tdcHCAL = tdcblkHCAL_acl[inTime_idcl];
     T_idblkHCAL_aclN = idblkHCAL_aclN;
+    T_idclHCAL_intime = inTime_idcl;
     T_idclHCAL_sthpq_p = sthpq_p_idcl;
 
     // Calculating thpq (both w & w/o deflection due to SBS dipole)
