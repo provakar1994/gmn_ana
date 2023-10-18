@@ -110,14 +110,14 @@ int qelas_ana_data (const char *configfilename,
   std::vector<void*> hcalclvar_mem = {&eHCAL,&xHCAL,&yHCAL,&rblkHCAL,&cblkHCAL,&idblkHCAL,&atimeHCAL,&tdcHCAL};
   setrootvar::setbranch(C, "sbs.hcal", hcalclvar, hcalclvar_mem);
 
-  // hcal clus var [2]
-  int maxHCALcl = 50;
-  int idHCAL_clN; double idHCAL_cl[maxHCALcl];
-  double nblkHCAL_cl[maxHCALcl], eblkHCAL_cl[maxHCALcl], atimeblkHCAL_cl[maxHCALcl], tdcblkHCAL_cl[maxHCALcl]; 
-  double eHCAL_cl[maxHCALcl], HCAL_cl[maxHCALcl], yHCAL_cl[maxHCALcl], rblkHCAL_cl[maxHCALcl], cblkHCAL_cl[maxHCALcl];
-  std::vector<std::string> hcalclvar_cl = {"id","id","nblk","eblk","e","x","y","rowblk","colblk","atimeblk","tdctime"};
-  std::vector<void*> hcalclvar_cl_mem = {&idHCAL_cl,&idHCAL_clN,&nblkHCAL_cl,&eblkHCAL_cl,&eHCAL_cl,&xHCAL_cl,&yHCAL_cl,&rblkHCAL_cl,&cblkHCAL_cl,&atimeblkHCAL_cl,&tdcblkHCAL_cl};
-  setrootvar::setbranch(C, "sbs.hcal.clus", hcalclvar_cl, hcalclvar_cl_mem, 1);
+  // // hcal clus var [2]
+  // int maxHCALcl = 50;
+  // int idHCAL_clN; double idHCAL_cl[maxHCALcl];
+  // double nblkHCAL_cl[maxHCALcl], eblkHCAL_cl[maxHCALcl], atimeblkHCAL_cl[maxHCALcl], tdcblkHCAL_cl[maxHCALcl]; 
+  // double eHCAL_cl[maxHCALcl], HCAL_cl[maxHCALcl], yHCAL_cl[maxHCALcl], rblkHCAL_cl[maxHCALcl], cblkHCAL_cl[maxHCALcl];
+  // std::vector<std::string> hcalclvar_cl = {"id","id","nblk","eblk","e","x","y","rowblk","colblk","atimeblk","tdctime"};
+  // std::vector<void*> hcalclvar_cl_mem = {&idHCAL_cl,&idHCAL_clN,&nblkHCAL_cl,&eblkHCAL_cl,&eHCAL_cl,&xHCAL_cl,&yHCAL_cl,&rblkHCAL_cl,&cblkHCAL_cl,&atimeblkHCAL_cl,&tdcblkHCAL_cl};
+  // setrootvar::setbranch(C, "sbs.hcal.clus", hcalclvar_cl, hcalclvar_cl_mem, 1);
 
   // bbhodo clus var
   int ncltmeanHODO; 
@@ -221,7 +221,7 @@ int qelas_ana_data (const char *configfilename,
   double T_dpel;        Tout->Branch("dpel", &T_dpel, "dpel/D");
   double T_ephi;        Tout->Branch("ephi", &T_ephi, "ephi/D");
   double T_etheta;      Tout->Branch("etheta", &T_etheta, "etheta/D");
-  double T_pcentral;    Tout->Branch("pcentral", &T_pcentral, "pcentral/D");
+  double T_pelas;       Tout->Branch("pelas", &T_pelas, "pelas/D");
   double T_thetapq_p;   Tout->Branch("thetapq_p", &T_thetapq_p, "thetapq_p/D");
   double T_thetapq_n;   Tout->Branch("thetapq_n", &T_thetapq_n, "thetapq_n/D");
   //track
@@ -381,7 +381,7 @@ int qelas_ana_data (const char *configfilename,
 
     double etheta = kine::etheta(Peprime);
     double ephi = kine::ephi(Peprime);
-    double pcentral = kine::pcentral(ebeam_corr, etheta, Ntype);
+    double pelas = kine::pelas(ebeam_corr, etheta, Ntype);
 
     double nu = 0.;                   // energy of the virtual photon
     double pN_expect = 0.;            // expected recoil nucleon momentum
@@ -402,9 +402,9 @@ int qelas_ana_data (const char *configfilename,
       Q2recon = kine::Q2(Pe.E(), Peprime.E(), etheta);
       W2recon = kine::W2(Pe.E(), Peprime.E(), Q2recon, Ntype);
     } else if (model == 1) {
-      nu = Pe.E() - pcentral;
+      nu = Pe.E() - pelas;
       pN_expect = kine::pN_expect(nu, Ntype);
-      thetaN_expect = acos((Pe.E() - pcentral*cos(etheta)) / pN_expect);
+      thetaN_expect = acos((Pe.E() - pelas*cos(etheta)) / pN_expect);
       pNhat = kine::qVect_unit(thetaN_expect, phiN_expect);
       PNprime.SetPxPyPzE(pN_expect*pNhat.X(), pN_expect*pNhat.Y(), pN_expect*pNhat.Z(), nu+PN.E());
       Q2recon = kine::Q2(Pe.E(), Peprime.E(), etheta);
@@ -418,7 +418,7 @@ int qelas_ana_data (const char *configfilename,
     }
     h_Q2->Fill(Q2recon); 
     double Wrecon = sqrt(max(0., W2recon));
-    double dpel = Peprime.E()/pcentral - 1.0; h_dpel->Fill(dpel);
+    double dpel = Peprime.E()/pelas - 1.0; h_dpel->Fill(dpel);
 
     T_nu = nu;
     T_Q2 = Q2recon;
@@ -427,7 +427,7 @@ int qelas_ana_data (const char *configfilename,
     T_dpel = dpel;
     T_ephi = ephi;
     T_etheta = etheta;
-    T_pcentral = pcentral;
+    T_pelas = pelas;
 
     T_rnum = rnum;
     T_segnum = nseg;
