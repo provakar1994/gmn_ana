@@ -36,6 +36,28 @@ class EMFFFits {
 };
 
 //##############################
+class Galster1971 : public EMFFFits {
+  // S. Galster: Nuclear Physics B32 (1971) 221-237
+ public:
+  Galster1971(){};
+  double GetFF(G_t const kG, double const Q2) override {
+    double GNGD_Fit[1], GNGD_Err[1];
+    const int kID = static_cast<int>(kG);
+    int err = GalsterFit(kID, Q2, GNGD_Fit, GNGD_Err);
+    StripGDandMu(kG,Q2,GNGD_Fit[0]);
+    return GNGD_Fit[0];
+  }
+  std::vector<double> GetFFwErr(G_t kG, double const Q2) override {
+    /* Output: GetFFnErr[0] = Fit value, GetFFnErr[1] = Fit error */
+    std::cout << "WARNING: Error calculation is yet to be added for Galster Fit (1971)\n";
+    std::vector<double> result{Galster1971::GetFF(kG,Q2),-1000};
+    return result;
+  }
+ private:
+  int GalsterFit(const int kID, const double kQ2, double *GNGD_Fit, double *GNGD_Err);
+};
+
+//##############################
 class Kelly2004 : public EMFFFits {
   // J. J. Kelly: PHYSICAL REVIEW C 70, 068202 (2004)
  public:

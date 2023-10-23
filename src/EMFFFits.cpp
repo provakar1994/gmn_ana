@@ -31,6 +31,32 @@ G_t EMFFFits::StrToG_t(const std::string& str) {
   }
 }
 
+// ########################
+// ## Galster Fit (1971) ##
+// ########################
+int Galster1971::GalsterFit(const int kID, const double kQ2, double *GNGD_Fit, double* GNGD_Err) {
+  // This fit has been mentioned in the GMn proposal. 
+  // It returns GEn/GEp, but it seems to me that GEp for their case is essentially GDip
+  
+  // GEp->kID=1, GMp->kID=2, GEn->kID=3, GMn->kID=4
+  if (kID!=3) {
+    std::cerr<<"*** ERROR***, Galster fit only supports kID=3 ie GEn"<<std::endl;
+    GNGD_Fit[0] = -1000;  GNGD_Err[0] = -1000;
+    return -1;
+  }
+
+  //// Applying parametrization formula
+  double tau = kID<3 ? kine::tau(kQ2,"p") : kine::tau(kQ2,"n");
+  double numerator = -constant::mun;
+  double denominator = 1. + 5.6*tau;
+
+  GNGD_Fit[0] = numerator / denominator;
+  GNGD_Err[0] = -1000.;
+
+  return 0;
+  
+}
+
 // ######################
 // ## Kelly Fit (2004) ##
 // ######################
