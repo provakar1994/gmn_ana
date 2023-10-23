@@ -255,7 +255,7 @@ int elas_ana_data (const char *configfilename,
   double T_dpel;          Tout->Branch("dpel", &T_dpel, "dpel/D");
   double T_ephi;          Tout->Branch("ephi", &T_ephi, "ephi/D");
   double T_etheta;        Tout->Branch("etheta", &T_etheta, "etheta/D");
-  double T_pcentral;      Tout->Branch("pcentral", &T_pcentral, "pcentral/D");
+  double T_pelas;         Tout->Branch("pelas", &T_pelas, "pelas/D");
   double T_thpq_p;        Tout->Branch("thpq_p", &T_thpq_p, "thpq_p/D");
   double T_thpq_n;        Tout->Branch("thpq_n", &T_thpq_n, "thpq_n/D"); //n=>no deflection
   //track
@@ -426,7 +426,8 @@ int elas_ana_data (const char *configfilename,
 
     double etheta = kine::etheta(Peprime);
     double ephi = kine::ephi(Peprime);
-    double pcentral = kine::pcentral(ebeam_corr, etheta, Ntype);
+    double pelas = kine::pelas(ebeam_corr, etheta, Ntype);
+    double thelas = kine::thelas(ebeam_corr, trP_corr, Ntype);
 
     double nu = 0.;                   // energy of the virtual photon
     double pN_expect = 0.;            // expected recoil nucleon momentum
@@ -437,24 +438,26 @@ int elas_ana_data (const char *configfilename,
        model 1 = uses reconstructed angles as independent variable 
        model 2 = uses 4-vector calculation */
     TVector3 pNhat;                   // 3-momentum of the recoil nucleon (Unit)
-    double Q2recon, W2recon;
-    if (model == 0) {
+    double Q2recon{0}, W2recon{0};
+    if (model == 0) { // p as independent variable
       nu = Pe.E() - Peprime.E();
       pN_expect = kine::pN_expect(nu, Ntype);
       thetaN_expect = acos((Pe.E() - Peprime.Pz()) / pN_expect);
       pNhat = kine::qVect_unit(thetaN_expect, phiN_expect);
       PNprime.SetPxPyPzE(pN_expect*pNhat.X(), pN_expect*pNhat.Y(), pN_expect*pNhat.Z(), nu+PN.E());
-      Q2recon = kine::Q2(Pe.E(), Peprime.E(), etheta);
-      W2recon = kine::W2(Pe.E(), Peprime.E(), Q2recon, Ntype);
-    } else if (model == 1) {
-      nu = Pe.E() - pcentral;
+      Q2recon = kine::Q2(Pe.E(), Peprime.E(), thelas);
+      //W2recon = kine::W2(Pe.E(), Peprime.E(), Q2recon, Ntype);
+      W2recon = kine::W2_general(Pe.E(), Peprime.E(), etheta, Ntype);
+    } else if (model == 1) { // angle as independent variable
+      nu = Pe.E() - pelas;
       pN_expect = kine::pN_expect(nu, Ntype);
-      thetaN_expect = acos((Pe.E() - pcentral*cos(etheta)) / pN_expect);
+      thetaN_expect = acos((Pe.E() - pelas*cos(etheta)) / pN_expect);
       pNhat = kine::qVect_unit(thetaN_expect, phiN_expect);
       PNprime.SetPxPyPzE(pN_expect*pNhat.X(), pN_expect*pNhat.Y(), pN_expect*pNhat.Z(), nu+PN.E());
-      Q2recon = kine::Q2(Pe.E(), Peprime.E(), etheta);
-      W2recon = kine::W2(Pe.E(), Peprime.E(), Q2recon, Ntype);
-    } else if (model == 2) {
+      Q2recon = kine::Q2(Pe.E(), pelas, etheta);
+      //W2recon = kine::W2(Pe.E(), Peprime.E(), Q2recon, Ntype);
+      W2recon = kine::W2_general(Pe.E(), Peprime.E(), etheta, Ntype);
+    } else if (model == 2) { // 4-vector calculation
       nu = q.E();
       PNprime = q + PN; 
       pNhat = PNprime.Vect().Unit();
@@ -463,7 +466,7 @@ int elas_ana_data (const char *configfilename,
     }
     h_Q2->Fill(Q2recon); 
     double Wrecon = sqrt(max(0., W2recon));
-    double dpel = Peprime.E()/pcentral - 1.0; h_dpel->Fill(dpel);
+    double dpel = Peprime.E()/pelas - 1.0; h_dpel->Fill(dpel);
 
     // defining W cut
     WCut = Wrecon >= W_cutR[0] && Wrecon <= W_cutR[1];
@@ -475,7 +478,7 @@ int elas_ana_data (const char *configfilename,
     T_dpel = dpel;
     T_ephi = ephi;
     T_etheta = etheta;
-    T_pcentral = pcentral;
+    T_pelas = pelas;
 
     T_rnum = rnum;
     T_segnum = nseg;
