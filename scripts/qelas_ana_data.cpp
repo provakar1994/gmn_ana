@@ -284,10 +284,10 @@ int qelas_ana_data (const char *configfilename,
   vector<double> dy_p_cut; jmgr->GetVectorFromSubKey<double>(key,"dy_p_cut",dy_p_cut);
   vector<double> dx_n_cut; jmgr->GetVectorFromSubKey<double>(key,"dx_n_cut",dx_n_cut);
   vector<double> dy_n_cut; jmgr->GetVectorFromSubKey<double>(key,"dy_n_cut",dy_n_cut);
-  vector<double> hcal_active_area = cut::hcal_active_area_data(1,1); // Exc. 1 blk from all 4 sides
+  vector<double> hcal_active_area = cut::hcal_active_area_data(1,1,pass); // Exc. 1 blk from all 4 sides
   vector<double> hcal_safety_margin = cut::hcal_safety_margin(dx_p_cut[1],dx_n_cut[1],dy_p_cut[1],hcal_active_area);
-  TH2F *h2_xyHCAL_p = util_pd::TH2FHCALface_xy_data("h2_xyHCAL_p",sbs_kick);
-  TH2F *h2_xyHCAL_n = util_pd::TH2FHCALface_xy_data("h2_xyHCAL_n",0);
+  TH2F *h2_xyHCAL_p = util_pd::TH2FHCALface_xy_data("h2_xyHCAL_p",sbs_kick,pass);
+  TH2F *h2_xyHCAL_n = util_pd::TH2FHCALface_xy_data("h2_xyHCAL_n",0,pass);
 
   // reading W cut limits
   std::vector<double> W_cutR; jmgr->GetVectorFromSubKey<double>(key,"W_cutR",W_cutR);
