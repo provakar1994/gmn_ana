@@ -82,7 +82,7 @@ int elas_ana_data (const char *configfilename,
   /*
    Algorithms:
    1. Default: Cluster w/ highest energy.
-   2. Atime: HE cluster passing HCAL/SH ADC coincidence time. 
+   2. In-time: HE cluster passing HCAL/SH ADC coincidence time. 
    3. Smallest thpq: Clusters with smallest thpq_p that passed ADC coin time and sampling fraction cuts
    -----
    How-to access in Tout:
@@ -132,9 +132,9 @@ int elas_ana_data (const char *configfilename,
   setrootvar::setbranch(C, "bb.ps", bbpsclvar, bbpsclvar_mem);
    
   // hcal clus var
-  double eHCAL, xHCAL, yHCAL, rblkHCAL, cblkHCAL, idblkHCAL, atimeHCAL, tdcHCAL[maxNtr];
-  std::vector<std::string> hcalclvar = {"e","x","y","rowblk","colblk","idblk","atimeblk","clus_blk.tdctime"};
-  std::vector<void*> hcalclvar_mem = {&eHCAL,&xHCAL,&yHCAL,&rblkHCAL,&cblkHCAL,&idblkHCAL,&atimeHCAL,&tdcHCAL};
+  double eHCAL, xHCAL, yHCAL, indexHCAL, rblkHCAL, cblkHCAL, idblkHCAL, atimeHCAL, tdcHCAL[maxNtr];
+  std::vector<std::string> hcalclvar = {"e","x","y","index","rowblk","colblk","idblk","atimeblk","clus_blk.tdctime"};
+  std::vector<void*> hcalclvar_mem = {&eHCAL,&xHCAL,&yHCAL,&indexHCAL,&rblkHCAL,&cblkHCAL,&idblkHCAL,&atimeHCAL,&tdcHCAL};
   setrootvar::setbranch(C, "sbs.hcal", hcalclvar, hcalclvar_mem);
 
   // hcal all clus vars
@@ -256,6 +256,8 @@ int elas_ana_data (const char *configfilename,
   double T_ephi;          Tout->Branch("ephi", &T_ephi, "ephi/D");
   double T_etheta;        Tout->Branch("etheta", &T_etheta, "etheta/D");
   double T_pelas;         Tout->Branch("pelas", &T_pelas, "pelas/D");
+  double T_epsilon;       Tout->Branch("epsilon", &T_epsilon, "epsilon/D"); // calculated using general eqn.
+  double T_epsilon_p;     Tout->Branch("epsilon_p", &T_epsilon_p, "epsilon_p/D");
   double T_thpq_p;        Tout->Branch("thpq_p", &T_thpq_p, "thpq_p/D");
   double T_thpq_n;        Tout->Branch("thpq_n", &T_thpq_n, "thpq_n/D"); //n=>no deflection
   //track
@@ -299,7 +301,8 @@ int elas_ana_data (const char *configfilename,
   double T_ToF;           Tout->Branch("ToF", &T_ToF, "ToF/D");
   //HCAL (All clusters)
   int T_idblkHCAL_aclN;   Tout->Branch("idblkHCAL_aclN", &T_idblkHCAL_aclN, "idblkHCAL_aclN/I"); 
-  int T_idclHCAL_intime; if (hcal_acl_ON) Tout->Branch("idclHCAL_intime", &T_idclHCAL_intime, "idclHCAL_intime/I"); //stores HCAL cl. that are in BBCAL/HCAL ADC coin time
+  int T_idclHCAL_hetot;   Tout->Branch("idclHCAL_hetot", &T_idclHCAL_hetot, "idclHCAL_hetot/I"); //stores HCAL cl. index with highest total energy
+  int T_idclHCAL_intime;  if (hcal_acl_ON) Tout->Branch("idclHCAL_intime", &T_idclHCAL_intime, "idclHCAL_intime/I"); //stores HCAL cl. that are in BBCAL/HCAL ADC coin time
   int T_idclHCAL_sthpq_p; if (hcal_acl_ON) Tout->Branch("idclHCAL_sthpq_p", &T_idclHCAL_sthpq_p, "idclHCAL_sthpq_p/I"); //stores HCAL cl. index with smallest thpq value
   double T_idblkHCAL_acl[maxNHCALcl];    if (hcal_acl_ON) Tout->Branch("idblkHCAL_acl", &T_idblkHCAL_acl, "idblkHCAL_acl[idblkHCAL_aclN]/D"); 
   double T_nblkHCAL_acl[maxNHCALcl];     if (hcal_acl_ON) Tout->Branch("nblkHCAL_acl", &T_nblkHCAL_acl, "nblkHCAL_acl[idblkHCAL_aclN]/D"); 
@@ -438,7 +441,7 @@ int elas_ana_data (const char *configfilename,
        model 1 = uses reconstructed angles as independent variable 
        model 2 = uses 4-vector calculation */
     TVector3 pNhat;                   // 3-momentum of the recoil nucleon (Unit)
-    double Q2recon{0}, W2recon{0};
+    double Q2recon{0},W2recon{0},epsilon{0},epsilon_p{0};
     if (model == 0) { // p as independent variable
       nu = Pe.E() - Peprime.E();
       pN_expect = kine::pN_expect(nu, Ntype);
@@ -446,6 +449,8 @@ int elas_ana_data (const char *configfilename,
       pNhat = kine::qVect_unit(thetaN_expect, phiN_expect);
       PNprime.SetPxPyPzE(pN_expect*pNhat.X(), pN_expect*pNhat.Y(), pN_expect*pNhat.Z(), nu+PN.E());
       Q2recon = kine::Q2(Pe.E(), Peprime.E(), thelas);
+      epsilon = kine::epsilon_general(thelas,Q2recon,nu);
+      epsilon_p = kine::epsilon(thelas,Q2recon,"p");
       //W2recon = kine::W2(Pe.E(), Peprime.E(), Q2recon, Ntype);
       W2recon = kine::W2_general(Pe.E(), Peprime.E(), etheta, Ntype);
     } else if (model == 1) { // angle as independent variable
@@ -455,6 +460,8 @@ int elas_ana_data (const char *configfilename,
       pNhat = kine::qVect_unit(thetaN_expect, phiN_expect);
       PNprime.SetPxPyPzE(pN_expect*pNhat.X(), pN_expect*pNhat.Y(), pN_expect*pNhat.Z(), nu+PN.E());
       Q2recon = kine::Q2(Pe.E(), pelas, etheta);
+      epsilon = kine::epsilon_general(etheta,Q2recon,nu);
+      epsilon_p = kine::epsilon(etheta,Q2recon,"p");
       //W2recon = kine::W2(Pe.E(), Peprime.E(), Q2recon, Ntype);
       W2recon = kine::W2_general(Pe.E(), Peprime.E(), etheta, Ntype);
     } else if (model == 2) { // 4-vector calculation
@@ -462,6 +469,8 @@ int elas_ana_data (const char *configfilename,
       PNprime = q + PN; 
       pNhat = PNprime.Vect().Unit();
       Q2recon = -q.M2();
+      epsilon = kine::epsilon_general(etheta,Q2recon,nu);
+      epsilon_p = kine::epsilon(etheta,Q2recon,"p");
       W2recon = PNprime.M2();
     }
     h_Q2->Fill(Q2recon); 
@@ -479,6 +488,8 @@ int elas_ana_data (const char *configfilename,
     T_ephi = ephi;
     T_etheta = etheta;
     T_pelas = pelas;
+    T_epsilon = epsilon;
+    T_epsilon_p = epsilon_p;
 
     T_rnum = rnum;
     T_segnum = nseg;
@@ -533,63 +544,72 @@ int elas_ana_data (const char *configfilename,
     double proton_thetabend = 0.3 * BdL / PNprime.Vect().Mag();  // p*theta = 0.3*BdL
     double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist()-(sbsconf.GetSBSdist()+expconst::sbsdipolegap/2.0));
 
-    // Looping through ALL HCAL clusters
+    /*
+      Implementing HCAL offline clustering algorithm
+    */
     int inTime_idcl = -1;   //HCAL cl. index that is within HCAL/SH ADC coin. time
     int sthpq_p_idcl = -1;  //HCAL cl. index with smallest thpq_p value 
     double temp_thpq = 1e6;
     if (hcal_acl_ON) {
+      // Clusters in the *.clus.* variables aren't sorted in terms of their total energy.
+      // Instead they are sorted by the energy of the HE blocks in the corresponding cluster.
+      // But for offline clustering we want them to be sorted by total energy instead. So, 
+      // let's sort the array indices in terms of total cluster energy.
+      std::vector<size_t> sortedIndices = util_pd::SortIndices(eHCAL_acl, idblkHCAL_aclN);
+      // Looping through ALL HCAL clusters
       for (int ihcl=0; ihcl<idblkHCAL_aclN; ihcl++) {
+	// getting cl index sorted by the total energy
+	int ihcl_sorted = sortedIndices[ihcl];
       
 	// picking the HE cluster that is in time (i.e. HCAL/SH ADC coin time)
-	// ** utilizing the fact that the clusters are already sorted by energy
-	bool coinT_cut = abs(atimeblkHCAL_acl[ihcl]-atimeSH-coinTADC_cutR[0])<=coinTADC_cutR[2]*coinTADC_cutR[1];
+	bool coinT_cut = abs(atimeblkHCAL_acl[ihcl_sorted]-atimeSH-coinTADC_cutR[0])<=coinTADC_cutR[2]*coinTADC_cutR[1];
 	if (inTime_idcl==-1 && coinT_cut) {
-	  inTime_idcl = ihcl;
+	  inTime_idcl = ihcl_sorted;
 	}
 
-	T_idblkHCAL_acl[ihcl] = idblkHCAL_acl[ihcl];
-	T_nblkHCAL_acl[ihcl] = nblkHCAL_acl[ihcl];
-	T_eblkHCAL_acl[ihcl] = eblkHCAL_acl[ihcl];
-	T_atimeblkHCAL_acl[ihcl] = atimeblkHCAL_acl[ihcl];
-	T_tdcblkHCAL_acl[ihcl] = tdcblkHCAL_acl[ihcl];
+	T_idblkHCAL_acl[ihcl_sorted] = idblkHCAL_acl[ihcl_sorted];
+	T_nblkHCAL_acl[ihcl_sorted] = nblkHCAL_acl[ihcl_sorted];
+	T_eblkHCAL_acl[ihcl_sorted] = eblkHCAL_acl[ihcl_sorted];
+	T_atimeblkHCAL_acl[ihcl_sorted] = atimeblkHCAL_acl[ihcl_sorted];
+	T_tdcblkHCAL_acl[ihcl_sorted] = tdcblkHCAL_acl[ihcl_sorted];
 
-	T_eHCAL_acl[ihcl] = eHCAL_acl[ihcl];
-	T_xHCAL_acl[ihcl] = xHCAL_acl[ihcl];
-	T_yHCAL_acl[ihcl] = yHCAL_acl[ihcl];
+	T_eHCAL_acl[ihcl_sorted] = eHCAL_acl[ihcl_sorted];
+	T_xHCAL_acl[ihcl_sorted] = xHCAL_acl[ihcl_sorted];
+	T_yHCAL_acl[ihcl_sorted] = yHCAL_acl[ihcl_sorted];
 
 	if (inTime_idcl!=-1) h_hcl_inTime_idcl->Fill(inTime_idcl);
 	if (WCut) {
 	  if (inTime_idcl!=-1) h_hcl_inTime_idcl_WCut->Fill(inTime_idcl);
       
 	  // HE block related variables
-	  h2_hclHE_eng_vs_idcl->Fill(ihcl,eblkHCAL_acl[ihcl]);
-	  h2_hclHE_atime_vs_idcl->Fill(ihcl,atimeblkHCAL_acl[ihcl]);
-	  h2_hclHE_tdc_vs_idcl->Fill(ihcl,tdcblkHCAL_acl[ihcl]);
+	  h2_hclHE_eng_vs_idcl->Fill(ihcl_sorted,eblkHCAL_acl[ihcl_sorted]);
+	  h2_hclHE_atime_vs_idcl->Fill(ihcl_sorted,atimeblkHCAL_acl[ihcl_sorted]);
+	  h2_hclHE_tdc_vs_idcl->Fill(ihcl_sorted,tdcblkHCAL_acl[ihcl_sorted]);
       
 	  // Cluster variables
-	  h2_hcl_eng_vs_idcl->Fill(ihcl,eHCAL_acl[ihcl]);
-	  h2_hcl_nblk_vs_idcl->Fill(ihcl,nblkHCAL_acl[ihcl]);
+	  h2_hcl_eng_vs_idcl->Fill(ihcl_sorted,eHCAL_acl[ihcl_sorted]);
+	  h2_hcl_nblk_vs_idcl->Fill(ihcl_sorted,nblkHCAL_acl[ihcl_sorted]);
 	}
 
 	// picking the cluster that has smallest thpq and passes coinT_cut and sFrac_cut
-	bool sFrac_cut = eHCAL_acl[ihcl]/(ebeam_corr-trP_corr)>hcal_sF_cutR;
+	bool sFrac_cut = eHCAL_acl[ihcl_sorted]/(ebeam_corr-trP_corr)>hcal_sF_cutR;
 	if (coinT_cut && sFrac_cut) {
 	  // Calculating thpq (both w & w/o deflection due to SBS dipole)
 	  // assuming no deflection (using "n" for no deflection)
-	  TVector3 HCAL_pos = HCAL_origin + xHCAL_acl[ihcl]*HCAL_axes[0] + yHCAL_acl[ihcl]*HCAL_axes[1];
+	  TVector3 HCAL_pos = HCAL_origin + xHCAL_acl[ihcl_sorted]*HCAL_axes[0] + yHCAL_acl[ihcl_sorted]*HCAL_axes[1];
 	  // TVector3 n_dir = (HCAL_pos - vertex).Unit();
 	  // double thpq_n = acos(n_dir.Dot(pNhat));
 	  // p
 	  TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);
 	  double thpq_p = acos(p_dir.Unit().Dot(pNhat));
 	  // finding the cl. id. with smallest thpq_p value
-	  if (thpq_p < temp_thpq) sthpq_p_idcl = ihcl;
+	  if (thpq_p < temp_thpq) sthpq_p_idcl = ihcl_sorted;
 	  temp_thpq = thpq_p;
-	  // if (min(thpq_p,thpq_n) < temp_thpq) sthpq_p_idcl = ihcl;
+	  // if (min(thpq_p,thpq_n) < temp_thpq) sthpq_p_idcl = ihcl_sorted;
 	  // temp_thpq = min(thpq_p,thpq_n);
 	}
       }
-      if (inTime_idcl==-1) inTime_idcl = 0; // couldn't find any cl. in time, switching to HE cls. (index=0)
+      if (inTime_idcl==-1) inTime_idcl = 0; // couldn't find any cl. in time, switching to cl w/ HE block (index=0)
       if (sthpq_p_idcl==-1) sthpq_p_idcl = inTime_idcl;
     } 
     else {
@@ -615,6 +635,7 @@ int elas_ana_data (const char *configfilename,
     T_atimeHCAL = atimeblkHCAL_acl[inTime_idcl];
     T_tdcHCAL = tdcblkHCAL_acl[inTime_idcl];
     T_idblkHCAL_aclN = idblkHCAL_aclN;
+    T_idclHCAL_hetot = indexHCAL;
     T_idclHCAL_intime = inTime_idcl;
     T_idclHCAL_sthpq_p = sthpq_p_idcl;
 
@@ -729,7 +750,7 @@ int elas_ana_data (const char *configfilename,
   pt->AddText(Form(" Total # events analyzed: %ld, Total # runs: %d",nevents,nruns));
   pt->AddText(Form(" Total charge: %.7fC",totcharge));
   pt->AddText(Form(" HCAL offsets: v = %.4f, h = %.4f",hcal_voffset,hcal_hoffset));
-  char const * hcl_algo_flag = hcal_acl_ON ? "Atime" : "Default";
+  char const * hcl_algo_flag = hcal_acl_ON ? "In-time" : "Default";
   pt->AddText(Form(" Best HCAL cluster choice algorithm: %s",hcl_algo_flag));
   pt->AddText(Form(" Global cuts: "));
   std::string tmpstr = "";
