@@ -21,7 +21,8 @@ namespace cut {
   // Uses ** Real Data ** DB to calculate the active region
   // Default: Excludes 1 block from all 4 sides of HCAL
   std::vector<double> hcal_active_area_data (int nBlk_x,   // No. of blocks to exclude form top and bottom (Default=1)
-					     int nBlk_y);  // No. of blocks to exclude form left and right (Default=1)
+					     int nBlk_y,   // No. of blocks to exclude form left and right (Default=1)
+					     int rpass);   // replay pass
 
   // Returns "True" if nucleon pos. in HCAL is within active area
   bool inHCAL_activeA (double xHCAL,                           // vertical (x) pos of recoil N at HCAL

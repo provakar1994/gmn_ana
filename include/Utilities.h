@@ -27,7 +27,7 @@ namespace util_pd {
      ##                General              ##  
      ######################################### */
   // returns TCanvas object with optimized size
-  TCanvas *TC(std::string name,   // name of the canvas
+  TCanvas *TC(std::string hname,  // name of the canvas
  	      int rdiv,           // # divisions in row
 	      int cdiv);          // # divisions in column 
 
@@ -36,10 +36,10 @@ namespace util_pd {
   /* #################################################
      ##                HCAL Histograms              ##  
      ################################################# */
-  TH2F *TH2FHCALface_rc(std::string name);      // returns TH2F for HCAL face (row,col)
-  TH2F *TH2FHCALface_xy_data(std::string name, double sbs_kick); // returns TH2F for HCAL face (x,y) [Data]
-  TH2F *TH2FHCALface_xy_simu(std::string name, double sbs_kick); // returns TH2F for HCAL face (x,y) [Simu]
-  TH2F *TH2FdxdyHCAL(std::string name);         // returns TH2F for dxdyHCAL
+  TH2F *TH2FHCALface_rc(std::string hname);      // returns TH2F for HCAL face (row,col)
+  TH2F *TH2FHCALface_xy_data(std::string hname, double sbs_kick, int rpass); // returns TH2F for HCAL face (x,y) [Data]
+  TH2F *TH2FHCALface_xy_simu(std::string hname, double sbs_kick); // returns TH2F for HCAL face (x,y) [Simu]
+  TH2F *TH2FdxdyHCAL(std::string hname);         // returns TH2F for dxdyHCAL
 
   // draws rectangular cut regions
   void DrawArea(std::vector<double> dimensions,      // a vector with extreme points

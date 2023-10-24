@@ -37,46 +37,52 @@ namespace util_pd {
      ##                HCAL Related                 ##  
      ################################################# */
   //_____________________________________
-  TH2F *TH2FHCALface_rc(std::string name) {
+  TH2F *TH2FHCALface_rc(std::string hname) {
     // returns TH2F for HCAL face (row,col)
     /* NOTE: HCAL block id (ibblk) starts from 1 and goes up to 288 but both
        HCAL row (rowblk) and column starts from 0 and goes up to 23 and 
        11, respectively. Extremely annoying! */
-    TH2F *h = new TH2F(name.c_str(), ";HCAL columns;HCAL rows",
+    TH2F *h = new TH2F(hname.c_str(), ";HCAL columns;HCAL rows",
 		       expconst::hcalcol, 0, expconst::hcalcol,
 		       expconst::hcalrow, 0, expconst::hcalrow);
     return h;
   }
   //_____________________________________
-  TH2F *TH2FHCALface_xy_data(std::string name, double sbs_kick) {
+  TH2F *TH2FHCALface_xy_data(std::string hname, double sbs_kick, int rpass) {
     // returns TH2F for HCAL face (x,y) [Data]
-    double y_min = expconst::yHCAL_r_DB - expconst::hcalblk_w/2.;
-    double y_max = expconst::yHCAL_l_DB + expconst::hcalblk_w/2.;
-    double x_min = expconst::xHCAL_t_DB - expconst::hcalblk_h/2.;
-    double x_max = expconst::xHCAL_b_DB + expconst::hcalblk_h/2.;
+    // block positions from DB
+    double xHCAL_t_DB = rpass<2 ? expconst::xHCAL_t_DB_p1 : expconst::xHCAL_t_DB;   //m, center of top row blocks (from DB)
+    double xHCAL_b_DB = rpass<2 ? expconst::xHCAL_b_DB_p1 : expconst::xHCAL_b_DB;   //m, center of bottom row blocks (from DB)
+    double yHCAL_r_DB = rpass<2 ? expconst::yHCAL_r_DB_p1 : expconst::yHCAL_r_DB;   //m, center of right most blocks (from DB)
+    double yHCAL_l_DB = rpass<2 ? expconst::yHCAL_l_DB_p1 : expconst::yHCAL_l_DB;   //m, center of left most blocks (from DB)
+    // cut region
+    double y_min = yHCAL_r_DB - expconst::hcalblk_w/2.;
+    double y_max = yHCAL_l_DB + expconst::hcalblk_w/2.;
+    double x_min = xHCAL_t_DB - expconst::hcalblk_h/2.;
+    double x_max = xHCAL_b_DB + expconst::hcalblk_h/2.;
     std::string ylabel = sbs_kick==0 ? "x_{HCAL}^{exp} (m)" : "x_{HCAL}^{exp}-" + std::to_string(sbs_kick) + " (m)";
-    TH2F *h = new TH2F(name.c_str(),Form(";y_{HCAL}^{exp} (m);%s",ylabel.c_str()),
+    TH2F *h = new TH2F(hname.c_str(),Form(";y_{HCAL}^{exp} (m);%s",ylabel.c_str()),
 		       expconst::hcalcol, y_min, y_max,
 		       expconst::hcalrow, x_min, x_max);
     return h;
   }
   //_____________________________________
-  TH2F *TH2FHCALface_xy_simu(std::string name, double sbs_kick) {
+  TH2F *TH2FHCALface_xy_simu(std::string hname, double sbs_kick) {
     // returns TH2F for HCAL face (x,y) [Simu]
     double y_min = expconst::yHCAL_r_DB_MC - expconst::hcalblk_w/2.;
     double y_max = expconst::yHCAL_l_DB_MC + expconst::hcalblk_w/2.;
     double x_min = expconst::xHCAL_t_DB_MC - expconst::hcalblk_h/2.;
     double x_max = expconst::xHCAL_b_DB_MC + expconst::hcalblk_h/2.;
     std::string ylabel = sbs_kick==0 ? "x_{HCAL}^{exp} (m)" : "x_{HCAL}^{exp}-" + std::to_string(sbs_kick) + " (m)";
-    TH2F *h = new TH2F(name.c_str(),Form(";y_{HCAL}^{exp} (m);%s",ylabel.c_str()),
+    TH2F *h = new TH2F(hname.c_str(),Form(";y_{HCAL}^{exp} (m);%s",ylabel.c_str()),
 		       expconst::hcalcol, y_min, y_max,
 		       expconst::hcalrow, x_min, x_max);
     return h;
   }
   //_____________________________________
-  TH2F *TH2FdxdyHCAL(std::string name) {
+  TH2F *TH2FdxdyHCAL(std::string hname) {
     // returns TH2F for dxdyHCAL
-    TH2F *h = new TH2F(name.c_str(), ";y_{HCAL}^{obs} - y_{HCAL}^{exp} (m);x_{HCAL}^{obs} - x_{HCAL}^{exp} (m)",
+    TH2F *h = new TH2F(hname.c_str(), ";y_{HCAL}^{obs} - y_{HCAL}^{exp} (m);x_{HCAL}^{obs} - x_{HCAL}^{exp} (m)",
 		       250, -1.25, 1.25, 250, -3.5, 2);
     return h;
   }
@@ -102,12 +108,12 @@ namespace util_pd {
   /* #################################################
      ##              Kinematic Histograms           ##  
      ################################################# */
-  TH1F *TH1FhW(std::string name) {
+  TH1F *TH1FhW(std::string hname) {
     // returns W histogram
-    TH1F *h = new TH1F(name.c_str(), "W Distribution (GeV)", 250,0,2);
+    TH1F *h = new TH1F(hname.c_str(), "W Distribution (GeV)", 250,0,2);
     return h;
   }
-  TH1F *TH1FhQ2(std::string name,       // Name of histogram
+  TH1F *TH1FhQ2(std::string hname,      // Name of histogram
 		int conf) {             // SBS config
     // returns Q2 histogram
     int nbin=0; double hmin=-100, hmax=-100;
@@ -116,7 +122,7 @@ namespace util_pd {
     else if (conf==7) { nbin=120; hmin=6.; hmax=12.; }
     else if (conf==11) { nbin=200; hmin=8.; hmax=18.; }
     else std::cerr << "[Utilities::TH1FhQ2] Enter valid SBS config!!" << std::endl;
-    TH1F *h = new TH1F(name.c_str(), "Q^{2} Distribution (GeV^{2})", 
+    TH1F *h = new TH1F(hname.c_str(), "Q^{2} Distribution (GeV^{2})", 
 		       nbin, hmin, hmax);
     return h;
   }

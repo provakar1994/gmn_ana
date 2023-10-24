@@ -26,18 +26,19 @@ namespace expconst {
   static const double hcalblk_gap_h = 0.00254;  //m, horiz. gap bet. two blocks
   static const double hcalblk_gap_v = 0.00635;  //m, vert. gap bet. two blocks
   // 2. x & y pos of blocks sitting at all 4 edges
-  // pass 1 (assuming HCAL frame introduces ~ 45cm vertical offset)
-  /* static const double xHCAL_t_DB = -2.190625;   //m, center of top row blocks (from SBS-replay/DB) */
-  /* static const double xHCAL_b_DB = 1.460625;    //m, center of bottom row blocks (from SBS-replay/DB) */
-  /* static const double yHCAL_r_DB = -0.85217;    //m, center of right most blocks (from SBS-replay/DB) */
-  /* static const double yHCAL_l_DB = 0.85217;     //m, center of left most blocks (from SBS-replay/DB) */
+  // pass 0/1 (assuming HCAL frame introduces ~ 45cm vertical offset)
+  // during pass 0 the HCAL block dimensions were slightly off as well!
+  static const double xHCAL_t_DB_p1 = -2.190625;   //m, center of top row blocks (from SBS-replay/DB)
+  static const double xHCAL_b_DB_p1 = 1.460625;    //m, center of bottom row blocks (from SBS-replay/DB)
+  static const double yHCAL_r_DB_p1 = -0.85217;    //m, center of right most blocks (from SBS-replay/DB)
+  static const double yHCAL_l_DB_p1 = 0.85217;     //m, center of left most blocks (from SBS-replay/DB)
   // pass 2 (assuming HCAL frame introduces 75cm vertical offset, confirmed by GEp CAD file)
   static const double xHCAL_t_DB = -2.575625;   //m, center of top row blocks (from SBS-replay/DB)
   static const double xHCAL_b_DB = 1.075625;    //m, center of bottom row blocks (from SBS-replay/DB)
   static const double yHCAL_r_DB = -0.85217;    //m, center of right most blocks (from SBS-replay/DB)
   static const double yHCAL_l_DB = 0.85217;     //m, center of left most blocks (from SBS-replay/DB)
   // --- above => data, below => simu
-  // pass 1 (assuming HCAL frame introduces 45cm vertical offset)
+  // pass 0/1 (assuming HCAL frame introduces 45cm vertical offset)
   /* static const double xHCAL_t_DB_MC = -2.27563; //m, center of top row blocks (from SBS-replay/DB_MC) */
   /* static const double xHCAL_b_DB_MC = 1.37562;  //m, center of bottom row blocks (from SBS-replay/DB_MC) */
   /* static const double yHCAL_r_DB_MC = -0.85217; //m, center of right most blocks (from SBS-replay/DB_MC) */

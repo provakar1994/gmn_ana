@@ -2,7 +2,7 @@
 
 namespace cut {
 
-  std::vector<double> hcal_active_area_simu (int nBlk_x=1, int nBlk_y=1) {
+  std::vector<double> hcal_active_area_simu (int nBlk_x, int nBlk_y) {
     // defines the active area of HCAL using simulation DB
     // indiv. block pos. can be found at SBS-replay/DB_MC/db_sbs.hcal.dat
     std::vector<double> active_area;
@@ -23,15 +23,15 @@ namespace cut {
     return active_area;
   }
   //___________________________________________________________________
-  std::vector<double> hcal_active_area_data (int nBlk_x=1, int nBlk_y=1) {
+  std::vector<double> hcal_active_area_data (int nBlk_x, int nBlk_y, int rpass) {
     // defines the active area of HCAL using real data DB
     // indiv. block pos. can be found at SBS-replay/DB/db_sbs.hcal.dat
     std::vector<double> active_area;
     // block positions from DB
-    double xHCAL_t_DB = expconst::xHCAL_t_DB;   //m, center of top row blocks (from DB)
-    double xHCAL_b_DB = expconst::xHCAL_b_DB;   //m, center of bottom row blocks (from DB)
-    double yHCAL_r_DB = expconst::yHCAL_r_DB;   //m, center of right most blocks (from DB)
-    double yHCAL_l_DB = expconst::yHCAL_l_DB;   //m, center of left most blocks (from DB)
+    double xHCAL_t_DB = rpass<2 ? expconst::xHCAL_t_DB_p1 : expconst::xHCAL_t_DB;   //m, center of top row blocks (from DB)
+    double xHCAL_b_DB = rpass<2 ? expconst::xHCAL_b_DB_p1 : expconst::xHCAL_b_DB;   //m, center of bottom row blocks (from DB)
+    double yHCAL_r_DB = rpass<2 ? expconst::yHCAL_r_DB_p1 : expconst::yHCAL_r_DB;   //m, center of right most blocks (from DB)
+    double yHCAL_l_DB = rpass<2 ? expconst::yHCAL_l_DB_p1 : expconst::yHCAL_l_DB;   //m, center of left most blocks (from DB)
     // calculate cut limits
     double xHCAL_t = (xHCAL_t_DB + (expconst::hcalblk_h/2.) + expconst::hcalblk_gap_v) + (nBlk_x - 1) * expconst::hcalblk_cTc_v;
     double xHCAL_b = (xHCAL_b_DB - (expconst::hcalblk_h/2.) - expconst::hcalblk_gap_v) - (nBlk_x - 1) * expconst::hcalblk_cTc_v;
