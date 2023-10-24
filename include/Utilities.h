@@ -6,6 +6,7 @@
 #include <sstream>
 #include <iostream>
 #include <dirent.h>
+#include <algorithm>
 
 #include "TH1F.h"
 #include "TH2F.h"
@@ -157,5 +158,23 @@ namespace util_pd {
 
   /* Luminosity calculation for g4sbs data */
   double Luminosity(double ibeam, std::string targetType);               // ibeam shoud be in A
+
+  /* #########################################
+     ## General Purpose Templated Functions ##  
+     ######################################### */
+  /* Function to sort array indices by their values in descending order */
+  template <typename T>
+    std::vector<size_t> SortIndices(const T* array, size_t size) {
+    // Initialize original indices
+    std::vector<size_t> indices(size);
+    for (size_t i = 0; i < size; ++i) {
+      indices[i] = i;
+    }
+    // Sort indices based on array values
+    std::sort(indices.begin(), indices.end(),
+              [array](size_t i1, size_t i2) { return array[i1] > array[i2]; });
+    return indices;
+  }
+
 }
 #endif
