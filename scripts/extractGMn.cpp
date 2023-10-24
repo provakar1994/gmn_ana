@@ -13,7 +13,7 @@ int extractGMn(double const etheta, double const Q2, double const R_fit) {
   // EMFF extraction using same parametrization used in SIMC generator
   double GEp_kelly = kellyfit.GetFF(G_t::kGEp,Q2);
   double GMp_kelly = kellyfit.GetFF(G_t::kGMp,Q2);
-  double GEn_Seamus = seamusfit.GetFF(G_t::kGEn,Q2);
+  double GEn_seamus = seamusfit.GetFF(G_t::kGEn,Q2);
   double GMn_kelly = kellyfit.GetFF(G_t::kGMn,Q2);
 
   // EMFF extraction using Ye fit (2017), to get GMn from data/MC fit
@@ -23,7 +23,8 @@ int extractGMn(double const etheta, double const Q2, double const R_fit) {
 
   // Getting sigma Born ratio (n/p) for the given Q2 and etheta 
   // (basically, mimicing the calculation done in MC generator)
-  double sigmaBorn_Ratio_MC = kine::sigmaBorn_ratio(etheta,Q2,GEp_kelly,GMp_kelly,GEn_Seamus,GMn_kelly);
+  double sigmaBorn_Ratio_MC = kine::sigmaBorn_ratio(etheta,Q2,GEp_kelly,GMp_kelly,GEn_seamus,GMn_kelly);
+  //std::cout << "Born ratio MC " << sigmaBorn_Ratio_MC << "\n";
 
   // Assuming that the discrepancy in n/p ratio we get by fitting MC to data
   // is totally attributable to Born cross section ratio. Hece we calculate the 
