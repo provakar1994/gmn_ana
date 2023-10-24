@@ -9,6 +9,7 @@ int get_ff(double const Q2, std::string G) {
   Kelly2004 kellyfit;
   Seamus20XX seamusfit;
   Christy2022 christyfit;
+  Galster1971 galsterfit;
 
   G_t kG = EMFFFits::StrToG_t(G);
 
@@ -44,9 +45,9 @@ int get_ff(double const Q2, std::string G) {
       if (i==0) outData << "Q2" << "," << "Kelly2004" << "," << "Ye2017" << "," << "Christy2022" << "\n";
       outData << Q2 << "," << kellyfit.GetFF(kG,Q2) << "," << yefit.GetFF(kG,Q2) << "," << christyfit.GetFF(kG,Q2) << "\n";
     } else if (kG == G_t::kGEn) {
-      //std::cout << Q2 << "," << kellyfit.GetFF(kG,Q2) << "," << yefit.GetFF(kG,Q2) << "," << seamusfit.GetFF(kG,Q2) << "\n";
-      if (i==0) outData << "Q2" << "," << "Kelly2004" << "," << "Ye2017" << "," << "Seamus20XX" << "\n";
-      outData << Q2 << "," << kellyfit.GetFF(kG,Q2) << "," << yefit.GetFF(kG,Q2) << "," << seamusfit.GetFF(kG,Q2) << "\n";
+      //std::cout << Q2 << "," << kellyfit.GetFF(kG,Q2) << "," << yefit.GetFF(kG,Q2) << "," << seamusfit.GetFF(kG,Q2) << "," << galster.GetFF(kG,Q2) << "\n";
+      if (i==0) outData << "Q2" << "," << "Kelly2004" << "," << "Ye2017" << "," << "Seamus20XX" << "," << "Galster1971" << "\n";
+      outData << Q2 << "," << kellyfit.GetFF(kG,Q2) << "," << yefit.GetFF(kG,Q2) << "," << seamusfit.GetFF(kG,Q2) << "," << galsterfit.GetFF(kG,Q2) << "\n";
     } else {
       //std::cout << Q2 << "," << kellyfit.GetFF(kG,Q2) << "," << yefit.GetFF(kG,Q2) << "\n";
       if (i==0) outData << "Q2" << "," << "Kelly2004" << "," << "Ye2017" << "\n";
