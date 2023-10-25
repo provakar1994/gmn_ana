@@ -189,8 +189,11 @@ int qelas_ana_simu (const char *configfilename,
   double T_ephi;        Tout->Branch("ephi", &T_ephi, "ephi/D");
   double T_etheta;      Tout->Branch("etheta", &T_etheta, "etheta/D");
   double T_pelas;       Tout->Branch("pelas", &T_pelas, "pelas/D");
-  double T_thetapq_p;   Tout->Branch("thetapq_p", &T_thetapq_p, "thetapq_p/D");
-  double T_thetapq_n;   Tout->Branch("thetapq_n", &T_thetapq_n, "thetapq_n/D");
+  double T_epsilon;     Tout->Branch("epsilon", &T_epsilon, "epsilon/D"); // calculated using general eqn.
+  double T_epsilon_p;   Tout->Branch("epsilon_p", &T_epsilon_p, "epsilon_p/D");
+  double T_epsilon_n;   Tout->Branch("epsilon_n", &T_epsilon_n, "epsilon_n/D");
+  double T_thpq_p;      Tout->Branch("thpq_p", &T_thpq_p, "thpq_p/D");
+  double T_thpq_n;      Tout->Branch("thpq_n", &T_thpq_n, "thpq_n/D");
   //track
   double T_vz;          Tout->Branch("vz", &T_vz, "vz/D");
   double T_trP;         Tout->Branch("trP", &T_trP, "trP/D");
@@ -202,6 +205,11 @@ int qelas_ana_simu (const char *configfilename,
   double T_tgY;         Tout->Branch("tgY", &T_tgY, "tgY/D");
   double T_tgTh;        Tout->Branch("tgTh", &T_tgTh, "tgTh/D");
   double T_tgPh;        Tout->Branch("tgPh", &T_tgPh, "tgPh/D");
+  //cross-section predicted from MC
+  double T_sigMott;     Tout->Branch("sigMott", &T_sigMott, "sigMott/D");
+  double T_sigRed_p;    Tout->Branch("sigRed_p", &T_sigRed_p, "sigRed_p/D");
+  double T_sigRed_n;    Tout->Branch("sigRed_n", &T_sigRed_n, "sigRed_n/D");
+  double T_sigBorn_ratio; Tout->Branch("sigBorn_ratio", &T_sigBorn_ratio, "sigBorn_ratio/D");
   //BBCAL
   double T_ePS;         Tout->Branch("ePS", &T_ePS, "ePS/D"); 
   double T_rblkPS;      Tout->Branch("rblkPS", &T_rblkPS, "rblkPS/D"); 
@@ -270,6 +278,12 @@ int qelas_ana_simu (const char *configfilename,
     for(int i=0; i<288; i++) {ml_arr[i] = 0.0;}
   }
 
+  // EMFF fits
+  Ye2017 yefit;
+  Kelly2004 kellyfit;
+  Seamus20XX seamusfit;
+  Christy2022 christyfit;
+
   // looping through the tree ---------------------------------------
   std::cout << std::endl;
   long nevent = 0, nevents = C->GetEntries(), ngoodevs = 0; 
@@ -320,6 +334,7 @@ int qelas_ana_simu (const char *configfilename,
     double etheta = kine::etheta(Peprime);
     double ephi = kine::ephi(Peprime);
     double pelas = kine::pelas(ebeam_corr, etheta, Ntype);
+    double thelas = kine::thelas(ebeam_corr, precon, Ntype);
 
     double nu = 0.;                   // energy of the virtual photon
     double pN_expect = 0.;            // expected recoil nucleon momentum
@@ -330,28 +345,39 @@ int qelas_ana_simu (const char *configfilename,
        model 1 = uses reconstructed angles as independent variable 
        model 2 = uses 4-vector calculation */
     TVector3 pNhat;                   // 3-momentum of the recoil nucleon (Unit)
-    double Q2recon = 0., W2recon = 0.;
+    double Q2recon{0},W2recon{0},epsilon{0},epsilon_p{0},epsilon_n{0};
     if (model == 0) {
       nu = Pe.E() - Peprime.E();
       pN_expect = kine::pN_expect(nu, Ntype);
       thetaN_expect = acos((Pe.E() - Peprime.Pz()) / pN_expect);
       pNhat = kine::qVect_unit(thetaN_expect, phiN_expect);
       PNprime.SetPxPyPzE(pN_expect*pNhat.X(), pN_expect*pNhat.Y(), pN_expect*pNhat.Z(), nu+PN.E());
-      Q2recon = kine::Q2(Pe.E(), Peprime.E(), etheta);
-      W2recon = kine::W2(Pe.E(), Peprime.E(), Q2recon, Ntype);
+      Q2recon = kine::Q2(Pe.E(), Peprime.E(), thelas);
+      epsilon = kine::epsilon_general(thelas,Q2recon,nu);
+      epsilon_p = kine::epsilon(thelas,Q2recon,"p");
+      epsilon_n = kine::epsilon(thelas,Q2recon,"n");
+      //W2recon = kine::W2(Pe.E(), Peprime.E(), Q2recon, Ntype);
+      W2recon = kine::W2_general(Pe.E(), Peprime.E(), etheta, Ntype);
      } else if (model == 1) {
       nu = Pe.E() - pelas;
       pN_expect = kine::pN_expect(nu, Ntype);
       thetaN_expect = acos((Pe.E() - pelas*cos(etheta)) / pN_expect);
       pNhat = kine::qVect_unit(thetaN_expect, phiN_expect);
       PNprime.SetPxPyPzE(pN_expect*pNhat.X(), pN_expect*pNhat.Y(), pN_expect*pNhat.Z(), nu+PN.E());
-      Q2recon = kine::Q2(Pe.E(), Peprime.E(), etheta);
-      W2recon = kine::W2(Pe.E(), Peprime.E(), Q2recon, Ntype);
+      Q2recon = kine::Q2(Pe.E(), pelas, etheta);
+      epsilon = kine::epsilon_general(etheta,Q2recon,nu);
+      epsilon_p = kine::epsilon(etheta,Q2recon,"p");
+      epsilon_n = kine::epsilon(etheta,Q2recon,"n");
+      //W2recon = kine::W2(Pe.E(), Peprime.E(), Q2recon, Ntype);
+      W2recon = kine::W2_general(Pe.E(), Peprime.E(), etheta, Ntype);
     } else if (model == 2) {
       nu = q.E();
       PNprime = q + PN;
       pNhat = PNprime.Vect().Unit();
       Q2recon = -q.M2();
+      epsilon = kine::epsilon_general(etheta,Q2recon,nu);
+      epsilon_p = kine::epsilon(etheta,Q2recon,"p");
+      epsilon_n = kine::epsilon(etheta,Q2recon,"n");
       W2recon = PNprime.M2();
     }
     h_Q2->Fill(Q2recon); 
@@ -368,6 +394,9 @@ int qelas_ana_simu (const char *configfilename,
     T_ephi = ephi;
     T_etheta = etheta;
     T_pelas = pelas;
+    T_epsilon = epsilon;
+    T_epsilon_p = epsilon_p;
+    T_epsilon_n = epsilon_n;
 
     T_vz = vz[0];
     T_trP = p[0];
@@ -380,6 +409,17 @@ int qelas_ana_simu (const char *configfilename,
     T_tgY = ytgt[0];
     T_tgTh = thtgt[0];
     T_tgPh = phtgt[0];
+
+    // EMFF extraction using same parametrization used in MC generators
+    double GEp_kelly = kellyfit.GetFF(G_t::kGEp,Q2recon);
+    double GMp_kelly = kellyfit.GetFF(G_t::kGMp,Q2recon);
+    double GEn_seamus = seamusfit.GetFF(G_t::kGEn,Q2recon);
+    double GMn_kelly = kellyfit.GetFF(G_t::kGMn,Q2recon);
+
+    T_sigMott = kine::sigmaMott(Pe.E(),Peprime.E(),etheta);
+    T_sigRed_p = kine::sigmaReduced(kine::tau(Q2recon,"p"),epsilon_p,GEp_kelly,GMp_kelly);
+    T_sigRed_n = kine::sigmaReduced(kine::tau(Q2recon,"n"),epsilon_n,GEn_seamus,GMn_kelly);
+    T_sigBorn_ratio = kine::sigmaBorn_ratio(etheta,Q2recon,GEp_kelly,GMp_kelly,GEn_seamus,GMn_kelly);
 
     T_ePS = ePS;
     T_rblkPS = rblkPS;
@@ -417,17 +457,17 @@ int qelas_ana_simu (const char *configfilename,
     T_dx = dx;
     T_dy = dy;
 
-    /* Calculating thetapq (both p & n hypothesis) */
+    /* Calculating thpq (both p & n hypothesis) */
     // n (no deflection)
     TVector3 HCAL_pos = HCAL_origin + xHCAL*HCAL_axes[0] + yHCAL*HCAL_axes[1];
     TVector3 n_dir = (HCAL_pos - vertex);
-    T_thetapq_n = acos(n_dir.Unit().Dot(pNhat));
+    T_thpq_n = acos(n_dir.Unit().Dot(pNhat));
     // p 
     double BdL = sbsfield; //* expconst::sbsdipolegap;
     double proton_thetabend = 0.3 * BdL / PNprime.Vect().Mag();  // p*theta = 0.3*BdL
     double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist()-(sbsconf.GetSBSdist()+expconst::sbsdipolegap/2.0));
     TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);
-    T_thetapq_p = acos(p_dir.Unit().Dot(pNhat));
+    T_thpq_p = acos(p_dir.Unit().Dot(pNhat));
 
     // calculate ToF for neutrons
     double ToF_n = (n_dir.Mag() / constant::c) * sqrt(1. + pow((constant::Mn/PNprime.Vect().Mag()), 2));
