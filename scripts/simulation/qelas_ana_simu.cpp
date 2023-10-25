@@ -33,10 +33,9 @@
 static const std::string target = "LD2";
 
 int qelas_ana_simu (const char *configfilename, 
-                    int verbose=-1,  //<-1=>Debug, =-1=>Test
-                    int verbosefn=0, //>0=>Debug
-		    /* verbose=0 & verbosefn=0 => Production*/
-		    std::string filebase="siout/test_qelas_ana")
+		    int model=2, //Analysis model
+		    std::string generator="simc",
+		    std::string process="deeN")
 {
   gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
 
@@ -45,38 +44,40 @@ int qelas_ana_simu (const char *configfilename,
 
   // reading input config file ---------------------------------------
   JSONManager *jmgr = new JSONManager(configfilename);
- 
+  std::string key = generator + "_" + process + "_model" + std::to_string(model);
+
+  // setting verbosity
+  int verbose = jmgr->GetValueFromSubKey<int>(key,"verbose");
+  int verbosefn = jmgr->GetValueFromSubKey<int>(key,"verbose_function");
+
   // seting up the desired SBS configuration
-  int conf = jmgr->GetValueFromKey<int>("SBS_config");
-  int sbsmag = jmgr->GetValueFromKey<int>("SBS_magnet_percent");
-  double sbsfield = jmgr->GetValueFromKey<double>("SBS_field");
+  int conf = jmgr->GetValueFromSubKey<int>(key,"SBS_config");
+  int sbsmag = jmgr->GetValueFromSubKey<int>(key,"SBS_magnet_percent");
+  double sbsfield = jmgr->GetValueFromSubKey<double>(key,"SBS_field");
   SBSconfig sbsconf(conf, sbsmag);
   cout << sbsconf;
 
   // reading job summary and parsing ROOT trees
-  std::string rfd = jmgr->GetValueFromKey_str("rootfile_dir");
-  std::string prefix = jmgr->GetValueFromKey_str("prefix_to_filebase");
-  std::string gen = jmgr->GetValueFromKey_str("generator");
-  std::string process = jmgr->GetValueFromKey_str("process");
-  int njobs = jmgr->GetValueFromKey<int>("Njobs_to_ana"); // # MC jobs to analyze
-  std::vector<SimuJob> sjobs; util_pd::ReadSimuJobSummary(rfd,prefix,conf,sbsmag,gen,process,njobs,verbosefn,sjobs);
+  std::string rfd = jmgr->GetValueFromSubKey_str(key,"rootfile_dir");
+  std::string prefix = jmgr->GetValueFromSubKey_str(key,"prefix_to_filebase");
+  int njobs = jmgr->GetValueFromSubKey<int>(key,"Njobs_to_ana"); // # MC jobs to analyze
+  std::vector<SimuJob> sjobs; util_pd::ReadSimuJobSummary(rfd,prefix,conf,sbsmag,generator,process,njobs,verbosefn,sjobs);
   TChain *C = new TChain("T"); util_pd::LoadSimuROOTTree(sjobs,verbosefn,C);
 
   // Choosing the model of calculation
   // model 0 => uses reconstructed p as independent variable
   // model 1 => uses reconstructed angles as independent variable
   // model 2 => uses 4-vector calculation
-  int model = jmgr->GetValueFromKey<int>("model");
   if (model == 0) std::cout << "Using model 0 [recon. p as indep. var.] for analysis.." << std::endl;
   else if (model == 1) std::cout << "Using model 1 [recon. angle as indep. var.] for analysis.." << std::endl;
   else if (model == 2) std::cout << "Using model 2 [4-vector calculation] for analysis.." << std::endl;
   else { std::cerr << "Enter a valid model number! **!**" << std::endl; throw; }
 
   // choosing nucleon type 
-  std::string Ntype = jmgr->GetValueFromKey_str("Ntype");
+  std::string Ntype = jmgr->GetValueFromSubKey_str(key,"Ntype");
 
   // setting up global cuts
-  std::string gcut = jmgr->GetValueFromKey_str("global_cut");
+  std::string gcut = jmgr->GetValueFromSubKey_str(key,"global_cut");
   std::vector<std::string> gCutList; util_pd::SplitString('&',gcut,gCutList);
   TTreeFormula *GlobalCut = new TTreeFormula("GlobalCut",(TCut)gcut.c_str(),C);
 
@@ -110,7 +111,7 @@ int qelas_ana_simu (const char *configfilename,
   setrootvar::setbranch(C,"bb.tr",trvar,trvar_mem);
 
   //hcal variables
-  bool gen_ML_data = jmgr->GetValueFromKey<int>("gen_ML_data"); // Generate ML data?
+  bool gen_ML_data = 0; //= jmgr->GetValueFromSubKey<int>(key,"gen_ML_data"); // Generate ML data?
   int aHCALndata;
   double aHCAL[maxNtr],apHCAL[maxNtr],acHCAL[maxNtr],ampHCAL[maxNtr],amppHCAL[maxNtr],elHCAL[maxNtr];
   std::vector<std::string> hcalvar = {"a","a","a_p","a_c","a_amp","a_amp_p","adcelemID"};
@@ -121,7 +122,7 @@ int qelas_ana_simu (const char *configfilename,
   double mc_sigma, mc_fnucl, mc_ebeam, mc_np;                     // mc_sigma => Cross-section weight
   std::vector<std::string> mc = {"mc_sigma","mc_fnucl","mc_np"};  // Default: g4sbs gen.
   std::vector<void*> mc_mem = {&mc_sigma,&mc_fnucl,&mc_np}; 
-  if (gen.compare("simc")==0) {
+  if (generator.compare("simc")==0) {
     mc = {"simc_Weight","simc_fnucl","simc_Ebeam"};  
     mc_mem = {&mc_sigma,&mc_fnucl,&mc_ebeam}; 
   }
@@ -132,8 +133,9 @@ int qelas_ana_simu (const char *configfilename,
   C->SetBranchStatus("bb.etot_over_p", 1);
 
   // defining the outputfile
+  std::string filebase = jmgr->GetValueFromSubKey_str(key,"output_filebase");
   if (verbose==0 && verbosefn==0) filebase = "pdout/qelas_ana";
-  TString outFile = Form("%s_%s_sbs%d_sbs%dp_model%d.root",filebase.c_str(),gen.c_str(),conf,sbsmag,model);
+  TString outFile = Form("%s_%s_sbs%d_sbs%dp_model%d.root",filebase.c_str(),generator.c_str(),conf,sbsmag,model);
   TFile *fout = new TFile(outFile.Data(),"RECREATE");
 
   // defining histograms
@@ -143,8 +145,8 @@ int qelas_ana_simu (const char *configfilename,
   TH1F *h_dpel = new TH1F("h_dpel",";p/p_{elastic}(#theta)-1;",100,-0.3,0.3);
   
   TH1F *h_Q2 = util_pd::TH1FhQ2("h_Q2", conf);
-  std::vector<double> hdx_lim; jmgr->GetVectorFromKey<double>("h_dxHCAL_lims", hdx_lim);
-  std::vector<double> hdy_lim; jmgr->GetVectorFromKey<double>("h_dyHCAL_lims", hdy_lim);
+  std::vector<double> hdx_lim; jmgr->GetVectorFromSubKey<double>(key,"h_dxHCAL_lims", hdx_lim);
+  std::vector<double> hdy_lim; jmgr->GetVectorFromSubKey<double>(key,"h_dyHCAL_lims", hdy_lim);
   TH1F *h_dxHCAL = new TH1F("h_dxHCAL","W & fiducial cuts;x_{HCAL}^{obs} - x_{HCAL}^{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
   TH1F *h_dxHCAL_nfc = new TH1F("h_dxHCAL_nfc","W cut;x_{HCAL}^{obs} - x_{HCAL}^{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
   TH1F *h_dyHCAL = new TH1F("h_dyHCAL","W & fiducial cuts;y_{HCAL}^{obs} - y_{HCAL}^{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
@@ -242,22 +244,22 @@ int qelas_ana_simu (const char *configfilename,
   double ebeam = sbsconf.GetEbeam(); // gets overwritten in the event loop
 
   // HCAL cut definitions
-  std::vector<double> dx_p_cut; jmgr->GetVectorFromKey<double>("dx_p_cut", dx_p_cut);
+  std::vector<double> dx_p_cut; jmgr->GetVectorFromSubKey<double>(key,"dx_p_cut", dx_p_cut);
   double sbs_kick = abs(dx_p_cut[0]);
-  std::vector<double> dy_p_cut; jmgr->GetVectorFromKey<double>("dy_p_cut", dy_p_cut);
-  std::vector<double> dx_n_cut; jmgr->GetVectorFromKey<double>("dx_n_cut", dx_n_cut);
-  std::vector<double> dy_n_cut; jmgr->GetVectorFromKey<double>("dy_n_cut", dy_n_cut);
+  std::vector<double> dy_p_cut; jmgr->GetVectorFromSubKey<double>(key,"dy_p_cut", dy_p_cut);
+  std::vector<double> dx_n_cut; jmgr->GetVectorFromSubKey<double>(key,"dx_n_cut", dx_n_cut);
+  std::vector<double> dy_n_cut; jmgr->GetVectorFromSubKey<double>(key,"dy_n_cut", dy_n_cut);
   std::vector<double> hcal_active_area = cut::hcal_active_area_simu(1,1); // Exc. 1 blk from all 4 sides
   std::vector<double> hcal_safety_margin = cut::hcal_safety_margin(dx_p_cut[1], dx_n_cut[1], dy_p_cut[1], hcal_active_area);
   TH2F *h2_xyHCAL_p = util_pd::TH2FHCALface_xy_simu("h2_xyHCAL_p",sbs_kick);
   TH2F *h2_xyHCAL_n = util_pd::TH2FHCALface_xy_simu("h2_xyHCAL_n",0);
 
   // reading W cut limits
-  std::vector<double> W_cutR; jmgr->GetVectorFromKey<double>("W_cutR",W_cutR);
+  std::vector<double> W_cutR; jmgr->GetVectorFromSubKey<double>(key,"W_cutR",W_cutR);
 
   // costruct axes of HCAL CoS in Hall CoS
-  double hcal_voffset = jmgr->GetValueFromKey<double>("hcal_voffset");
-  double hcal_hoffset = jmgr->GetValueFromKey<double>("hcal_hoffset");
+  double hcal_voffset = jmgr->GetValueFromSubKey<double>(key,"hcal_voffset");
+  double hcal_hoffset = jmgr->GetValueFromSubKey<double>(key,"hcal_hoffset");
   std::vector<TVector3> HCAL_axes; kine::SetHCALaxes(sbsconf.GetSBStheta_rad(), HCAL_axes);
   TVector3 HCAL_origin = sbsconf.GetHCALdist()*HCAL_axes[2] + hcal_voffset*HCAL_axes[0] + hcal_hoffset*HCAL_axes[1];
 
@@ -314,7 +316,7 @@ int qelas_ana_simu (const char *configfilename,
 
     // kinematic parameters
     double ebeam_corr = ebeam; //- MeanEloss;
-    if (gen.compare("simc")==0) ebeam_corr = mc_ebeam;
+    if (generator.compare("simc")==0) ebeam_corr = mc_ebeam;
     double precon = p[0]; //+ MeanEloss_outgoing
 
     // constructing the 4 vectors
@@ -580,9 +582,9 @@ int qelas_ana_simu (const char *configfilename,
 
   /**** Canvas 2 (dx & dy) ****/
   TCanvas *c2 = util_pd::TC("c2",2,2);
-  std::vector<double> hdxp_fitR; jmgr->GetVectorFromKey<double>("h_dxHCAL_p_fitR", hdxp_fitR);
-  std::vector<double> hdxn_fitR; jmgr->GetVectorFromKey<double>("h_dxHCAL_n_fitR", hdxn_fitR);
-  std::vector<double> hdy_fitR; jmgr->GetVectorFromKey<double>("h_dyHCAL_fitR", hdy_fitR);
+  std::vector<double> hdxp_fitR; jmgr->GetVectorFromSubKey<double>(key,"h_dxHCAL_p_fitR",hdxp_fitR);
+  std::vector<double> hdxn_fitR; jmgr->GetVectorFromSubKey<double>(key,"h_dxHCAL_n_fitR",hdxn_fitR);
+  std::vector<double> hdy_fitR; jmgr->GetVectorFromSubKey<double>(key,"h_dyHCAL_fitR",hdy_fitR);
   gStyle->SetOptFit(1);
   c2->cd(1); //
   TF1 *fdxp = fit::fit_1gs_nbg(hdxp_fitR,h_dxHCAL);
@@ -611,7 +613,7 @@ int qelas_ana_simu (const char *configfilename,
   TPaveText *pt = new TPaveText(.05,.1,.95,.8);
   pt->AddText(Form(" Date of creation: %s", util_pd::getDate().c_str()));
   pt->AddText(Form("Configfile: %s",configfilename));
-  pt->AddText(Form(" Analyzing %s generated QE events for SBS%d-SBS%dp settings",gen.c_str(),conf,sbsmag));
+  pt->AddText(Form(" Analyzing %s generated QE events for SBS%d-SBS%dp settings",generator.c_str(),conf,sbsmag));
   pt->AddText(Form(" Analysis model: %d",model));
   pt->AddText(Form(" Total # events analyzed: %ld",nevents));
   pt->AddText(Form(" HCAL offsets: v = %.4f, h = %.4f",hcal_voffset,hcal_hoffset));
