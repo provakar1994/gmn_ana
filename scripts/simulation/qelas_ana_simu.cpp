@@ -464,10 +464,10 @@ int qelas_ana_simu (const char *configfilename,
     	// dx dist. for p & n separately using MC info
     	if (int(mc_fnucl)==0) {
     	  h_dxHCAL_n->Fill(dx, weight);
-	  h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick, weight);
+	  h2_xyHCAL_n->Fill(xyHCAL_exp[1], xyHCAL_exp[0], weight);
     	} else if (int(mc_fnucl)==1) {
     	  h_dxHCAL_p->Fill(dx, weight);
-	  h2_xyHCAL_n->Fill(xyHCAL_exp[1], xyHCAL_exp[0], weight);
+	  h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick, weight);
     	} else {
     	  std::cerr << "*!* Invalid final state nuclei!" << std::endl; 
     	  std::exit(1);
