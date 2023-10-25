@@ -57,8 +57,9 @@ int qelas_ana_simu (const char *configfilename,
   std::string rfd = jmgr->GetValueFromKey_str("rootfile_dir");
   std::string prefix = jmgr->GetValueFromKey_str("prefix_to_filebase");
   std::string gen = jmgr->GetValueFromKey_str("generator");
+  std::string process = jmgr->GetValueFromKey_str("process");
   int njobs = jmgr->GetValueFromKey<int>("Njobs_to_ana"); // # MC jobs to analyze
-  std::vector<SimuJob> sjobs; util_pd::ReadSimuJobSummary(rfd,prefix,conf,sbsmag,gen,target,njobs,verbosefn,sjobs);
+  std::vector<SimuJob> sjobs; util_pd::ReadSimuJobSummary(rfd,prefix,conf,sbsmag,gen,process,njobs,verbosefn,sjobs);
   TChain *C = new TChain("T"); util_pd::LoadSimuROOTTree(sjobs,verbosefn,C);
 
   // Choosing the model of calculation
@@ -108,10 +109,18 @@ int qelas_ana_simu (const char *configfilename,
   std::vector<void*> trvar_mem = {&ntrack,&p,&px,&py,&pz,&xTr,&yTr,&thTr,&phTr,&vx,&vy,&vz,&xtgt,&ytgt,&thtgt,&phtgt};
   setrootvar::setbranch(C,"bb.tr",trvar,trvar_mem);
 
+  //hcal variables
+  bool gen_ML_data = jmgr->GetValueFromKey<int>("gen_ML_data"); // Generate ML data?
+  int aHCALndata;
+  double aHCAL[maxNtr],apHCAL[maxNtr],acHCAL[maxNtr],ampHCAL[maxNtr],amppHCAL[maxNtr],elHCAL[maxNtr];
+  std::vector<std::string> hcalvar = {"a","a","a_p","a_c","a_amp","a_amp_p","adcelemID"};
+  std::vector<void*> hcalvar_mem = {&aHCAL,&aHCALndata,&apHCAL,&acHCAL,&ampHCAL,&amppHCAL,&elHCAL};
+  if (gen_ML_data) setrootvar::setbranch(C,"sbs.hcal",hcalvar,hcalvar_mem,1);
+
   //MC variables
-  double mc_sigma, mc_fnucl, mc_ebeam;                    // mc_sigma => Cross-section weight
-  std::vector<std::string> mc = {"mc_sigma","mc_fnucl"};  // Default: g4sbs gen.
-  std::vector<void*> mc_mem = {&mc_sigma,&mc_fnucl}; 
+  double mc_sigma, mc_fnucl, mc_ebeam, mc_np;                     // mc_sigma => Cross-section weight
+  std::vector<std::string> mc = {"mc_sigma","mc_fnucl","mc_np"};  // Default: g4sbs gen.
+  std::vector<void*> mc_mem = {&mc_sigma,&mc_fnucl,&mc_np}; 
   if (gen.compare("simc")==0) {
     mc = {"simc_Weight","simc_fnucl","simc_Ebeam"};  
     mc_mem = {&mc_sigma,&mc_fnucl,&mc_ebeam}; 
@@ -179,7 +188,7 @@ int qelas_ana_simu (const char *configfilename,
   double T_dpel;        Tout->Branch("dpel", &T_dpel, "dpel/D");
   double T_ephi;        Tout->Branch("ephi", &T_ephi, "ephi/D");
   double T_etheta;      Tout->Branch("etheta", &T_etheta, "etheta/D");
-  double T_pcentral;    Tout->Branch("pcentral", &T_pcentral, "pcentral/D");
+  double T_pelas;       Tout->Branch("pelas", &T_pelas, "pelas/D");
   double T_thetapq_p;   Tout->Branch("thetapq_p", &T_thetapq_p, "thetapq_p/D");
   double T_thetapq_n;   Tout->Branch("thetapq_n", &T_thetapq_n, "thetapq_n/D");
   //track
@@ -252,6 +261,15 @@ int qelas_ana_simu (const char *configfilename,
   std::unordered_map<std::string,SimuJob> mnorm;
   for (auto & sjob: sjobs) mnorm[sjob.rfname] = sjob;
 
+  // ML data
+  TString data_file = "siout/hcal_all_ML.csv"; ofstream ml_data;
+  double ml_arr[288]; 
+  if (gen_ML_data) {
+    ml_data.open(data_file);
+    ml_data << "Event #, True nucleon p (GeV/c), n(0) or p(1), ADC, (ped. sub.), (pC), for, all, 288, channels, ...,\n";  
+    for(int i=0; i<288; i++) {ml_arr[i] = 0.0;}
+  }
+
   // looping through the tree ---------------------------------------
   std::cout << std::endl;
   long nevent = 0, nevents = C->GetEntries(), ngoodevs = 0; 
@@ -301,7 +319,7 @@ int qelas_ana_simu (const char *configfilename,
 
     double etheta = kine::etheta(Peprime);
     double ephi = kine::ephi(Peprime);
-    double pcentral = kine::pcentral(ebeam_corr, etheta, Ntype);
+    double pelas = kine::pelas(ebeam_corr, etheta, Ntype);
 
     double nu = 0.;                   // energy of the virtual photon
     double pN_expect = 0.;            // expected recoil nucleon momentum
@@ -322,9 +340,9 @@ int qelas_ana_simu (const char *configfilename,
       Q2recon = kine::Q2(Pe.E(), Peprime.E(), etheta);
       W2recon = kine::W2(Pe.E(), Peprime.E(), Q2recon, Ntype);
      } else if (model == 1) {
-      nu = Pe.E() - pcentral;
+      nu = Pe.E() - pelas;
       pN_expect = kine::pN_expect(nu, Ntype);
-      thetaN_expect = acos((Pe.E() - pcentral*cos(etheta)) / pN_expect);
+      thetaN_expect = acos((Pe.E() - pelas*cos(etheta)) / pN_expect);
       pNhat = kine::qVect_unit(thetaN_expect, phiN_expect);
       PNprime.SetPxPyPzE(pN_expect*pNhat.X(), pN_expect*pNhat.Y(), pN_expect*pNhat.Z(), nu+PN.E());
       Q2recon = kine::Q2(Pe.E(), Peprime.E(), etheta);
@@ -338,7 +356,7 @@ int qelas_ana_simu (const char *configfilename,
     }
     h_Q2->Fill(Q2recon); 
     double Wrecon = sqrt(max(0., W2recon));
-    double dpel = Peprime.E()/pcentral - 1.0; h_dpel->Fill(dpel);
+    double dpel = Peprime.E()/pelas - 1.0; h_dpel->Fill(dpel);
 
     T_ebeam = Pe.E();
 
@@ -349,7 +367,7 @@ int qelas_ana_simu (const char *configfilename,
     T_dpel = dpel;
     T_ephi = ephi;
     T_etheta = etheta;
-    T_pcentral = pcentral;
+    T_pelas = pelas;
 
     T_vz = vz[0];
     T_trP = p[0];
@@ -477,6 +495,16 @@ int qelas_ana_simu (const char *configfilename,
       }
     }
       
+    // ML data
+    if (gen_ML_data) {
+      //ml_data << nevent << "," << mc_fnucl << "," << mc_np << "," << dx << "," << dy << ",";
+      //ml_data << nevent << "," << mc_fnucl << "," << mc_np << "," << xyHCAL_exp[0] << "," << xyHCAL_exp[1] << ",";
+      ml_data << nevent << "," << mc_fnucl << "," << mc_np << "," << dx << "," << dy << "," << xyHCAL_exp[0] << "," << xyHCAL_exp[1] << ",";
+      for (int ihit=0;ihit<aHCALndata;ihit++) {ml_arr[int(elHCAL[ihit])] = apHCAL[ihit];}
+      for (int i=0; i<288; i++) {ml_data << ml_arr[i] << ","; ml_arr[i] = 0.0; }
+      ml_data << std::endl;
+    }
+
     Tout->Fill();
   } // event loop
   std::cout << std::endl << std::endl;
