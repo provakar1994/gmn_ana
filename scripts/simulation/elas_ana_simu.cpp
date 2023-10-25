@@ -57,8 +57,10 @@ int elas_ana_simu (const char *configfilename,
   std::string rfd = jmgr->GetValueFromKey_str("rootfile_dir");
   std::string prefix = jmgr->GetValueFromKey_str("prefix_to_filebase");
   std::string gen = jmgr->GetValueFromKey_str("generator");
+  std::string process = jmgr->GetValueFromKey_str("process");
   int njobs = jmgr->GetValueFromKey<int>("Njobs_to_ana"); // # MC jobs to analyze
-  std::vector<SimuJob> sjobs; util_pd::ReadSimuJobSummary(rfd,prefix,conf,sbsmag,gen,target,njobs,verbosefn,sjobs);
+  //std::vector<SimuJob> sjobs; util_pd::ReadSimuJobSummary(rfd,prefix,conf,sbsmag,gen,target,njobs,verbosefn,sjobs);
+  std::vector<SimuJob> sjobs; util_pd::ReadSimuJobSummary(rfd,prefix,conf,sbsmag,gen,process,njobs,verbosefn,sjobs);
   TChain *C = new TChain("T"); util_pd::LoadSimuROOTTree(sjobs,verbosefn,C);
 
   // Choosing the model of calculation
@@ -152,13 +154,13 @@ int elas_ana_simu (const char *configfilename,
   bool WCut;            Tout->Branch("WCut", &WCut, "WCut/B");
   bool pCut;            Tout->Branch("pCut", &pCut, "pCut/B");
   // -- a few variations
-  bool pCut_1p5sig;       Tout->Branch("pCut_1p5sig", &pCut_1p5sig, "pCut_1p5sig/O");
-  bool pCut_2sig;         Tout->Branch("pCut_2sig", &pCut_2sig, "pCut_2sig/O");
-  bool pCut_2p5sig;       Tout->Branch("pCut_2p5sig", &pCut_2p5sig, "pCut_2p5sig/O");
-  bool pCut_3sig;         Tout->Branch("pCut_3sig", &pCut_3sig, "pCut_3sig/O");
+  bool pCut_1p5sig;     Tout->Branch("pCut_1p5sig", &pCut_1p5sig, "pCut_1p5sig/O");
+  bool pCut_2sig;       Tout->Branch("pCut_2sig", &pCut_2sig, "pCut_2sig/O");
+  bool pCut_2p5sig;     Tout->Branch("pCut_2p5sig", &pCut_2p5sig, "pCut_2p5sig/O");
+  bool pCut_3sig;       Tout->Branch("pCut_3sig", &pCut_3sig, "pCut_3sig/O");
   // --
-  bool SMCut;             Tout->Branch("SMCut", &SMCut, "SMCut/B");
-  bool ARCut;             Tout->Branch("ARCut", &ARCut, "ARCut/B");
+  bool SMCut;           Tout->Branch("SMCut", &SMCut, "SMCut/B");
+  bool ARCut;           Tout->Branch("ARCut", &ARCut, "ARCut/B");
   bool fiduCut;         Tout->Branch("fiduCut", &fiduCut, "fiduCut/B");
   //MC related
   double weight;        Tout->Branch("weight", &weight, "weight/D");  
@@ -173,8 +175,11 @@ int elas_ana_simu (const char *configfilename,
   double T_dpel;        Tout->Branch("dpel", &T_dpel, "dpel/D");
   double T_ephi;        Tout->Branch("ephi", &T_ephi, "ephi/D");
   double T_etheta;      Tout->Branch("etheta", &T_etheta, "etheta/D");
-  double T_pcentral;    Tout->Branch("pcentral", &T_pcentral, "pcentral/D");
-  double T_thetapq_p;   Tout->Branch("thetapq_p", &T_thetapq_p, "thetapq_p/D");
+  double T_pelas;       Tout->Branch("pelas", &T_pelas, "pelas/D");
+  double T_epsilon;     Tout->Branch("epsilon", &T_epsilon, "epsilon/D"); // calculated using general eqn.
+  double T_epsilon_p;   Tout->Branch("epsilon_p", &T_epsilon_p, "epsilon_p/D");
+  double T_thpq_p;      Tout->Branch("thpq_p", &T_thpq_p, "thpq_p/D");
+  double T_thpq_n;      Tout->Branch("thpq_n", &T_thpq_n, "thpq_n/D"); //n=>no deflection
   //track
   double T_vz;          Tout->Branch("vz", &T_vz, "vz/D");
   double T_trP;         Tout->Branch("trP", &T_trP, "trP/D");
@@ -290,7 +295,8 @@ int elas_ana_simu (const char *configfilename,
 
     double etheta = kine::etheta(Peprime);
     double ephi = kine::ephi(Peprime);
-    double pcentral = kine::pcentral(ebeam_corr, etheta, Ntype);
+    double pelas = kine::pelas(ebeam_corr, etheta, Ntype);
+    double thelas = kine::thelas(ebeam_corr, precon, Ntype);
 
     double nu = 0.;                   // energy of the virtual photon
     double pN_expect = 0.;            // expected recoil nucleon momentum
@@ -301,33 +307,41 @@ int elas_ana_simu (const char *configfilename,
        model 1 = uses reconstructed angles as independent variable 
        model 2 = uses 4-vector calculation */
     TVector3 pNhat;                   // 3-momentum of the recoil nucleon (Unit)
-    double Q2recon = 0., W2recon = 0.;
+    double Q2recon{0},W2recon{0},epsilon{0},epsilon_p{0};
     if (model == 0) {
       nu = Pe.E() - Peprime.E();
       pN_expect = kine::pN_expect(nu, Ntype);
       thetaN_expect = acos((Pe.E() - Peprime.Pz()) / pN_expect);
       pNhat = kine::qVect_unit(thetaN_expect, phiN_expect);
       PNprime.SetPxPyPzE(pN_expect*pNhat.X(), pN_expect*pNhat.Y(), pN_expect*pNhat.Z(), nu+PN.E());
-      Q2recon = kine::Q2(Pe.E(), Peprime.E(), etheta);
-      W2recon = kine::W2(Pe.E(), Peprime.E(), Q2recon, Ntype);
+      Q2recon = kine::Q2(Pe.E(), Peprime.E(), thelas);
+      epsilon = kine::epsilon_general(thelas,Q2recon,nu);
+      epsilon_p = kine::epsilon(thelas,Q2recon,"p");
+      //W2recon = kine::W2(Pe.E(), Peprime.E(), Q2recon, Ntype);
+      W2recon = kine::W2_general(Pe.E(), Peprime.E(), etheta, Ntype);
     } else if (model == 1) {
-      nu = Pe.E() - pcentral;
+      nu = Pe.E() - pelas;
       pN_expect = kine::pN_expect(nu, Ntype);
-      thetaN_expect = acos((Pe.E() - pcentral*cos(etheta)) / pN_expect);
+      thetaN_expect = acos((Pe.E() - pelas*cos(etheta)) / pN_expect);
       pNhat = kine::qVect_unit(thetaN_expect, phiN_expect);
       PNprime.SetPxPyPzE(pN_expect*pNhat.X(), pN_expect*pNhat.Y(), pN_expect*pNhat.Z(), nu+PN.E());
-      Q2recon = kine::Q2(Pe.E(), Peprime.E(), etheta);
-      W2recon = kine::W2(Pe.E(), Peprime.E(), Q2recon, Ntype);
+      Q2recon = kine::Q2(Pe.E(), pelas, etheta);
+      epsilon = kine::epsilon_general(etheta,Q2recon,nu);
+      epsilon_p = kine::epsilon(etheta,Q2recon,"p");
+      //W2recon = kine::W2(Pe.E(), Peprime.E(), Q2recon, Ntype);
+      W2recon = kine::W2_general(Pe.E(), Peprime.E(), etheta, Ntype);
     } else if (model == 2) {
       nu = q.E();
       PNprime = q + PN;
       pNhat = PNprime.Vect().Unit();
       Q2recon = -q.M2();
+      epsilon = kine::epsilon_general(etheta,Q2recon,nu);
+      epsilon_p = kine::epsilon(etheta,Q2recon,"p");
       W2recon = PNprime.M2();
     }
     h_Q2->Fill(Q2recon); 
     double Wrecon = sqrt(max(0., W2recon));
-    double dpel = Peprime.E()/pcentral - 1.0; h_dpel->Fill(dpel);
+    double dpel = Peprime.E()/pelas - 1.0; h_dpel->Fill(dpel);
 
     T_ebeam = Pe.E();
 
@@ -338,7 +352,9 @@ int elas_ana_simu (const char *configfilename,
     T_dpel = dpel;
     T_ephi = ephi;
     T_etheta = etheta;
-    T_pcentral = pcentral;
+    T_pelas = pelas;
+    T_epsilon = epsilon;
+    T_epsilon_p = epsilon_p;
 
     T_vz = vz[0];
     T_trP = p[0];
@@ -388,13 +404,16 @@ int elas_ana_simu (const char *configfilename,
     T_dx = dx;
     T_dy = dy;
 
-    /* Calculating thetapq (p hypothesis) */
+    /* Calculating thpq (p hypothesis) */
     TVector3 HCAL_pos = HCAL_origin + xHCAL*HCAL_axes[0] + yHCAL*HCAL_axes[1];
+    TVector3 n_dir = (HCAL_pos - vertex).Unit();
+    T_thpq_n = acos(n_dir.Dot(pNhat));
+    // p 
     double BdL = sbsfield; //* expconst::sbsdipolegap;
     double proton_thetabend = 0.3 * BdL / PNprime.Vect().Mag();  // p*theta = 0.3*BdL
     double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist()-(sbsconf.GetSBSdist()+expconst::sbsdipolegap/2.0));
     TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);
-    T_thetapq_p = acos(p_dir.Unit().Dot(pNhat));
+    T_thpq_p = acos(p_dir.Unit().Dot(pNhat));
 
     // HCAL active area and safety margin cuts [Fiducial region]
     ARCut = cut::inHCAL_activeA(xHCAL,yHCAL,hcal_active_area);
@@ -422,7 +441,7 @@ int elas_ana_simu (const char *configfilename,
 	if (int(mc_fnucl)==1) {
 	  h_dxHCAL_p->Fill(dx, weight);
 	  h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick, weight);
-	} else {
+	}else if (process.compare("heep")==0) {
 	  std::cerr << "*!* Invalid final state nuclei!" << std::endl; 
 	  std::exit(1);
 	}
