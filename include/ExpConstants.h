@@ -167,18 +167,18 @@ class SBSconfig {
   }
 
  private:
-  int    fSBSconf;             // SBS configuration number
-  int    fSBSmag;              // SBS magnet settings (%)
-  double fEbeam;               // beam energy (better to get this from tree) (GeV)
-  double fBBtheta;             // BigBite magnet angle (deg)
-  double fBBtheta_rad;         // BigBite magnet angle (rad)
-  double fBBdist;              // BigBite magnet distance from target (m)
-  double fSBStheta;            // Super BigBite magnet angle (deg)
-  double fSBStheta_rad;        // Super BigBite magnet angle (rad)
-  double fSBSdist;             // Super BigBite magnet distance from target (m)
-  double fHCALtheta;           // HCAL angle (deg)
-  double fHCALtheta_rad;       // HCAL angle (rad)
-  double fHCALdist;            // HCAL distance from target (m)
+  int    fSBSconf{0};             // SBS configuration number
+  int    fSBSmag{0};              // SBS magnet settings (%)
+  double fEbeam{0};               // beam energy (better to get this from tree) (GeV)
+  double fBBtheta{0};             // BigBite magnet angle (deg)
+  double fBBtheta_rad{0};         // BigBite magnet angle (rad)
+  double fBBdist{0};              // BigBite magnet distance from target (m)
+  double fSBStheta{0};            // Super BigBite magnet angle (deg)
+  double fSBStheta_rad{0};        // Super BigBite magnet angle (rad)
+  double fSBSdist{0};             // Super BigBite magnet distance from target (m)
+  double fHCALtheta{0};           // HCAL angle (deg)
+  double fHCALtheta_rad{0};       // HCAL angle (rad)
+  double fHCALdist{0};            // HCAL distance from target (m)
 };
 
 #endif
