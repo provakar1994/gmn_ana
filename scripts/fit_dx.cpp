@@ -91,19 +91,23 @@ int fit_dx (const char *configfilename,
   int Opoly = jmgr->GetValueFromSubKey<int>(key,"Order_of_poly_bg");
   auto data_rdf_filtered = data_rdf.Filter(cuts_for_signal_data);
   auto simu_rdf_filtered_1 = simu_rdf.Filter(cuts_for_signal_simu);
-  double offset = jmgr->GetValueFromSubKey<double>(key,"dx_peak_offset_for_MC");
-  std::string dx_shifted = "dx+" + std::to_string(offset);
-  auto simu_rdf_filtered = simu_rdf_filtered_1.Define("dx_shifted",dx_shifted.c_str());
+  // Reading in offsets for dx peak position in MC for both p and n
+  double dx_offset_p = jmgr->GetValueFromSubKey<double>(key,"dx_offset_MC_for_p");
+  double dx_offset_n = !is_elastic ? jmgr->GetValueFromSubKey<double>(key,"dx_offset_MC_for_n") : 0;
+  std::string dx_shifted_p = "dx+" + std::to_string(dx_offset_p);
+  std::string dx_shifted_n = "dx+" + std::to_string(dx_offset_n);
+  auto simu_rdf_filtered = simu_rdf_filtered_1.Define("dx_shifted_p",dx_shifted_p.c_str())
+    .Define("dx_shifted_n",dx_shifted_n.c_str());
   auto bg_rdf_filtered = data_rdf.Filter(cuts_for_bg);
 
   // Creating important histograms
   vector<double> h_dx; jmgr->GetVectorFromSubKey<double>(key,"h_dx",h_dx);
   TH1F *h_dxHCAL_data = (TH1F*)data_rdf_filtered.Histo1D({"h_dxHCAL_data","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
   TH1F *h_dxHCAL_data_CT = (TH1F*)data_rdf_filtered.Filter(coinT_cut.c_str()).Histo1D({"h_dxHCAL_data_CT","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
-  TH1F *h_dxHCAL_simu = (TH1F*)simu_rdf_filtered.Histo1D({"h_dxHCAL_simu","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted","weight")->Clone();
-  TH1F *h_dxHCAL_simu_p = (TH1F*)simu_rdf_filtered.Filter("mc_fnucl==1").Histo1D({"h_dxHCAL_simu_p","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted","weight")->Clone();
+  //TH1F *h_dxHCAL_simu = (TH1F*)simu_rdf_filtered.Histo1D({"h_dxHCAL_simu","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted","weight")->Clone();
+  TH1F *h_dxHCAL_simu_p = (TH1F*)simu_rdf_filtered.Filter("mc_fnucl==1").Histo1D({"h_dxHCAL_simu_p","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_p","weight")->Clone();
   TH1F *h_dxHCAL_simu_n;
-  if (!is_elastic) h_dxHCAL_simu_n = (TH1F*)simu_rdf_filtered.Filter("mc_fnucl==0").Histo1D({"h_dxHCAL_simu_n","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted","weight")->Clone();
+  if (!is_elastic) h_dxHCAL_simu_n = (TH1F*)simu_rdf_filtered.Filter("mc_fnucl==0").Histo1D({"h_dxHCAL_simu_n","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_n","weight")->Clone();
   TH1F *h_dxHCAL_bg = (TH1F*)bg_rdf_filtered.Histo1D({"h_dxHCAL_bg","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
 
   // Fits
