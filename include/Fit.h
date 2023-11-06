@@ -42,6 +42,13 @@ namespace fit {
 			 int Opoly,            // Order of poly to fit bg
 			 std::vector<TH1F*> &ho);   // Output: ht,hs,hbg
 
+  // TH Interpolation fit using 1 signal histo & 1 bg histo (2 pars)
+  TF1* fit_1hs_1hbg_THI (std::vector<double> const & fit_range,
+			 TH1F* ht,             // total histo to fit 
+			 TH1F* hs,             // signal histo for fit
+			 TH1F* hbg,            // bg histo for fit
+			 std::vector<TH1F*> &ho);   // Output: ht,hs,hbg,N*hs (N=par[0],B=par[1])
+
   // TH Interpolation fit using 2 signal histos & no background (2 pars)
   TF1* fit_2hs_nbg_THI (std::vector<double> const & fit_range,
 			TH1F* ht,             // total histo to fit 
