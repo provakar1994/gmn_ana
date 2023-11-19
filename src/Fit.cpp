@@ -216,8 +216,10 @@ namespace fit {
     TH1F *hs1_cp2 = (TH1F*)hs1_cp1->Clone(); hs1_cp2->Scale(pars[0]);
     TH1F *hs2_cp2 = (TH1F*)hs2_cp1->Clone(); hs2_cp2->Scale(pars[0]*pars[1]);
     TH1F *hst = (TH1F*)hs1_cp2->Clone(); hst->Add(hs1_cp2,hs2_cp2);
-    TH1F *hbg_cp2 = (TH1F*)hs1_cp1->Clone(); hbg_cp2->Add(ht_cp,hst,1,-1); 
-    ho = {ht_cp,hst,hbg_cp2,hs1_cp2,hs2_cp2};
+    TH1F *hbg_sc = (TH1F*)hbg_cp1->Clone(); hbg_sc->Scale(pars[0]*pars[2]); 
+    TH1F *hsANDbg = (TH1F*)hs1_cp2->Clone(); hsANDbg->Add(hst,hbg_sc);
+    TH1F *hres = (TH1F*)hs2_cp1->Clone(); hres->Add(ht_cp,hsANDbg,1,-1); 
+    ho = {ht_cp,hst,hbg_sc,hres,hs1_cp2,hs2_cp2};
     
     return f1;
   }
@@ -280,11 +282,23 @@ namespace fit {
     std::vector<double> pars = GetFitParams(f1);
     //for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
 
+    // drawing the polynomial background function
+    FitFn *ffn2 = new FitFn(Opoly);
+    TF1* bgf = new TF1("bgf",ffn2,&FitFn::ffn_poly,fit_range[0],fit_range[1],Opoly+1);
+    bgf->SetNpx(500);
+    bgf->SetParameters(&fit::GetFitParams(f1)[2]);
+    //bgf->SetLineColor(46);
+
+    // now get a bg histo from bgf
+    TH1F *hbg_sc = (TH1F*)hs1_cp1->Clone(); util_pd::TF1toTH1F(bgf,hbg_sc);
+    hbg_sc->SetMarkerColor(46); hbg_sc->SetLineColor(46); hbg_sc->SetLineWidth(2);
+
     TH1F *hs1_cp2 = (TH1F*)hs1_cp1->Clone(); hs1_cp2->Scale(pars[0]);
     TH1F *hs2_cp2 = (TH1F*)hs2_cp1->Clone(); hs2_cp2->Scale(pars[0]*pars[1]);
     TH1F *hst = (TH1F*)hs1_cp2->Clone(); hst->Add(hs1_cp2,hs2_cp2);
-    TH1F *hbg = (TH1F*)ht_cp->Clone(); hbg->Add(ht_cp,hst,1,-1); 
-    ho = {ht_cp,hst,hbg,hs1_cp2,hs2_cp2};
+    TH1F *hsANDbg = (TH1F*)hs1_cp2->Clone(); hsANDbg->Add(hst,hbg_sc);
+    TH1F *hres = (TH1F*)hs2_cp1->Clone(); hres->Add(ht_cp,hsANDbg,1,-1); 
+    ho = {ht_cp,hst,hbg_sc,hres,hs1_cp2,hs2_cp2};
     
     return f1;
   }

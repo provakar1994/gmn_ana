@@ -5,6 +5,7 @@ namespace util_pd {
   /* #########################################
      ##                General              ##  
      ######################################### */
+  //_____________________________________
   TCanvas *TC(std::string name,   // name of the canvas
  	      int rdiv,           // # divisions in row
 	      int cdiv)           // # divisions in column 
@@ -22,6 +23,19 @@ namespace util_pd {
     return c;
   }
 
+  //_____________________________________
+  void TF1toTH1F(TF1* const func, // TF1 object to mimic
+		 TH1F* &hist)     // TH1F object to modify
+  /* creates a TH1F object from a given TF1 object */
+  {
+    for (int i = 1; i <= hist->GetNbinsX(); ++i) {
+      double binCenter = hist->GetBinCenter(i);
+      double functionValue = func->Eval(binCenter);
+      hist->SetBinContent(i, functionValue);
+    }
+  }
+
+  //_____________________________________
   std::string getDate()
   /* returns today's date */
   {

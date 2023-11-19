@@ -6,6 +6,7 @@
 #include "TF1.h"
 
 #include "FitFns.h"
+#include "Utilities.h"
 
 /* IMPORTANT: Be sure to make a canvas available before calling a fit function. */
 

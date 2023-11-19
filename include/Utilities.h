@@ -8,6 +8,7 @@
 #include <dirent.h>
 #include <algorithm>
 
+#include "TF1.h"
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TLine.h"
@@ -32,6 +33,9 @@ namespace util_pd {
 	      int cdiv);          // # divisions in column 
 
   std::string getDate(); // returns today's date
+
+  // creates a TH1F object from a given TF1 object
+  void TF1toTH1F(TF1* const func, TH1F* &hist);
 
   /* #################################################
      ##                HCAL Histograms              ##  
