@@ -9,6 +9,7 @@
 */
 
 #include "TH1F.h"
+#include "TPad.h"
 #include "TFile.h"
 #include "TLatex.h"
 #include "TLegend.h"
@@ -20,6 +21,59 @@
 
 #include "../include/gmn_ana.h"
 #include "../dflay/src/JSONManager.cxx"
+
+void gStyleFitCanvas() 
+{
+  gStyle->SetOptStat("e"); gStyle->SetOptFit(1); 
+  gStyle->SetErrorX(0);
+}
+
+void customize_residual(TH1F* h)
+{
+  h->GetXaxis()->SetLabelOffset(0.03);
+  h->GetXaxis()->SetLabelSize(0.12);
+  h->GetYaxis()->SetLabelOffset(0.005);
+  h->GetYaxis()->SetLabelSize(0.11);
+  h->SetMarkerStyle(22);
+  h->SetMarkerColor(46);
+  h->SetLineColor(46);
+  h->SetStats(0);
+}
+
+void customize_data(TH1F* h)
+{
+  h->SetMarkerStyle(21);
+  h->SetMarkerSize(0.8);
+  h->SetMarkerColor(kBlack);
+  h->SetLineColor(kBlack);
+}
+
+void customize_gfit(TH1F* h)
+{
+  h->SetLineColor(kRed);
+  h->SetLineStyle(7);
+  h->SetLineWidth(3);
+  //h->SetFillColor(kRed);
+  //h->SetFillColorAlpha(kRed,0.2);
+}
+
+void customize_psig(TH1F* h)
+{
+  h->SetLineColor(kBlue);
+  h->SetLineStyle(4);
+  h->SetLineWidth(3);
+  //h->SetFillColor(kBlue);
+  //h->SetFillColorAlpha(kBlue,0.3);
+}
+
+void customize_nsig(TH1F* h)
+{
+  h->SetLineColor(kGreen+2);
+  h->SetLineStyle(8);
+  h->SetLineWidth(3);
+  //h->SetFillColor(kGreen+2);
+  //h->SetFillColorAlpha(kGreen+2,0.3);
+}
 
 void customize_dx(TH1F* h)
 {
@@ -36,15 +90,19 @@ void customize_hs(TH1F* h)
 {
   h->SetMarkerColor(kBlack);
   h->SetMarkerSize(0.8);
-  h->SetMarkerStyle(20);
+  h->SetMarkerStyle(22);
   h->SetLineColor(kBlack);
 }
 
 void customize_hbg(TH1F* h) 
 {
-  h->SetMarkerColor(kRed);
+  h->SetMarkerColor(6);
   h->SetMarkerStyle(29);
-  h->SetLineColor(kRed);
+  h->SetLineColor(6);
+  h->SetLineStyle(9);
+  h->SetLineWidth(3);
+  //h->SetFillColor(6);
+  //h->SetFillColorAlpha(6,0.3);
 }
 
 double total_fit (double * x, double * par) {
@@ -54,7 +112,7 @@ double total_fit (double * x, double * par) {
 
 int fit_dx (const char *configfilename, 
 	    bool is_elastic = 1, // 1=>Yes, 0=>QE
-	    std::string filebase="pdout/test_fit_dx") 
+	    std::string filebase="pdout/fit_dx") 
 {
   gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
 
@@ -72,16 +130,25 @@ int fit_dx (const char *configfilename,
   std::string sfprefix = jmgr->GetValueFromSubKey_str(key,"simu_file_prefix");
   dfprefix = dfprefix.empty() ? "" : dfprefix + "_";
   sfprefix = sfprefix.empty() ? "" : sfprefix + "_";
-  // char const * dfp = dfprefix.empty() ? "" : (dfprefix + "_").c_str();
-  // char const * sfp = sfprefix.empty() ? "" : (sfprefix + "_").c_str();
 
   // defining output files
-  TString outFile = Form("%s_sbs%d_sbs%dp_model%d.root",filebase.c_str(),conf,sbsmag,model);
+  TString outFile = Form("%s_%s_pass%d_%s_sbs%d_sbs%dp_model%d.root",filebase.c_str(),key,pass,gen.c_str(),conf,sbsmag,model);
+  TFile *fout = new TFile(outFile.Data(), "RECREATE");
 
   // reading ROOT files as df
   ROOT::EnableImplicitMT();
   ROOT::RDataFrame data_rdf("Tout",Form("pdout/%s%s_ana_data_sbs%d_sbs%dp_model%d_pass%d.root",dfprefix.c_str(),key,conf,sbsmag,model,pass));
   ROOT::RDataFrame simu_rdf("Tout",Form("simulation/siout/%s%s_ana_%s_sbs%d_sbs%dp_model%d.root",sfprefix.c_str(),key,gen.c_str(),conf,sbsmag,model));
+
+  // ***********
+  // Inelastic generator. make this part user configuration later. Add a flag, etc.
+  // ***********
+  //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/inel_gen_elas_ana_g4sbs_sbs4_sbs0p_model2.root"));
+  ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/inel_ld2_g4sbs_sbs4_sbs50p_model2.root"));
+  auto inel_rdf_filtered = inel_rdf.Filter("W2>0.89&&trP>1.16&&eHCAL>0");
+  vector<double> h_dx; jmgr->GetVectorFromSubKey<double>(key,"h_dx",h_dx); //temporary replacement
+  TH1F *h_dxHCAL_bg_inel = (TH1F*)inel_rdf_filtered.Histo1D({"h_dxHCAL_bg_inel","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx","weight")->Clone();
+  // ***********
 
   // Applying cuts
   std::string cuts_for_signal_data = jmgr->GetValueFromSubKey_str(key,"cuts_for_signal_data");
@@ -101,7 +168,7 @@ int fit_dx (const char *configfilename,
   auto bg_rdf_filtered = data_rdf.Filter(cuts_for_bg);
 
   // Creating important histograms
-  vector<double> h_dx; jmgr->GetVectorFromSubKey<double>(key,"h_dx",h_dx);
+  //vector<double> h_dx; jmgr->GetVectorFromSubKey<double>(key,"h_dx",h_dx);
   TH1F *h_dxHCAL_data = (TH1F*)data_rdf_filtered.Histo1D({"h_dxHCAL_data","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
   TH1F *h_dxHCAL_data_CT = (TH1F*)data_rdf_filtered.Filter(coinT_cut.c_str()).Histo1D({"h_dxHCAL_data_CT","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
   //TH1F *h_dxHCAL_simu = (TH1F*)simu_rdf_filtered.Histo1D({"h_dxHCAL_simu","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted","weight")->Clone();
@@ -129,7 +196,7 @@ int fit_dx (const char *configfilename,
     TLegend *l0=new TLegend(0.10,0.77,0.38,0.9);
     l0->SetTextFont(42);
     l0->AddEntry(ho[0],"Data","l");
-    l0->AddEntry(f0,"Global Fit","l");
+    l0->AddEntry(f0,"Fit","l");
     l0->AddEntry(ho[1],"Signal","lep");
     l0->Draw();
     // --- 
@@ -146,7 +213,7 @@ int fit_dx (const char *configfilename,
     // TLegend *l1=new TLegend(0.10,0.77,0.38,0.9);
     // l1->SetTextFont(42);
     // l1->AddEntry(ho1[0],"Data","l");
-    // l1->AddEntry(f1,"Global Fit (MC + Data bg.)","l");
+    // l1->AddEntry(f1,"Fit (MC + Data bg.)","l");
     // l1->AddEntry(ho1[1],"Signal (from MC)","lep");
     // l1->AddEntry(ho1[2],"Bg. (from Data)","lep");
     // l1->Draw();
@@ -174,7 +241,7 @@ int fit_dx (const char *configfilename,
     TLegend *l2=new TLegend(0.10,0.77,0.39,0.9);
     l2->SetTextFont(42);
     l2->AddEntry(ho2[0],"Data","l");
-    l2->AddEntry(f2,"Global Fit (MC + poly. bg.)","l");
+    l2->AddEntry(f2,"Fit (MC + poly. bg.)","l");
     l2->AddEntry(ho2[1],"Signal (from MC)","lep");
     l2->AddEntry(ho2[2],Form("Bg. (%d^{th} order poly.)",Opoly),"lep");
     l2->Draw();    
@@ -199,6 +266,25 @@ int fit_dx (const char *configfilename,
     std::cout << " Background count: " << bgcount << "\n";
     std::cout << " Signal count: " << sigcount << "\n\n";
     // ---
+
+    // Canvas 4 : Fitting w/ signal and background from MC
+    TCanvas *c4 = util_pd::TC("c4",1,1);
+    c4->cd(); gStyle->SetOptFit(1);
+    vector<TH1F*> ho4;
+    TF1 *f4 = fit::fit_1hs_1hbg_THI(dx_fit_range,
+				    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_bg_inel,
+				    ho4);
+    ho4[0]->Draw(); customize_ht(ho4[0]); customize_dx(ho4[0]);
+    ho4[1]->Draw("same"); customize_hs(ho4[1]); customize_dx(ho4[1]);
+    ho4[2]->Draw("same"); customize_hbg(ho4[2]); customize_dx(ho4[2]);
+    TLegend *l4=new TLegend(0.10,0.77,0.38,0.9);
+    l4->SetTextFont(42);
+    l4->AddEntry(ho4[0],"Data","l");
+    l4->AddEntry(f4,"Fit","l");
+    l4->AddEntry(ho4[1],"Signal (from MC)","lep");
+    l4->AddEntry(ho4[2],"Bg. (from MC)","lep");
+    l4->Draw();
+    // --- 
 
     // Canvas 4 : Fitting using a Gaussian and fixed polynomial (got the params from f2)
     // TF1* fpfit = new TF1("fpfit",total_fit,-2,1,10);
@@ -236,56 +322,163 @@ int fit_dx (const char *configfilename,
     TLegend *l0=new TLegend(0.10,0.77,0.38,0.9);
     l0->SetTextFont(42);
     l0->AddEntry(ho[0],"Data","l");
-    l0->AddEntry(f0,"Global Fit","l");
+    l0->AddEntry(f0,"Fit","l");
     l0->AddEntry(ho[1],"Signal","lep");
     l0->Draw();
     // --- 
 
     // Canvas 1 : Fitting data/MC w/ background from data
-    TCanvas *c1 = util_pd::TC("c1",1,1);
-    c1->cd(); gStyle->SetOptFit(1);
+    TCanvas *c1 = util_pd::TC("c1",1,1); gStyleFitCanvas();
+    c1->cd();
+    // performing the fit
     vector<TH1F*> ho1;
     TF1 *f1 = fit::fit_2hs_1hbg_THI(dx_fit_range,
-				    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg,
-				    ho1);
-    ho1[0]->Draw(); customize_ht(ho1[0]); customize_dx(ho1[0]);
-    ho1[1]->Draw("same"); customize_hs(ho1[1]); customize_dx(ho1[1]);
-    //cout << " *** " << ho1[1]->Integral() << "\n";
-    ho1[2]->Draw("same"); customize_hbg(ho1[2]); customize_dx(ho1[2]);
-    //cout << " *** " << ho1[2]->Integral() << "\n";
-    TLegend *l1=new TLegend(0.10,0.77,0.38,0.9);
+    				    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg,
+    				    ho1);
+    // converting fit fn to a hostogram
+    TH1F *hf1 = (TH1F*)h_dxHCAL_data->Clone(); util_pd::TF1toTH1F(f1,hf1);
+    ho1[0]->Draw(); c1->Update(); 
+    // grabbing statbox of the fitted histo
+    TPaveStats *st1 = (TPaveStats*)ho1[0]->FindObject("stats");
+    // getting pads for pull plot
+    std::vector<TPad*> p1 = util_pd::GetPadsForPullPlot(c1);
+    //
+    // preparing the pad for data/MC fit
+    //
+    p1[0]->cd();
+    // drawing all the histograms
+    //ho1[0]->Draw(); customize_ht(ho1[0]); customize_dx(ho1[0]);
+    h_dxHCAL_data->Draw("E"); customize_data(h_dxHCAL_data);
+    hf1->Draw("same HIST"); customize_gfit(hf1);
+    ho1[4]->Draw("same HIST"); customize_psig(ho1[4]);
+    ho1[5]->Draw("same HIST"); customize_nsig(ho1[5]);
+    ho1[2]->Draw("same HIST"); customize_hbg(ho1[2]);
+    // redrawing the stat box
+    st1->SetX1NDC(0.6); st1->SetX2NDC(0.9); st1->SetY2NDC(0.9);
+    st1->Draw("same");    
+    // drawing a legend
+    TLegend *l1=new TLegend(0.10,0.64,0.35,0.9);
     l1->SetTextFont(42);
-    l1->AddEntry(ho1[0],"Data","l");
-    l1->AddEntry(f1,"Global Fit (MC + Data bg.)","l");
-    l1->AddEntry(ho1[1],"Signal (from MC)","lep");
-    l1->AddEntry(ho1[2],"Bg. (from Data)","lep");
+    l1->AddEntry(h_dxHCAL_data,"Data","p");
+    l1->AddEntry(hf1,"Fit (QE MC + bg.)","lf");
+    l1->AddEntry(ho1[4],"p signal (from MC)","lf");
+    l1->AddEntry(ho1[5],"n signal (from MC)","lf");
+    l1->AddEntry(ho1[2],"Bg. (from Data)","lf");
+    l1->AddEntry(ho1[3],"Residual","p");
     l1->Draw();
-    // --- 
+    //
+    // preparing the pad for residual
+    //  
+    p1[1]->cd();
+    ho1[3]->Draw(); customize_residual(ho1[3]);
+    // drawing a horizontal line at y = 0
+    util_pd::DrawZeroLine(p1[1],dx_fit_range[0],dx_fit_range[1]);
+    // ** ----- ***
 
-    // Canvas 2 : Fitting data/MC w/ polynomial background
-    TCanvas *c2 = util_pd::TC("c2",1,1);
-    c2->cd(); gStyle->SetOptFit(1);
+    // Canvas 2 : Fitting data/MC w/ background from data
+    TCanvas *c2 = util_pd::TC("c2",1,1); gStyleFitCanvas();
+    c2->cd();
+    // performing the fit
     vector<TH1F*> ho2;
-    TF1 *f2 = fit::fit_2hs_1pbg_THI(dx_fit_range,
-				    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,Opoly,
-				    ho2);
-    ho2[0]->Draw(); customize_ht(ho2[0]); customize_dx(ho2[0]);
-    ho2[1]->Draw("same"); customize_hs(ho2[1]); customize_dx(ho2[1]);
-    ho2[2]->Draw("same"); customize_hbg(ho2[2]);
-    // drawing the polynomial background as well
-    FitFn *ffn = new FitFn(Opoly);
-    TF1* bg2 = new TF1("bg2",ffn,&FitFn::ffn_poly,dx_fit_range[0],dx_fit_range[1],Opoly+1);
-    bg2->SetNpx(500);
-    bg2->SetParameters(&fit::GetFitParams(f2)[2]);
-    bg2->SetLineColor(kGreen+2);
-    bg2->Draw("same");
-    TLegend *l2=new TLegend(0.10,0.77,0.39,0.9);
+    TF1 *f2 = fit::fit_2hs_1hbg_THI(dx_fit_range,
+    				    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_inel,
+    				    ho2);
+    // converting fit fn to a hostogram
+    TH1F *hf2 = (TH1F*)h_dxHCAL_data->Clone(); util_pd::TF1toTH1F(f2,hf2);
+    ho2[0]->Draw(); c2->Update(); 
+    // grabbing statbox of the fitted histo
+    TPaveStats *st2 = (TPaveStats*)ho2[0]->FindObject("stats");
+    // getting pads for pull plot
+    std::vector<TPad*> p2 = util_pd::GetPadsForPullPlot(c2);
+    //
+    // preparing the pad for data/MC fit
+    //
+    p2[0]->cd();
+    // drawing all the histograms
+    //ho2[0]->Draw(); customize_ht(ho2[0]); customize_dx(ho2[0]);
+    h_dxHCAL_data->Draw("E"); customize_data(h_dxHCAL_data);
+    hf2->Draw("same HIST"); customize_gfit(hf2);
+    ho2[4]->Draw("same HIST"); customize_psig(ho2[4]);
+    ho2[5]->Draw("same HIST"); customize_nsig(ho2[5]);
+    ho2[2]->Draw("same HIST"); customize_hbg(ho2[2]);
+    // redrawing the stat box
+    st2->SetX1NDC(0.6); st2->SetX2NDC(0.9); st2->SetY2NDC(0.9);
+    st2->Draw("same");    
+    // drawing a legend
+    TLegend *l2=new TLegend(0.10,0.64,0.35,0.9);
     l2->SetTextFont(42);
-    l2->AddEntry(ho2[0],"Data","l");
-    l2->AddEntry(f2,"Global Fit (MC + poly. bg.)","l");
-    l2->AddEntry(ho2[1],"Signal (from MC)","lep");
-    l2->AddEntry(ho2[2],Form("Bg. (%d^{th} order poly.)",Opoly),"lep");
+    l2->AddEntry(h_dxHCAL_data,"Data","p");
+    l2->AddEntry(hf2,"Fit (QE MC + bg.)","lf");
+    l2->AddEntry(ho2[4],"p signal (from MC)","lf");
+    l2->AddEntry(ho2[5],"n signal (from MC)","lf");
+    l2->AddEntry(ho2[2],"Bg. (from MC)","lf");
+    l2->AddEntry(ho2[3],"Residual","p");
     l2->Draw();
+    //
+    // preparing the pad for residual
+    //  
+    p2[1]->cd();
+    ho2[3]->Draw(); customize_residual(ho2[3]);
+    // drawing a horizontal line at y = 0
+    util_pd::DrawZeroLine(p2[1],dx_fit_range[0],dx_fit_range[1]);
+    // ** ----- ***
+    
+    // Canvas 3 : Fitting data/MC w/ polynomial background
+    TCanvas *c3 = util_pd::TC("c3",1,1); gStyleFitCanvas();
+    c3->cd(); 
+    // performing the fit
+    vector<TH1F*> ho3;
+    TF1 *f3 = fit::fit_2hs_1pbg_THI(dx_fit_range,
+    				    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,Opoly,
+    				    ho3);
+    // converting fit fn to a hostogram
+    TH1F *hf3 = (TH1F*)h_dxHCAL_data->Clone(); util_pd::TF1toTH1F(f3,hf3);
+    ho3[0]->Draw(); c3->Update(); 
+    // grabbing statbox of the fitted histo
+    TPaveStats *st3 = (TPaveStats*)ho3[0]->FindObject("stats");
+    // getting pads for pull plot
+    std::vector<TPad*> p3 = util_pd::GetPadsForPullPlot(c3);
+    //
+    // preparing the pad for data/MC fit
+    //
+    p3[0]->cd();
+    // drawing all the histograms
+    //ho3[0]->Draw(); customize_ht(ho3[0]); customize_dx(ho3[0]);
+    h_dxHCAL_data->Draw("E"); customize_data(h_dxHCAL_data);
+    hf3->Draw("same HIST"); customize_gfit(hf3);
+    ho3[4]->Draw("same HIST"); customize_psig(ho3[4]);
+    ho3[5]->Draw("same HIST"); customize_nsig(ho3[5]);
+    ho3[2]->Draw("same HIST"); customize_hbg(ho3[2]);
+    // redrawing the stat box
+    st3->SetX1NDC(0.62); st3->SetX2NDC(0.9); st3->SetY2NDC(0.9);
+    st3->Draw("same");
+    // drawing a legend
+    TLegend *l3=new TLegend(0.10,0.6,0.36,0.9);
+    l3->SetTextFont(42);
+    l3->AddEntry(h_dxHCAL_data,"Data","p");
+    //l3->AddEntry(f3,"Fit (MC + poly. bg.)","l");
+    l3->AddEntry(hf3,"Fit (QE MC + bg.)","lf");
+    l3->AddEntry(ho3[4],"p signal (from MC)","lf");
+    l3->AddEntry(ho3[5],"n signal (from MC)","lf");
+    l3->AddEntry(ho3[2],Form("Bg. (poly. of order %d)",Opoly),"lf");
+    l3->AddEntry(ho3[3],"Residual","p");
+    //l3->SetFillStyle(0); // makes legend box transparent
+    l3->Draw();
+    //
+    // preparing the pad for residual
+    //  
+    p3[1]->cd();
+    ho3[3]->Draw(); customize_residual(ho3[3]);
+    // drawing a horizontal line at y = 0
+    util_pd::DrawZeroLine(p3[1],dx_fit_range[0],dx_fit_range[1]);
+
+    // writing out the canvases
+    c0->Update(); c0->Write();
+    // turning off the stats of data histo [IMPORTANT!]
+    h_dxHCAL_data->SetStats(0);
+    c1->Update(); c1->Write();
+    c2->Update(); c2->Write();
+    c3->Update(); c3->Write();
   } // QE
 
   return 0;
