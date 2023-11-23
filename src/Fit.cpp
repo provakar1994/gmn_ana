@@ -291,7 +291,7 @@ namespace fit {
 
     // now get a bg histo from bgf
     TH1F *hbg_sc = (TH1F*)hs1_cp1->Clone(); util_pd::TF1toTH1F(bgf,hbg_sc);
-    hbg_sc->SetMarkerColor(46); hbg_sc->SetLineColor(46); hbg_sc->SetLineWidth(2);
+    hbg_sc->SetMarkerColor(46); hbg_sc->SetLineColor(46); //hbg_sc->SetLineWidth(2);
 
     TH1F *hs1_cp2 = (TH1F*)hs1_cp1->Clone(); hs1_cp2->Scale(pars[0]);
     TH1F *hs2_cp2 = (TH1F*)hs2_cp1->Clone(); hs2_cp2->Scale(pars[0]*pars[1]);

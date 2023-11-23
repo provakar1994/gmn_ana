@@ -24,6 +24,36 @@ namespace util_pd {
   }
 
   //_____________________________________
+  std::vector<TPad*> GetPadsForPullPlot(TCanvas *c1) 
+  /* splits a given canvas into two pads suitable for pull plots */
+  {
+    c1->cd();
+    TPad *p1 = new TPad("p1","p1",0,0.25,1,1);    //for fit
+    TPad *p2 = new TPad("p2","p2",0,0.02,1,0.25); //for residual
+    p1->SetBottomMargin(0.00001); p1->SetBorderMode(0);
+    p1->SetTickx(); p1->SetTicky();
+    p1->SetGridx(); p1->Draw();
+    p2->SetTopMargin(0.00001); p2->SetBottomMargin(0.2);
+    p2->SetBorderMode(0);
+    p2->SetTickx(); p2->SetTicky(); 
+    p2->SetGridx(); p2->Draw();
+    std::vector<TPad*> pads{p1,p2};
+    return pads;
+  }
+
+  //_____________________________________
+  void DrawZeroLine(TPad *p1, double xmin, double xmax)
+  /* Draws a horizontal line at y=0 */
+  {
+    p1->cd();
+    TLine* zeroLine = new TLine(xmin,0,xmax,0);
+    zeroLine->SetLineColor(kGray+2);
+    zeroLine->SetLineWidth(2);
+    zeroLine->SetLineStyle(9);
+    zeroLine->Draw("same"); 
+  }
+
+  //_____________________________________
   void TF1toTH1F(TF1* const func, // TF1 object to mimic
 		 TH1F* &hist)     // TH1F object to modify
   /* creates a TH1F object from a given TF1 object */

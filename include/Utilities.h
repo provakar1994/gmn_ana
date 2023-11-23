@@ -32,6 +32,12 @@ namespace util_pd {
  	      int rdiv,           // # divisions in row
 	      int cdiv);          // # divisions in column 
 
+  // splits a given canvas into two pads suitable for pull plots
+  std::vector<TPad*> GetPadsForPullPlot(TCanvas *c1);
+
+  // draws a horizontal line at y=0
+  void DrawZeroLine(TPad *p1, double xmin, double xmax);
+
   std::string getDate(); // returns today's date
 
   // creates a TH1F object from a given TF1 object
