@@ -54,6 +54,31 @@ namespace util_pd {
   }
 
   //_____________________________________
+  double GetxNDC(double x)
+  /* Returns normalized coordinate for a given x value */
+  {
+    gPad->Update();
+    return (x - gPad->GetX1())/(gPad->GetX2()-gPad->GetX1());
+  }
+
+  //_____________________________________
+  double UnfoldyNDC(double yNDC) 
+  /* Returns y value for a given y coordinate in NDC */
+  {
+    gPad->Update();
+    return yNDC*(gPad->GetY2()-gPad->GetY1()) + gPad->GetY1();
+  }
+
+  //_____________________________________
+  void PlotCutRegion(double xmin, double xmax)
+  /* Plots cut region for given x range */
+  {
+    TBox *cutRegion = new TBox(xmin,UnfoldyNDC(0.1),xmax,UnfoldyNDC(0.9));
+    cutRegion->SetFillColorAlpha(kRed, 0.3);
+    cutRegion->Draw();
+  }
+
+  //_____________________________________
   void TF1toTH1F(TF1* const func, // TF1 object to mimic
 		 TH1F* &hist)     // TH1F object to modify
   /* creates a TH1F object from a given TF1 object */

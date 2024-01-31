@@ -9,6 +9,7 @@
 #include <algorithm>
 
 #include "TF1.h"
+#include "TBox.h"
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TLine.h"
@@ -42,6 +43,15 @@ namespace util_pd {
 
   // creates a TH1F object from a given TF1 object
   void TF1toTH1F(TF1* const func, TH1F* &hist);
+
+  // Returns normalized coordinate for a given x value
+  double GetxNDC(double x);
+
+  // Returns y value for a given y coordinate in NDC
+  double UnfoldyNDC(double yNDC);
+
+  // Plots cut region for given x range
+  void PlotCutRegion(double xmin, double xmax);
 
   /* #################################################
      ##                HCAL Histograms              ##  
