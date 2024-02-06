@@ -55,7 +55,7 @@ int elas_ana_simu (const char *configfilename,
   int sbsmag = jmgr->GetValueFromSubKey<int>(key,"SBS_magnet_percent");
   double sbsfield = jmgr->GetValueFromSubKey<double>(key,"SBS_field");
   SBSconfig sbsconf(conf, sbsmag);
-  cout << sbsconf;
+  std::cout << sbsconf;
 
   // reading job summary and parsing ROOT trees
   std::string rfd = jmgr->GetValueFromSubKey_str(key,"rootfile_dir");
@@ -83,7 +83,7 @@ int elas_ana_simu (const char *configfilename,
   TTreeFormula *GlobalCut = new TTreeFormula("GlobalCut",(TCut)gcut.c_str(),C);
 
   // setting up ROOT tree branch addresses ---------------------------------------
-  int maxNtr=1000;
+  int maxNtr = jmgr->GetValueFromSubKey<int>(key,"max_N_tracks");
   C->SetBranchStatus("*",0);
   // bbsh clus var
   double eSH, xSH, ySH, rblkSH, cblkSH, idblkSH, atimeSH;
@@ -104,12 +104,20 @@ int elas_ana_simu (const char *configfilename,
   setrootvar::setbranch(C, "sbs.hcal", hcalclvar, hcalclvar_mem);
 
   // track var
-  double ntrack, p[maxNtr],px[maxNtr],py[maxNtr],pz[maxNtr],xTr[maxNtr],yTr[maxNtr],thTr[maxNtr],phTr[maxNtr];
+  double ntrack,p[maxNtr],px[maxNtr],py[maxNtr],pz[maxNtr],xTr[maxNtr],yTr[maxNtr],thTr[maxNtr],phTr[maxNtr];
   double vx[maxNtr],vy[maxNtr],vz[maxNtr];
-  double xtgt[maxNtr],ytgt[maxNtr],thtgt[maxNtr],phtgt[maxNtr];
-  std::vector<std::string> trvar = {"n","p","px","py","pz","x","y","th","ph","vx","vy","vz","tg_x","tg_y","tg_th","tg_ph"};
-  std::vector<void*> trvar_mem = {&ntrack,&p,&px,&py,&pz,&xTr,&yTr,&thTr,&phTr,&vx,&vy,&vz,&xtgt,&ytgt,&thtgt,&phtgt};
+  double xtgt[maxNtr],ytgt[maxNtr],thtgt[maxNtr],phtgt[maxNtr],xfp[maxNtr],yfp[maxNtr],thfp[maxNtr],phfp[maxNtr];
+  std::vector<std::string> trvar = {"n","p","px","py","pz","x","y","th","ph","vx","vy","vz","tg_x","tg_y","tg_th","tg_ph",
+				    "r_x","r_y","r_th","r_ph"};
+  std::vector<void*> trvar_mem = {&ntrack,&p,&px,&py,&pz,&xTr,&yTr,&thTr,&phTr,&vx,&vy,&vz,&xtgt,&ytgt,&thtgt,&phtgt,
+				  &xfp,&yfp,&thfp,&phfp};
   setrootvar::setbranch(C,"bb.tr",trvar,trvar_mem);
+
+  // GEM variables
+  double nhitsGEM[maxNtr], ngoodhitsGEM[maxNtr], trchi2ndf[maxNtr];
+  std::vector<std::string> gemvar = {"nhits","ngoodhits","chi2ndf"};
+  std::vector<void*> gemvar_mem = {&nhitsGEM,&ngoodhitsGEM,&trchi2ndf};
+  setrootvar::setbranch(C,"bb.gem.track",gemvar,gemvar_mem);
 
   //MC variables
   double mc_sigma, mc_fnucl, mc_ebeam;                    // mc_sigma => Cross-section weight
@@ -153,72 +161,84 @@ int elas_ana_simu (const char *configfilename,
   TTree *Tout = new TTree("Tout", "");
   Tout->SetMaxTreeSize(4000000000LL);
   //cuts
-  bool WCut;            Tout->Branch("WCut", &WCut, "WCut/B");
-  bool pCut;            Tout->Branch("pCut", &pCut, "pCut/B");
+  bool WCut;              Tout->Branch("WCut", &WCut, "WCut/B");
+  bool bbfiduCut;         Tout->Branch("bbfiduCut", &bbfiduCut, "bbfiduCut/O");
+  bool pCut;              Tout->Branch("pCut", &pCut, "pCut/B");
   // -- a few variations
-  bool pCut_1p5sig;     Tout->Branch("pCut_1p5sig", &pCut_1p5sig, "pCut_1p5sig/O");
-  bool pCut_2sig;       Tout->Branch("pCut_2sig", &pCut_2sig, "pCut_2sig/O");
-  bool pCut_2p5sig;     Tout->Branch("pCut_2p5sig", &pCut_2p5sig, "pCut_2p5sig/O");
-  bool pCut_3sig;       Tout->Branch("pCut_3sig", &pCut_3sig, "pCut_3sig/O");
+  bool pCut_1p5sig;       Tout->Branch("pCut_1p5sig", &pCut_1p5sig, "pCut_1p5sig/O");
+  bool pCut_2sig;         Tout->Branch("pCut_2sig", &pCut_2sig, "pCut_2sig/O");
+  bool pCut_2p5sig;       Tout->Branch("pCut_2p5sig", &pCut_2p5sig, "pCut_2p5sig/O");
+  bool pCut_3sig;         Tout->Branch("pCut_3sig", &pCut_3sig, "pCut_3sig/O");
   // --
-  bool SMCut;           Tout->Branch("SMCut", &SMCut, "SMCut/B");
-  bool ARCut;           Tout->Branch("ARCut", &ARCut, "ARCut/B");
-  bool fiduCut;         Tout->Branch("fiduCut", &fiduCut, "fiduCut/B");
+  bool SMCut;             Tout->Branch("SMCut", &SMCut, "SMCut/B");
+  bool ARCut;             Tout->Branch("ARCut", &ARCut, "ARCut/B");
+  bool fiduCut;           Tout->Branch("fiduCut", &fiduCut, "fiduCut/B");
+  // -- a few variations
+  bool SMCut_p10p;        Tout->Branch("SMCut_p10p", &SMCut_p10p, "SMCut_p10p/O");
+  bool SMCut_m10p;        Tout->Branch("SMCut_m10p", &SMCut_m10p, "SMCut_m10p/O");
   //MC related
-  double weight;        Tout->Branch("weight", &weight, "weight/D");  
-  int T_mc_fnucl;       Tout->Branch("mc_fnucl", &T_mc_fnucl, "mc_fnucl/I");
+  double weight;          Tout->Branch("weight", &weight, "weight/D");  
+  int T_mc_fnucl;         Tout->Branch("mc_fnucl", &T_mc_fnucl, "mc_fnucl/I");
   //
-  double T_ebeam;       Tout->Branch("ebeam", &T_ebeam, "ebeam/D");
+  double T_ebeam;         Tout->Branch("ebeam", &T_ebeam, "ebeam/D");
   //kine
-  double T_nu;          Tout->Branch("nu", &T_nu, "nu/D");
-  double T_Q2;          Tout->Branch("Q2", &T_Q2, "Q2/D");
-  double T_W2;          Tout->Branch("W2", &T_W2, "W2/D");
-  double T_W;           Tout->Branch("W", &T_W, "W/D");
-  double T_dpel;        Tout->Branch("dpel", &T_dpel, "dpel/D");
-  double T_ephi;        Tout->Branch("ephi", &T_ephi, "ephi/D");
-  double T_etheta;      Tout->Branch("etheta", &T_etheta, "etheta/D");
-  double T_pelas;       Tout->Branch("pelas", &T_pelas, "pelas/D");
-  double T_epsilon;     Tout->Branch("epsilon", &T_epsilon, "epsilon/D"); // calculated using general eqn.
-  double T_epsilon_p;   Tout->Branch("epsilon_p", &T_epsilon_p, "epsilon_p/D");
-  double T_thpq_p;      Tout->Branch("thpq_p", &T_thpq_p, "thpq_p/D");
-  double T_thpq_n;      Tout->Branch("thpq_n", &T_thpq_n, "thpq_n/D"); //n=>no deflection
+  double T_nu;            Tout->Branch("nu", &T_nu, "nu/D");
+  double T_Q2;            Tout->Branch("Q2", &T_Q2, "Q2/D");
+  double T_W2;            Tout->Branch("W2", &T_W2, "W2/D");
+  double T_W;             Tout->Branch("W", &T_W, "W/D");
+  double T_dpel;          Tout->Branch("dpel", &T_dpel, "dpel/D");
+  double T_ephi;          Tout->Branch("ephi", &T_ephi, "ephi/D");
+  double T_etheta;        Tout->Branch("etheta", &T_etheta, "etheta/D");
+  double T_pelas;         Tout->Branch("pelas", &T_pelas, "pelas/D");
+  double T_epsilon;       Tout->Branch("epsilon", &T_epsilon, "epsilon/D"); // calculated using general eqn.
+  double T_epsilon_p;     Tout->Branch("epsilon_p", &T_epsilon_p, "epsilon_p/D");
+  double T_thpq_p;        Tout->Branch("thpq_p", &T_thpq_p, "thpq_p/D");
+  double T_thpq_n;        Tout->Branch("thpq_n", &T_thpq_n, "thpq_n/D"); //n=>no deflection
   //track
-  double T_vz;          Tout->Branch("vz", &T_vz, "vz/D");
-  double T_trP;         Tout->Branch("trP", &T_trP, "trP/D");
-  double T_trX;         Tout->Branch("trX", &T_trX, "trX/D");
-  double T_trY;         Tout->Branch("trY", &T_trY, "trY/D");
-  double T_trTh;        Tout->Branch("trTh", &T_trTh, "trTh/D");
-  double T_trPh;        Tout->Branch("trPh", &T_trPh, "trPh/D");
-  double T_tgX;         Tout->Branch("tgX", &T_tgX, "tgX/D");
-  double T_tgY;         Tout->Branch("tgY", &T_tgY, "tgY/D");
-  double T_tgTh;        Tout->Branch("tgTh", &T_tgTh, "tgTh/D");
-  double T_tgPh;        Tout->Branch("tgPh", &T_tgPh, "tgPh/D");
+  double T_vz;            Tout->Branch("vz", &T_vz, "vz/D");
+  double T_trP;           Tout->Branch("trP", &T_trP, "trP/D");
+  double T_trX;           Tout->Branch("trX", &T_trX, "trX/D");
+  double T_trY;           Tout->Branch("trY", &T_trY, "trY/D");
+  double T_trTh;          Tout->Branch("trTh", &T_trTh, "trTh/D");
+  double T_trPh;          Tout->Branch("trPh", &T_trPh, "trPh/D");
+  double T_tgX;           Tout->Branch("tgX", &T_tgX, "tgX/D");
+  double T_tgY;           Tout->Branch("tgY", &T_tgY, "tgY/D");
+  double T_tgTh;          Tout->Branch("tgTh", &T_tgTh, "tgTh/D");
+  double T_tgPh;          Tout->Branch("tgPh", &T_tgPh, "tgPh/D");
+  double T_fpX;           Tout->Branch("fpX", &T_fpX, "fpX/D");
+  double T_fpY;           Tout->Branch("fpY", &T_fpY, "fpY/D");
+  double T_fpTh;          Tout->Branch("fpTh", &T_fpTh, "fpTh/D");
+  double T_fpPh;          Tout->Branch("fpPh", &T_fpPh, "fpPh/D");
   //BBCAL
-  double T_ePS;         Tout->Branch("ePS", &T_ePS, "ePS/D"); 
-  double T_rblkPS;      Tout->Branch("rblkPS", &T_rblkPS, "rblkPS/D"); 
-  double T_cblkPS;      Tout->Branch("cblkPS", &T_cblkPS, "cblkPS/D"); 
-  double T_idblkPS;     Tout->Branch("idblkPS", &T_idblkPS, "idblkPS/D"); 
-  double T_atimePS;     Tout->Branch("atimePS", &T_atimePS, "atimePS/D"); 
-  double T_eSH;         Tout->Branch("eSH", &T_eSH, "eSH/D"); 
-  double T_xSH;         Tout->Branch("xSH", &T_xSH, "xSH/D"); 
-  double T_ySH;         Tout->Branch("ySH", &T_ySH, "ySH/D"); 
-  double T_rblkSH;      Tout->Branch("rblkSH", &T_rblkSH, "rblkSH/D"); 
-  double T_cblkSH;      Tout->Branch("cblkSH", &T_cblkSH, "cblkSH/D"); 
-  double T_idblkSH;     Tout->Branch("idblkSH", &T_idblkSH, "idblkSH/D"); 
-  double T_atimeSH;     Tout->Branch("atimeSH", &T_atimeSH, "atimeSH/D");  
+  double T_ePS;           Tout->Branch("ePS", &T_ePS, "ePS/D"); 
+  double T_rblkPS;        Tout->Branch("rblkPS", &T_rblkPS, "rblkPS/D"); 
+  double T_cblkPS;        Tout->Branch("cblkPS", &T_cblkPS, "cblkPS/D"); 
+  double T_idblkPS;       Tout->Branch("idblkPS", &T_idblkPS, "idblkPS/D"); 
+  double T_atimePS;       Tout->Branch("atimePS", &T_atimePS, "atimePS/D"); 
+  double T_eSH;           Tout->Branch("eSH", &T_eSH, "eSH/D"); 
+  double T_xSH;           Tout->Branch("xSH", &T_xSH, "xSH/D"); 
+  double T_ySH;           Tout->Branch("ySH", &T_ySH, "ySH/D"); 
+  double T_rblkSH;        Tout->Branch("rblkSH", &T_rblkSH, "rblkSH/D"); 
+  double T_cblkSH;        Tout->Branch("cblkSH", &T_cblkSH, "cblkSH/D"); 
+  double T_idblkSH;       Tout->Branch("idblkSH", &T_idblkSH, "idblkSH/D"); 
+  double T_atimeSH;       Tout->Branch("atimeSH", &T_atimeSH, "atimeSH/D");  
   //HCAL
-  double T_eHCAL;       Tout->Branch("eHCAL", &T_eHCAL, "eHCAL/D"); 
-  double T_xHCAL;       Tout->Branch("xHCAL", &T_xHCAL, "xHCAL/D"); 
-  double T_yHCAL;       Tout->Branch("yHCAL", &T_yHCAL, "yHCAL/D"); 
-  double T_idblkHCAL;   Tout->Branch("idblkHCAL", &T_idblkHCAL, "idblkHCAL/D"); 
-  double T_rblkHCAL;    Tout->Branch("rblkHCAL", &T_rblkHCAL, "rblkHCAL/D"); 
-  double T_cblkHCAL ;   Tout->Branch("cblkHCAL", &T_cblkHCAL, "cblkHCAL/D"); 
-  double T_atimeHCAL;   Tout->Branch("atimeHCAL", &T_atimeHCAL, "atimeHCAL/D"); 
-  double T_tdcHCAL;     Tout->Branch("tdcHCAL", &T_tdcHCAL, "tdcHCAL/D"); 
-  double T_xHCAL_exp;   Tout->Branch("xHCAL_exp", &T_xHCAL_exp, "xHCAL_exp/D"); 
-  double T_yHCAL_exp;   Tout->Branch("yHCAL_exp", &T_yHCAL_exp, "yHCAL_exp/D"); 
-  double T_dx;          Tout->Branch("dx", &T_dx, "dx/D"); 
-  double T_dy;          Tout->Branch("dy", &T_dy, "dy/D");
+  double T_eHCAL;         Tout->Branch("eHCAL", &T_eHCAL, "eHCAL/D"); 
+  double T_xHCAL;         Tout->Branch("xHCAL", &T_xHCAL, "xHCAL/D"); 
+  double T_yHCAL;         Tout->Branch("yHCAL", &T_yHCAL, "yHCAL/D"); 
+  double T_idblkHCAL;     Tout->Branch("idblkHCAL", &T_idblkHCAL, "idblkHCAL/D"); 
+  double T_rblkHCAL;      Tout->Branch("rblkHCAL", &T_rblkHCAL, "rblkHCAL/D"); 
+  double T_cblkHCAL ;     Tout->Branch("cblkHCAL", &T_cblkHCAL, "cblkHCAL/D"); 
+  double T_atimeHCAL;     Tout->Branch("atimeHCAL", &T_atimeHCAL, "atimeHCAL/D"); 
+  double T_tdcHCAL;       Tout->Branch("tdcHCAL", &T_tdcHCAL, "tdcHCAL/D"); 
+  double T_xHCAL_exp;     Tout->Branch("xHCAL_exp", &T_xHCAL_exp, "xHCAL_exp/D"); 
+  double T_yHCAL_exp;     Tout->Branch("yHCAL_exp", &T_yHCAL_exp, "yHCAL_exp/D"); 
+  double T_dx;            Tout->Branch("dx", &T_dx, "dx/D"); 
+  double T_dy;            Tout->Branch("dy", &T_dy, "dy/D");
+  //GEM
+  double T_nhitsGEM;      Tout->Branch("nhitsGEM", &T_nhitsGEM, "nhitsGEM/D");
+  double T_ngoodhitsGEM;  Tout->Branch("ngoodhitsGEM", &T_ngoodhitsGEM, "ngoodhitsGEM/D");
+  double T_trchi2ndf;     Tout->Branch("trchi2ndf", &T_trchi2ndf, "trchi2ndf/D");
 
   // Do the energy loss calculation here (only for g4sbs generator)
   double ebeam = sbsconf.GetEbeam(); // gets overwritten in the event loop
@@ -229,16 +249,23 @@ int elas_ana_simu (const char *configfilename,
   vector<double> dy_p_cut; jmgr->GetVectorFromSubKey<double>(key,"dy_p_cut", dy_p_cut);
   vector<double> hcal_active_area = cut::hcal_active_area_simu(1,1); // Exc. 1 blk from all 4 sides
   vector<double> hcal_safety_margin = cut::hcal_safety_margin(dx_p_cut[1], dx_p_cut[1], dy_p_cut[1], hcal_active_area);
+  // varying safety margin width by +/- 10% in vertical direction
+  vector<double> hcal_safety_margin_p10p = cut::hcal_safety_margin(dx_p_cut[1]*1.1,dx_p_cut[1]*1.1,dy_p_cut[1],hcal_active_area);
+  vector<double> hcal_safety_margin_m10p = cut::hcal_safety_margin(dx_p_cut[1]*.9,dx_p_cut[1]*.9,dy_p_cut[1],hcal_active_area);
   TH2F *h2_xyHCAL_p = util_pd::TH2FHCALface_xy_simu("h2_xyHCAL_p",sbs_kick);
 
   // reading W cut limits
   std::vector<double> W_cutR; jmgr->GetVectorFromSubKey<double>(key,"W_cutR",W_cutR);
+  // reading BB fiducial cut limits
+  std::vector<double> bbfidu_cutR; jmgr->GetVectorFromSubKey<double>(key,"bbfidu_cutR",bbfidu_cutR);
 
   // costruct axes of HCAL CoS in Hall CoS
   double hcal_voffset = jmgr->GetValueFromSubKey<double>(key,"hcal_voffset");
   double hcal_hoffset = jmgr->GetValueFromSubKey<double>(key,"hcal_hoffset");
-  vector<TVector3> HCAL_axes; kine::SetHCALaxes(sbsconf.GetSBStheta_rad(), HCAL_axes);
-  TVector3 HCAL_origin = sbsconf.GetHCALdist()*HCAL_axes[2] + hcal_voffset*HCAL_axes[0] + hcal_hoffset*HCAL_axes[1];
+  double hcal_zoffset = jmgr->GetValueFromSubKey<double>(key,"hcal_zoffset");
+  //vector<TVector3> HCAL_axes; kine::SetHCALaxes(sbsconf.GetSBStheta_rad(), HCAL_axes);
+  vector<TVector3> HCAL_axes; kine::SetHCALaxes(sbsconf.GetHCALtheta_rad(), HCAL_axes);
+  TVector3 HCAL_origin = (sbsconf.GetHCALdist()+hcal_zoffset)*HCAL_axes[2] + hcal_voffset*HCAL_axes[0] + hcal_hoffset*HCAL_axes[1];
 
   // calculating MC normalizetion factors 
   double mc_omega, lumi;
@@ -370,6 +397,14 @@ int elas_ana_simu (const char *configfilename,
     T_tgTh = thtgt[0];
     T_tgPh = phtgt[0];
 
+    T_fpX = xfp[0];
+    T_fpY = yfp[0];
+    T_fpTh = thfp[0];
+    T_fpPh = phfp[0];
+
+    // defining BB fiducial cut
+    bbfiduCut = abs(T_fpX - 0.9*T_fpTh - bbfidu_cutR[0]) <= bbfidu_cutR[1];
+
     T_ePS = ePS;
     T_rblkPS = rblkPS;
     T_cblkPS = cblkPS;
@@ -392,6 +427,10 @@ int elas_ana_simu (const char *configfilename,
     T_idblkHCAL = idblkHCAL;
     T_atimeHCAL = atimeHCAL;
     T_tdcHCAL = tdcHCAL[0];
+
+    T_nhitsGEM = nhitsGEM[0];
+    T_ngoodhitsGEM = ngoodhitsGEM[0];
+    T_trchi2ndf = trchi2ndf[0];
 
     T_mc_fnucl = int(mc_fnucl);
 
@@ -421,6 +460,9 @@ int elas_ana_simu (const char *configfilename,
     ARCut = cut::inHCAL_activeA(xHCAL,yHCAL,hcal_active_area);
     SMCut = cut::inHCAL_safety_margin(target,xyHCAL_exp[0],xyHCAL_exp[1],sbs_kick,hcal_safety_margin);
     fiduCut = ARCut && SMCut; 
+    // varying SM cut in vertical direction
+    SMCut_p10p = cut::inHCAL_safety_margin(target,xyHCAL_exp[0],xyHCAL_exp[1],sbs_kick,hcal_safety_margin_p10p);
+    SMCut_m10p = cut::inHCAL_safety_margin(target,xyHCAL_exp[0],xyHCAL_exp[1],sbs_kick,hcal_safety_margin_m10p);
     // defining HCAL cuts
     pCut = pow((dx-dx_p_cut[0]) / (dx_p_cut[1]*dx_p_cut[2]), 2) + pow((dy-dy_p_cut[0]) / (dy_p_cut[1]*dy_p_cut[2]), 2) <= 1.;
     // a few variations
@@ -537,6 +579,7 @@ int elas_ana_simu (const char *configfilename,
   pt->AddText(Form(" Inbuilt W cut: %.2f #leq W #leq %.2f GeV/c",W_cutR[0],W_cutR[1]));
   pt->AddText(Form(" Inbuilt p cut (#Deltax): Mean = %.4f, %.1f#sigma = %.4f",dx_p_cut[0],dx_p_cut[2],dx_p_cut[1]));
   pt->AddText(Form(" Inbuilt p cut (#Deltay): Mean = %.4f, %.1f#sigma = %.4f",dy_p_cut[0],dy_p_cut[2],dy_p_cut[1]));
+  pt->AddText(Form(" Inbuilt BB fiducial cut: |fpX-0.9*fpTh-%.2f| #leq %.2f",bbfidu_cutR[0],bbfidu_cutR[1]));
   pt->AddText(" Fit info: ");
   pt->AddText(" p peak, w/ fiducial cut: dxpM,dxpS,dypM,dypS ");
   pt->AddText(Form(" %.5f,%.5f,%.5f,%.5f",dxpM,dxpS,dypM,dypS));

@@ -58,7 +58,7 @@ namespace expconst {
   /*
     NOTES:
     *. Target cell dimensions:
-       - Cell diameter is still a guess. Using the value Andrew used.
+       - Cell diameter value was provided by Dave M. to Andrew over an email.
        - Cell thickness is also a guess. Again using what Andrew used.
     *. Target density: Look at ~/OneDrive - University of Connecticut/workPD/proj/gmn-ana-resources/target
     *. Stopping power: 
@@ -76,7 +76,7 @@ namespace expconst {
   // LH2
   static const double lh2_TgtRho = 0.0725;      //g/cc, target density
   static const double lh2_CellThick = 0.02;     //cm, target cell thickness (Andrew's guess)
-  static const double lh2_CellDiam  = 1.6*2.54; //cm, target cell diameter (Andrew's guess)
+  static const double lh2_CellDiam  = 1.6*2.54; //cm, target cell diameter (Provided by Dave M.)
   static const double lh2_uWinThick = 0.0145;   //cm, upstream window thickness
   static const double lh2_dWinThick = 0.0158;   //cm, downstream window (tip) thickness
   static const double lh2_dWallThick = 0.0143;  //cm, downstream wall thickness
