@@ -332,6 +332,7 @@ int qelas_ana_data (const char *configfilename,
   double T_eHCAL;         Tout->Branch("eHCAL", &T_eHCAL, "eHCAL/D"); 
   double T_xHCAL;         Tout->Branch("xHCAL", &T_xHCAL, "xHCAL/D"); 
   double T_yHCAL;         Tout->Branch("yHCAL", &T_yHCAL, "yHCAL/D"); 
+  double T_indexHCAL;     Tout->Branch("indexHCAL", &T_indexHCAL, "indexHCAL/D"); 
   double T_idblkHCAL;     Tout->Branch("idblkHCAL", &T_idblkHCAL, "idblkHCAL/D"); 
   double T_rblkHCAL;      Tout->Branch("rblkHCAL", &T_rblkHCAL, "rblkHCAL/D"); 
   double T_cblkHCAL ;     Tout->Branch("cblkHCAL", &T_cblkHCAL, "cblkHCAL/D"); 
@@ -343,8 +344,8 @@ int qelas_ana_data (const char *configfilename,
   double T_dy;            Tout->Branch("dy", &T_dy, "dy/D");
   double T_ToF_n;         Tout->Branch("ToF_n", &T_ToF_n, "ToF_n/D");
   //HCAL (All clusters)
-  int T_idblkHCAL_aclN;   Tout->Branch("idblkHCAL_aclN", &T_idblkHCAL_aclN, "idblkHCAL_aclN/I"); 
-  int T_idclHCAL_htote;   Tout->Branch("idclHCAL_htote", &T_idclHCAL_htote, "idclHCAL_htote/I"); //stores HCAL cl. index with highest total energy
+  int T_idblkHCAL_aclN;   if (hcal_acl_ON) Tout->Branch("idblkHCAL_aclN", &T_idblkHCAL_aclN, "idblkHCAL_aclN/I"); 
+  int T_idclHCAL_htote;   if (hcal_acl_ON) Tout->Branch("idclHCAL_htote", &T_idclHCAL_htote, "idclHCAL_htote/I"); //stores HCAL cl. index with highest total energy
   int T_idclHCAL_intime;  if (hcal_acl_ON) Tout->Branch("idclHCAL_intime", &T_idclHCAL_intime, "idclHCAL_intime/I"); //stores HCAL cl. that are in BBCAL/HCAL ADC coin time
   int T_idclHCAL_sthpq;   if (hcal_acl_ON) Tout->Branch("idclHCAL_sthpq", &T_idclHCAL_sthpq, "idclHCAL_sthpq/I"); //stores HCAL cl. index with smallest thpq value
   double T_idblkHCAL_acl[maxNHCALcl];    if (hcal_acl_ON) Tout->Branch("idblkHCAL_acl", &T_idblkHCAL_acl, "idblkHCAL_acl[idblkHCAL_aclN]/D"); 
@@ -665,6 +666,7 @@ int qelas_ana_data (const char *configfilename,
     int highest_idcl = 0;   //Highest HCAL cl. index among all 4 cl. algos
     double temp_thpq = 1e6;
     if (idblkHCAL_aclN>0) { //if HCAL has a cluster
+      bool index_mismatch = false; //bool to check HtotE cluster index mismatch
       if (hcal_acl_ON) {
 	// Clusters in the *.clus.* variables aren't sorted in terms of their total energy.
 	// Instead they are sorted by the energy of the HE blocks in the corresponding cluster.
@@ -674,70 +676,76 @@ int qelas_ana_data (const char *configfilename,
 	HtotE_idcl = sortedIndices[0]; if (HtotE_idcl>highest_idcl) highest_idcl = HtotE_idcl;
 	// Sanity check: check if the sorted HE (tot) matches with indexHCAL
 	if (HtotE_idcl!=(int)indexHCAL) {
-	  std::cout << Form("[*INDEX mismatch*] HCAL HtotE cl: rnum %u, segnum %u, gev %u\n",rnum,nseg-1,gevnum);
-	  std::cout << Form(" exp index %d, obs index %d, exp eng %f, obs eng %f\n------\n",(int)indexHCAL,HtotE_idcl,eHCAL,eHCAL_acl[HtotE_idcl]);
+	  index_mismatch = true;
+	  //std::cout << Form("[*INDEX mismatch*] HCAL HtotE cl: rnum %u, segnum %u, gev %u\n",rnum,nseg-1,gevnum);
+	  //std::cout << Form(" exp index %d, obs index %d, exp eng %f, obs eng %f\n------\n",(int)indexHCAL,HtotE_idcl,eHCAL,eHCAL_acl[HtotE_idcl]);
 	}
-	// Looping through ALL HCAL clusters
-	for (int ihcl=0; ihcl<idblkHCAL_aclN; ihcl++) {
-	  // getting cl index sorted by the total energy
-	  int ihcl_sorted = sortedIndices[ihcl];
-      
-	  // picking the HE cluster that is in time (i.e. HCAL/SH ADC coin time)
-	  bool coinT_cut = abs(atimeblkHCAL_acl[ihcl_sorted]-atimeSH-coinTADC_cutR[0])<=coinTADC_cutR[2]*coinTADC_cutR[1];
-	  if (inTime_idcl==-1 && coinT_cut) {
-	    inTime_idcl = ihcl_sorted;
-	    if (inTime_idcl>highest_idcl) highest_idcl = inTime_idcl;
-	  }
+	// if index_mismatch and the default cl is in time then accept it
+	if (index_mismatch && abs(atimeHCAL-atimeSH-coinTADC_cutR[0])<=coinTADC_cutR[2]*coinTADC_cutR[1]) {
+	  inTime_idcl = (int)indexHCAL; sthpq_p_idcl = (int)indexHCAL;	    
+	} else {
+	  // Looping through ALL HCAL clusters
+	  for (int ihcl=0; ihcl<idblkHCAL_aclN; ihcl++) {
+	    // getting cl index sorted by the total energy
+	    int ihcl_sorted = sortedIndices[ihcl];
 
-	  // // filling HCAL cl vectors
-	  // // ** info on the HE block on each cl
-	  // T_idblkHCAL_acl[ihcl_sorted] = idblkHCAL_acl[ihcl_sorted];
-	  // T_nblkHCAL_acl[ihcl_sorted] = nblkHCAL_acl[ihcl_sorted];
-	  // T_eblkHCAL_acl[ihcl_sorted] = eblkHCAL_acl[ihcl_sorted];
-	  // T_atimeblkHCAL_acl[ihcl_sorted] = atimeblkHCAL_acl[ihcl_sorted];
-	  // T_tdcblkHCAL_acl[ihcl_sorted] = tdcblkHCAL_acl[ihcl_sorted];
-	  // // ** info on the params of the cl itself
-	  // T_eHCAL_acl[ihcl_sorted] = eHCAL_acl[ihcl_sorted];
-	  // T_xHCAL_acl[ihcl_sorted] = xHCAL_acl[ihcl_sorted];
-	  // T_yHCAL_acl[ihcl_sorted] = yHCAL_acl[ihcl_sorted];
+	    // picking the HE cluster that is in time (i.e. HCAL/SH ADC coin time)
+	    bool coinT_cut = abs(atimeblkHCAL_acl[ihcl_sorted]-atimeSH-coinTADC_cutR[0])<=coinTADC_cutR[2]*coinTADC_cutR[1];
+	    if (inTime_idcl==-1 && coinT_cut) {
+	      inTime_idcl = ihcl_sorted;
+	      if (inTime_idcl>highest_idcl) highest_idcl = inTime_idcl;
+	    }
 
-	  if (inTime_idcl!=-1) h_hcl_inTime_idcl->Fill(inTime_idcl);
-	  if (WCut) {
-	    if (inTime_idcl!=-1) h_hcl_inTime_idcl_WCut->Fill(inTime_idcl);
-      
-	    // HE block related variables
-	    h2_hclHE_eng_vs_idcl->Fill(ihcl_sorted,eblkHCAL_acl[ihcl_sorted]);
-	    h2_hclHE_atime_vs_idcl->Fill(ihcl_sorted,atimeblkHCAL_acl[ihcl_sorted]);
-	    h2_hclHE_tdc_vs_idcl->Fill(ihcl_sorted,tdcblkHCAL_acl[ihcl_sorted]);
-      
-	    // Cluster variables
-	    h2_hcl_eng_vs_idcl->Fill(ihcl_sorted,eHCAL_acl[ihcl_sorted]);
-	    h2_hcl_nblk_vs_idcl->Fill(ihcl_sorted,nblkHCAL_acl[ihcl_sorted]);
-	  }
+	    // // filling HCAL cl vectors
+	    // // ** info on the HE block on each cl
+	    // T_idblkHCAL_acl[ihcl_sorted] = idblkHCAL_acl[ihcl_sorted];
+	    // T_nblkHCAL_acl[ihcl_sorted] = nblkHCAL_acl[ihcl_sorted];
+	    // T_eblkHCAL_acl[ihcl_sorted] = eblkHCAL_acl[ihcl_sorted];
+	    // T_atimeblkHCAL_acl[ihcl_sorted] = atimeblkHCAL_acl[ihcl_sorted];
+	    // T_tdcblkHCAL_acl[ihcl_sorted] = tdcblkHCAL_acl[ihcl_sorted];
+	    // // ** info on the params of the cl itself
+	    // T_eHCAL_acl[ihcl_sorted] = eHCAL_acl[ihcl_sorted];
+	    // T_xHCAL_acl[ihcl_sorted] = xHCAL_acl[ihcl_sorted];
+	    // T_yHCAL_acl[ihcl_sorted] = yHCAL_acl[ihcl_sorted];
 
-	  // picking the cluster that has smallest thpq and passes coinT_cut and sFrac_cut
-	  bool sFrac_cut = eHCAL_acl[ihcl_sorted]/(ebeam_corr-trP_corr)>hcal_sF_cutR;
-	  if (coinT_cut && sFrac_cut) {
-	    // Calculating thpq (both w & w/o deflection due to SBS dipole)
-	    // assuming no deflection (using "n" for no deflection)
-	    TVector3 HCAL_pos = HCAL_origin + xHCAL_acl[ihcl_sorted]*HCAL_axes[0] + yHCAL_acl[ihcl_sorted]*HCAL_axes[1];
-	    TVector3 n_dir = (HCAL_pos - vertex).Unit();
-	    double thpq_n = acos(n_dir.Dot(pNhat));
-	    // p
-	    TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);
-	    double thpq_p = acos(p_dir.Unit().Dot(pNhat));
-	    // finding the cl. id. with smallest thpq_p value
-	    // if (thpq_p < temp_thpq) sthpq_p_idcl = ihcl_sorted;
-	    // temp_thpq = thpq_p;
-	    if (min(thpq_p,thpq_n) < temp_thpq) sthpq_p_idcl = ihcl_sorted;
-	    temp_thpq = min(thpq_p,thpq_n);
+	    if (inTime_idcl!=-1) h_hcl_inTime_idcl->Fill(inTime_idcl);
+	    if (WCut) {
+	      if (inTime_idcl!=-1) h_hcl_inTime_idcl_WCut->Fill(inTime_idcl);
+      
+	      // HE block related variables
+	      h2_hclHE_eng_vs_idcl->Fill(ihcl_sorted,eblkHCAL_acl[ihcl_sorted]);
+	      h2_hclHE_atime_vs_idcl->Fill(ihcl_sorted,atimeblkHCAL_acl[ihcl_sorted]);
+	      h2_hclHE_tdc_vs_idcl->Fill(ihcl_sorted,tdcblkHCAL_acl[ihcl_sorted]);
+      
+	      // Cluster variables
+	      h2_hcl_eng_vs_idcl->Fill(ihcl_sorted,eHCAL_acl[ihcl_sorted]);
+	      h2_hcl_nblk_vs_idcl->Fill(ihcl_sorted,nblkHCAL_acl[ihcl_sorted]);
+	    }
+
+	    // picking the cluster that has smallest thpq and passes coinT_cut and sFrac_cut
+	    bool sFrac_cut = eHCAL_acl[ihcl_sorted]/(ebeam_corr-trP_corr)>hcal_sF_cutR;
+	    if (coinT_cut && sFrac_cut) {
+	      // Calculating thpq (both w & w/o deflection due to SBS dipole)
+	      // assuming no deflection (using "n" for no deflection)
+	      TVector3 HCAL_pos = HCAL_origin + xHCAL_acl[ihcl_sorted]*HCAL_axes[0] + yHCAL_acl[ihcl_sorted]*HCAL_axes[1];
+	      TVector3 n_dir = (HCAL_pos - vertex).Unit();
+	      double thpq_n = acos(n_dir.Dot(pNhat));
+	      // p
+	      TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);
+	      double thpq_p = acos(p_dir.Unit().Dot(pNhat));
+	      // finding the cl. id. with smallest thpq_p value
+	      // if (thpq_p < temp_thpq) sthpq_p_idcl = ihcl_sorted;
+	      // temp_thpq = thpq_p;
+	      if (min(thpq_p,thpq_n) < temp_thpq) sthpq_p_idcl = ihcl_sorted;
+	      temp_thpq = min(thpq_p,thpq_n);
+	    }
 	  }
 	}
 	if (inTime_idcl==-1) inTime_idcl = HtotE_idcl; // couldn't find any cl. in time, switching to HtotE cl
 	if (sthpq_p_idcl==-1) sthpq_p_idcl = inTime_idcl; // couldn't find any cl. w/ sthqp, switching to cl. in time
 
 	// -- filling HCAL cl vectors
-	if (sthpq_p_idcl>highest_idcl) highest_idcl = sthpq_p_idcl; // last step of determining the highest idcl
+	if (!index_mismatch && sthpq_p_idcl>highest_idcl) highest_idcl = sthpq_p_idcl; // last step of determining the highest idcl
 	for (int ihcl=0; ihcl<=highest_idcl; ihcl++) {
 	  // ** info on the HE block on each cl
 	  T_idblkHCAL_acl[ihcl] = idblkHCAL_acl[ihcl];
@@ -750,34 +758,53 @@ int qelas_ana_data (const char *configfilename,
 	  T_xHCAL_acl[ihcl] = xHCAL_acl[ihcl];
 	  T_yHCAL_acl[ihcl] = yHCAL_acl[ihcl];
 	}
-	// fill basic HCAL variables using inTime clusters
-	T_dx = xHCAL_acl[inTime_idcl] - xyHCAL_exp[0];
-	T_dy = yHCAL_acl[inTime_idcl] - xyHCAL_exp[1];
-	T_eHCAL = eHCAL_acl[inTime_idcl];
-	T_xHCAL = xHCAL_acl[inTime_idcl];
-	T_yHCAL = yHCAL_acl[inTime_idcl];
-	T_rblkHCAL = rblkHCAL_acl[inTime_idcl];
-	T_cblkHCAL = cblkHCAL_acl[inTime_idcl];
-	T_idblkHCAL = idblkHCAL_acl[inTime_idcl];
-	T_atimeHCAL = atimeblkHCAL_acl[inTime_idcl];
-	T_tdcHCAL = tdcblkHCAL_acl[inTime_idcl];
-	T_idblkHCAL_aclN = idblkHCAL_aclN;
-	T_idclHCAL_htote = HtotE_idcl; //indexHCAL;
-	T_idclHCAL_intime = inTime_idcl;
-	T_idclHCAL_sthpq = sthpq_p_idcl;
+	if (index_mismatch && inTime_idcl==(int)indexHCAL) {
+	  // if there is index mismatch and the default cl is in time
+	  T_dx = xHCAL - xyHCAL_exp[0];
+	  T_dy = yHCAL - xyHCAL_exp[1];
+	  T_eHCAL = eHCAL;
+	  T_xHCAL = xHCAL;
+	  T_yHCAL = yHCAL;
+	  T_indexHCAL = indexHCAL;
+	  T_rblkHCAL = rblkHCAL;
+	  T_cblkHCAL = cblkHCAL;
+	  T_idblkHCAL = idblkHCAL;
+	  T_atimeHCAL = atimeHCAL;
+	  T_tdcHCAL = tdcHCAL[0];
+	  T_idblkHCAL_aclN = idblkHCAL_aclN;
+	  T_idclHCAL_htote = HtotE_idcl;
+	  T_idclHCAL_intime = inTime_idcl;
+	  T_idclHCAL_sthpq = sthpq_p_idcl;
+	} else {
+	  // fill basic HCAL variables using inTime clusters
+	  T_dx = xHCAL_acl[inTime_idcl] - xyHCAL_exp[0];
+	  T_dy = yHCAL_acl[inTime_idcl] - xyHCAL_exp[1];
+	  T_eHCAL = eHCAL_acl[inTime_idcl];
+	  T_xHCAL = xHCAL_acl[inTime_idcl];
+	  T_yHCAL = yHCAL_acl[inTime_idcl];
+	  T_indexHCAL = indexHCAL;
+	  T_rblkHCAL = rblkHCAL_acl[inTime_idcl];
+	  T_cblkHCAL = cblkHCAL_acl[inTime_idcl];
+	  T_idblkHCAL = idblkHCAL_acl[inTime_idcl];
+	  T_atimeHCAL = atimeblkHCAL_acl[inTime_idcl];
+	  T_tdcHCAL = tdcblkHCAL_acl[inTime_idcl];
+	  T_idblkHCAL_aclN = idblkHCAL_aclN;
+	  T_idclHCAL_htote = HtotE_idcl;
+	  T_idclHCAL_intime = inTime_idcl;
+	  T_idclHCAL_sthpq = sthpq_p_idcl;
+	}
       } else { //if HCAL has a cl but secondary clustering is off!
-	T_dx = xHCAL_acl[(int)indexHCAL] - xyHCAL_exp[0];
-	T_dy = yHCAL_acl[(int)indexHCAL] - xyHCAL_exp[1];
-	T_eHCAL = eHCAL_acl[(int)indexHCAL];
-	T_xHCAL = xHCAL_acl[(int)indexHCAL];
-	T_yHCAL = yHCAL_acl[(int)indexHCAL];
-	T_rblkHCAL = rblkHCAL_acl[(int)indexHCAL];
-	T_cblkHCAL = cblkHCAL_acl[(int)indexHCAL];
-	T_idblkHCAL = idblkHCAL_acl[(int)indexHCAL];
-	T_atimeHCAL = atimeblkHCAL_acl[(int)indexHCAL];
-	T_tdcHCAL = tdcblkHCAL_acl[(int)indexHCAL];
-	T_idblkHCAL_aclN = idblkHCAL_aclN;
-	T_idclHCAL_htote = (int)indexHCAL;
+	T_dx = xHCAL - xyHCAL_exp[0];
+	T_dy = yHCAL - xyHCAL_exp[1];
+	T_eHCAL = eHCAL;
+	T_xHCAL = xHCAL;
+	T_yHCAL = yHCAL;
+	T_indexHCAL = indexHCAL;
+	T_rblkHCAL = rblkHCAL;
+	T_cblkHCAL = cblkHCAL;
+	T_idblkHCAL = idblkHCAL;
+	T_atimeHCAL = atimeHCAL;
+	T_tdcHCAL = tdcHCAL[0];
       }
     } else { //if HCAL doesn't have a cl
       T_dx = -99;
@@ -785,6 +812,7 @@ int qelas_ana_data (const char *configfilename,
       T_eHCAL = -99;
       T_xHCAL = -99;
       T_yHCAL = -99;
+      T_indexHCAL = -99;
       T_rblkHCAL = -99;
       T_cblkHCAL = -99;
       T_idblkHCAL = -99;
