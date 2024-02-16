@@ -53,8 +53,9 @@ void customize_gfit(TH1F* h)
   h->SetLineColor(kRed);
   h->SetLineStyle(7);
   h->SetLineWidth(3);
-  //h->SetFillColor(kRed);
-  //h->SetFillColorAlpha(kRed,0.2);
+  //***
+  h->SetFillColor(kRed);
+  h->SetFillColorAlpha(kRed,0.2);
 }
 
 void customize_psig(TH1F* h)
@@ -62,8 +63,9 @@ void customize_psig(TH1F* h)
   h->SetLineColor(kBlue);
   h->SetLineStyle(4);
   h->SetLineWidth(3);
-  //h->SetFillColor(kBlue);
-  //h->SetFillColorAlpha(kBlue,0.3);
+  //***
+  h->SetFillColor(kBlue);
+  h->SetFillColorAlpha(kBlue,0.3);
 }
 
 void customize_nsig(TH1F* h)
@@ -71,8 +73,9 @@ void customize_nsig(TH1F* h)
   h->SetLineColor(kGreen+2);
   h->SetLineStyle(8);
   h->SetLineWidth(3);
-  //h->SetFillColor(kGreen+2);
-  //h->SetFillColorAlpha(kGreen+2,0.3);
+  //***
+  h->SetFillColor(kGreen+2);
+  h->SetFillColorAlpha(kGreen+2,0.3);
 }
 
 void customize_dx(TH1F* h)
@@ -101,8 +104,9 @@ void customize_hbg(TH1F* h)
   h->SetLineColor(6);
   h->SetLineStyle(9);
   h->SetLineWidth(3);
-  //h->SetFillColor(6);
-  //h->SetFillColorAlpha(6,0.3);
+  //***
+  h->SetFillColor(6);
+  h->SetFillColorAlpha(6,0.3);
 }
 
 double total_fit (double * x, double * par) {
@@ -133,6 +137,7 @@ int fit_dx (const char *configfilename,
 
   // defining output files
   TString outFile = Form("%s_%s_pass%d_%s_sbs%d_sbs%dp_model%d.root",filebase.c_str(),key,pass,gen.c_str(),conf,sbsmag,model);
+  TString outPlot = outFile; outPlot.ReplaceAll(".root",".pdf");
   TFile *fout = new TFile(outFile.Data(), "RECREATE");
 
   // reading ROOT files as df
@@ -143,9 +148,14 @@ int fit_dx (const char *configfilename,
   // ***********
   // Inelastic generator. make this part user configuration later. Add a flag, etc.
   // ***********
+  // ** sbs4
   //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/inel_gen_elas_ana_g4sbs_sbs4_sbs0p_model2.root"));
-  ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/inel_ld2_g4sbs_sbs4_sbs50p_model2.root"));
-  auto inel_rdf_filtered = inel_rdf.Filter("W2>0.89&&trP>1.16&&eHCAL>0");
+  //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/inel_ld2_g4sbs_sbs4_sbs50p_model2.root"));
+  //auto inel_rdf_filtered = inel_rdf.Filter("W2>0.89&&trP>1.16&&eHCAL>0");
+  // ** --
+  ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/0p815sf_inel_lh2_g4sbs_sbs7_sbs85p_model2.root"));
+  //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/0p815sf_inel_ld2_g4sbs_sbs7_sbs85p_model2.root"));
+  auto inel_rdf_filtered = inel_rdf.Filter("W2>0.89&&trP>1.2&&eHCAL>0&&fiduCut");
   vector<double> h_dx; jmgr->GetVectorFromSubKey<double>(key,"h_dx",h_dx); //temporary replacement
   TH1F *h_dxHCAL_bg_inel = (TH1F*)inel_rdf_filtered.Histo1D({"h_dxHCAL_bg_inel","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx","weight")->Clone();
   // ***********
@@ -310,6 +320,8 @@ int fit_dx (const char *configfilename,
     ## Fitting QE dx distributions ##
     ################################# */
   else {
+    std::vector<double> R_vals, Rerr_vals;
+
     // Canvas 0 : Fitting data/MC w/o any background
     TCanvas *c0 = util_pd::TC("c0",1,1);
     c0->cd(); gStyle->SetOptFit(1);
@@ -317,6 +329,7 @@ int fit_dx (const char *configfilename,
     TF1 *f0 = fit::fit_2hs_nbg_THI(dx_fit_range,
 				   h_dxHCAL_data_CT,h_dxHCAL_simu_p,h_dxHCAL_simu_n,
 				   ho);
+    R_vals.push_back(f0->GetParameter(1)); Rerr_vals.push_back(f0->GetParError(1));
     ho[0]->Draw(); customize_ht(ho[0]); customize_dx(ho[0]);
     ho[1]->Draw("same"); customize_hs(ho[1]); customize_dx(ho[1]);
     TLegend *l0=new TLegend(0.10,0.77,0.38,0.9);
@@ -335,6 +348,7 @@ int fit_dx (const char *configfilename,
     TF1 *f1 = fit::fit_2hs_1hbg_THI(dx_fit_range,
     				    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg,
     				    ho1);
+    R_vals.push_back(f1->GetParameter(1)); Rerr_vals.push_back(f1->GetParError(1));
     // converting fit fn to a hostogram
     TH1F *hf1 = (TH1F*)h_dxHCAL_data->Clone(); util_pd::TF1toTH1F(f1,hf1);
     ho1[0]->Draw(); c1->Update(); 
@@ -383,6 +397,7 @@ int fit_dx (const char *configfilename,
     TF1 *f2 = fit::fit_2hs_1hbg_THI(dx_fit_range,
     				    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_inel,
     				    ho2);
+    R_vals.push_back(f2->GetParameter(1)); Rerr_vals.push_back(f2->GetParError(1));
     // converting fit fn to a hostogram
     TH1F *hf2 = (TH1F*)h_dxHCAL_data->Clone(); util_pd::TF1toTH1F(f2,hf2);
     ho2[0]->Draw(); c2->Update(); 
@@ -431,6 +446,7 @@ int fit_dx (const char *configfilename,
     TF1 *f3 = fit::fit_2hs_1pbg_THI(dx_fit_range,
     				    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,Opoly,
     				    ho3);
+    R_vals.push_back(f3->GetParameter(1)); Rerr_vals.push_back(f3->GetParError(1));
     // converting fit fn to a hostogram
     TH1F *hf3 = (TH1F*)h_dxHCAL_data->Clone(); util_pd::TF1toTH1F(f3,hf3);
     ho3[0]->Draw(); c3->Update(); 
@@ -472,13 +488,21 @@ int fit_dx (const char *configfilename,
     // drawing a horizontal line at y = 0
     util_pd::DrawZeroLine(p3[1],dx_fit_range[0],dx_fit_range[1]);
 
+    // Writing out fit parameters
+    std::cout << "\n--- Reporting fit params ---\n";
+    std::cout << "R0,R0err,R1,R1err,R2,R2err,R3,R3err\n";
+    for(size_t i=0; i < R_vals.size(); i++){
+      std::cout << R_vals[i] << "," << Rerr_vals[i] << ",";
+    }
+    std::cout << "\n------\n";
+
     // writing out the canvases
-    c0->Update(); c0->Write();
+    c0->Update(); c0->Write(); c0->SaveAs(Form("%s[",outPlot.Data())); c0->SaveAs(Form("%s",outPlot.Data())); 
     // turning off the stats of data histo [IMPORTANT!]
     h_dxHCAL_data->SetStats(0);
-    c1->Update(); c1->Write();
-    c2->Update(); c2->Write();
-    c3->Update(); c3->Write();
+    c1->Update(); c1->Write(); c1->SaveAs(Form("%s",outPlot.Data())); 
+    c2->Update(); c2->Write(); c2->SaveAs(Form("%s",outPlot.Data())); 
+    c3->Update(); c3->Write(); c3->SaveAs(Form("%s",outPlot.Data())); c3->SaveAs(Form("%s]",outPlot.Data())); 
   } // QE
 
   return 0;
