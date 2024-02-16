@@ -273,6 +273,8 @@ int elas_ana_data (const char *configfilename,
   double T_ephi;          Tout->Branch("ephi", &T_ephi, "ephi/D");
   double T_etheta;        Tout->Branch("etheta", &T_etheta, "etheta/D");
   double T_pelas;         Tout->Branch("pelas", &T_pelas, "pelas/D");
+  double T_pN_exp;        Tout->Branch("pN_exp", &T_pN_exp, "pN_exp/D"); //exp. nucleon momentum
+  double T_thN_exp;       Tout->Branch("thN_exp", &T_thN_exp, "thN_exp/D"); //exp. nucelon theta
   double T_epsilon;       Tout->Branch("epsilon", &T_epsilon, "epsilon/D"); // calculated using general eqn.
   double T_epsilon_p;     Tout->Branch("epsilon_p", &T_epsilon_p, "epsilon_p/D");
   double T_thpq_p;        Tout->Branch("thpq_p", &T_thpq_p, "thpq_p/D");
@@ -509,6 +511,8 @@ int elas_ana_data (const char *configfilename,
       epsilon = kine::epsilon_general(etheta,Q2recon,nu);
       epsilon_p = kine::epsilon(etheta,Q2recon,"p");
       W2recon = PNprime.M2();
+      //--
+      pN_expect = kine::pN_expect(nu, Ntype);
     }
     h_Q2->Fill(Q2recon); 
     double Wrecon = sqrt(max(0., W2recon));
@@ -522,6 +526,8 @@ int elas_ana_data (const char *configfilename,
     T_ephi = ephi;
     T_etheta = etheta;
     T_pelas = pelas;
+    T_pN_exp = pN_expect;
+    T_thN_exp = thetaN_expect;
     T_epsilon = epsilon;
     T_epsilon_p = epsilon_p;
 
@@ -884,7 +890,7 @@ int elas_ana_data (const char *configfilename,
   pt->AddText(Form(" Analysis model: %d",model));
   pt->AddText(Form(" Total # events analyzed: %ld, Total # runs: %d",nevents,nruns));
   pt->AddText(Form(" Total charge: %.7fC",totcharge));
-  pt->AddText(Form(" HCAL offsets: v = %.4f, h = %.4f",hcal_voffset,hcal_hoffset));
+  pt->AddText(Form(" HCAL offsets: v = %.4f, h = %.4f, z = %.4f",hcal_voffset,hcal_hoffset,hcal_zoffset));
   char const * hcl_algo_flag = hcal_acl_ON ? "In-time" : "Default";
   pt->AddText(Form(" Best HCAL cluster choice algorithm: %s",hcl_algo_flag));
   pt->AddText(Form(" Global cuts: "));
