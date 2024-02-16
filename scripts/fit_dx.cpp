@@ -267,20 +267,28 @@ int fit_dx (const char *configfilename,
     TCanvas *c3 = util_pd::TC("c3",1,1);
     c3->cd(); gStyle->SetOptFit(1);
     vector<double> reject_points{-1.3,-0.15};
+    vector<TH1F*> ho3;
     TF1* bg3 = fit::fit_1pbg_SB(dx_fit_range,
 				reject_points,
 				Opoly,
 				fit::GetFitParams(f2),
-				h_dxHCAL_data);
-    bg3->Draw("same");
+				h_dxHCAL_data,
+				ho3);
+    //bg3->Draw("same");
+    ho3[0]->Draw(); customize_ht(ho3[0]); customize_dx(ho3[0]);
+    ho3[1]->Draw("same ep"); customize_hs(ho3[1]); customize_dx(ho3[1]);
+    ho3[2]->Draw("same"); customize_hbg(ho3[2]); customize_dx(ho3[2]);    
 
-    double bgcount = (int)bg3->Integral(dx_fit_range[0],dx_fit_range[1])/h_dxHCAL_data->GetBinWidth(1);
+    //double bgcount = (int)bg3->Integral(dx_fit_range[0],dx_fit_range[1])/h_dxHCAL_data->GetBinWidth(1);
+    double bgcount = ho3[2]->Integral(ho3[2]->FindBin(dx_fit_range[0]),ho3[2]->FindBin(dx_fit_range[1]));;
     double totcount = h_dxHCAL_data->Integral(h_dxHCAL_data->FindBin(dx_fit_range[0]),h_dxHCAL_data->FindBin(dx_fit_range[1]));
     int sigcount = totcount - bgcount;
+    int sigcount_2ndmethod = ho3[1]->Integral(ho3[1]->FindBin(dx_fit_range[0]),ho3[1]->FindBin(dx_fit_range[1]));;
     std::cout << " ***** Reporting # elastics from side band fit ***** \n";
     std::cout << " Total count: " << totcount << "\n";
     std::cout << " Background count: " << bgcount << "\n";
-    std::cout << " Signal count: " << sigcount << "\n\n";
+    std::cout << " Signal count: " << sigcount << "\n";
+    std::cout << " Signal count (2nd method): " << sigcount_2ndmethod << "\n\n";
     // ---
 
     // Canvas 4 : Fitting w/ signal and background from MC

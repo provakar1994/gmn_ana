@@ -35,8 +35,10 @@ namespace fit {
 		    std::vector<double> const & reject_points,
 		    int Opoly,          // Order of poly to fit bg
 		    std::vector<double> const & initial_guesses,
-		    TH1F* ht)           // total histo to fit
+		    TH1F* ht,           // total histo to fit
+		    std::vector<TH1F*> &ho)    // Output: ht,hs,hbg
   /* Side band (SB) fit using 1 polynomial and 2 reject points (Opoly+1 pars) */
+  /* NOTE: This fit method just fits the bg */
   {
     const int npars = Opoly+1;
 
@@ -48,14 +50,18 @@ namespace fit {
     f1->SetParameters(&initial_guesses[0]);
 
     ht_cp->Fit(f1,"R");
-    // std::vector<double> pars;
-    // for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
 
+    // drawing the bg
     TF1* bg = new TF1("bg",ffn,&FitFn::ffn_poly,fit_range[0],fit_range[1],Opoly+1);
     bg->SetNpx(500);
     // bg->SetParameters(&pars[0]);
     bg->SetParameters(&GetFitParams(f1)[0]);
     bg->SetLineColor(kGreen+2);
+
+    // let's extract the signal histo
+    TH1F *hbg = (TH1F*)ht_cp->Clone(); util_pd::TF1toTH1F(bg,hbg);
+    TH1F *hs = (TH1F*)ht_cp->Clone(); hs->Add(ht_cp,hbg,1,-1);
+    ho = {ht_cp,hs,hbg};
 
     return bg;
   }

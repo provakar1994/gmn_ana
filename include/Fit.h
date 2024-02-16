@@ -23,12 +23,14 @@ namespace fit {
   // Returns a vector filled with fit pramater errors from f1
   std::vector<double> GetFitParamErrors(TF1 * const f1);
 
-  // Side band (SB) fit using 1 polynomial and 2 reject points (Opoly+1 pars)
+  // Side band (SB) fit using 1 polynomial and 2 reject points (Opoly+1 pars
+  // NOTE: This fit method just fits the bg
   TF1* fit_1pbg_SB (std::vector<double> const & fit_range,
 		    std::vector<double> const & reject_points,
 		    int Opoly,          // Order of poly to fit bg
 		    std::vector<double> const & initial_guesses,
-		    TH1F* ht);          // total histo to fit
+		    TH1F* ht,          // total histo to fit
+		    std::vector<TH1F*> &ho);   // Output: ht,hs,hbg,N*hs 
 
   // TH Interpolation fit using 1 signal histo & no background (1 par)
   TF1* fit_1hs_nbg_THI (std::vector<double> const & fit_range,
