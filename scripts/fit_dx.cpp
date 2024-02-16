@@ -151,21 +151,6 @@ int fit_dx (const char *configfilename,
   ROOT::RDataFrame simu_rdf("Tout",Form("simulation/siout/%s%s_ana_%s_sbs%d_sbs%dp_model%d.root",sfprefix.c_str(),key,gen.c_str(),conf,sbsmag,model));
   ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/%sinel_%s_ana_g4sbs_sbs%d_sbs%dp_model%d.root",infprefix.c_str(),key,conf,sbsmag,model));
 
-  // ***********
-  // Inelastic generator. make this part user configuration later. Add a flag, etc.
-  // ***********
-  // ** sbs4
-  //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/inel_elas_ana_g4sbs_sbs4_sbs0p_model2.root"));
-  //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/inel_qelas_ana_g4sbs_sbs4_sbs50p_model2.root"));
-  //auto inel_rdf_filtered = inel_rdf.Filter("W2>0.89&&trP>1.16&&eHCAL>0");
-  // ** --
-  ////ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/0p815sf_inel_elas_ana_g4sbs_sbs7_sbs85p_model2.root"));
-  //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/0p815sf_inel_qelas_ana_g4sbs_sbs7_sbs85p_model2.root"));
-  ////auto inel_rdf_filtered = inel_rdf.Filter("W2>0.89&&trP>1.2&&eHCAL>0&&fiduCut");
-  ////vector<double> h_dx; jmgr->GetVectorFromSubKey<double>(key,"h_dx",h_dx); //temporary replacement
-  ////TH1F *h_dxHCAL_bg_inel = (TH1F*)inel_rdf_filtered.Histo1D({"h_dxHCAL_bg_inel","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx","weight")->Clone();
-  // ***********
-
   // Applying cuts
   std::string cuts_for_signal_data = jmgr->GetValueFromSubKey_str(key,"cuts_for_signal_data");
   std::string cuts_for_signal_simu = jmgr->GetValueFromSubKey_str(key,"cuts_for_signal_simu");
