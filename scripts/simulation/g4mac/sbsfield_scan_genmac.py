@@ -3,9 +3,6 @@ This script reads a g4sbs macro and generates multiple copies
 of that with various SBS field values.
 '''
 
-#import numpy as np
-#import pandas as pd
-
 def readfile(macfile):
     '''Reads a .mac file and returns a list
     containing all the lines in the file'''
@@ -47,22 +44,26 @@ def writefile(filename,
 def main():
 
     # User inputs
-    infilename = 'sbs14_sbs70p_QE.mac'
-    outfilebase = 'sbs14_sbs70p_QE'
-    oldvalue = '.82'
-    list_of_newvalue = ['.83', '.84']
+    infilename = 'sbs11_sbs100p_g4sbs_deeN.mac'
+    outfilebase = 'sbs11_sbs100p_g4sbs_deeN'
+    oldvalue = '0.7'
+    list_of_newvalue = ['0.94','0.97','0.99','1.01']
 
     # Read all the lines in the mac file
     macfile_data = readfile(infilename)
 
     for item in list_of_newvalue:
         # Update the desired flag value
+        #updated_macfile_data = update_flag_value(macfile_data, 
+        #                                         '/g4sbs/sbsmagfield',
+        #                                         oldvalue,
+        #                                         item)
         updated_macfile_data = update_flag_value(macfile_data, 
-                                                 '/g4sbs/sbsmagfield',
+                                                 '/g4sbs/scalesbsfield',
                                                  oldvalue,
                                                  item)
         # Write a new mac file with updated values
-        outfilename = outfilebase + '_' + item.replace('.', '') + 'T.mac'
+        outfilename = item.replace('.', 'p') + 'sf_' + outfilebase + '.mac'
         writefile(outfilename, updated_macfile_data)
 
 
