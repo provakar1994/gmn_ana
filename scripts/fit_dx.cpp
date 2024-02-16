@@ -132,8 +132,10 @@ int fit_dx (const char *configfilename,
   std::string gen = jmgr->GetValueFromSubKey_str(key,"generator");
   std::string dfprefix = jmgr->GetValueFromSubKey_str(key,"data_file_prefix");
   std::string sfprefix = jmgr->GetValueFromSubKey_str(key,"simu_file_prefix");
+  std::string infprefix = jmgr->GetValueFromSubKey_str(key,"inel_file_prefix");
   dfprefix = dfprefix.empty() ? "" : dfprefix + "_";
   sfprefix = sfprefix.empty() ? "" : sfprefix + "_";
+  infprefix = infprefix.empty() ? "" : infprefix + "_";
 
   // defining output files
   TString outFile = Form("%s_%s_pass%d_%s_sbs%d_sbs%dp_model%d.root",filebase.c_str(),key,pass,gen.c_str(),conf,sbsmag,model);
@@ -144,30 +146,33 @@ int fit_dx (const char *configfilename,
   ROOT::EnableImplicitMT();
   ROOT::RDataFrame data_rdf("Tout",Form("pdout/%s%s_ana_data_sbs%d_sbs%dp_model%d_pass%d.root",dfprefix.c_str(),key,conf,sbsmag,model,pass));
   ROOT::RDataFrame simu_rdf("Tout",Form("simulation/siout/%s%s_ana_%s_sbs%d_sbs%dp_model%d.root",sfprefix.c_str(),key,gen.c_str(),conf,sbsmag,model));
+  ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/%sinel_%s_ana_%s_sbs%d_sbs%dp_model%d.root",infprefix.c_str(),key,gen.c_str(),conf,sbsmag,model));
 
   // ***********
   // Inelastic generator. make this part user configuration later. Add a flag, etc.
   // ***********
   // ** sbs4
-  //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/inel_gen_elas_ana_g4sbs_sbs4_sbs0p_model2.root"));
-  //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/inel_ld2_g4sbs_sbs4_sbs50p_model2.root"));
+  //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/inel_elas_ana_g4sbs_sbs4_sbs0p_model2.root"));
+  //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/inel_qelas_ana_g4sbs_sbs4_sbs50p_model2.root"));
   //auto inel_rdf_filtered = inel_rdf.Filter("W2>0.89&&trP>1.16&&eHCAL>0");
   // ** --
-  ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/0p815sf_inel_lh2_g4sbs_sbs7_sbs85p_model2.root"));
-  //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/0p815sf_inel_ld2_g4sbs_sbs7_sbs85p_model2.root"));
-  auto inel_rdf_filtered = inel_rdf.Filter("W2>0.89&&trP>1.2&&eHCAL>0&&fiduCut");
-  vector<double> h_dx; jmgr->GetVectorFromSubKey<double>(key,"h_dx",h_dx); //temporary replacement
-  TH1F *h_dxHCAL_bg_inel = (TH1F*)inel_rdf_filtered.Histo1D({"h_dxHCAL_bg_inel","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx","weight")->Clone();
+  ////ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/0p815sf_inel_elas_ana_g4sbs_sbs7_sbs85p_model2.root"));
+  //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/0p815sf_inel_qelas_ana_g4sbs_sbs7_sbs85p_model2.root"));
+  ////auto inel_rdf_filtered = inel_rdf.Filter("W2>0.89&&trP>1.2&&eHCAL>0&&fiduCut");
+  ////vector<double> h_dx; jmgr->GetVectorFromSubKey<double>(key,"h_dx",h_dx); //temporary replacement
+  ////TH1F *h_dxHCAL_bg_inel = (TH1F*)inel_rdf_filtered.Histo1D({"h_dxHCAL_bg_inel","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx","weight")->Clone();
   // ***********
 
   // Applying cuts
   std::string cuts_for_signal_data = jmgr->GetValueFromSubKey_str(key,"cuts_for_signal_data");
   std::string cuts_for_signal_simu = jmgr->GetValueFromSubKey_str(key,"cuts_for_signal_simu");
-  std::string cuts_for_bg = jmgr->GetValueFromSubKey_str(key,"cuts_for_bg");
+  std::string cuts_for_bg_data = jmgr->GetValueFromSubKey_str(key,"cuts_for_bg_data");
+  std::string cuts_for_bg_simu = jmgr->GetValueFromSubKey_str(key,"cuts_for_bg_simu");
   std::string coinT_cut = jmgr->GetValueFromSubKey_str(key,"coinT_cut");
   int Opoly = jmgr->GetValueFromSubKey<int>(key,"Order_of_poly_bg");
   auto data_rdf_filtered = data_rdf.Filter(cuts_for_signal_data);
   auto simu_rdf_filtered_1 = simu_rdf.Filter(cuts_for_signal_simu);
+  auto inel_rdf_filtered = inel_rdf.Filter("W2>0.89&&trP>1.2&&eHCAL>0&&fiduCut");
   // Reading in offsets for dx peak position in MC for both p and n
   double dx_offset_p = jmgr->GetValueFromSubKey<double>(key,"dx_offset_MC_for_p");
   double dx_offset_n = !is_elastic ? jmgr->GetValueFromSubKey<double>(key,"dx_offset_MC_for_n") : 0;
@@ -175,17 +180,18 @@ int fit_dx (const char *configfilename,
   std::string dx_shifted_n = "dx+" + std::to_string(dx_offset_n);
   auto simu_rdf_filtered = simu_rdf_filtered_1.Define("dx_shifted_p",dx_shifted_p.c_str())
     .Define("dx_shifted_n",dx_shifted_n.c_str());
-  auto bg_rdf_filtered = data_rdf.Filter(cuts_for_bg);
+  auto bg_data_rdf_filtered = data_rdf.Filter(cuts_for_bg_data);
 
   // Creating important histograms
-  //vector<double> h_dx; jmgr->GetVectorFromSubKey<double>(key,"h_dx",h_dx);
+  vector<double> h_dx; jmgr->GetVectorFromSubKey<double>(key,"h_dx",h_dx);
   TH1F *h_dxHCAL_data = (TH1F*)data_rdf_filtered.Histo1D({"h_dxHCAL_data","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
   TH1F *h_dxHCAL_data_CT = (TH1F*)data_rdf_filtered.Filter(coinT_cut.c_str()).Histo1D({"h_dxHCAL_data_CT","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
   //TH1F *h_dxHCAL_simu = (TH1F*)simu_rdf_filtered.Histo1D({"h_dxHCAL_simu","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted","weight")->Clone();
   TH1F *h_dxHCAL_simu_p = (TH1F*)simu_rdf_filtered.Filter("mc_fnucl==1").Histo1D({"h_dxHCAL_simu_p","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_p","weight")->Clone();
   TH1F *h_dxHCAL_simu_n;
   if (!is_elastic) h_dxHCAL_simu_n = (TH1F*)simu_rdf_filtered.Filter("mc_fnucl==0").Histo1D({"h_dxHCAL_simu_n","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_n","weight")->Clone();
-  TH1F *h_dxHCAL_bg = (TH1F*)bg_rdf_filtered.Histo1D({"h_dxHCAL_bg","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
+  TH1F *h_dxHCAL_bg_data = (TH1F*)bg_data_rdf_filtered.Histo1D({"h_dxHCAL_bg_data","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
+  TH1F *h_dxHCAL_bg_inel = (TH1F*)inel_rdf_filtered.Histo1D({"h_dxHCAL_bg_inel","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx","weight")->Clone();
 
   // Fits
   vector<double> dx_fit_range; jmgr->GetVectorFromSubKey<double>(key,"dx_fit_range",dx_fit_range);
@@ -216,7 +222,7 @@ int fit_dx (const char *configfilename,
     // c1->cd(); gStyle->SetOptFit(1);
     // vector<TH1F*> ho1;
     // TF1 *f1 = fit::fit_1hs_1hbg_THI(dx_fit_range,
-    // 				    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_bg,
+    // 				    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_bg_data,
     // 				    ho1);
     // ho1[0]->Draw(); customize_ht(ho1[0]); customize_dx(ho1[0]);
     // ho1[1]->Draw("same"); customize_hs(ho1[1]); customize_dx(ho1[1]);
@@ -346,7 +352,7 @@ int fit_dx (const char *configfilename,
     // performing the fit
     vector<TH1F*> ho1;
     TF1 *f1 = fit::fit_2hs_1hbg_THI(dx_fit_range,
-    				    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg,
+    				    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_data,
     				    ho1);
     R_vals.push_back(f1->GetParameter(1)); Rerr_vals.push_back(f1->GetParError(1));
     // converting fit fn to a hostogram
