@@ -120,6 +120,9 @@ int fit_dx (const char *configfilename,
 {
   gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
 
+  // Define a clock to get macro processing time
+  TStopwatch *sw = new TStopwatch(); sw->Start();
+
   // reading input config file ---------------------------------------
   JSONManager *jmgr = new JSONManager(configfilename);
   char const * key = is_elastic ? "elas" : "qelas";
@@ -146,7 +149,7 @@ int fit_dx (const char *configfilename,
   ROOT::EnableImplicitMT();
   ROOT::RDataFrame data_rdf("Tout",Form("pdout/%s%s_ana_data_sbs%d_sbs%dp_model%d_pass%d.root",dfprefix.c_str(),key,conf,sbsmag,model,pass));
   ROOT::RDataFrame simu_rdf("Tout",Form("simulation/siout/%s%s_ana_%s_sbs%d_sbs%dp_model%d.root",sfprefix.c_str(),key,gen.c_str(),conf,sbsmag,model));
-  ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/%sinel_%s_ana_%s_sbs%d_sbs%dp_model%d.root",infprefix.c_str(),key,gen.c_str(),conf,sbsmag,model));
+  ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/%sinel_%s_ana_g4sbs_sbs%d_sbs%dp_model%d.root",infprefix.c_str(),key,conf,sbsmag,model));
 
   // ***********
   // Inelastic generator. make this part user configuration later. Add a flag, etc.
@@ -172,14 +175,14 @@ int fit_dx (const char *configfilename,
   int Opoly = jmgr->GetValueFromSubKey<int>(key,"Order_of_poly_bg");
   auto data_rdf_filtered = data_rdf.Filter(cuts_for_signal_data);
   auto simu_rdf_filtered_1 = simu_rdf.Filter(cuts_for_signal_simu);
-  auto inel_rdf_filtered = inel_rdf.Filter("W2>0.89&&trP>1.2&&eHCAL>0&&fiduCut");
+  auto inel_rdf_filtered_1 = inel_rdf.Filter(cuts_for_bg_simu);
   // Reading in offsets for dx peak position in MC for both p and n
   double dx_offset_p = jmgr->GetValueFromSubKey<double>(key,"dx_offset_MC_for_p");
   double dx_offset_n = !is_elastic ? jmgr->GetValueFromSubKey<double>(key,"dx_offset_MC_for_n") : 0;
   std::string dx_shifted_p = "dx+" + std::to_string(dx_offset_p);
   std::string dx_shifted_n = "dx+" + std::to_string(dx_offset_n);
-  auto simu_rdf_filtered = simu_rdf_filtered_1.Define("dx_shifted_p",dx_shifted_p.c_str())
-    .Define("dx_shifted_n",dx_shifted_n.c_str());
+  auto simu_rdf_filtered = simu_rdf_filtered_1.Define("dx_shifted_p",dx_shifted_p.c_str()).Define("dx_shifted_n",dx_shifted_n.c_str());
+  auto inel_rdf_filtered = inel_rdf_filtered_1.Define("dx_shifted_p",dx_shifted_p.c_str()).Define("dx_shifted_n",dx_shifted_n.c_str());
   auto bg_data_rdf_filtered = data_rdf.Filter(cuts_for_bg_data);
 
   // Creating important histograms
@@ -191,7 +194,11 @@ int fit_dx (const char *configfilename,
   TH1F *h_dxHCAL_simu_n;
   if (!is_elastic) h_dxHCAL_simu_n = (TH1F*)simu_rdf_filtered.Filter("mc_fnucl==0").Histo1D({"h_dxHCAL_simu_n","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_n","weight")->Clone();
   TH1F *h_dxHCAL_bg_data = (TH1F*)bg_data_rdf_filtered.Histo1D({"h_dxHCAL_bg_data","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
-  TH1F *h_dxHCAL_bg_inel = (TH1F*)inel_rdf_filtered.Histo1D({"h_dxHCAL_bg_inel","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx","weight")->Clone();
+  //TH1F *h_dxHCAL_bg_inel = (TH1F*)inel_rdf_filtered.Histo1D({"h_dxHCAL_bg_inel","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();  
+  TH1F *h_dxHCAL_bg_inel_p = (TH1F*)inel_rdf_filtered.Filter("mc_fnucl==1").Histo1D({"h_dxHCAL_bg_inel_p","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_p","weight")->Clone();
+  TH1F *h_dxHCAL_bg_inel_n;
+  if (!is_elastic) h_dxHCAL_bg_inel_n = (TH1F*)inel_rdf_filtered.Filter("mc_fnucl==0").Histo1D({"h_dxHCAL_bg_inel_n","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_n","weight")->Clone();
+  TH1F *h_dxHCAL_bg_inel = (TH1F*)h_dxHCAL_bg_inel_p->Clone(); h_dxHCAL_bg_inel->Add(h_dxHCAL_bg_inel_p,h_dxHCAL_bg_inel_n);
 
   // Fits
   vector<double> dx_fit_range; jmgr->GetVectorFromSubKey<double>(key,"dx_fit_range",dx_fit_range);
@@ -502,9 +509,85 @@ int fit_dx (const char *configfilename,
     // drawing a horizontal line at y = 0
     util_pd::DrawZeroLine(p3[1],dx_fit_range[0],dx_fit_range[1]);
 
+    // ** --
+    // Canvas 4 : Fitting w/ polynomial background using side band method
+    // Steps: 1. Subrtact bg using sideband method, 2. Perform data/MC fit w/o bg
+    TCanvas *c4 = util_pd::TC("c4",1,1); gStyleFitCanvas();
+    c4->cd(); 
+    // Let's perform the sideband fit first
+    vector<double> reject_points{-1.2,0.3};
+    vector<TH1F*> hosb4;
+    TF1* bgsb4 = fit::fit_1pbg_SB(dx_fit_range,
+				  reject_points,
+				  Opoly,
+				  fit::GetFitParams(f3),
+				  h_dxHCAL_data,
+				  hosb4);
+    hosb4[0]->Draw(); c4->Update(); 
+    // grabbing statbox of the fitted histo
+    TPaveStats *stsb4 = (TPaveStats*)hosb4[0]->FindObject("stats"); 
+    // hosb4[0]->Draw(); customize_ht(hosb4[0]); customize_dx(hosb4[0]);
+    // hosb4[1]->Draw("same ep"); customize_hs(hosb4[1]); customize_dx(hosb4[1]);
+    // hosb4[2]->Draw("same"); customize_hbg(hosb4[2]); customize_dx(hosb4[2]);
+
+    // Now, let's fit the bg subtracted signal using MC signals
+    vector<TH1F*> ho4;
+    TF1 *f4 = fit::fit_2hs_nbg_THI(dx_fit_range,
+    				   hosb4[1],h_dxHCAL_simu_p,h_dxHCAL_simu_n,
+    				   ho4);
+    R_vals.push_back(f4->GetParameter(1)); Rerr_vals.push_back(f4->GetParError(1));
+    // converting fit fn to a hostogram
+    TH1F *hf4 = (TH1F*)h_dxHCAL_data->Clone(); util_pd::TF1toTH1F(f4,hf4);
+    ho4[0]->Draw(); c4->Update(); 
+    // hosb4[0]->Draw("same"); customize_ht(hosb4[0]); customize_dx(hosb4[0]);
+    // hosb4[1]->Draw("same HIST"); customize_hs(hosb4[1]); customize_dx(hosb4[1]);
+    // hosb4[2]->Draw("same HIST"); customize_hbg(hosb4[2]); customize_dx(hosb4[2]);
+
+    // grabbing statbox of the fitted histo
+    TPaveStats *st4 = (TPaveStats*)ho4[0]->FindObject("stats");
+    // getting pads for pull plot
+    std::vector<TPad*> p4 = util_pd::GetPadsForPullPlot(c4);
+    //
+    // preparing the pad for data/MC fit
+    //
+    p4[0]->cd();
+    // drawing all the histograms
+    hosb4[0]->Draw(); customize_ht(hosb4[0]); customize_dx(hosb4[0]);
+    hosb4[2]->Draw("same"); customize_hbg(hosb4[2]); customize_dx(hosb4[2]);    
+    // h_dxHCAL_data->Draw("E"); customize_data(h_dxHCAL_data);
+    hosb4[1]->Draw("same E"); customize_data(hosb4[1]); hosb4[1]->SetStats(0);
+    hf4->Draw("same HIST"); customize_gfit(hf4);
+    ho4[3]->Draw("same HIST"); customize_psig(ho4[3]);
+    ho4[4]->Draw("same HIST"); customize_nsig(ho4[4]);
+    //ho4[2]->Draw("same HIST"); customize_hbg(ho4[2]);
+    // redrawing the stat boxes
+    stsb4->SetX1NDC(0.62); stsb4->SetX2NDC(0.9); stsb4->SetY2NDC(0.9);
+    stsb4->Draw("same");
+    st4->SetX1NDC(0.62); st4->SetX2NDC(0.9); st4->SetY2NDC(0.6);
+    st4->Draw("same");
+    // drawing a legend
+    TLegend *l4=new TLegend(0.10,0.6,0.36,0.9);
+    l4->SetTextFont(42);
+    l4->AddEntry(hosb4[0],"Data","l");
+    l4->AddEntry(hosb4[2],Form("Bg w/ SB fit (poly. ord. %d)",Opoly),"lf");
+    //l4->AddEntry(f4,"Fit (MC + poly. bg.)","l");
+    l4->AddEntry(hosb4[1],"Data (bg subtracted)","p");
+    l4->AddEntry(hf4,"Fit (QE MC + bg.)","lf");
+    l4->AddEntry(ho4[3],"p signal (from MC)","lf");
+    l4->AddEntry(ho4[4],"n signal (from MC)","lf");
+    l4->AddEntry(ho4[2],"Residual","p");
+    //l4->SetFillStyle(0); // makes legend box transparent
+    l4->Draw();
+    //
+    // preparing the pad for residual
+    p4[1]->cd();
+    ho4[2]->Draw(); customize_residual(ho4[2]);
+    // drawing a horizontal line at y = 0
+    util_pd::DrawZeroLine(p4[1],dx_fit_range[0],dx_fit_range[1]);
+
     // Writing out fit parameters
     std::cout << "\n--- Reporting fit params ---\n";
-    std::cout << "R0,R0err,R1,R1err,R2,R2err,R3,R3err\n";
+    std::cout << "R0,R0err,R1,R1err,R2,R2err,R3,R3err,R4,R4err\n";
     for(size_t i=0; i < R_vals.size(); i++){
       std::cout << R_vals[i] << "," << Rerr_vals[i] << ",";
     }
@@ -516,8 +599,12 @@ int fit_dx (const char *configfilename,
     h_dxHCAL_data->SetStats(0);
     c1->Update(); c1->Write(); c1->SaveAs(Form("%s",outPlot.Data())); 
     c2->Update(); c2->Write(); c2->SaveAs(Form("%s",outPlot.Data())); 
-    c3->Update(); c3->Write(); c3->SaveAs(Form("%s",outPlot.Data())); c3->SaveAs(Form("%s]",outPlot.Data())); 
+    c3->Update(); c3->Write(); c3->SaveAs(Form("%s",outPlot.Data())); 
+    c4->Update(); c4->Write(); c4->SaveAs(Form("%s",outPlot.Data())); c4->SaveAs(Form("%s]",outPlot.Data())); 
   } // QE
+
+  sw->Stop();
+  std::cout << "CPU time = " << sw->CpuTime() << "s. Real time = " << sw->RealTime() << "s.\n\n";
 
   return 0;
 }
