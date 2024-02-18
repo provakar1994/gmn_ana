@@ -116,6 +116,14 @@ void customize_hbg(TH1F* h)
   h->SetFillColorAlpha(6,0.3);
 }
 
+void customize_hcut(TH1F* h)
+{
+  h->SetLineWidth(2);
+  h->SetLineColor(kBlack);
+  h->SetStats(0);
+  h->GetXaxis()->CenterTitle(true);
+}
+
 double total_fit (double * x, double * par) {
   FitFn *ffn = new FitFn(6);
   return ffn->ffn_gaus(x,&par[0]) + ffn->ffn_poly(x,&par[3]);
@@ -197,7 +205,8 @@ int fit_dx (const char *configfilename,
   vector<double> dx_fit_range; jmgr->GetVectorFromSubKey<double>(key,"dx_fit_range",dx_fit_range);
 
   // Cut variation **************
-  // Although not necessary, keeping this loop separate gives more control
+  // Although not necessary, keeping this loop separate gives more control and clarity
+  // forming the cuts
   bool is_vary_cut = jmgr->GetValueFromSubKey<int>(key,"is_vary_cut");
   bool is_vary_arnd_fix_bin = jmgr->GetValueFromSubKey<int>(key,"is_vary_arnd_fix_bin");
   std::string param_to_vary = jmgr->GetValueFromSubKey_str(key,"param_to_vary");
@@ -206,18 +215,26 @@ int fit_dx (const char *configfilename,
   int iter = is_vary_cut ? (int)cut_range[0] : 1;
   std::vector<double> minval, maxval;
   std::vector<std::string> cuts, cuts_p, cuts_n;
+  // double low = vary_style==1 ? min-width : min;
+  // double high = vary_style==2 ? h_cut_param[2] : min+width; 
   for (int i=0; i<iter; i++) {
     double max = min + width;
     minval.push_back(min); maxval.push_back(max);
+    //minval.push_back(low); maxval.push_back(high);
     std::string cut = param_to_vary+">"+std::to_string(min)+"&&"+param_to_vary+"<="+std::to_string(max); 
     cuts.push_back(cut);
     std::string cut_p = cut + "&&mc_fnucl==1"; cuts_p.push_back(cut_p);
     std::string cut_n = cut + "&&mc_fnucl==0"; cuts_n.push_back(cut_n);
+    // update high and low
     min += width;
   }
 
   outdata << "min,max,R0,R0err,R1,R1err,R2,R2err,R3,R3err,R4,R4err\n";
 
+  // draawing cut histo
+  vector<double> h_cut_param; jmgr->GetVectorFromSubKey<double>(key,"h_cut_param",h_cut_param);
+  TH1F *hcut = (TH1F*)data_rdf_filtered.Histo1D({"hcut","",int(h_cut_param[0]),h_cut_param[1],h_cut_param[2]},param_to_vary)->Clone();
+  customize_hcut(hcut); hcut->SetTitle(Form("%s {%s}",param_to_vary.c_str(),cuts_for_signal_data.c_str()));
   for (int i=0; i<iter; i++) {
     if (is_vary_cut) {
       h_dxHCAL_data = (TH1F*)data_rdf_filtered.Filter(cuts[i]).Histo1D({"h_dxHCAL_data","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
@@ -225,10 +242,13 @@ int fit_dx (const char *configfilename,
       h_dxHCAL_simu_p = (TH1F*)simu_rdf_filtered.Filter(cuts_p[i]).Histo1D({"h_dxHCAL_simu_p","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_p","weight")->Clone();
       if (!is_elastic) h_dxHCAL_simu_n = (TH1F*)simu_rdf_filtered.Filter(cuts_n[i]).Histo1D({"h_dxHCAL_simu_n","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_n","weight")->Clone();
 
-      // // Canvas to plot cut region
-      // TCanvas *cCut = util_pd::TC("cCut",1,1);
-      // cCut->cd(); 
-      
+      // Canvas to plot cut region
+      TCanvas *cCut = util_pd::TC("cCut",1,1);
+      cCut->SetTickx(); cCut->SetTicky(); cCut->cd();
+      hcut->Draw();
+      util_pd::PlotCutRegion(minval[i],maxval[i]);
+      cCut->Update(); cCut->Write(); if (is_vary_cut&&i==0) cCut->SaveAs(Form("%s[",outPlot.Data())); 
+      cCut->SaveAs(Form("%s",outPlot.Data())); 
     }
     // ***
 
@@ -626,12 +646,13 @@ int fit_dx (const char *configfilename,
       outdata << "\n";
       std::cout << "\n------\n";
 
-      // writing out the canvases
-      c0->Update(); c0->Write(); if (i==0) c0->SaveAs(Form("%s[",outPlot.Data())); 
-      c0->SaveAs(Form("%s",outPlot.Data())); 
-      // turning off the stats of data histo [IMPORTANT!]
-      h_dxHCAL_data->SetStats(0);
+      // further customization of the data histo 
+      h_dxHCAL_data->SetStats(0); //[IMPORTANT!]
       h_dxHCAL_data->SetTitle(Form("#Delta x {%s}",cuts_for_signal_data.c_str()));
+
+      // writing out the canvases
+      c0->Update(); c0->Write(); if (!is_vary_cut&&i==0) c0->SaveAs(Form("%s[",outPlot.Data())); 
+      c0->SaveAs(Form("%s",outPlot.Data())); 
       c1->Update(); c1->Write(); c1->SaveAs(Form("%s",outPlot.Data())); 
       c2->Update(); c2->Write(); c2->SaveAs(Form("%s",outPlot.Data())); 
       c3->Update(); c3->Write(); c3->SaveAs(Form("%s",outPlot.Data())); 
