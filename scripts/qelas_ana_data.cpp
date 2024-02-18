@@ -136,15 +136,6 @@ int qelas_ana_data (const char *configfilename,
   std::vector<void*> hcalclvar_mem = {&eHCAL,&xHCAL,&yHCAL,&indexHCAL,&rblkHCAL,&cblkHCAL,&idblkHCAL,&atimeHCAL,&tdcHCAL};
   setrootvar::setbranch(C, "sbs.hcal", hcalclvar, hcalclvar_mem);
 
-  // // hcal clus var [2]
-  // int maxHCALcl = 50;
-  // int idHCAL_clN; double idHCAL_cl[maxHCALcl];
-  // double nblkHCAL_cl[maxHCALcl], eblkHCAL_cl[maxHCALcl], atimeblkHCAL_cl[maxHCALcl], tdcblkHCAL_cl[maxHCALcl]; 
-  // double eHCAL_cl[maxHCALcl], HCAL_cl[maxHCALcl], yHCAL_cl[maxHCALcl], rblkHCAL_cl[maxHCALcl], cblkHCAL_cl[maxHCALcl];
-  // std::vector<std::string> hcalclvar_cl = {"id","id","nblk","eblk","e","x","y","rowblk","colblk","atimeblk","tdctime"};
-  // std::vector<void*> hcalclvar_cl_mem = {&idHCAL_cl,&idHCAL_clN,&nblkHCAL_cl,&eblkHCAL_cl,&eHCAL_cl,&xHCAL_cl,&yHCAL_cl,&rblkHCAL_cl,&cblkHCAL_cl,&atimeblkHCAL_cl,&tdcblkHCAL_cl};
-  // setrootvar::setbranch(C, "sbs.hcal.clus", hcalclvar_cl, hcalclvar_cl_mem, 1);
-
   // hcal all clus vars
   int maxNHCALcl = jmgr->GetValueFromSubKey<int>(key,"max_N_HCAL_clusters");
   int idblkHCAL_aclN; double idblkHCAL_acl[maxNHCALcl], rblkHCAL_acl[maxNHCALcl], cblkHCAL_acl[maxNHCALcl];
@@ -630,15 +621,6 @@ int qelas_ana_data (const char *configfilename,
     T_cblkSH = cblkSH;
     T_idblkSH = idblkSH;
     T_atimeSH = atimeSH;
-
-    // T_eHCAL = eHCAL;
-    // T_xHCAL = xHCAL;
-    // T_yHCAL = yHCAL;
-    // T_rblkHCAL = rblkHCAL;
-    // T_cblkHCAL = cblkHCAL;
-    // T_idblkHCAL = idblkHCAL;
-    // T_atimeHCAL = atimeHCAL;
-    // T_tdcHCAL = tdcHCAL[0];
 
     T_ncltmeanHODO = ncltmeanHODO;
     T_cltmeanHODO = cltmeanHODO[0];
