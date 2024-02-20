@@ -10,9 +10,7 @@
 
 /*
   To-Do:
-  1. c0 should contain data and MC error bars
-  2. If is_vary_cut = true, add cut range to each plot
-  3. add cut histo at the beginning 
+  1. A gif for the fits
 */
 
 #include "TH1F.h"
@@ -98,10 +96,10 @@ void customize_ht(TH1F* h)
 
 void customize_hs(TH1F* h) 
 {
-  h->SetMarkerColor(kBlack);
+  h->SetMarkerColor(kRed);
   h->SetMarkerSize(0.8);
   h->SetMarkerStyle(22);
-  h->SetLineColor(kBlack);
+  h->SetLineColor(kRed);
 }
 
 void customize_hbg(TH1F* h) 
@@ -124,14 +122,30 @@ void customize_hcut(TH1F* h)
   h->GetXaxis()->CenterTitle(true);
 }
 
+void customize_hsummary(TH1F* h, std::vector<std::string> const & lcuts)
+{
+  gStyle->SetErrorX(0);
+  gPad->SetGridy();
+  h->SetStats(0);
+  h->SetMarkerStyle(20);
+  h->SetMarkerColor(2);
+  h->SetLineColor(2);
+  for (int i=0; i<lcuts.size(); i++) h->GetXaxis()->SetBinLabel(i+1,lcuts[i].c_str());
+  h->LabelsOption("v","X");
+}
+
+void AddCutToLegend(TLegend *leg, std::string cut) {
+  TLegendEntry* legE = leg->AddEntry((TObject*)0,Form("%s",cut.c_str()),"");
+  legE->SetTextColor(2);
+}
+
 double total_fit (double * x, double * par) {
   FitFn *ffn = new FitFn(6);
   return ffn->ffn_gaus(x,&par[0]) + ffn->ffn_poly(x,&par[3]);
 }
 
 int fit_dx (const char *configfilename, 
-	    bool is_elastic = 1, // 1=>Yes, 0=>QE
-	    std::string filebase="pdout/fit_dx") 
+	    bool is_elastic = 1) // 1=>Yes, 0=>QE 
 {
   gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
 
@@ -156,6 +170,7 @@ int fit_dx (const char *configfilename,
   infprefix = infprefix.empty() ? "" : infprefix + "_";
 
   // defining output files
+  std::string filebase = jmgr->GetValueFromSubKey_str(key,"output_filebase");
   TString outFile = Form("%s_%s_pass%d_%s_sbs%d_sbs%dp_model%d.root",filebase.c_str(),key,pass,gen.c_str(),conf,sbsmag,model);
   TString outPlot = outFile; outPlot.ReplaceAll(".root",".pdf");
   TString outData = outFile; outData.ReplaceAll(".root",".csv"); ofstream outdata; outdata.open(outData);
@@ -203,38 +218,58 @@ int fit_dx (const char *configfilename,
 
   // Fits
   vector<double> dx_fit_range; jmgr->GetVectorFromSubKey<double>(key,"dx_fit_range",dx_fit_range);
+  vector<double> reject_points; jmgr->GetVectorFromSubKey<double>(key,"SB_reject_points",reject_points);
 
   // Cut variation **************
   // Although not necessary, keeping this loop separate gives more control and clarity
   // forming the cuts
   bool is_vary_cut = jmgr->GetValueFromSubKey<int>(key,"is_vary_cut");
-  bool is_vary_arnd_fix_bin = jmgr->GetValueFromSubKey<int>(key,"is_vary_arnd_fix_bin");
   std::string param_to_vary = jmgr->GetValueFromSubKey_str(key,"param_to_vary");
   vector<double> cut_range; jmgr->GetVectorFromSubKey<double>(key,"cut_iter_min_width",cut_range);
+  vector<double> h_cut_param; jmgr->GetVectorFromSubKey<double>(key,"h_cut_param",h_cut_param);
   double min = cut_range[1], width = cut_range[2]; 
   int iter = is_vary_cut ? (int)cut_range[0] : 1;
+  // choosing cut variation style
+  int cut_vary_style = jmgr->GetValueFromSubKey<int>(key,"cut_vary_style");
+  // 0 -> scan from low to high with fixed width
+  // 1 -> scan around a fixed mean with increasing width. NOTE: cut_range[1] = mean, in this case
+  // 2 -> increase threshold by a fixed amount
+  double low = cut_vary_style==1 ? min-width : min;
+  double high = cut_vary_style==2 ? h_cut_param[2] : min+width; 
   std::vector<double> minval, maxval;
-  std::vector<std::string> cuts, cuts_p, cuts_n;
-  // double low = vary_style==1 ? min-width : min;
-  // double high = vary_style==2 ? h_cut_param[2] : min+width; 
+  std::vector<std::string> cuts, cuts_p, cuts_n, cuts_2;
   for (int i=0; i<iter; i++) {
-    double max = min + width;
-    minval.push_back(min); maxval.push_back(max);
-    //minval.push_back(low); maxval.push_back(high);
-    std::string cut = param_to_vary+">"+std::to_string(min)+"&&"+param_to_vary+"<="+std::to_string(max); 
-    cuts.push_back(cut);
+    minval.push_back(low); maxval.push_back(high);
+    std::string cut, cut_2;
+    char low_buff[20]; std::snprintf(low_buff,20,"%.2f",low); std::string low_str(low_buff);
+    char high_buff[20]; std::snprintf(high_buff,20,"%.2f",high); std::string high_str(high_buff);
+    if (cut_vary_style==0 || cut_vary_style==1) {
+      cut = param_to_vary+">"+low_str+"&&"+param_to_vary+"<="+high_str; 
+      cut_2 = low_str+"<"+param_to_vary+"<="+high_str;
+    } 
+    else if (cut_vary_style==2) { cut = param_to_vary+">"+low_str; cut_2 = cut; }
+    cuts.push_back(cut); cuts_2.push_back(cut_2);
+    //std::cout << cut << "\n";
     std::string cut_p = cut + "&&mc_fnucl==1"; cuts_p.push_back(cut_p);
     std::string cut_n = cut + "&&mc_fnucl==0"; cuts_n.push_back(cut_n);
     // update high and low
-    min += width;
+    if (cut_vary_style==0) { low = high; high += width; }
+    else if (cut_vary_style==1) { low -= width; high += width; }
+    else if (cut_vary_style==2) { low += width; high = h_cut_param[2]; }
   }
 
-  outdata << "min,max,R0,R0err,R1,R1err,R2,R2err,R3,R3err,R4,R4err\n";
+  // various outputs
+  outdata << "cut,min,max,R0,R0err,R1,R1err,R2,R2err,R3,R3err,R4,R4err\n";
+  TString outGIF = outFile; outGIF.ReplaceAll(".root",".gif");
+
+  // summary histo
+  TH1F *htemp = new TH1F("htemp","",iter,-0.5,iter-0.5);
 
   // draawing cut histo
-  vector<double> h_cut_param; jmgr->GetVectorFromSubKey<double>(key,"h_cut_param",h_cut_param);
   TH1F *hcut = (TH1F*)data_rdf_filtered.Histo1D({"hcut","",int(h_cut_param[0]),h_cut_param[1],h_cut_param[2]},param_to_vary)->Clone();
   customize_hcut(hcut); hcut->SetTitle(Form("%s {%s}",param_to_vary.c_str(),cuts_for_signal_data.c_str()));
+  // Canvas to plot cut region
+  TCanvas *cCut = util_pd::TC("cCut",1,1);
   for (int i=0; i<iter; i++) {
     if (is_vary_cut) {
       h_dxHCAL_data = (TH1F*)data_rdf_filtered.Filter(cuts[i]).Histo1D({"h_dxHCAL_data","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
@@ -242,19 +277,20 @@ int fit_dx (const char *configfilename,
       h_dxHCAL_simu_p = (TH1F*)simu_rdf_filtered.Filter(cuts_p[i]).Histo1D({"h_dxHCAL_simu_p","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_p","weight")->Clone();
       if (!is_elastic) h_dxHCAL_simu_n = (TH1F*)simu_rdf_filtered.Filter(cuts_n[i]).Histo1D({"h_dxHCAL_simu_n","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_n","weight")->Clone();
 
-      // Canvas to plot cut region
-      TCanvas *cCut = util_pd::TC("cCut",1,1);
+      // drawing cut histos
       cCut->SetTickx(); cCut->SetTicky(); cCut->cd();
       hcut->Draw();
       util_pd::PlotCutRegion(minval[i],maxval[i]);
       cCut->Update(); cCut->Write(); if (is_vary_cut&&i==0) cCut->SaveAs(Form("%s[",outPlot.Data())); 
       cCut->SaveAs(Form("%s",outPlot.Data())); 
+      cCut->SaveAs(Form("%s+150",outGIF.Data()));
     }
     // ***
 
     /*######################################
       ## Fitting elastic dx distributions ##
       ###################################### */
+    std::vector<double> R_vals, Rerr_vals;
     if (is_elastic) {
       // Canvas 0 : Fitting data/MC w/o any background
       TCanvas *c0 = util_pd::TC("c0",1,1);
@@ -322,7 +358,7 @@ int fit_dx (const char *configfilename,
       // Canvas 3 : Sideband fit (distribution from data)
       TCanvas *c3 = util_pd::TC("c3",1,1);
       c3->cd(); gStyle->SetOptFit(1);
-      vector<double> reject_points{-1.3,-0.15};
+      //vector<double> reject_points{-1.3,-0.15};
       vector<TH1F*> ho3;
       TF1* bg3 = fit::fit_1pbg_SB(dx_fit_range,
 				  reject_points,
@@ -390,23 +426,24 @@ int fit_dx (const char *configfilename,
       ## Fitting QE dx distributions ##
       ################################# */
     else {
-      std::vector<double> R_vals, Rerr_vals;
-
       // Canvas 0 : Fitting data/MC w/o any background
       TCanvas *c0 = util_pd::TC("c0",1,1);
-      c0->cd(); gStyle->SetOptFit(1);
+      c0->cd(); //gStyle->SetOptFit(1);
       vector<TH1F*> ho;
       TF1 *f0 = fit::fit_2hs_nbg_THI(dx_fit_range,
-				     h_dxHCAL_data_CT,h_dxHCAL_simu_p,h_dxHCAL_simu_n,
+				     h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,
 				     ho);
       R_vals.push_back(f0->GetParameter(1)); Rerr_vals.push_back(f0->GetParError(1));
-      ho[0]->Draw(); customize_ht(ho[0]); customize_dx(ho[0]);
-      ho[1]->Draw("same"); customize_hs(ho[1]); customize_dx(ho[1]);
-      TLegend *l0=new TLegend(0.10,0.77,0.38,0.9);
+      //ho[0]->Draw("E"); customize_data(ho[0]); customize_dx(ho[0]);
+      h_dxHCAL_data->Draw("E"); customize_data(h_dxHCAL_data);
+      ho[1]->Draw("same"); customize_hs(ho[1]); //customize_dx(ho[1]);
+      //f0->Draw("same");
+      TLegend *l0 = new TLegend(0.10,0.78,0.30,0.9);
       l0->SetTextFont(42);
-      l0->AddEntry(ho[0],"Data","l");
-      l0->AddEntry(f0,"Fit","l");
-      l0->AddEntry(ho[1],"Signal","lep");
+      l0->AddEntry(h_dxHCAL_data,"Data","p");
+      //l0->AddEntry(f0,"Fit","l");
+      l0->AddEntry(ho[1],"Signal","p");
+      if (is_vary_cut) AddCutToLegend(l0,cuts_2[i].c_str());
       l0->Draw();
       // --- 
 
@@ -449,6 +486,7 @@ int fit_dx (const char *configfilename,
       l1->AddEntry(ho1[5],"n signal (from MC)","lf");
       l1->AddEntry(ho1[2],"Bg. (from Data)","lf");
       l1->AddEntry(ho1[3],"Residual","p");
+      if (is_vary_cut) AddCutToLegend(l1,cuts_2[i].c_str());
       l1->Draw();
       //
       // preparing the pad for residual
@@ -467,6 +505,10 @@ int fit_dx (const char *configfilename,
       TF1 *f2 = fit::fit_2hs_1hbg_THI(dx_fit_range,
 				      h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_inel,
 				      ho2);
+      if (is_vary_cut) {
+	htemp->SetBinContent(i+1,f2->GetParameter(1));
+	htemp->SetBinError(i+1,f2->GetParError(1));
+      }
       R_vals.push_back(f2->GetParameter(1)); Rerr_vals.push_back(f2->GetParError(1));
       // converting fit fn to a hostogram
       TH1F *hf2 = (TH1F*)h_dxHCAL_data->Clone(); util_pd::TF1toTH1F(f2,hf2);
@@ -498,6 +540,7 @@ int fit_dx (const char *configfilename,
       l2->AddEntry(ho2[5],"n signal (from MC)","lf");
       l2->AddEntry(ho2[2],"Bg. (from MC)","lf");
       l2->AddEntry(ho2[3],"Residual","p");
+      if (is_vary_cut) AddCutToLegend(l2,cuts_2[i].c_str());
       l2->Draw();
       //
       // preparing the pad for residual
@@ -548,6 +591,7 @@ int fit_dx (const char *configfilename,
       l3->AddEntry(ho3[5],"n signal (from MC)","lf");
       l3->AddEntry(ho3[2],Form("Bg. (poly. of order %d)",Opoly),"lf");
       l3->AddEntry(ho3[3],"Residual","p");
+      if (is_vary_cut) AddCutToLegend(l3,cuts_2[i].c_str());
       //l3->SetFillStyle(0); // makes legend box transparent
       l3->Draw();
       //
@@ -564,7 +608,7 @@ int fit_dx (const char *configfilename,
       TCanvas *c4 = util_pd::TC("c4",1,1); gStyleFitCanvas();
       c4->cd(); 
       // Let's perform the sideband fit first
-      vector<double> reject_points{-1.2,0.3};
+      //vector<double> reject_points{-1.2,0.3};
       vector<TH1F*> hosb4;
       TF1* bgsb4 = fit::fit_1pbg_SB(dx_fit_range,
 				    reject_points,
@@ -624,21 +668,22 @@ int fit_dx (const char *configfilename,
       l4->AddEntry(hf4,"Fit (QE MC + bg.)","lf");
       l4->AddEntry(ho4[3],"p signal (from MC)","lf");
       l4->AddEntry(ho4[4],"n signal (from MC)","lf");
-      l4->AddEntry(ho4[2],"Residual","p");
+      //l4->AddEntry(ho4[2],"Residual","p");
+      if (is_vary_cut) AddCutToLegend(l4,cuts_2[i].c_str());
       //l4->SetFillStyle(0); // makes legend box transparent
       l4->Draw();
-      //
-      // preparing the pad for residual
-      p4[1]->cd();
-      ho4[2]->Draw(); customize_residual(ho4[2]);
-      // drawing a horizontal line at y = 0
-      util_pd::DrawZeroLine(p4[1],dx_fit_range[0],dx_fit_range[1]);
+      // //
+      // // preparing the pad for residual
+      // p4[1]->cd();
+      // ho4[2]->Draw(); customize_residual(ho4[2]);
+      // // drawing a horizontal line at y = 0
+      // util_pd::DrawZeroLine(p4[1],dx_fit_range[0],dx_fit_range[1]);
 
       // Writing out fit parameters
       std::cout << "\n--- Reporting fit params ---\n";
-      std::cout << "min,max,R0,R0err,R1,R1err,R2,R2err,R3,R3err,R4,R4err\n";
-      std::cout << minval[i] << "," << maxval[i] << ",";
-      outdata << minval[i] << "," << maxval[i] << ",";
+      std::cout << "cut,min,max,R0,R0err,R1,R1err,R2,R2err,R3,R3err,R4,R4err\n";
+      std::cout << cuts_2[i] << "," << minval[i] << "," << maxval[i] << ",";
+      outdata << cuts_2[i] << "," << minval[i] << "," << maxval[i] << ",";
       for(size_t i=0; i < R_vals.size(); i++){
 	std::cout << R_vals[i] << "," << Rerr_vals[i] << ",";
 	outdata << R_vals[i] << "," << Rerr_vals[i] << ",";
@@ -648,7 +693,8 @@ int fit_dx (const char *configfilename,
 
       // further customization of the data histo 
       h_dxHCAL_data->SetStats(0); //[IMPORTANT!]
-      h_dxHCAL_data->SetTitle(Form("#Delta x {%s}",cuts_for_signal_data.c_str()));
+      h_dxHCAL_data->SetTitle(Form("dx {%s}",cuts_for_signal_data.c_str()));
+      h_dxHCAL_data->GetYaxis()->SetRangeUser(0,h_dxHCAL_data->GetMaximum()*1.1);
 
       // writing out the canvases
       c0->Update(); c0->Write(); if (!is_vary_cut&&i==0) c0->SaveAs(Form("%s[",outPlot.Data())); 
@@ -656,10 +702,28 @@ int fit_dx (const char *configfilename,
       c1->Update(); c1->Write(); c1->SaveAs(Form("%s",outPlot.Data())); 
       c2->Update(); c2->Write(); c2->SaveAs(Form("%s",outPlot.Data())); 
       c3->Update(); c3->Write(); c3->SaveAs(Form("%s",outPlot.Data())); 
-      c4->Update(); c4->Write(); c4->SaveAs(Form("%s",outPlot.Data())); if (i==iter-1) c4->SaveAs(Form("%s]",outPlot.Data())); 
+      c4->Update(); c4->Write(); c4->SaveAs(Form("%s",outPlot.Data())); 
+      if (i==iter-1) c4->SaveAs(Form("%s]",outPlot.Data())); 
     } // QE
+  } // for, cut vairation
 
+  if (is_vary_cut) {
+    // creating infinite loop gif
+    cCut->SaveAs(Form("%s++5",outGIF.Data())); 
+    // writing additional memory to file
+    // Canvas : Plotting cut variation summary
+    TCanvas *cGist = util_pd::TC("cGist",1,1); cGist->cd();
+    cGist->SetBottomMargin(0.3);
+    customize_hsummary(htemp,cuts_2);
+    htemp->Draw(); htemp->Write();
+    cGist->Write();
   }
+
+  // reporting output files
+  std::cout << "------" << std::endl;
+  std::cout << " Summary plots  : " << outPlot << std::endl;
+  std::cout << " Output ROOT file  : " << outFile << std::endl;
+  std::cout << "------" << std::endl;
 
   sw->Stop();
   std::cout << "CPU time = " << sw->CpuTime() << "s. Real time = " << sw->RealTime() << "s.\n\n";
