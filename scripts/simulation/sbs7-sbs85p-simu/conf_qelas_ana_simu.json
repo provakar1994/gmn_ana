@@ -4,18 +4,21 @@
     "Ntype"              : "np",
     "SBS_config"         : 7,
     "SBS_magnet_percent" : 85,
-    "prefix_to_filebase" : "1p0sf",
+    "prefix_to_filebase" : "0p815sf",
     "Njobs_to_ana"       : -1,
-    "rootfile_dir"       : "/lustre19/expphy/volatile/halla/sbs/pdbforce/g4sbs_output/dMCcomp/sbs11_sbs100p/ld2",
-    "global_cut"         : "bb.tr.n>0&&bb.gem.track.nhits>3&&abs(bb.tr.vz[0])<0.08&&abs(bb.tr.r_x[0]-0.9*bb.tr.r_th[0])<0.32&&bb.tr.p[0]>1.8&&bb.ps.e>0.2",
+    "rootfile_dir"       : "/lustre19/expphy/volatile/halla/sbs/pdbforce/g4sbs_output/dMCcomp/sbs7_sbs85p/0p815sf/simc",
+    "global_cut"         : "bb.tr.n>0&&bb.gem.track.nhits>3&&abs(bb.tr.vz[0])<0.08&&bb.tr.p[0]>2.1&&bb.ps.e>0.2",
     "W_cutR"             : [0.7,1.2],
+    "bbfidu_cutR"        : [0.035,0.335],
+    "max_N_tracks"       : 250,
     "SBS_field"          : 0.595,
-    "hcal_voffset"       : 0.015,
+    "hcal_voffset"       : 0,
     "hcal_hoffset"       : 0,
-    "dx_p_cut"           : [-0.726362,0.0809066,3],
-    "dy_p_cut"           : [-0.0195559,0.126236,3],
-    "dx_n_cut"           : [0.0241716,0.0803376,3],
-    "dy_n_cut"           : [-0.0195559,0.126236,3],
+    "hcal_zoffset"       : 0,
+    "dx_p_cut"           : [-0.777869,0.105705,3],
+    "dy_p_cut"           : [-0.0137088,0.125362,3],
+    "dx_n_cut"           : [-0.00111071,0.0886445,3],
+    "dy_n_cut"           : [-0.0137088,0.125362,3],
     "h_dxHCAL_lims"      : [290,-3.2,2.6],
     "h_dyHCAL_lims"      : [200,-1.5,1.5],
     "h_dxHCAL_p_fitR"    : [-2,-0.37,0.8,0.8],
@@ -26,8 +29,8 @@
     "gen_ML_data"        : 0,
     "verbose"            : -1,
     "verbose_function"   : 0,
-    "output_filebase"    : "siout/1p0sf_qelas_ana",
-    "COMMENTS"           : "It takes 13 hrs to run 50K g4sbs LD2 events!!"
+    "output_filebase"    : "siout/0p815sf_qelas_ana",
+    "COMMENTS"           : "02/16/24"
 },
 "g4sbs_deeN_model2":
 {
@@ -125,7 +128,7 @@
     "gen_ML_data"        : 0,
     "verbose"            : -1,
     "verbose_function"   : 0,
-    "output_filebase"    : "siout/0p815sf_inel_ld2",
+    "output_filebase"    : "siout/0p815sf_inel_qelas",
     "COMMENTS"           : "Inelastic MC ran on  02/12/24"
 }
 }

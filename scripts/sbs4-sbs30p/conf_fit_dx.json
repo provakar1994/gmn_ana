@@ -1,9 +1,41 @@
 {
-"elas":
+"qelas":
 {
     "SBS_config"           : 4,
     "SBS_magnet_percent"   : 30,
     "model"                : 2,
+    "pass"                 : 2,
+    "generator"            : "simc",
+    "data_file_prefix"     : "test",
+    "simu_file_prefix"     : "0p42sf",
+    "inel_file_prefix"     : "0p65sf",
+    "coinT_cut"            : "abs(coinT_trig-518)<20",
+    "cuts_for_signal_data" : "WCut&&fiduCut&&abs(dy)<0.3&&eHCAL>0&&coinTADCCut",
+    "cuts_for_signal_simu" : "WCut&&fiduCut&&abs(dy)<0.3&&eHCAL>0",
+    "cuts_for_bg_data"     : "W>0.3&&W<1.3&&fiduCut&&dy>0.6",
+    "cuts_for_bg_simu"     : "W2>0.89&&trP>1.16&&eHCAL>0",
+    "dx_offset_MC_for_p"   : -0.01,
+    "dx_offset_MC_for_n"   : -0.048,
+    "Order_of_poly_bg"     : 2,
+    "h_dx"                 : [120,-2,1],
+    "dx_fit_range"         : [-2,1],
+    "SB_reject_points"     : [-1.2,0.3],
+    "CUT VARIATION SECTION": "------ See Below ------",
+    "NOTE [IMPORTANT]"     : "cuts_for_signal* above SHOULDN't contain the cut to vary",
+    "is_vary_cut"          : 0,
+    "cut_vary_style"       : 0,
+    "param_to_vary"        : "eHCAL",
+    "h_cut_param"          : [200,0,1.0],
+    "cut_iter_min_width"   : [10,0,0.1],
+    "SCRIPT RUN SECTION"   : "------ See Below ------",
+    "output_filebase"      : "0p42sf_fit_dx",
+    "LAST MODIFIED ON"     : "02/20/24"                 
+},
+"elas_old":
+{
+    "SBS_config"           : 4,
+    "SBS_magnet_percent"   : 30,
+    "model"                : 1,
     "pass"                 : 2,
     "data_file_prefix"     : "test",
     "simu_file_prefix"     : "hoff75cm_385sf",
@@ -12,12 +44,12 @@
     "cuts_for_signal_data" : "W2>=0.3&&W2<=1.4&&eHCAL>0",
     "cuts_for_signal_simu" : "W2>=0.3&&W2<=1.4&&eHCAL>0",
     "cuts_for_bg"          : "1",
-    "dx_peak_offset_for_MC": 0.03,
+    "dx_offset_MC_for_p"   : 0.03,
     "Order_of_poly_bg"     : 4,
     "h_dx"                 : [120,-2,1],
     "dx_fit_range"         : [-2,1]
 },
-"qelas":
+"qelas_old":
 {
     "SBS_config"           : 4,
     "SBS_magnet_percent"   : 30,
@@ -30,7 +62,8 @@
     "cuts_for_signal_data" : "W>=0.3&&W<=1.3&&fiduCut&&abs(dy)<0.3",
     "cuts_for_signal_simu" : "W>=0.3&&W<=1.3&&fiduCut&&abs(dy)<0.3",
     "cuts_for_bg"          : "WCut&&fiduCut&&dy>0.6",
-    "dx_peak_offset_for_MC": 0,
+    "dx_offset_MC_for_p"   : 0,
+    "dx_offset_MC_for_n"   : 0,
     "Order_of_poly_bg"     : 5,
     "h_dx"                 : [120,-3.5,2.5],
     "dx_fit_range"         : [-3.5,2.5]

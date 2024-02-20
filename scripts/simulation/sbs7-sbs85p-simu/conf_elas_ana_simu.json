@@ -54,7 +54,7 @@
     "NOTE"               : "verbose=0 & verbosefn=0 => Production; verbose<-1=>Debug, =-1=>Test; verbosefn>0=>Debug",
     "verbose"            : -1,
     "verbose_function"   : 0,
-    "output_filebase"    : "siout/0p815sf_inel_lh2",
+    "output_filebase"    : "siout/0p815sf_inel_elas",
     "README"             : "for pass2 data: 02/15/24"
 },
 "old":
