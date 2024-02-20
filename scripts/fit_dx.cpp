@@ -169,13 +169,6 @@ int fit_dx (const char *configfilename,
   sfprefix = sfprefix.empty() ? "" : sfprefix + "_";
   infprefix = infprefix.empty() ? "" : infprefix + "_";
 
-  // defining output files
-  std::string filebase = jmgr->GetValueFromSubKey_str(key,"output_filebase");
-  TString outFile = Form("%s_%s_pass%d_%s_sbs%d_sbs%dp_model%d.root",filebase.c_str(),key,pass,gen.c_str(),conf,sbsmag,model);
-  TString outPlot = outFile; outPlot.ReplaceAll(".root",".pdf");
-  TString outData = outFile; outData.ReplaceAll(".root",".csv"); ofstream outdata; outdata.open(outData);
-  TFile *fout = new TFile(outFile.Data(), "RECREATE");
-
   // reading ROOT files as df
   ROOT::EnableImplicitMT();
   ROOT::RDataFrame data_rdf("Tout",Form("pdout/%s%s_ana_data_sbs%d_sbs%dp_model%d_pass%d.root",dfprefix.c_str(),key,conf,sbsmag,model,pass));
@@ -188,6 +181,7 @@ int fit_dx (const char *configfilename,
   std::string cuts_for_bg_data = jmgr->GetValueFromSubKey_str(key,"cuts_for_bg_data");
   std::string cuts_for_bg_simu = jmgr->GetValueFromSubKey_str(key,"cuts_for_bg_simu");
   std::string coinT_cut = jmgr->GetValueFromSubKey_str(key,"coinT_cut");
+  bool is_vary_cut = jmgr->GetValueFromSubKey<int>(key,"is_vary_cut");
   int Opoly = jmgr->GetValueFromSubKey<int>(key,"Order_of_poly_bg");
   auto data_rdf_filtered = data_rdf.Filter(cuts_for_signal_data);
   auto simu_rdf_filtered_1 = simu_rdf.Filter(cuts_for_signal_simu);
@@ -216,6 +210,14 @@ int fit_dx (const char *configfilename,
   if (!is_elastic) h_dxHCAL_bg_inel_n = (TH1F*)inel_rdf_filtered.Filter("mc_fnucl==0").Histo1D({"h_dxHCAL_bg_inel_n","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_n","weight")->Clone();
   TH1F *h_dxHCAL_bg_inel = (TH1F*)h_dxHCAL_bg_inel_p->Clone(); h_dxHCAL_bg_inel->Add(h_dxHCAL_bg_inel_p,h_dxHCAL_bg_inel_n);
 
+  // defining output files
+  std::string filebase = jmgr->GetValueFromSubKey_str(key,"output_filebase");
+  char const * outdir = !is_vary_cut ? "pdout/" : "pdout/sysstdy/";
+  TString outFile = Form("%s%s_%s_pass%d_%s_sbs%d_sbs%dp_model%d.root",outdir,filebase.c_str(),key,pass,gen.c_str(),conf,sbsmag,model);
+  TString outPlot = outFile; outPlot.ReplaceAll(".root",".pdf");
+  TString outData = outFile; outData.ReplaceAll(".root",".csv"); ofstream outdata; outdata.open(outData);
+  TFile *fout = new TFile(outFile.Data(), "RECREATE");
+
   // Fits
   vector<double> dx_fit_range; jmgr->GetVectorFromSubKey<double>(key,"dx_fit_range",dx_fit_range);
   vector<double> reject_points; jmgr->GetVectorFromSubKey<double>(key,"SB_reject_points",reject_points);
@@ -223,7 +225,6 @@ int fit_dx (const char *configfilename,
   // Cut variation **************
   // Although not necessary, keeping this loop separate gives more control and clarity
   // forming the cuts
-  bool is_vary_cut = jmgr->GetValueFromSubKey<int>(key,"is_vary_cut");
   std::string param_to_vary = jmgr->GetValueFromSubKey_str(key,"param_to_vary");
   vector<double> cut_range; jmgr->GetVectorFromSubKey<double>(key,"cut_iter_min_width",cut_range);
   vector<double> h_cut_param; jmgr->GetVectorFromSubKey<double>(key,"h_cut_param",h_cut_param);
@@ -259,7 +260,8 @@ int fit_dx (const char *configfilename,
   }
 
   // various outputs
-  outdata << "cut,min,max,R0,R0err,R1,R1err,R2,R2err,R3,R3err,R4,R4err\n";
+  outdata << "cut,min,max,chi20,NDF0,R0,R0err,B0,B0err,chi21,NDF1,R1,R1err,B1,B1err,chi22,NDF2,R2,R2err,B2,B2err,"
+	  << "chi23,NDF3,R3,R3err,B3,B3err,chi24,NDF4,R4,R4err,B4,B4err\n";
   TString outGIF = outFile; outGIF.ReplaceAll(".root",".gif");
 
   // summary histo
@@ -270,6 +272,7 @@ int fit_dx (const char *configfilename,
   customize_hcut(hcut); hcut->SetTitle(Form("%s {%s}",param_to_vary.c_str(),cuts_for_signal_data.c_str()));
   // Canvas to plot cut region
   TCanvas *cCut = util_pd::TC("cCut",1,1);
+  if (!is_vary_cut) cCut->Delete();
   for (int i=0; i<iter; i++) {
     if (is_vary_cut) {
       h_dxHCAL_data = (TH1F*)data_rdf_filtered.Filter(cuts[i]).Histo1D({"h_dxHCAL_data","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
@@ -281,6 +284,11 @@ int fit_dx (const char *configfilename,
       cCut->SetTickx(); cCut->SetTicky(); cCut->cd();
       hcut->Draw();
       util_pd::PlotCutRegion(minval[i],maxval[i]);
+      TLegend *lCut = new TLegend(0.10,0.80,0.30,0.9);
+      lCut->SetTextFont(42);
+      lCut->AddEntry(hcut,Form("%s",param_to_vary.c_str()),"l");
+      AddCutToLegend(lCut,cuts_2[i].c_str());
+      lCut->Draw();
       cCut->Update(); cCut->Write(); if (is_vary_cut&&i==0) cCut->SaveAs(Form("%s[",outPlot.Data())); 
       cCut->SaveAs(Form("%s",outPlot.Data())); 
       cCut->SaveAs(Form("%s+150",outGIF.Data()));
@@ -290,7 +298,7 @@ int fit_dx (const char *configfilename,
     /*######################################
       ## Fitting elastic dx distributions ##
       ###################################### */
-    std::vector<double> R_vals, Rerr_vals;
+    std::vector<double> R_vals,Rerr_vals,chi2,NDF,B_vals,Berr_vals;
     if (is_elastic) {
       // Canvas 0 : Fitting data/MC w/o any background
       TCanvas *c0 = util_pd::TC("c0",1,1);
@@ -305,7 +313,7 @@ int fit_dx (const char *configfilename,
       l0->SetTextFont(42);
       l0->AddEntry(ho[0],"Data","l");
       l0->AddEntry(f0,"Fit","l");
-      l0->AddEntry(ho[1],"Signal","lep");
+      l0->AddEntry(ho[1],"MC Signal","lep");
       l0->Draw();
       // --- 
 
@@ -433,7 +441,10 @@ int fit_dx (const char *configfilename,
       TF1 *f0 = fit::fit_2hs_nbg_THI(dx_fit_range,
 				     h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,
 				     ho);
+      // grabbing fit params for future use
+      chi2.push_back(f0->GetChisquare()); NDF.push_back(f0->GetNDF());
       R_vals.push_back(f0->GetParameter(1)); Rerr_vals.push_back(f0->GetParError(1));
+      B_vals.push_back(0); Berr_vals.push_back(0);
       //ho[0]->Draw("E"); customize_data(ho[0]); customize_dx(ho[0]);
       h_dxHCAL_data->Draw("E"); customize_data(h_dxHCAL_data);
       ho[1]->Draw("same"); customize_hs(ho[1]); //customize_dx(ho[1]);
@@ -442,7 +453,7 @@ int fit_dx (const char *configfilename,
       l0->SetTextFont(42);
       l0->AddEntry(h_dxHCAL_data,"Data","p");
       //l0->AddEntry(f0,"Fit","l");
-      l0->AddEntry(ho[1],"Signal","p");
+      l0->AddEntry(ho[1],"MC Signal","p");
       if (is_vary_cut) AddCutToLegend(l0,cuts_2[i].c_str());
       l0->Draw();
       // --- 
@@ -455,7 +466,10 @@ int fit_dx (const char *configfilename,
       TF1 *f1 = fit::fit_2hs_1hbg_THI(dx_fit_range,
 				      h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_data,
 				      ho1);
+      // grabbing fit params for future use
+      chi2.push_back(f1->GetChisquare()); NDF.push_back(f1->GetNDF());
       R_vals.push_back(f1->GetParameter(1)); Rerr_vals.push_back(f1->GetParError(1));
+      B_vals.push_back(f1->GetParameter(2)); Berr_vals.push_back(f1->GetParError(2));
       // converting fit fn to a hostogram
       TH1F *hf1 = (TH1F*)h_dxHCAL_data->Clone(); util_pd::TF1toTH1F(f1,hf1);
       ho1[0]->Draw(); c1->Update(); 
@@ -509,7 +523,10 @@ int fit_dx (const char *configfilename,
 	htemp->SetBinContent(i+1,f2->GetParameter(1));
 	htemp->SetBinError(i+1,f2->GetParError(1));
       }
+      // grabbing fit params for future use
+      chi2.push_back(f2->GetChisquare()); NDF.push_back(f2->GetNDF());
       R_vals.push_back(f2->GetParameter(1)); Rerr_vals.push_back(f2->GetParError(1));
+      B_vals.push_back(f2->GetParameter(2)); Berr_vals.push_back(f2->GetParError(2));
       // converting fit fn to a hostogram
       TH1F *hf2 = (TH1F*)h_dxHCAL_data->Clone(); util_pd::TF1toTH1F(f2,hf2);
       ho2[0]->Draw(); c2->Update(); 
@@ -559,7 +576,10 @@ int fit_dx (const char *configfilename,
       TF1 *f3 = fit::fit_2hs_1pbg_THI(dx_fit_range,
 				      h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,Opoly,
 				      ho3);
+      // grabbing fit params for future use
+      chi2.push_back(f3->GetChisquare()); NDF.push_back(f3->GetNDF());
       R_vals.push_back(f3->GetParameter(1)); Rerr_vals.push_back(f3->GetParError(1));
+      B_vals.push_back(f3->GetParameter(2)); Berr_vals.push_back(f3->GetParError(2));
       // converting fit fn to a hostogram
       TH1F *hf3 = (TH1F*)h_dxHCAL_data->Clone(); util_pd::TF1toTH1F(f3,hf3);
       ho3[0]->Draw(); c3->Update(); 
@@ -628,7 +648,10 @@ int fit_dx (const char *configfilename,
       TF1 *f4 = fit::fit_2hs_nbg_THI(dx_fit_range,
 				     hosb4[1],h_dxHCAL_simu_p,h_dxHCAL_simu_n,
 				     ho4);
+      // grabbing fit params for future use
+      chi2.push_back(f4->GetChisquare()); NDF.push_back(f4->GetNDF());
       R_vals.push_back(f4->GetParameter(1)); Rerr_vals.push_back(f4->GetParError(1));
+      B_vals.push_back(bgsb4->GetParameter(0)); Berr_vals.push_back(bgsb4->GetParError(0));
       // converting fit fn to a hostogram
       TH1F *hf4 = (TH1F*)h_dxHCAL_data->Clone(); util_pd::TF1toTH1F(f4,hf4);
       ho4[0]->Draw(); c4->Update(); 
@@ -686,7 +709,8 @@ int fit_dx (const char *configfilename,
       outdata << cuts_2[i] << "," << minval[i] << "," << maxval[i] << ",";
       for(size_t i=0; i < R_vals.size(); i++){
 	std::cout << R_vals[i] << "," << Rerr_vals[i] << ",";
-	outdata << R_vals[i] << "," << Rerr_vals[i] << ",";
+	//outdata << R_vals[i] << "," << Rerr_vals[i] << ",";
+	outdata << Form("%.1f,%.1f,%.4f,%.4f,%.4f,%.4f,",chi2[i],NDF[i],R_vals[i],Rerr_vals[i],B_vals[i],Berr_vals[i]);
       }
       outdata << "\n";
       std::cout << "\n------\n";
@@ -721,6 +745,7 @@ int fit_dx (const char *configfilename,
 
   // reporting output files
   std::cout << "------" << std::endl;
+  std::cout << " Fit params  : " << outData << std::endl;
   std::cout << " Summary plots  : " << outPlot << std::endl;
   std::cout << " Output ROOT file  : " << outFile << std::endl;
   std::cout << "------" << std::endl;
