@@ -449,11 +449,13 @@ int fit_dx (const char *configfilename,
       h_dxHCAL_data->Draw("E"); customize_data(h_dxHCAL_data);
       ho[1]->Draw("same"); customize_hs(ho[1]); //customize_dx(ho[1]);
       //f0->Draw("same");
-      TLegend *l0 = new TLegend(0.10,0.78,0.30,0.9);
+      TLegend *l0 = new TLegend(0.10,0.73,0.35,0.9);
       l0->SetTextFont(42);
       l0->AddEntry(h_dxHCAL_data,"Data","p");
       //l0->AddEntry(f0,"Fit","l");
       l0->AddEntry(ho[1],"MC Signal","p");
+      l0->AddEntry((TObject*)0,Form("MC p peak offset: %.3fm",dx_offset_p),"");
+      l0->AddEntry((TObject*)0,Form("MC n peak offset: %.3fm",dx_offset_n),"");
       if (is_vary_cut) AddCutToLegend(l0,cuts_2[i].c_str());
       l0->Draw();
       // --- 
