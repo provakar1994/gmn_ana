@@ -184,16 +184,16 @@ int fit_dx (const char *configfilename,
   bool is_vary_cut = jmgr->GetValueFromSubKey<int>(key,"is_vary_cut");
   int Opoly = jmgr->GetValueFromSubKey<int>(key,"Order_of_poly_bg");
   auto data_rdf_filtered = data_rdf.Filter(cuts_for_signal_data);
-  auto simu_rdf_filtered_1 = simu_rdf.Filter(cuts_for_signal_simu);
-  auto inel_rdf_filtered_1 = inel_rdf.Filter(cuts_for_bg_simu);
+  auto simu_rdf_filtered = simu_rdf.Filter(cuts_for_signal_simu);
+  auto inel_rdf_filtered = inel_rdf.Filter(cuts_for_bg_simu);
+  auto bg_data_rdf_filtered = data_rdf.Filter(cuts_for_bg_data);
   // Reading in offsets for dx peak position in MC for both p and n
   double dx_offset_p = jmgr->GetValueFromSubKey<double>(key,"dx_offset_MC_for_p");
   double dx_offset_n = !is_elastic ? jmgr->GetValueFromSubKey<double>(key,"dx_offset_MC_for_n") : 0;
   std::string dx_shifted_p = "dx+" + std::to_string(dx_offset_p);
   std::string dx_shifted_n = "dx+" + std::to_string(dx_offset_n);
-  auto simu_rdf_filtered = simu_rdf_filtered_1.Define("dx_shifted_p",dx_shifted_p.c_str()).Define("dx_shifted_n",dx_shifted_n.c_str());
-  auto inel_rdf_filtered = inel_rdf_filtered_1.Define("dx_shifted_p",dx_shifted_p.c_str()).Define("dx_shifted_n",dx_shifted_n.c_str());
-  auto bg_data_rdf_filtered = data_rdf.Filter(cuts_for_bg_data);
+  simu_rdf_filtered = simu_rdf_filtered.Define("dx_shifted_p",dx_shifted_p.c_str()).Define("dx_shifted_n",dx_shifted_n.c_str());
+  inel_rdf_filtered = inel_rdf_filtered.Define("dx_shifted_p",dx_shifted_p.c_str()).Define("dx_shifted_n",dx_shifted_n.c_str());
 
   // Creating important histograms
   vector<double> h_dx; jmgr->GetVectorFromSubKey<double>(key,"h_dx",h_dx);
@@ -258,6 +258,7 @@ int fit_dx (const char *configfilename,
     else if (cut_vary_style==1) { low -= width; high += width; }
     else if (cut_vary_style==2) { low += width; high = h_cut_param[2]; }
   }
+  
 
   // various outputs
   outdata << "cut,min,max,chi20,NDF0,R0,R0err,B0,B0err,chi21,NDF1,R1,R1err,B1,B1err,chi22,NDF2,R2,R2err,B2,B2err,"
@@ -273,7 +274,7 @@ int fit_dx (const char *configfilename,
   customize_hcut(hcut); hcut->SetTitle(Form("%s {%s}",param_to_vary.c_str(),cuts_for_signal_data.c_str()));
   // Canvas to plot cut region
   TCanvas *cCut = util_pd::TC("cCut",1,1);
-  if (!is_vary_cut) cCut->Delete();
+  if (!is_vary_cut) cCut->Close();
   for (int i=0; i<iter; i++) {
     if (is_vary_cut) {
       h_dxHCAL_data = (TH1F*)data_rdf_filtered.Filter(cuts[i]).Histo1D({"h_dxHCAL_data","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
