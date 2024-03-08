@@ -263,6 +263,7 @@ int fit_dx (const char *configfilename,
   outdata << "cut,min,max,chi20,NDF0,R0,R0err,B0,B0err,chi21,NDF1,R1,R1err,B1,B1err,chi22,NDF2,R2,R2err,B2,B2err,"
 	  << "chi23,NDF3,R3,R3err,B3,B3err,chi24,NDF4,R4,R4err,B4,B4err\n";
   TString outGIF = outFile; outGIF.ReplaceAll(".root",".gif");
+  TString outPNG = outFile; outPNG.ReplaceAll(".root","");
 
   // summary histo
   TH1F *htemp = new TH1F("htemp","",iter,-0.5,iter-0.5);
@@ -291,6 +292,7 @@ int fit_dx (const char *configfilename,
       lCut->Draw();
       cCut->Update(); cCut->Write(); if (is_vary_cut&&i==0) cCut->SaveAs(Form("%s[",outPlot.Data())); 
       cCut->SaveAs(Form("%s",outPlot.Data())); 
+      //cCut->SaveAs(Form("%s_cCut_%d.png",outPNG.Data(),i)); 
       cCut->SaveAs(Form("%s+150",outGIF.Data()));
     }
     // ***
@@ -569,6 +571,7 @@ int fit_dx (const char *configfilename,
       // drawing a horizontal line at y = 0
       util_pd::DrawZeroLine(p2[1],dx_fit_range[0],dx_fit_range[1]);
       // ** ----- ***
+      //c2->SaveAs(Form("%s_c2_%d.png",outPNG.Data(),i)); 
     
       // Canvas 3 : Fitting data/MC w/ polynomial background
       TCanvas *c3 = util_pd::TC("c3",1,1); gStyleFitCanvas();
@@ -623,6 +626,8 @@ int fit_dx (const char *configfilename,
       ho3[3]->Draw(); customize_residual(ho3[3]);
       // drawing a horizontal line at y = 0
       util_pd::DrawZeroLine(p3[1],dx_fit_range[0],dx_fit_range[1]);
+      // *******************
+      //c3->SaveAs(Form("%s_c3_%d.png",outPNG.Data(),i)); 
 
       // ** --
       // Canvas 4 : Fitting w/ polynomial background using side band method
@@ -720,7 +725,7 @@ int fit_dx (const char *configfilename,
       // further customization of the data histo 
       h_dxHCAL_data->SetStats(0); //[IMPORTANT!]
       h_dxHCAL_data->SetTitle(Form("dx {%s}",cuts_for_signal_data.c_str()));
-      h_dxHCAL_data->GetYaxis()->SetRangeUser(0,h_dxHCAL_data->GetMaximum()*1.1);
+      h_dxHCAL_data->GetYaxis()->SetRangeUser(-5,h_dxHCAL_data->GetMaximum()*1.1);
 
       // writing out the canvases
       c0->Update(); c0->Write(); if (!is_vary_cut&&i==0) c0->SaveAs(Form("%s[",outPlot.Data())); 
