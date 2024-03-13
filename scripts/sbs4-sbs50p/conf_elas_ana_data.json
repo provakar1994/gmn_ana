@@ -1,15 +1,14 @@
 {
-"pass2":
+"pass2_model2":
 {
     "Ntype"              : "p",
     "SBS_config"         : 4,
     "SBS_magnet_percent" : 50,
-    "model"              : 2,
     "Nruns_to_ana"       : -1,
     "get_scaler_info"    : 0,
     "runsheet_dir"       : "../DB",
     "rootfile_dir"       : "/lustre19/expphy/volatile/halla/sbs/sbs-gmn/GMN_REPLAYS/pass2_take4/SBS4/LH2/rootfiles",
-    "global_cut"         : "fEvtHdr.fTrigBits==1&&bb.tr.n>0&&bb.gem.track.nhits>2&&abs(bb.tr.vz[0])<0.08&&bb.ps.e>0.2",
+    "global_cut"         : "fEvtHdr.fTrigBits==1&&bb.tr.n>0&&bb.gem.track.nhits>3&&abs(bb.tr.vz[0])<0.08&&bb.tr.p[0]>1.6&&bb.ps.e>0.2",
     "W_cutR"             : [0.7,1.12],
     "bbfidu_cutR"        : [0.02,0.33],
     "coinT_ADC_cutR"     : [1.15,1.4,3],
@@ -26,6 +25,11 @@
     "h_dyHCAL_lims"      : [200,-1.5,1.5],
     "h_dxHCAL_p_fitR"    : [-2,-0.33,1.2,1.2],
     "h_dyHCAL_fitR"      : [-1,1,1.2,1.2],
+    "Other_parmas_block" : "-----FOLLOWING PARMAS ARE NEEDED TO RUN THE SCRIPT-----",
+    "NOTE"               : "verbose=0 & verbosefn=0 => Production; verbose<-1=>Debug, =-1=>Test; verbosefn>0=>Debug",
+    "verbose"            : -1,
+    "verbose_function"   : 0,
+    "outfile_prefix"     : "p2_t4",
     "README"             : "pass2 take4: 03/13/2024"
 },
 "pass2_take3":

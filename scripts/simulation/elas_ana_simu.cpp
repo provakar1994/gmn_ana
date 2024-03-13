@@ -134,9 +134,9 @@ int elas_ana_simu (const char *configfilename,
   C->SetBranchStatus("bb.etot_over_p", 1);
 
   // defining the outputfile
-  std::string filebase = jmgr->GetValueFromSubKey_str(key,"output_filebase");
-  if (verbose==0 && verbosefn==0) filebase = "siout/elas_ana";
-  TString outFile = Form("%s_%s_sbs%d_sbs%dp_model%d.root",filebase.c_str(),generator.c_str(),conf,sbsmag,model);
+  std::string filebase = jmgr->GetValueFromSubKey_str(key,"outfile_prefix");
+  filebase = (verbose==0 && verbosefn==0) ? "" : filebase + "_";
+  TString outFile = Form("siout/%selas_ana_%s_sbs%d_sbs%dp_model%d.root",filebase.c_str(),generator.c_str(),conf,sbsmag,model);
   TFile *fout = new TFile(outFile.Data(),"RECREATE");
 
   // defining histograms

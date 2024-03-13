@@ -1,5 +1,5 @@
 {
-"pass2":
+"pass2_model2":
 {
     "Ntype"              : "np",
     "SBS_config"         : 4,
@@ -29,6 +29,11 @@
     "h_dxHCAL_p_fitR"    : [-2,-0.33,0.8,0.8],
     "h_dxHCAL_n_fitR"    : [-0.33,0.5,0.8,0.8],
     "h_dyHCAL_fitR"      : [-1,1,0.8,0.8],
+    "Other_parmas_block" : "-----FOLLOWING PARMAS ARE NEEDED TO RUN THE SCRIPT-----",
+    "NOTE"               : "verbose=0 & verbosefn=0 => Production; verbose<-1=>Debug, =-1=>Test; verbosefn>0=>Debug",
+    "verbose"            : -1,
+    "verbose_function"   : 0,
+    "outfile_prefix"     : "p2_t4",
     "README"             : "First look at official pass2 data: 01/31/2024"
 },
 "qa_pass2_model0":

@@ -33,10 +33,7 @@ static const std::string target = "LH2";
 
 int elas_ana_data (const char *configfilename,
 		   int pass, //replay pass
-		   int verbose=-1,  //<0=>Debug
-		   int verbosefn=0, //>0=>Debug
-		   /* verbose==verbosefn==0 => Production */
-		   std::string filebase="pdout/test_elas_ana")
+		   int model=2) //Analysis model
 {
   gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
 
@@ -45,7 +42,11 @@ int elas_ana_data (const char *configfilename,
 
   // reading input config file ---------------------------------------
   JSONManager *jmgr = new JSONManager(configfilename);
-  std::string key = "pass" + std::to_string(pass);
+  std::string key = "pass" + std::to_string(pass) + "_model" + std::to_string(model);
+
+  // setting verbosity
+  int verbose = jmgr->GetValueFromSubKey<int>(key,"verbose");
+  int verbosefn = jmgr->GetValueFromSubKey<int>(key,"verbose_function");
 
   // seting up the desired SBS configuration
   int conf = jmgr->GetValueFromSubKey<int>(key,"SBS_config");
@@ -72,7 +73,6 @@ int elas_ana_data (const char *configfilename,
   // model 0 => uses reconstructed p as independent variable
   // model 1 => uses reconstructed angles as independent variable
   // model 2 => uses 4-vector calculation
-  int model = jmgr->GetValueFromSubKey<int>(key,"model");
   if (model == 0) std::cout << "Using model 0 [recon. p as indep. var.] for analysis.." << std::endl;
   else if (model == 1) std::cout << "Using model 1 [recon. angle as indep. var.] for analysis.." << std::endl;
   else if (model == 2) std::cout << "Using model 2 [4-vector calculation] for analysis.." << std::endl;
@@ -201,8 +201,9 @@ int elas_ana_data (const char *configfilename,
   if (get_scaler_info) setrootvar::setbranch(S,"",streevar,streevar_mem);
 
   // defining the outputfile
-  if (verbose==0 && verbosefn==0) filebase = "pdout/elas_ana";
-  TString outFile = Form("%s_data_sbs%d_sbs%dp_model%d_pass%d.root",filebase.c_str(),conf,sbsmag,model,pass);
+  std::string filebase = jmgr->GetValueFromSubKey_str(key,"outfile_prefix");
+  filebase = (verbose==0 && verbosefn==0) ? "" : filebase + "_";
+  TString outFile = Form("pdout/%selas_ana_data_sbs%d_sbs%dp_model%d_pass%d.root",filebase.c_str(),conf,sbsmag,model,pass);
   TFile *fout = new TFile(outFile.Data(), "RECREATE");
 
   // defining histograms

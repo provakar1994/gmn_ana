@@ -9,7 +9,7 @@
     "get_scaler_info"    : 0,
     "runsheet_dir"       : "../DB",
     "rootfile_dir"       : "/lustre19/expphy/volatile/halla/sbs/sbs-gmn/GMN_REPLAYS/pass2_take3/SBS4/LH2/rootfiles",
-    "global_cut"         : "fEvtHdr.fTrigBits==1&&bb.tr.n>0&&bb.gem.track.nhits>3&&abs(bb.tr.vz[0])<0.08&&abs(bb.tr.r_x-0.9*bb.tr.r_th)<0.4&&bb.tr.p[0]>1.6&&bb.ps.e>0.2",
+    "global_cut"         : "fEvtHdr.fTrigBits==1&&bb.tr.n>0&&bb.gem.track.nhits>3&&abs(bb.tr.vz[0])<0.08&&bb.tr.p[0]>1.6&&bb.ps.e>0.2",
     "W_cutR"             : [0.7,1.12],
     "bbfidu_cutR"        : [0.02,0.33],
     "coinT_ADC_cutR"     : [0.44,1.3,3],
@@ -17,7 +17,7 @@
     "max_N_HCAL_clusters": 25,
     "hcal_acl_ON"        : 1,
     "hcal_samp_frac_cutR": 0.01,
-    "hcal_voffset"       : 0.07263,
+    "hcal_voffset"       : 0.0,
     "hcal_hoffset"       : 0.0,
     "hcal_zoffset"       : 0.0,
     "dx_p_cut"           : [-0.656897,0.0946764,1],
@@ -26,7 +26,7 @@
     "h_dyHCAL_lims"      : [200,-1.5,1.5],
     "h_dxHCAL_p_fitR"    : [-2,-0.33,1,1],
     "h_dyHCAL_fitR"      : [-1,1,0.8,1],
-    "README"             : "configfile for analysis using official pass2 data: 02/01/24"
+    "README"             : "pass2 take4: 03/13/24"
 },
 "qa_pass2_model2":
 {

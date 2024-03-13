@@ -26,7 +26,7 @@
     "gen_ML_data"        : 1,
     "verbose"            : -1,
     "verbose_function"   : 0,
-    "output_filebase"    : "siout/65sf_qelas_ana"
+    "outfile_prefix"     : "65sf"
 },
 "simc_deeN_model2_old":
 {
@@ -55,7 +55,7 @@
     "gen_ML_data"        : 1,
     "verbose"            : -1,
     "verbose_function"   : 0,
-    "output_filebase"    : "siout/65sf_old_qelas_ana"
+    "outfile_prefix"     : "65sf_old"
     "COMMENT"            : "This one is for data with old clustering algo and pass1"
 },
 "g4sbs_deeN_model2":
@@ -85,7 +85,7 @@
     "gen_ML_data"        : 1,
     "verbose"            : -1,
     "verbose_function"   : 0,
-    "output_filebase"    : "siout/ML_qelas_ana"
+    "outfile_prefix"     : "ML"
 },
 "g4sbs_inel_model2":
 {
@@ -114,6 +114,6 @@
     "gen_ML_data"        : 1,
     "verbose"            : -1,
     "verbose_function"   : 0,
-    "output_filebase"    : "siout/inel_ld2"
+    "outfile_prefix"     : "inel_ld2"
 }
 }

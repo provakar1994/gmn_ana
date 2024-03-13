@@ -29,7 +29,7 @@
     "gen_ML_data"        : 0,
     "verbose"            : -1,
     "verbose_function"   : 0,
-    "output_filebase"    : "siout/0p815sf_qelas_ana",
+    "outfile_prefix"     : "0p815sf",
     "COMMENTS"           : "02/16/24"
 },
 "g4sbs_deeN_model2":
@@ -62,7 +62,7 @@
     "gen_ML_data"        : 0,
     "verbose"            : -1,
     "verbose_function"   : 0,
-    "output_filebase"    : "siout/1p5zoff_0p815sf_qelas_ana",
+    "outfile_prefix"     : "1p5zoff_0p815sf",
     "COMMENTS"           : "It takes 13 hrs to run 50K g4sbs LD2 events!!"
 },
 "g4sbs_deeN_model2_old":
@@ -95,7 +95,7 @@
     "gen_ML_data"        : 0,
     "verbose"            : -1,
     "verbose_function"   : 0,
-    "output_filebase"    : "siout/0p733sf_qelas_ana",
+    "outfile_prefix"     : "0p733sf",
     "COMMENTS"           : "It takes 13 hrs to run 50K g4sbs LD2 events!!"
 },
 "g4sbs_inel_model2":
@@ -128,7 +128,7 @@
     "gen_ML_data"        : 0,
     "verbose"            : -1,
     "verbose_function"   : 0,
-    "output_filebase"    : "siout/0p815sf_inel_qelas",
+    "outfile_prefix"     : "0p815sf_inel",
     "COMMENTS"           : "Inelastic MC ran on  02/12/24"
 }
 }
