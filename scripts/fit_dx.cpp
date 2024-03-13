@@ -147,11 +147,17 @@ void AddCutToLegend(TLegend *leg, std::string cut) {
   legE->SetTextColor(2);
 }
 
+// void AddFiduCutToLegend(TLegend *leg, std::vector<double> hcal_AR, std::vector<double> hcal_SM) {
+//   TLegendEntry* legE0 = leg->AddEntry((TObject*)0,"HCAL Boundary","");
+//   legE0->SetTextColor(kGreen+2);
+//   TLegendEntry* legE0 = leg->AddEntry((TObject*)0,Form("%.1fb(x), %.1fb(y)",),"");
+// }
+
 void PlotFiduCut(int pass, std::vector<double> hcal_AR, std::vector<double> hcal_SM) {
   std::vector<double> hcal_area = cut::hcal_active_area_data(0,0,pass); 
   //std::vector<double> hcal_AR = cut::hcal_active_area_data(AR_w[0],AR_w[1],pass); 
   //std::vector<double> hcal_SM = cut::hcal_safety_margin(SM_w[0],SM_w[1],SM_w[2],hcal_AR);
-  util_pd::DrawArea(hcal_area,1,2,1);
+  util_pd::DrawArea(hcal_area,kGreen+2,2,1);
   util_pd::DrawArea(hcal_AR,2,4,9);
   util_pd::DrawArea(hcal_SM,4,4,9);
 }
@@ -278,9 +284,9 @@ int fit_dx (const char *configfilename,
   double low = cut_vary_style==1 ? min-width : min;
   double high = cut_vary_style==2 ? h_cut_param[2] : min+width; 
   // fidu cut variation (Cut style 3 -- Very different than the others)
-  std::vector<double> fvary_xp; jmgr->GetVectorFromSubKey<double>(key,"fidu_vary_xp",fvary_xp);
-  std::vector<double> fvary_xn; jmgr->GetVectorFromSubKey<double>(key,"fidu_vary_xn",fvary_xn);
-  std::vector<double> fvary_y; jmgr->GetVectorFromSubKey<double>(key,"fidu_vary_y",fvary_y);
+  std::vector<int> fvary_xp; jmgr->GetVectorFromSubKey<int>(key,"fidu_vary_xp",fvary_xp);
+  std::vector<int> fvary_xn; jmgr->GetVectorFromSubKey<int>(key,"fidu_vary_xn",fvary_xn);
+  std::vector<int> fvary_y; jmgr->GetVectorFromSubKey<int>(key,"fidu_vary_y",fvary_y);
   std::vector<std::vector<double>> hcal_SMs;
   // --
   std::vector<double> minval, maxval;
@@ -299,9 +305,9 @@ int fit_dx (const char *configfilename,
       else if (cut_vary_style==3) {
 	cut = "1"; cut_2 = "ARCut&&SMCut";
 	double SM_xp, SM_xn, SM_y;
-	SM_xp = (int)fvary_xp[0] ? SM_w[0]*(1.+0.01*fvary_xp[i+1]) : SM_w[0];
-	SM_xn = (int)fvary_xn[0] ? SM_w[1]*(1.+0.01*fvary_xn[i+1]) : SM_w[1];
-	SM_y = (int)fvary_y[0] ? SM_w[2]*(1.+0.01*fvary_y[i+1]) : SM_w[2];
+	SM_xp = fvary_xp[0] ? SM_w[0]*(1.+0.01*fvary_xp[i+1]) : SM_w[0];
+	SM_xn = fvary_xn[0] ? SM_w[1]*(1.+0.01*fvary_xn[i+1]) : SM_w[1];
+	SM_y = fvary_y[0] ? SM_w[2]*(1.+0.01*fvary_y[i+1]) : SM_w[2];
 	std::vector<double> hcal_SM_i = cut::hcal_safety_margin(SM_xp,SM_xn,SM_y,hcal_AR);
 	hcal_SMs.push_back(hcal_SM_i);
       }
