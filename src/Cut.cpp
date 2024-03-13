@@ -1,7 +1,11 @@
 #include "../include/Cut.h"
 
 namespace cut {
-
+  
+  bool SpotCut (double x, double x_M, double x_S, double x_nS, double y, double y_M, double y_S, double y_nS) {
+    return pow((x-x_M)/(x_S*x_nS),2) + pow((y-y_M)/(y_S*y_nS),2) <= 1.;
+  }
+  //___________________________________________________________________
   std::vector<double> hcal_active_area_simu (int nBlk_x, int nBlk_y) {
     // defines the active area of HCAL using simulation DB
     // indiv. block pos. can be found at SBS-replay/DB_MC/db_sbs.hcal.dat

@@ -173,24 +173,13 @@ int qelas_ana_simu (const char *configfilename,
   bool bbfiduCut;         Tout->Branch("bbfiduCut", &bbfiduCut, "bbfiduCut/O");
   bool pCut;              Tout->Branch("pCut", &pCut, "pCut/O");
   bool nCut;              Tout->Branch("nCut", &nCut, "nCut/O");
-  // -- a few variations
-  bool pCut_1p5sig;       Tout->Branch("pCut_1p5sig", &pCut_1p5sig, "pCut_1p5sig/O");
-  bool nCut_1p5sig;       Tout->Branch("nCut_1p5sig", &nCut_1p5sig, "nCut_1p5sig/O");
-  bool pCut_2sig;         Tout->Branch("pCut_2sig", &pCut_2sig, "pCut_2sig/O");
-  bool nCut_2sig;         Tout->Branch("nCut_2sig", &nCut_2sig, "nCut_2sig/O");
-  bool pCut_2p5sig;       Tout->Branch("pCut_2p5sig", &pCut_2p5sig, "pCut_2p5sig/O");
-  bool nCut_2p5sig;       Tout->Branch("nCut_2p5sig", &nCut_2p5sig, "nCut_2p5sig/O");
-  bool pCut_3sig;         Tout->Branch("pCut_3sig", &pCut_3sig, "pCut_3sig/O");
-  bool nCut_3sig;         Tout->Branch("nCut_3sig", &nCut_3sig, "nCut_3sig/O");
+  double pdx_nS;          Tout->Branch("pdx_nS", &pdx_nS, "pdx_nS/D"); //# sigma away from p dx peak
+  double ndx_nS;          Tout->Branch("ndx_nS", &ndx_nS, "ndx_nS/D"); //# sigma away from n dx peak
+  double dy_nS;           Tout->Branch("dy_nS", &dy_nS, "dy_nS/D"); //# sigma away from dy peak 
   // --
   bool SMCut;             Tout->Branch("SMCut", &SMCut, "SMCut/B");
   bool ARCut;             Tout->Branch("ARCut", &ARCut, "ARCut/B");
   bool fiduCut;           Tout->Branch("fiduCut", &fiduCut, "fiduCut/O");
-  // -- a few variations
-  bool SMCut_p10p;        Tout->Branch("SMCut_p10p", &SMCut_p10p, "SMCut_p10p/O");
-  bool SMCut_m10p;        Tout->Branch("SMCut_m10p", &SMCut_m10p, "SMCut_m10p/O");
-  bool SMCut_p20p;        Tout->Branch("SMCut_p20p", &SMCut_p20p, "SMCut_p20p/O");
-  bool SMCut_m20p;        Tout->Branch("SMCut_m20p", &SMCut_m20p, "SMCut_m20p/O");
   //MC related
   double weight;          Tout->Branch("weight", &weight, "weight/D");  
   int T_mc_fnucl;         Tout->Branch("mc_fnucl", &T_mc_fnucl, "mc_fnucl/I");
@@ -532,23 +521,13 @@ int qelas_ana_simu (const char *configfilename,
     ARCut = cut::inHCAL_activeA(xHCAL,yHCAL,hcal_active_area);
     SMCut = cut::inHCAL_safety_margin(target,xyHCAL_exp[0],xyHCAL_exp[1],sbs_kick,hcal_safety_margin);
     fiduCut = ARCut && SMCut; 
-    // varying fiducial cut in vertical direction by varying SM cut
-    SMCut_p10p = cut::inHCAL_safety_margin(target,xyHCAL_exp[0],xyHCAL_exp[1],sbs_kick,hcal_safety_margin_p10p);
-    SMCut_m10p = cut::inHCAL_safety_margin(target,xyHCAL_exp[0],xyHCAL_exp[1],sbs_kick,hcal_safety_margin_m10p);
-    SMCut_p20p = cut::inHCAL_safety_margin(target,xyHCAL_exp[0],xyHCAL_exp[1],sbs_kick,hcal_safety_margin_p20p);
-    SMCut_m20p = cut::inHCAL_safety_margin(target,xyHCAL_exp[0],xyHCAL_exp[1],sbs_kick,hcal_safety_margin_m20p);
     // defining HCAL cuts
-    pCut = pow((dx-dx_p_cut[0]) / (dx_p_cut[1]*dx_p_cut[2]), 2) + pow((dy-dy_p_cut[0]) / (dy_p_cut[1]*dy_p_cut[2]), 2) <= 1.;
-    nCut = pow((dx-dx_n_cut[0]) / (dx_n_cut[1]*dx_n_cut[2]), 2) + pow((dy-dy_n_cut[0]) / (dy_n_cut[1]*dy_n_cut[2]), 2) <= 1.;
-    // a few variations
-    pCut_1p5sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]*1.5),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]*1.5),2) <= 1.;
-    nCut_1p5sig = pow((dx-dx_n_cut[0])/(dx_n_cut[1]*dx_n_cut[2]*1.5),2) + pow((dy-dy_n_cut[0])/(dy_n_cut[1]*dy_n_cut[2]*1.5),2) <= 1.;
-    pCut_2sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]*2.),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]*2.),2) <= 1.;
-    nCut_2sig = pow((dx-dx_n_cut[0])/(dx_n_cut[1]*dx_n_cut[2]*2.),2) + pow((dy-dy_n_cut[0])/(dy_n_cut[1]*dy_n_cut[2]*2.),2) <= 1.;
-    pCut_2p5sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]*2.5),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]*2.5),2) <= 1.;
-    nCut_2p5sig = pow((dx-dx_n_cut[0])/(dx_n_cut[1]*dx_n_cut[2]*2.5),2) + pow((dy-dy_n_cut[0])/(dy_n_cut[1]*dy_n_cut[2]*2.5),2) <= 1.;
-    pCut_3sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]*3.),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]*3.),2) <= 1.;
-    nCut_3sig = pow((dx-dx_n_cut[0])/(dx_n_cut[1]*dx_n_cut[2]*3.),2) + pow((dy-dy_n_cut[0])/(dy_n_cut[1]*dy_n_cut[2]*3.),2) <= 1.;
+    pCut = cut::SpotCut(dx,dx_p_cut[0],dx_p_cut[1],dx_p_cut[2],dy,dy_p_cut[0],dy_p_cut[1],dy_p_cut[2]);
+    nCut = cut::SpotCut(dx,dx_n_cut[0],dx_n_cut[1],dx_n_cut[2],dy,dy_n_cut[0],dy_n_cut[1],dy_n_cut[2]);
+    // ***
+    pdx_nS = fabs(dx-dx_p_cut[0])/dx_p_cut[1];
+    ndx_nS = fabs(dx-dx_n_cut[0])/dx_n_cut[1];
+    dy_nS = fabs(dy-dy_p_cut[0])/dy_p_cut[1];  // assuming dy is same for n and p 
 
     // W cut
     if (WCut) {

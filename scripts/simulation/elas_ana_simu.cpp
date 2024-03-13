@@ -164,18 +164,12 @@ int elas_ana_simu (const char *configfilename,
   bool WCut;              Tout->Branch("WCut", &WCut, "WCut/B");
   bool bbfiduCut;         Tout->Branch("bbfiduCut", &bbfiduCut, "bbfiduCut/O");
   bool pCut;              Tout->Branch("pCut", &pCut, "pCut/B");
-  // -- a few variations
-  bool pCut_1p5sig;       Tout->Branch("pCut_1p5sig", &pCut_1p5sig, "pCut_1p5sig/O");
-  bool pCut_2sig;         Tout->Branch("pCut_2sig", &pCut_2sig, "pCut_2sig/O");
-  bool pCut_2p5sig;       Tout->Branch("pCut_2p5sig", &pCut_2p5sig, "pCut_2p5sig/O");
-  bool pCut_3sig;         Tout->Branch("pCut_3sig", &pCut_3sig, "pCut_3sig/O");
+  double pdx_nS;          Tout->Branch("pdx_nS", &pdx_nS, "pdx_nS/D"); //# sigma away from p dx peak
+  double dy_nS;           Tout->Branch("dy_nS", &dy_nS, "dy_nS/D"); //# sigma away from dy peak 
   // --
   bool SMCut;             Tout->Branch("SMCut", &SMCut, "SMCut/B");
   bool ARCut;             Tout->Branch("ARCut", &ARCut, "ARCut/B");
   bool fiduCut;           Tout->Branch("fiduCut", &fiduCut, "fiduCut/B");
-  // -- a few variations
-  bool SMCut_p10p;        Tout->Branch("SMCut_p10p", &SMCut_p10p, "SMCut_p10p/O");
-  bool SMCut_m10p;        Tout->Branch("SMCut_m10p", &SMCut_m10p, "SMCut_m10p/O");
   //MC related
   double weight;          Tout->Branch("weight", &weight, "weight/D");  
   int T_mc_fnucl;         Tout->Branch("mc_fnucl", &T_mc_fnucl, "mc_fnucl/I");
@@ -466,16 +460,11 @@ int elas_ana_simu (const char *configfilename,
     ARCut = cut::inHCAL_activeA(xHCAL,yHCAL,hcal_active_area);
     SMCut = cut::inHCAL_safety_margin(target,xyHCAL_exp[0],xyHCAL_exp[1],sbs_kick,hcal_safety_margin);
     fiduCut = ARCut && SMCut; 
-    // varying SM cut in vertical direction
-    SMCut_p10p = cut::inHCAL_safety_margin(target,xyHCAL_exp[0],xyHCAL_exp[1],sbs_kick,hcal_safety_margin_p10p);
-    SMCut_m10p = cut::inHCAL_safety_margin(target,xyHCAL_exp[0],xyHCAL_exp[1],sbs_kick,hcal_safety_margin_m10p);
     // defining HCAL cuts
-    pCut = pow((dx-dx_p_cut[0]) / (dx_p_cut[1]*dx_p_cut[2]), 2) + pow((dy-dy_p_cut[0]) / (dy_p_cut[1]*dy_p_cut[2]), 2) <= 1.;
-    // a few variations
-    pCut_1p5sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]*1.5),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]*1.5),2) <= 1.;
-    pCut_2sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]*2.),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]*2.),2) <= 1.;
-    pCut_2p5sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]*2.5),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]*2.5),2) <= 1.;
-    pCut_3sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]*3.),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]*3.),2) <= 1.;
+    pCut = cut::SpotCut(dx,dx_p_cut[0],dx_p_cut[1],dx_p_cut[2],dy,dy_p_cut[0],dy_p_cut[1],dy_p_cut[2]);
+    // ***
+    pdx_nS = fabs(dx-dx_p_cut[0])/dx_p_cut[1];
+    dy_nS = fabs(dy-dy_p_cut[0])/dy_p_cut[1];
 
     // defining W cut
     WCut = Wrecon >= W_cutR[0] && Wrecon <= W_cutR[1];

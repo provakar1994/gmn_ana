@@ -7,6 +7,16 @@
 
 namespace cut {
 
+  // Elliptical/spot cut (2D Cut) : Use cases: p/n spot cuts etc. 
+  bool SpotCut (double x,      // x variable 
+		double x_M,    // Mean of dist. in x 
+		double x_S,    // Sigma of dist. in x
+		double x_nS,   // # sigma of x dist. to be included
+		double y,  
+		double y_M,    // Mean of dist. in y 
+		double y_S,    // Sigma of dist. in y
+		double y_nS);  // # sigma of y dist. to be included
+
   /* ##########################
      ##  HCAL Geometry Cuts  ##
      ########################## */

@@ -240,18 +240,12 @@ int elas_ana_data (const char *configfilename,
   bool WCut;              Tout->Branch("WCut", &WCut, "WCut/O");
   bool bbfiduCut;         Tout->Branch("bbfiduCut", &bbfiduCut, "bbfiduCut/O");
   bool pCut;              Tout->Branch("pCut", &pCut, "pCut/O");
-  // -- a few variations
-  bool pCut_1p5sig;       Tout->Branch("pCut_1p5sig", &pCut_1p5sig, "pCut_1p5sig/O");
-  bool pCut_2sig;         Tout->Branch("pCut_2sig", &pCut_2sig, "pCut_2sig/O");
-  bool pCut_2p5sig;       Tout->Branch("pCut_2p5sig", &pCut_2p5sig, "pCut_2p5sig/O");
-  bool pCut_3sig;         Tout->Branch("pCut_3sig", &pCut_3sig, "pCut_3sig/O");
+  double pdx_nS;          Tout->Branch("pdx_nS", &pdx_nS, "pdx_nS/D"); //# sigma away from p dx peak
+  double dy_nS;           Tout->Branch("dy_nS", &dy_nS, "dy_nS/D"); //# sigma away from dy peak 
   // --
   bool SMCut;             Tout->Branch("SMCut", &SMCut, "SMCut/O");
   bool ARCut;             Tout->Branch("ARCut", &ARCut, "ARCut/O");
   bool fiduCut;           Tout->Branch("fiduCut", &fiduCut, "fiduCut/O");
-  // -- a few variations
-  bool SMCut_p10p;        Tout->Branch("SMCut_p10p", &SMCut_p10p, "SMCut_p10p/O");
-  bool SMCut_m10p;        Tout->Branch("SMCut_m10p", &SMCut_m10p, "SMCut_m10p/O");
   bool coinTADCCut;       Tout->Branch("coinTADCCut", &coinTADCCut, "coinTADCCut/O"); //HCAL/SH ADC coin time cut
   //run info
   UInt_t T_rnum;          Tout->Branch("rnum", &T_rnum, "rnum/i");
@@ -343,9 +337,10 @@ int elas_ana_data (const char *configfilename,
   double T_nhitsGEM;      Tout->Branch("nhitsGEM", &T_nhitsGEM, "nhitsGEM/D");
   double T_ngoodhitsGEM;  Tout->Branch("ngoodhitsGEM", &T_ngoodhitsGEM, "ngoodhitsGEM/D");
   double T_trchi2ndf;     Tout->Branch("trchi2ndf", &T_trchi2ndf, "trchi2ndf/D");
-  //coin time trigger
+  //various coin time (trigger & ADC)
   double T_bbT_trig;      Tout->Branch("bbT_trig", &T_bbT_trig, "bbT_trig/D");
   double T_coinT_trig;    Tout->Branch("coinT_trig", &T_coinT_trig, "coinT_trig/D");
+  double T_coinT_ADC_c;   Tout->Branch("coinT_ADC_c", &T_coinT_ADC_c, "coinT_ADC_c/D"); // centered w.r.t the mean
   //GRINCH
   double T_clsizeGRINCH;    if (conf>7) Tout->Branch("clsizeGRINCH", &T_clsizeGRINCH, "clsizeGRINCH/D");
   double T_cltmeanGRINCH;   if (conf>7) Tout->Branch("cltmeanGRINCH", &T_cltmeanGRINCH, "cltmeanGRINCH/D");
@@ -774,8 +769,9 @@ int elas_ana_data (const char *configfilename,
     double dx = T_dx;
     double dy = T_dy;
 
-    // HCAL/SH SDC coincidence time cut
+    // HCAL/SH SDC coincidence time
     coinTADCCut = abs(T_atimeHCAL - atimeSH - coinTADC_cutR[0]) <= coinTADC_cutR[2]*coinTADC_cutR[1];
+    T_coinT_ADC_c = T_atimeHCAL - atimeSH - coinTADC_cutR[0];
 
     // Calculating thpq (both w & w/o deflection due to SBS dipole)
     // assuming no deflection (using "n" for no deflection)
@@ -793,16 +789,11 @@ int elas_ana_data (const char *configfilename,
     ARCut = cut::inHCAL_activeA(T_xHCAL,T_yHCAL,hcal_active_area);
     SMCut = cut::inHCAL_safety_margin(target,xyHCAL_exp[0],xyHCAL_exp[1],sbs_kick,hcal_safety_margin);
     fiduCut = ARCut && SMCut; 
-    // varying SM cut in vertical direction
-    SMCut_p10p = cut::inHCAL_safety_margin(target,xyHCAL_exp[0],xyHCAL_exp[1],sbs_kick,hcal_safety_margin_p10p);
-    SMCut_m10p = cut::inHCAL_safety_margin(target,xyHCAL_exp[0],xyHCAL_exp[1],sbs_kick,hcal_safety_margin_m10p);
     // defining HCAL cuts
-    pCut = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]),2) <= 1.;
-    // a few variations
-    pCut_1p5sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]*1.5),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]*1.5),2) <= 1.;
-    pCut_2sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]*2.),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]*2.),2) <= 1.;
-    pCut_2p5sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]*2.5),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]*2.5),2) <= 1.;
-    pCut_3sig = pow((dx-dx_p_cut[0])/(dx_p_cut[1]*dx_p_cut[2]*3.),2) + pow((dy-dy_p_cut[0])/(dy_p_cut[1]*dy_p_cut[2]*3.),2) <= 1.;
+    pCut = cut::SpotCut(dx,dx_p_cut[0],dx_p_cut[1],dx_p_cut[2],dy,dy_p_cut[0],dy_p_cut[1],dy_p_cut[2]);
+    // ***
+    pdx_nS = fabs(dx-dx_p_cut[0])/dx_p_cut[1];
+    dy_nS = fabs(dy-dy_p_cut[0])/dy_p_cut[1];
 
     // W cut
     if (WCut&&idblkHCAL_aclN!=0) {
