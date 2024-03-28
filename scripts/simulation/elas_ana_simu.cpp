@@ -265,7 +265,18 @@ int elas_ana_simu (const char *configfilename,
 
   // calculating MC normalizetion factors 
   double mc_omega, lumi;
-  vector<double> totNtriesnCh; util_pd::GetTotNtriesnCh(sjobs,totNtriesnCh);
+  vector<long double> totNtriesnCh; util_pd::GetTotNtriesnCh(sjobs,totNtriesnCh);
+  // -- Rejection sampling (RS) flags and weight
+  bool usingRS = sjobs[0].usingRS;
+  double maxwtRS = sjobs[0].maxwtRS;
+  // report
+  if (usingRS) {
+    std::cout << "----\n";
+    std::cout << "Using RS: " << usingRS << std::endl;
+    std::cout << "Max Weight RS: " << maxwtRS << std::endl;
+    std::cout << "Total ntries: " << totNtriesnCh[0] << std::endl;
+    std::cout << "----\n";
+  }
 
   // implementing hashtable with norm info for efficiency
   std::unordered_map<std::string,SimuJob> mnorm;
@@ -273,6 +284,7 @@ int elas_ana_simu (const char *configfilename,
 
   // looping through the tree ---------------------------------------
   std::cout << std::endl;
+  long double ntries = totNtriesnCh[0];
   long nevent = 0, nevents = C->GetEntries(), ngoodevs = 0; 
   int treenum = 0, currenttreenum = 0, treeitr = 0;
   while (C->GetEntry(nevent++)) {
@@ -291,13 +303,14 @@ int elas_ana_simu (const char *configfilename,
       const char* rftemp = C->GetFile()->GetName();
       SimuJob sjtemp = mnorm[rftemp];
       lumi = sjtemp.lumi; mc_omega = sjtemp.genvol; ebeam = sjtemp.ebeam; 
+      if (sjtemp.usingRS) maxwtRS = sjtemp.maxwtRS;
     } 
     bool passedgCut = GlobalCut->EvalInstance(0) != 0;   
     if (!passedgCut) continue;
     ngoodevs++;
 
     // cross section weighted normalization factor
-    weight = mc_sigma*mc_omega*lumi / totNtriesnCh[0];
+    weight = usingRS ? maxwtRS*mc_omega*lumi/ntries : mc_sigma*mc_omega*lumi/ntries;
 
     // kinematic parameters
     double ebeam_corr = ebeam; //- MeanEloss;
@@ -560,8 +573,8 @@ int elas_ana_simu (const char *configfilename,
   pt->AddText(Form("Configfile: %s",configfilename));
   pt->AddText(Form(" Analyzing %s generated QE events for SBS%d-SBS%dp settings",generator.c_str(),conf,sbsmag));
   pt->AddText(Form(" Analysis model: %d",model));
-  pt->AddText(Form(" Total # events analyzed: %ld",nevents));
   pt->AddText(Form(" HCAL offsets: v = %.4f, h = %.4f, z = %.4f",hcal_voffset,hcal_hoffset,hcal_zoffset));
+  pt->AddText(Form(" Total # events analyzed: %ld",nevents));
   pt->AddText(Form(" Global cuts: "));
     std::string tmpstr = "";
   for (std::size_t i=0; i<gCutList.size(); i++) {
@@ -580,13 +593,19 @@ int elas_ana_simu (const char *configfilename,
   pt->AddText(Form(" %.5f,%.5f,%.5f,%.5f",dxpM,dxpS,dypM,dypS));
   pt->AddText(" p peak, w/o fiducial cut: dxpM_nfc,dxpS_nfc,dypM_nfc,dypS_nfc ");
   pt->AddText(Form(" %.5f,%.5f,%.5f,%.5f",dxpM_nfc,dxpS_nfc,dypM_nfc,dypS_nfc));
+  if (usingRS) {
+    pt->AddText(Form(" Rejection Sampling (RS) Summary:")); 
+    pt->AddText(Form(" Chosen maximum weight: %f",maxwtRS)); 
+    pt->AddText(Form(" Total # tries: %.0Lf",totNtries[0])); 
+  }
   sw->Stop();
   pt->AddText(Form("Macro processing time: CPU %.1fs | Real %.1fs",sw->CpuTime(),sw->RealTime()));
   TText *t1 = pt->GetLineWith("Configfile"); t1->SetTextColor(kRed);
   TText *t2 = pt->GetLineWith(" Global"); t2->SetTextColor(kBlue);
   TText *t3 = pt->GetLineWith(" Elastic"); t3->SetTextColor(kBlue);
   TText *t4 = pt->GetLineWith(" Fit info"); t4->SetTextColor(kBlue);
-  TText *t5 = pt->GetLineWith("Macro"); t5->SetTextColor(kGreen+3);
+  TText *t5 = pt->GetLineWith(" Rejection"); t5->SetTextColor(kMagenta+2);
+  TText *t6 = pt->GetLineWith("Macro"); t6->SetTextColor(kGreen+3);
   pt->Draw();  
   cSummary->SaveAs(Form("%s",outPlot.Data())); cSummary->SaveAs(Form("%s]",outPlot.Data())); cSummary->Write();  
   //**** -- ***//

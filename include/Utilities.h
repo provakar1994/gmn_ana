@@ -165,7 +165,12 @@ namespace util_pd {
 
   /* Calc. # tries & tot. Ch. from SimuJob objects */
   void GetTotNtriesnCh(std::vector<SimuJob> sjobs, // Input: List of SimuJob objects
-		       std::vector<double> &data); // Output: data[0]=>Tot. Ntries, data[1]=>Tot. Charge
+		       std::vector<long double> &data); // Output: data[0]=>Tot. Ntries, data[1]=>Tot. Charge
+
+  /* Calc. # tries & tot. Ch. from SimuJob objects */
+  void GetTotNtriesnCh(std::vector<SimuJob> sjobs, // Input: List of SimuJob objects
+		       std::string process,        // Input: Reaction process
+		       std::vector<long double> &data); // Output: data[0]=>Tot. Ntries, data[1]=>Tot. Charge
 
   /* Calculates mean energy loss in the target before and after scattering  */
   void GetElossInTgt(std::string const target,  // Target type

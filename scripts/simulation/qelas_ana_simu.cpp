@@ -288,7 +288,34 @@ int qelas_ana_simu (const char *configfilename,
 
   // calculating MC normalizetion factors 
   double mc_omega, lumi;
-  std::vector<double> totNtriesnCh; util_pd::GetTotNtriesnCh(sjobs,totNtriesnCh);
+  //std::vector<double> totNtriesnCh; util_pd::GetTotNtriesnCh(sjobs,totNtriesnCh);
+  std::vector<long double> totNtries, totCharge;
+  bool is_simcdeeN = false;
+  if (generator.compare("simc")==0 && process.compare("deeN")==0) {
+    is_simcdeeN = true;
+    std::vector<long double> totNtriesnCh_p; util_pd::GetTotNtriesnCh(sjobs,"deep",totNtriesnCh_p);
+    std::vector<long double> totNtriesnCh_n; util_pd::GetTotNtriesnCh(sjobs,"deen",totNtriesnCh_n);
+    totNtries = {totNtriesnCh_p[0],totNtriesnCh_n[0]};
+    totCharge = {totNtriesnCh_p[1],totNtriesnCh_n[1]};
+  } else {
+    std::vector<long double> totNtriesnCh; util_pd::GetTotNtriesnCh(sjobs,totNtriesnCh);
+    totNtries = {totNtriesnCh[0]}; totCharge = {totNtriesnCh[1]}; 
+  }
+  // -- Rejection sampling (RS) flags and weight
+  bool usingRS = sjobs[0].usingRS;
+  double maxwtRS = sjobs[0].maxwtRS; //gets updated per job in the event loop
+  double maxwtRS_n;       //needed for summary canvas
+  // report
+  if (usingRS) {
+    std::cout << "----\n";
+    std::cout << "Using RS: " << usingRS << std::endl;
+    std::cout << "Max Weight RS: " << maxwtRS << std::endl;
+    if (is_simcdeeN) {
+      std::cout << "Total ntries (p): " << totNtries[0] << std::endl;
+      std::cout << "Total ntries (n): " << totNtries[1] << std::endl;
+    }
+    std::cout << "----\n";
+  }
 
   // implementing hashtable with norm info for efficiency
   std::unordered_map<std::string,SimuJob> mnorm;
@@ -311,6 +338,7 @@ int qelas_ana_simu (const char *configfilename,
 
   // looping through the tree ---------------------------------------
   std::cout << std::endl;
+  long double ntries = totNtries[0];
   long nevent = 0, nevents = C->GetEntries(), ngoodevs = 0; 
   int treenum = 0, currenttreenum = 0, treeitr = 0;
   while (C->GetEntry(nevent++)) {
@@ -329,13 +357,18 @@ int qelas_ana_simu (const char *configfilename,
       const char* rftemp = C->GetFile()->GetName();
       SimuJob sjtemp = mnorm[rftemp];
       lumi = sjtemp.lumi; mc_omega = sjtemp.genvol; ebeam = sjtemp.ebeam; 
+      if (is_simcdeeN) {
+	if (sjtemp.process.compare("deep")==0) ntries = totNtries[0]; //p events
+	else {ntries = totNtries[1]; maxwtRS_n = sjtemp.maxwtRS;} // n events
+      }
+      if (sjtemp.usingRS) maxwtRS = sjtemp.maxwtRS;
     } 
     bool passedgCut = GlobalCut->EvalInstance(0) != 0;   
     if (!passedgCut) continue;
     ngoodevs++;
 
     // cross section weighted normalization factor
-    weight = mc_sigma*mc_omega*lumi / totNtriesnCh[0];
+    weight = usingRS ? maxwtRS*mc_omega*lumi/ntries : mc_sigma*mc_omega*lumi/ntries;
 
     // kinematic parameters
     double ebeam_corr = ebeam; //- MeanEloss;
@@ -649,10 +682,10 @@ int qelas_ana_simu (const char *configfilename,
   pt->AddText(Form("Configfile: %s",configfilename));
   pt->AddText(Form(" Analyzing %s generated QE events for SBS%d-SBS%dp settings",generator.c_str(),conf,sbsmag));
   pt->AddText(Form(" Analysis model: %d",model));
-  pt->AddText(Form(" Total # events analyzed: %ld",nevents));
   pt->AddText(Form(" HCAL offsets: v = %.4f, h = %.4f, z = %.4f",hcal_voffset,hcal_hoffset,hcal_zoffset));
+  pt->AddText(Form(" Total # events analyzed: %ld",nevents));
   pt->AddText(Form(" Global cuts: "));
-    std::string tmpstr = "";
+  std::string tmpstr = "";
   for (std::size_t i=0; i<gCutList.size(); i++) {
     if (i>0 && i%3==0) {pt->AddText(Form(" %s",tmpstr.c_str())); tmpstr="";}
     tmpstr += gCutList[i] + ", "; 
@@ -671,13 +704,26 @@ int qelas_ana_simu (const char *configfilename,
   pt->AddText(Form(" %.5f,%.5f,%.5f,%.5f,%.5f,%.5f",dxpM,dxpS,dxnM,dxnS,dyM,dyS));
   pt->AddText(" p & n peaks, w/o fiducial cut: dxpM_nfc,dxpS_nfc,dxnM_nfc,dxnS_nfc,dyM_nfc,dyS_nfc ");
   pt->AddText(Form(" %.5f,%.5f,%.5f,%.5f,%.5f,%.5f",dxpM_nfc,dxpS_nfc,dxnM_nfc,dxnS_nfc,dyM_nfc,dyS_nfc));
+  if (usingRS) {
+    pt->AddText(Form(" Rejection Sampling (RS) Summary:")); 
+    if (is_simcdeeN) { 
+      pt->AddText(Form(" Chosen maximum weight (p): %f",maxwtRS)); 
+      pt->AddText(Form(" Total # tries (p): %.0Lf",totNtries[0])); 
+      pt->AddText(Form(" Chosen maximum weight (n): %f",maxwtRS_n)); 
+      pt->AddText(Form(" Total # tries (n): %.0Lf",totNtries[1])); 
+    } else {
+      pt->AddText(Form(" Chosen maximum weight: %f",maxwtRS)); 
+      pt->AddText(Form(" Total # tries: %.0Lf",totNtries[0])); 
+    }
+  }
   sw->Stop();
   pt->AddText(Form("Macro processing time: CPU %.1fs | Real %.1fs",sw->CpuTime(),sw->RealTime()));
   TText *t1 = pt->GetLineWith("Configfile"); t1->SetTextColor(kRed);
   TText *t2 = pt->GetLineWith(" Global"); t2->SetTextColor(kBlue);
   TText *t3 = pt->GetLineWith(" Elastic"); t3->SetTextColor(kBlue);
   TText *t4 = pt->GetLineWith(" Fit info"); t4->SetTextColor(kBlue);
-  TText *t5 = pt->GetLineWith("Macro"); t5->SetTextColor(kGreen+3);
+  TText *t5 = pt->GetLineWith(" Rejection"); t5->SetTextColor(kMagenta+2);
+  TText *t6 = pt->GetLineWith("Macro"); t6->SetTextColor(kGreen+3);
   pt->Draw(); 
   cSummary->SaveAs(Form("%s",outPlot.Data())); cSummary->SaveAs(Form("%s]",outPlot.Data())); cSummary->Write();  
   //**** -- ***//

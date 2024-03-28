@@ -688,13 +688,20 @@ namespace util_pd {
 	  data.push_back(sfname.Data());
 	  data.push_back(rfname.Data());
 	  data.push_back(generator);
+	  data.push_back(processes[ifile].Data());
 	  data.push_back(temp[1]); //ngenreq
 	  data.push_back(temp[2]); //nthrown
 	  data.push_back(temp[3]); //genvol
 	  data.push_back(temp[4]); //lumi
 	  data.push_back(temp[5]); //ebeam(GeV)
-	  if (generator.compare("simc") == 0) data.push_back(temp[6]);  //charge(mC)
 	  if (generator.compare("g4sbs") == 0) data.push_back(temp[6]); //ibeam(muA)
+	  if (generator.compare("simc") == 0) {
+	    data.push_back(temp[6]);  //charge(mC)
+	    if (temp.size()>8) {
+	      data.push_back(temp[8]); //using_RS
+	      data.push_back(temp[9]); //max_wt_RS
+	    }
+	  }
 
 	  temp_sj.SetDataSimuJob(data);
 	  sjobs.push_back(temp_sj);
@@ -765,13 +772,28 @@ namespace util_pd {
   }
   //______________________________________________________________________________
   void GetTotNtriesnCh(std::vector<SimuJob> sjobs, // Input: List of SimuJob objects
-		       std::vector<double> &data)  // Output: data[0]=>Tot. Ch., data[1]=>Tot. ntries
+		       std::vector<long double> &data)  // Output: data[0]=>Tot. Ch., data[1]=>Tot. ntries
   /* Calc. # tries & tot. Ch. from SimuJob objects */
   {
-    double totntries=0.,totcharge=0.;
+    long double totntries=0.,totcharge=0.;
     for (auto & job : sjobs) {
       totntries += job.ntried;
       totcharge += job.charge;
+    }
+    data = {totntries,totcharge};
+  }
+  //______________________________________________________________________________
+  void GetTotNtriesnCh(std::vector<SimuJob> sjobs, // Input: List of SimuJob objects
+		       std::string process,        // Input: Reaction process
+		       std::vector<long double> &data)  // Output: data[0]=>Tot. Ch., data[1]=>Tot. ntries
+  /* Calc. # tries & tot. Ch. from SimuJob objects */
+  {
+    long double totntries=0.,totcharge=0.;
+    for (auto & job : sjobs) {
+      if (process.compare(job.process)==0) {
+	totntries += job.ntried;
+	totcharge += job.charge;
+      }
     }
     data = {totntries,totcharge};
   }
