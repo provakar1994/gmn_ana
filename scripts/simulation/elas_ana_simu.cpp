@@ -124,8 +124,8 @@ int elas_ana_simu (const char *configfilename,
   std::vector<std::string> mc = {"mc_sigma","mc_fnucl"};  // Default: g4sbs gen.
   std::vector<void*> mc_mem = {&mc_sigma,&mc_fnucl}; 
   if (generator.compare("simc")==0) {
-    mc = {"simc_Weight","simc_fnucl","simc_Ebeam"};  
-    mc_mem = {&mc_sigma,&mc_fnucl,&mc_ebeam}; 
+    mc = {"simc_Weight","simc_fnucl","simc_Ebeam","simc_veE","simc_vetheta"};  
+    mc_mem = {&mc_sigma,&mc_fnucl,&mc_ebeam,&mc_veE,&mc_vetheta}; 
   }
   setrootvar::setbranch(C,"MC",mc,mc_mem);
 
@@ -176,6 +176,11 @@ int elas_ana_simu (const char *configfilename,
   //
   double T_ebeam;         Tout->Branch("ebeam", &T_ebeam, "ebeam/D");
   //kine
+  // -- vertex (only for SIMC) ---
+  double T_veE;           if (generator.compare("simc")==0) Tout->Branch("veE", &T_veE, "veE/D");
+  double T_vetheta;       if (generator.compare("simc")==0) Tout->Branch("vetheta", &T_vetheta, "vetheta/D");
+  double T_vQ2;           if (generator.compare("simc")==0) Tout->Branch("vQ2", &T_vQ2, "vQ2/D");
+  double T_vepsilon;      if (generator.compare("simc")==0) Tout->Branch("vepsilon", &T_vepsilon, "vepsilon/D"); // calculated using general eqn.
   double T_nu;            Tout->Branch("nu", &T_nu, "nu/D");
   double T_Q2;            Tout->Branch("Q2", &T_Q2, "Q2/D");
   double T_W2;            Tout->Branch("W2", &T_W2, "W2/D");
@@ -384,6 +389,12 @@ int elas_ana_simu (const char *configfilename,
     double dpel = Peprime.E()/pelas - 1.0; h_dpel->Fill(dpel);
 
     T_ebeam = Pe.E();
+
+    // at vertex ("true" values)
+    T_veE = mc_veE;
+    T_vetheta = mc_vetheta;
+    T_vQ2 = kine::Q2(Pe.E(),T_veE,T_vetheta);
+    T_vepsilon = kine::epsilon_general(T_vetheta,T_vQ2,T_ebeam-T_veE);
 
     T_nu = nu;
     T_Q2 = Q2recon;
