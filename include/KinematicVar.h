@@ -13,6 +13,7 @@
 #include "TVector3.h"
 #include "TLorentzVector.h"
 
+#include "EMFFFits.h"
 #include "Constants.h"
 #include "ExpConstants.h"
 
@@ -79,6 +80,8 @@ namespace kine{
   double sigmaBorn_ratio(SBSconfig sbsconf, double GEp, double GMp, double GEn, double GMn);
   // the following fn calculates the Born CS ratio assuming Mott CS are the same for p and n
   double sigmaBorn_ratio(double etheta, double Q2, double GEp, double GMp, double GEn, double GMn);
+  double sigmaBorn_ratio_MC(double etheta, double Q2);
+  double sigmaBorn_ratio_MC(SBSconfig sbsconf, std::string Ntype);
  
   /* #######################################################
      ## Functions to extract GMn from Born CS ratio ##  

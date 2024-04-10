@@ -228,6 +228,29 @@ namespace kine {
     double sigmaBorn_n_wo_Mott = kine::sigmaBorn_wo_Mott(etheta,Q2,GEn,GMn,"n");
     return sigmaBorn_n_wo_Mott / sigmaBorn_p_wo_Mott;
   }
+  //--------------------------------------------
+  double sigmaBorn_ratio_MC(double etheta, double Q2) {
+    /* Calculates Born cross-section ratio for MC (Using the same parametrizations used in SIMC/g4sbs) */
+    // EMFF fits
+    Kelly2004 kellyfit;
+    Seamus20XX seamusfit;
+    // EMFF extraction using same parametrization used in MC generators
+    double GEp_kelly = kellyfit.GetFF(G_t::kGEp,Q2);
+    double GMp_kelly = kellyfit.GetFF(G_t::kGMp,Q2);
+    double GEn_seamus = seamusfit.GetFF(G_t::kGEn,Q2);
+    double GMn_kelly = kellyfit.GetFF(G_t::kGMn,Q2);
+    // calculate ratios
+    double sigmaBorn_p_wo_Mott = kine::sigmaBorn_wo_Mott(etheta,Q2,GEp_kelly,GMp_kelly,"p");
+    double sigmaBorn_n_wo_Mott = kine::sigmaBorn_wo_Mott(etheta,Q2,GEn_seamus,GMn_kelly,"n");
+    return sigmaBorn_n_wo_Mott / sigmaBorn_p_wo_Mott;
+  }
+  //--------------------------------------------
+  double sigmaBorn_ratio_MC(SBSconfig sbsconf, std::string Ntype) {
+    /* Calculates Born cross-section ratio for MC (Using the same parametrizations used in SIMC/g4sbs) */
+    double Q2 = kine::Q2(sbsconf,Ntype);
+    double etheta = sbsconf.GetBBtheta_rad();
+    return kine::sigmaBorn_ratio_MC(etheta,Q2);
+  }
 
   /* #######################################################
      ## Functions to extract GMn from Born CS ratio ##  
