@@ -203,7 +203,7 @@ int qelas_ana_data (const char *configfilename,
   // defining the outputfile
   std::string filebase = jmgr->GetValueFromSubKey_str(key,"outfile_prefix");
   filebase = (verbose==0 && verbosefn==0) ? "" : filebase + "_";
-  TString outFile = Form("%sqelas_ana_data_sbs%d_sbs%dp_model%d_pass%d.root",filebase.c_str(),conf,sbsmag,model,pass);
+  TString outFile = Form("pdout/%sqelas_ana_data_sbs%d_sbs%dp_model%d_pass%d.root",filebase.c_str(),conf,sbsmag,model,pass);
   TFile *fout = new TFile(outFile.Data(), "RECREATE");
 
   // defining histograms
