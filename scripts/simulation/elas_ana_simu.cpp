@@ -608,6 +608,7 @@ int elas_ana_simu (const char *configfilename,
     pt->AddText(Form(" Rejection Sampling (RS) Summary:")); 
     pt->AddText(Form(" Chosen maximum weight: %f",maxwtRS)); 
     pt->AddText(Form(" Total # tries: %.0Lf",totNtries[0])); 
+    TText *t5 = pt->GetLineWith(" Rejection"); t5->SetTextColor(kMagenta+2);
   }
   sw->Stop();
   pt->AddText(Form("Macro processing time: CPU %.1fs | Real %.1fs",sw->CpuTime(),sw->RealTime()));
@@ -615,7 +616,6 @@ int elas_ana_simu (const char *configfilename,
   TText *t2 = pt->GetLineWith(" Global"); t2->SetTextColor(kBlue);
   TText *t3 = pt->GetLineWith(" Elastic"); t3->SetTextColor(kBlue);
   TText *t4 = pt->GetLineWith(" Fit info"); t4->SetTextColor(kBlue);
-  TText *t5 = pt->GetLineWith(" Rejection"); t5->SetTextColor(kMagenta+2);
   TText *t6 = pt->GetLineWith("Macro"); t6->SetTextColor(kGreen+3);
   pt->Draw();  
   cSummary->SaveAs(Form("%s",outPlot.Data())); cSummary->SaveAs(Form("%s]",outPlot.Data())); cSummary->Write();  
