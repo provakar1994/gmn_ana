@@ -305,8 +305,12 @@ int fit_dx (const char *configfilename,
   inel_rdf_filtered = inel_rdf_filtered
     .Define("dx_shifted_p",dx_shifted_p.c_str())
     .Define("dx_shifted_n",dx_shifted_n.c_str());
-  bg_data_rdf_filtered = bg_data_rdf_filtered
-    .Define("dx_shifted",dx_shifted_p.c_str());
+  /*
+    Since we keep the data histogram untouched for fitting, I think we should 
+    do the same for bg histogram from data. Hence, commenting out the following lines.
+  */
+  // bg_data_rdf_filtered = bg_data_rdf_filtered
+  //   .Define("dx_shifted",dx_shifted_p.c_str());
 
 
   // defining output files
@@ -424,7 +428,7 @@ int fit_dx (const char *configfilename,
       h_dxHCAL_simu_p = (TH1F*)simu_rdf_filtered.Filter(cuts_p[i]).Histo1D({"h_dxHCAL_simu_p","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_p","weight")->Clone();
       if (!is_elastic) h_dxHCAL_simu_n = (TH1F*)simu_rdf_filtered.Filter(cuts_n[i]).Histo1D({"h_dxHCAL_simu_n","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_n","weight")->Clone();
       // bg histos
-      h_dxHCAL_bg_data = (TH1F*)bg_data_rdf_filtered.Histo1D({"h_dxHCAL_bg_data","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted")->Clone();
+      h_dxHCAL_bg_data = (TH1F*)bg_data_rdf_filtered.Histo1D({"h_dxHCAL_bg_data","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
       h_dxHCAL_bg_inel_p = (TH1F*)inel_rdf_filtered.Filter("mc_fnucl==1").Histo1D({"h_dxHCAL_bg_inel_p","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_p","weight")->Clone();
       if (!is_elastic) h_dxHCAL_bg_inel_n = (TH1F*)inel_rdf_filtered.Filter("mc_fnucl==0").Histo1D({"h_dxHCAL_bg_inel_n","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_n","weight")->Clone();
       //h_dxHCAL_bg_inel = (TH1F*)h_dxHCAL_bg_inel_p->Clone(); h_dxHCAL_bg_inel->Add(h_dxHCAL_bg_inel_p,h_dxHCAL_bg_inel_n);
@@ -448,9 +452,9 @@ int fit_dx (const char *configfilename,
       if (apply_to_bg_data) // applying custom fiduCut to data bg
  	h_dxHCAL_bg_data = (TH1F*)bg_data_rdf_filtered
  	  .Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"})
- 	  .Histo1D({"h_dxHCAL_bg_data","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted")->Clone();
+ 	  .Histo1D({"h_dxHCAL_bg_data","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
       else
- 	h_dxHCAL_bg_data = (TH1F*)bg_data_rdf_filtered.Histo1D({"h_dxHCAL_bg_data","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted")->Clone();
+ 	h_dxHCAL_bg_data = (TH1F*)bg_data_rdf_filtered.Histo1D({"h_dxHCAL_bg_data","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
       // (simu)
       if (apply_to_bg_simu) { // applying custom fiduCut to simu bg
  	h_dxHCAL_bg_inel_p = (TH1F*)inel_rdf_filtered
@@ -749,14 +753,18 @@ int fit_dx (const char *configfilename,
       util_pd::DrawZeroLine(p1[1],dx_fit_range[0],dx_fit_range[1]);
       // ** ----- ***
 
-      // Canvas 2 : Fitting data/MC w/ background from data
+      // Canvas 2 : Fitting data/MC w/ background from MC
       TCanvas *c2 = util_pd::TC("c2",1,1); gStyleFitCanvas();
       c2->cd();
       // performing the fit
       vector<TH1F*> ho2;
       TF1 *f2 = fit::fit_2hs_1hbg_THI(dx_fit_range,
-				      h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_inel,
-				      ho2);
+      				      h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_inel,
+      				      ho2);
+      // std::vector<double> pnOff_range{1,0,-0.020,0,-0.020};
+      // TF1 *f2 = fit::fit_2hs_1hbg_THI_xOffVary(dx_fit_range,
+      // 					       h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_inel,pnOff_range,
+      // 					       ho2);
       if (is_vary_cut) {
 	htemp->SetBinContent(i+1,f2->GetParameter(1));
 	htemp->SetBinError(i+1,f2->GetParError(1));
