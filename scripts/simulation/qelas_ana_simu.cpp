@@ -143,6 +143,7 @@ int qelas_ana_simu (const char *configfilename,
   // defining the outputfile
   std::string filebase = jmgr->GetValueFromSubKey_str(key,"outfile_prefix");
   filebase = (verbose==0 && verbosefn==0) ? "" : filebase + "_";
+  if (process.compare("inel")==0) filebase = filebase + "inel_";
   TString outFile = Form("siout/%sqelas_ana_%s_sbs%d_sbs%dp_model%d.root",filebase.c_str(),generator.c_str(),conf,sbsmag,model);
   TFile *fout = new TFile(outFile.Data(),"RECREATE");
 
