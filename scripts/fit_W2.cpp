@@ -78,6 +78,9 @@ int fit_W2 (const char *configfilename,
   ROOT::EnableImplicitMT();
   ROOT::RDataFrame data_rdf("Tout",Form("pdout/%s%s_ana_data_sbs%d_sbs%dp_model%d_pass%d.root",dfprefix.c_str(),process,conf,sbsmag,model,pass));
   ROOT::RDataFrame simu_rdf("Tout",Form("simulation/siout/%s%s_ana_%s_sbs%d_sbs%dp_model%d.root",sfprefix.c_str(),process,gen.c_str(),conf,sbsmag,model));
+  //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/inel_gen_elas_ana_g4sbs_sbs4_sbs0p_model2.root"));
+  //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/inel_ld2_g4sbs_sbs4_sbs50p_model2.root"));
+  ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/0p674sf_inel_qelas_ana_g4sbs_sbs14_sbs70p_model2.root"));
 
   // Applying cuts
   std::string cuts_for_signal_data = jmgr->GetValueFromSubKey_str(key,"cuts_for_signal_data");
@@ -100,6 +103,7 @@ int fit_W2 (const char *configfilename,
   TH1F *h_W2_simu = (TH1F*)simu_rdf_filtered.Histo1D({"h_W2_simu","",int(h_W2[0]),h_W2[1],h_W2[2]},"W2_shifted","weight")->Clone();
   TH1F *h_W2_simu_p = (TH1F*)simu_rdf_filtered.Filter("mc_fnucl==1").Histo1D({"h_W2_simu_p","",int(h_W2[0]),h_W2[1],h_W2[2]},"W2_shifted","weight")->Clone();
   TH1F *h_W2_simu_n = (TH1F*)simu_rdf_filtered.Filter("mc_fnucl==0").Histo1D({"h_W2_simu_n","",int(h_W2[0]),h_W2[1],h_W2[2]},"W2_shifted","weight")->Clone();
+  TH1F *h_W2_inel = (TH1F*)inel_rdf.Histo1D({"h_W2_inel","",int(h_W2[0]),h_W2[1],h_W2[2]},"W2","weight")->Clone();
   TH1F *h_W2_bg = (TH1F*)bg_rdf_filtered.Histo1D({"h_W2_bg","",int(h_W2[0]),h_W2[1],h_W2[2]},"W2")->Clone();
 
   // Fits
@@ -177,6 +181,25 @@ int fit_W2 (const char *configfilename,
   l2->Draw();
   std::cout << Form("\nTotal # elastics (from fitted data signal): %d\n",
 		    int(ho2[1]->Integral(ho2[1]->FindBin(W2_fit_range[0]),ho2[1]->FindBin(W2_fit_range[1]))));
+
+  // Canvas 3 : Fitting w/ signal and background from MC
+  TCanvas *c3 = util_pd::TC("c3",1,1);
+  c3->cd(); gStyle->SetOptFit(1);
+  vector<TH1F*> ho3;
+  TF1 *f3 = fit::fit_1hs_1hbg_THI(W2_fit_range,
+				  h_W2_data_raw,h_W2_simu,h_W2_inel,
+				  ho3);
+  ho3[0]->Draw(); customize_ht(ho3[0]); customize_W2(ho3[0]);
+  ho3[1]->Draw("same"); customize_hs(ho3[1]); customize_W2(ho3[1]);
+  ho3[2]->Draw("same"); customize_hbg(ho3[2]); customize_W2(ho3[2]);
+  TLegend *l3=new TLegend(0.10,0.77,0.38,0.9);
+  l3->SetTextFont(42);
+  l3->AddEntry(ho3[0],"Data","l");
+  l3->AddEntry(f3,"Global Fit","l");
+  l3->AddEntry(ho3[1],"Signal (from MC)","lep");
+  l3->AddEntry(ho3[2],"Bg. (from MC)","lep");
+  l3->Draw();
+  // --- 
 
   return 0;
 }
