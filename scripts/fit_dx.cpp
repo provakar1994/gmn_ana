@@ -290,12 +290,16 @@ int fit_dx (const char *configfilename,
   // Now its time to define new columns
   // 1. to account for dx_p and dx_n shifts
   // 2. to account for xHCAL_exp shift for proton tracks
-  double dx_offset_p = jmgr->GetValueFromSubKey<double>(key,"dx_offset_MC_for_p");
+  // First, let's check if the user wanna vary x offsets as free parameters or not
+  std::vector<double> pnXOff_range; jmgr->GetVectorFromSubKey<double>(key,"vary_pn_xOff_ranges",pnXOff_range);
+  bool is_vary_pnXOff = pnXOff_range[0]; 
+  // define the offset values
+  double dx_offset_p = is_vary_pnXOff ? 0 : jmgr->GetValueFromSubKey<double>(key,"dx_offset_MC_for_p");
   std::string dx_shifted_p = "dx+" + std::to_string(dx_offset_p);
-  double dx_offset_n = !is_elastic ? jmgr->GetValueFromSubKey<double>(key,"dx_offset_MC_for_n") : 0;
+  double dx_offset_n = (is_elastic||is_vary_pnXOff) ? 0 : jmgr->GetValueFromSubKey<double>(key,"dx_offset_MC_for_n");
   std::string dx_shifted_n = "dx+" + std::to_string(dx_offset_n);
-  //double sbs_kick = jmgr->GetValueFromSubKey<double>(key,"sbs_kick");
   std::string xExp_shifted = "xHCAL_exp-" + std::to_string(sbs_kick);
+  // define new columns 
   data_rdf_filtered = data_rdf_filtered
     .Define("xExp_shifted",xExp_shifted.c_str());
   simu_rdf_filtered = simu_rdf_filtered
@@ -705,9 +709,16 @@ int fit_dx (const char *configfilename,
       c1->cd();
       // performing the fit
       vector<TH1F*> ho1;
-      TF1 *f1 = fit::fit_2hs_1hbg_THI(dx_fit_range,
-				      h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_data,
-				      ho1);
+      TF1 *f1;
+      if (is_vary_pnXOff) {
+	f1 = fit::fit_2hs_1hbg_THI_xOffVary(dx_fit_range,
+					    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_data,pnXOff_range,
+					    ho1);
+      } else {
+	f1 = fit::fit_2hs_1hbg_THI(dx_fit_range,
+				   h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_data,
+				   ho1);
+      }
       // grabbing fit params for future use
       chi2.push_back(f1->GetChisquare()); NDF.push_back(f1->GetNDF());
       R_vals.push_back(f1->GetParameter(1)); Rerr_vals.push_back(f1->GetParError(1));
@@ -758,13 +769,16 @@ int fit_dx (const char *configfilename,
       c2->cd();
       // performing the fit
       vector<TH1F*> ho2;
-      TF1 *f2 = fit::fit_2hs_1hbg_THI(dx_fit_range,
-      				      h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_inel,
-      				      ho2);
-      // std::vector<double> pnOff_range{1,0,-0.020,0,-0.020};
-      // TF1 *f2 = fit::fit_2hs_1hbg_THI_xOffVary(dx_fit_range,
-      // 					       h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_inel,pnOff_range,
-      // 					       ho2);
+      TF1 *f2;
+      if (is_vary_pnXOff) {
+	f2 = fit::fit_2hs_2hbg_THI_xOffVary(dx_fit_range,
+					    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_inel_p,h_dxHCAL_bg_inel_n,pnXOff_range,
+					    ho2);
+      } else {
+	f2 = fit::fit_2hs_2hbg_THI(dx_fit_range,
+				   h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_inel_p,h_dxHCAL_bg_inel_n,
+				   ho2);
+      }
       if (is_vary_cut) {
 	htemp->SetBinContent(i+1,f2->GetParameter(1));
 	htemp->SetBinError(i+1,f2->GetParError(1));
@@ -822,9 +836,16 @@ int fit_dx (const char *configfilename,
       c3->cd(); 
       // performing the fit
       vector<TH1F*> ho3;
-      TF1 *f3 = fit::fit_2hs_1pbg_THI(dx_fit_range,
-				      h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,Opoly,
-				      ho3);
+      TF1 *f3;
+      if (is_vary_pnXOff) {
+	f3 = fit::fit_2hs_1pbg_THI_xOffVary(dx_fit_range,
+					    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,Opoly,pnXOff_range,
+					    ho3);
+      } else {
+	f3 = fit::fit_2hs_1pbg_THI(dx_fit_range,
+				   h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,Opoly,
+				   ho3);
+      }
       // grabbing fit params for future use
       chi2.push_back(f3->GetChisquare()); NDF.push_back(f3->GetNDF());
       R_vals.push_back(f3->GetParameter(1)); Rerr_vals.push_back(f3->GetParError(1));
