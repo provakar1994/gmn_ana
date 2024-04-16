@@ -79,7 +79,10 @@ class FitFn {
     double B = par[2];
     double hs1xOff = par[3];
     double hs2xOff = par[4];
-    return Norm*(fhs1->Interpolate(x[0]+hs1xOff)+R*fhs2->Interpolate(x[0]+hs2xOff)+B*fhbg->Interpolate(x[0]));
+    //
+    double modx1 = x[0]-hs1xOff;
+    double modx2 = x[0]-hs2xOff;
+    return Norm*(fhs1->Interpolate(modx1)+R*fhs2->Interpolate(modx2)+B*fhbg->Interpolate(x[0]));
   }
 
   // fits using 2 signal histos and 2 bg histo (3 params)
@@ -98,8 +101,8 @@ class FitFn {
     double hs1xOff = par[3];
     double hs2xOff = par[4];
     //
-    double modx1 = x[0]+hs1xOff;
-    double modx2 = x[0]+hs2xOff;
+    double modx1 = x[0]-hs1xOff;
+    double modx2 = x[0]-hs2xOff;
     return Norm*(fhs1->Interpolate(modx1)+R*fhs2->Interpolate(modx2)+B*(fhbg1->Interpolate(modx1)+fhbg2->Interpolate(modx2)));
   }
 
@@ -116,7 +119,10 @@ class FitFn {
     double R = par[1];
     double hs1xOff = par[2];
     double hs2xOff = par[3];
-    return Norm*(fhs1->Interpolate(x[0]+hs1xOff)+R*fhs2->Interpolate(x[0]+hs2xOff)) + ffn_poly(x,&par[4]);
+    //
+    double modx1 = x[0]-hs1xOff;
+    double modx2 = x[0]-hs2xOff;
+    return Norm*(fhs1->Interpolate(modx1)+R*fhs2->Interpolate(modx2)) + ffn_poly(x,&par[4]);
   }
 };
 
