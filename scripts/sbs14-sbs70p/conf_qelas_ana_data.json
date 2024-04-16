@@ -1,20 +1,19 @@
 {
-"pass2":
+"pass2_model2":
 {
     "Ntype"              : "np",
     "SBS_config"         : 14,
     "SBS_magnet_percent" : 70,
-    "model"              : 2,
     "Nruns_to_ana"       : -1,
     "get_scaler_info"    : 0,
     "runsheet_dir"       : "../DB",
-    "rootfile_dir"       : "/lustre19/expphy/volatile/halla/sbs/sbs-gmn/GMN_REPLAYS/pass2_take3/SBS14/LD2/rootfiles",
+    "rootfile_dir"       : "/w/halla-scshelf2102/sbs/pdbforce/gmn-data/pass2/SBS14/LD2/rootfiles",
     "global_cut"         : "fEvtHdr.fTrigBits==1&&bb.tr.n>0&&bb.gem.track.nhits>2&&abs(bb.tr.vz[0])<.08&&bb.tr.p[0]>1.5&&bb.ps.e>0.2",
     "W_cutR"             : [0.7,1.2],
     "bbfidu_cutR"        : [0.035,0.335],
-    "coinT_ADC_cutR"     : [0,2,3],
+    "coinT_ADC_cutR"     : [0,0.66,1.63],
     "max_N_tracks"       : 250,
-    "max_N_HCAL_clusters": 10,
+    "max_N_HCAL_clusters": 30,
     "hcal_acl_ON"        : 1,
     "hcal_samp_frac_cutR": 0.01,
     "hcal_voffset"       : 0.0,
@@ -29,6 +28,11 @@
     "h_dxHCAL_p_fitR"    : [-2,-0.33,0.5,0.5],
     "h_dxHCAL_n_fitR"    : [-0.33,0.5,0.5,0.5],
     "h_dyHCAL_fitR"      : [-1,1,0.8,0.8],
-    "README"             : ""
+    "Other_parmas_block" : "-----FOLLOWING PARMAS ARE NEEDED TO RUN THE SCRIPT-----",
+    "NOTE"               : "verbose=0 & verbosefn=0 => Production; verbose<-1=>Debug, =-1=>Test; verbosefn>0=>Debug",
+    "verbose"            : -1,
+    "verbose_function"   : 0,
+    "outfile_prefix"     : "test",
+    "README"             : "First look at official pass2 data: ??"
 }
 }
