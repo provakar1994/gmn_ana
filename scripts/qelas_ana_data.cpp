@@ -236,7 +236,7 @@ int qelas_ana_data (const char *configfilename,
 
   // defining interesting ROOT tree branches 
   TTree *Tout = new TTree("Tout", "");
-  Tout->SetMaxTreeSize(4000000000LL);
+  Tout->SetMaxTreeSize(5000000000LL);
   //cuts
   bool WCut;              Tout->Branch("WCut", &WCut, "WCut/O");
   bool bbfiduCut;         Tout->Branch("bbfiduCut", &bbfiduCut, "bbfiduCut/O");
