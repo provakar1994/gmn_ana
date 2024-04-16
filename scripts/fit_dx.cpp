@@ -319,7 +319,8 @@ int fit_dx (const char *configfilename,
 
   // defining output files
   std::string filebase = jmgr->GetValueFromSubKey_str(key,"output_filebase");
-  char const * outdir = !is_vary_cut ? "pdout/fits/" : "pdout/fits/sysstdy/";
+  char const * confmag = Form("sbs%dsbs%dp",conf,sbsmag);
+  char const * outdir = !is_vary_cut ? Form("pdout/fits/%s/",confmag) : Form("pdout/fits/%s/sysstdy/",confmag);
   TString outFile = Form("%s%s_%s_pass%d_%s_sbs%d_sbs%dp_model%d.root",outdir,filebase.c_str(),key,pass,gen.c_str(),conf,sbsmag,model);
   TString outPlot = outFile; outPlot.ReplaceAll(".root",".pdf");
   TString outData = outFile; outData.ReplaceAll(".root",".csv"); ofstream outdata; outdata.open(outData);
@@ -1007,7 +1008,7 @@ int fit_dx (const char *configfilename,
 
   if (is_vary_cut) {
     // creating infinite loop gif
-    cCut->SaveAs(Form("%s++5",outGIF.Data())); 
+    cCut->SaveAs(Form("%s++10",outGIF.Data())); 
     // writing additional memory to file
     // Canvas : Plotting cut variation summary
     TCanvas *cGist = util_pd::TC("cGist",1,1); cGist->cd();
