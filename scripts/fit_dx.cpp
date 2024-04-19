@@ -125,9 +125,9 @@ void customize_hcut(TH1F* h)
 void customize_h2fiduCut(TH2F* h2, char const * nORp, char const * DataORMC, double sbs_kick) 
 {
   h2->SetTitle(Form("%s Envelope (%s)",nORp,DataORMC));
-  h2->GetXaxis()->SetTitle("#Deltay (m)");
-  TString xtitle = sbs_kick!=0 ? Form("#Deltax - %.2f (m)",sbs_kick) : "#Deltax (m)"; 
-  h2->GetYaxis()->SetTitle(xtitle);
+  h2->GetXaxis()->SetTitle("y_{HCAL}^{exp} (m)");
+  std::string ytitle = sbs_kick==0 ? "x_{HCAL}^{exp} (m)" : "x_{HCAL}^{exp} - " + std::to_string(sbs_kick) + " (m)"; 
+  h2->GetYaxis()->SetTitle(ytitle.c_str());
 }
 
 void customize_hsummary(TH1F* h, std::vector<std::string> const & lcuts)
@@ -321,7 +321,7 @@ int fit_dx (const char *configfilename,
   std::string filebase = jmgr->GetValueFromSubKey_str(key,"output_filebase");
   char const * confmag = Form("sbs%dsbs%dp",conf,sbsmag);
   char const * outdir = !is_vary_cut ? Form("pdout/fits/%s/",confmag) : Form("pdout/fits/%s/sysstdy/",confmag);
-  TString outFile = Form("%s%s_%s_pass%d_%s_sbs%d_sbs%dp_model%d.root",outdir,filebase.c_str(),key,pass,gen.c_str(),conf,sbsmag,model);
+  TString outFile = Form("%s%s_fit_dx_%s_pass%d_%s_sbs%d_sbs%dp_model%d.root",outdir,filebase.c_str(),key,pass,gen.c_str(),conf,sbsmag,model);
   TString outPlot = outFile; outPlot.ReplaceAll(".root",".pdf");
   TString outData = outFile; outData.ReplaceAll(".root",".csv"); ofstream outdata; outdata.open(outData);
   TFile *fout = new TFile(outFile.Data(), "RECREATE");
@@ -351,6 +351,7 @@ int fit_dx (const char *configfilename,
   // 1 -> scan around a fixed mean with increasing width. NOTE: cut_range[1] = mean, in this case
   // 2 -> increase threshold by a fixed amount
   // 3 -> vary fidu cut. NOTE: Only cut_range[0] matters, sets the range but fidu_vary_* dictates variation 
+  bool apply_to_data_only = jmgr->GetValueFromSubKey<int>(key,"apply_to_data_only");
   double low = cut_vary_style==1 ? min-width : min;
   double high = cut_vary_style==2 ? h_cut_param[2] : min+width; 
   // fidu cut variation (Cut style 3 -- Very different than the others)
@@ -386,7 +387,8 @@ int fit_dx (const char *configfilename,
 	hcal_SMs.push_back(hcal_SM_i);
       }
       cuts.push_back(cut); cuts_2.push_back(cut_2);
-      //std::cout << cut << "\n";
+      // defining cuts for MC
+      if (apply_to_data_only) cut = "1";
       std::string cut_p = cut + "&&mc_fnucl==1"; cuts_p.push_back(cut_p);
       std::string cut_n = cut + "&&mc_fnucl==0"; cuts_n.push_back(cut_n);
       // update high and low
@@ -776,6 +778,9 @@ int fit_dx (const char *configfilename,
 					    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_inel_p,h_dxHCAL_bg_inel_n,pnXOff_range,
 					    ho2);
       } else {
+	// f2 = fit::fit_2hs_1hbg_THI(dx_fit_range,
+	// 			   h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_inel,
+	// 			   ho2);
 	f2 = fit::fit_2hs_2hbg_THI(dx_fit_range,
 				   h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_inel_p,h_dxHCAL_bg_inel_n,
 				   ho2);
