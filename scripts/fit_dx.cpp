@@ -27,6 +27,17 @@
 #include "../include/gmn_ana.h"
 #include "../dflay/src/JSONManager.cxx"
 
+std::vector<double> CalcRnumBinEdges(int nBins, double xmin, double xmax, bool debug) {
+  /* Calculates explicit bin edges based on # of bins and variable range */
+  double binWidth = (xmax-xmin)/(double)nBins;
+  std::vector<double> binEdges; 
+  for (int i = 0; i <= nBins; ++i) {
+    binEdges.push_back(xmin + i * binWidth);
+    if (debug) std::cout << xmin + i * binWidth << "\n";
+  }
+  return binEdges;
+}
+
 void gStyleFitCanvas() 
 {
   gStyle->SetOptStat("e"); gStyle->SetOptFit(1); 
@@ -336,6 +347,8 @@ int fit_dx (const char *configfilename,
   TH1F *h_dxHCAL_bg_inel_p;
   TH1F *h_dxHCAL_bg_inel_n;
   TH1F *h_dxHCAL_bg_inel;
+  // vs Run number
+  TH2F *h2_dxHCAL_vs_rnum;
 
   // Cut variation **************
   // Although not necessary, keeping this loop separate gives more control and clarity
@@ -421,6 +434,12 @@ int fit_dx (const char *configfilename,
   TCanvas *cCut = new TCanvas("cCut","cCut",1000,800);
   if (cut_vary_style==3) cCut->Divide(2,2);
 
+  // ## Explicit x bins for Rnum histos -- Needed to avoid round off error introduced by ROOT's default way of calculating bin edges
+  double minRnum = 13304, maxRnum = 13407;
+  int nbinRnum = int(maxRnum-minRnum);
+  std::vector<double> xbinsRnum = CalcRnumBinEdges(nbinRnum,minRnum-0.5,maxRnum+0.5,0);
+  // --------- 
+ 
   for (int i=0; i<iter; i++) {
 
     // forming the fiducial cut
@@ -438,7 +457,9 @@ int fit_dx (const char *configfilename,
       h_dxHCAL_bg_data = (TH1F*)bg_data_rdf_filtered.Histo1D({"h_dxHCAL_bg_data","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
       h_dxHCAL_bg_inel_p = (TH1F*)inel_rdf_filtered.Filter("mc_fnucl==1").Histo1D({"h_dxHCAL_bg_inel_p","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_p","weight")->Clone();
       if (!is_elastic) h_dxHCAL_bg_inel_n = (TH1F*)inel_rdf_filtered.Filter("mc_fnucl==0").Histo1D({"h_dxHCAL_bg_inel_n","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_n","weight")->Clone();
-      //h_dxHCAL_bg_inel = (TH1F*)h_dxHCAL_bg_inel_p->Clone(); h_dxHCAL_bg_inel->Add(h_dxHCAL_bg_inel_p,h_dxHCAL_bg_inel_n);
+      h_dxHCAL_bg_inel = (TH1F*)h_dxHCAL_bg_inel_p->Clone(); h_dxHCAL_bg_inel->Add(h_dxHCAL_bg_inel_p,h_dxHCAL_bg_inel_n);
+      // ** vs Run number histos **
+      h2_dxHCAL_vs_rnum = (TH2F*)data_rdf_filtered.Filter(cuts[i]).Histo2D({"h2_dxHCAL_vs_rnum","",nbinRnum,&(xbinsRnum)[0],int(h_dx[0]),h_dx[1],h_dx[2]},"rnum","dx")->Clone();
 
     } else { // use custom fidu cut
       h_dxHCAL_data = (TH1F*)data_rdf_filtered
@@ -449,6 +470,10 @@ int fit_dx (const char *configfilename,
       h_dxHCAL_simu_p = (TH1F*)simu_rdf_filtered
  	.Filter(cuts_p[i]).Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"})
  	.Histo1D({"h_dxHCAL_simu_p","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_p","weight")->Clone();
+      // ** vs Run number histos **
+      h2_dxHCAL_vs_rnum = (TH2F*)data_rdf_filtered
+	.Filter(cuts[i]).Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"})
+	.Histo2D({"h2_dxHCAL_vs_rnum","",nbinRnum,&(xbinsRnum)[0],int(h_dx[0]),h_dx[1],h_dx[2]},"rnum","dx")->Clone();
       
       if (!is_elastic) h_dxHCAL_simu_n = (TH1F*)simu_rdf_filtered
  			 .Filter(cuts_n[i]).Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"})
@@ -477,6 +502,22 @@ int fit_dx (const char *configfilename,
       }
     }    
     h_dxHCAL_bg_inel = (TH1F*)h_dxHCAL_bg_inel_p->Clone(); h_dxHCAL_bg_inel->Add(h_dxHCAL_bg_inel_p,h_dxHCAL_bg_inel_n);
+    // ------------
+
+    // Now that we have all the important histograms formed, let's write them to the output
+    // tree for further analysis.
+    if (!is_vary_cut) {
+      h_dxHCAL_data->Write(); 
+      h_dxHCAL_data_CT->Write();
+      h_dxHCAL_simu_p->Write();
+      h_dxHCAL_simu_n->Write();
+      h_dxHCAL_bg_data->Write();
+      h_dxHCAL_bg_inel_p->Write();
+      h_dxHCAL_bg_inel_n->Write();
+      h_dxHCAL_bg_inel->Write();
+      // vs Runnum histos
+      h2_dxHCAL_vs_rnum->Write();
+    }
     // ------------
 
     if (is_vary_cut) {
