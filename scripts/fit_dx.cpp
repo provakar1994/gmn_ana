@@ -178,7 +178,7 @@ double total_fit (double * x, double * par) {
   return ffn->ffn_gaus(x,&par[0]) + ffn->ffn_poly(x,&par[3]);
 }
 
-void CalcSigToBg(TF1* gfit, TH1F* hfit_p, TH1F* hfit_n, TH1F* hfit_bg) {
+void GetYields(TF1* gfit, TH1F* hfit_p, TH1F* hfit_n, TH1F* hfit_bg, std::vector<double> &output) {
   // determining bin width and ranges
   double binW = hfit_p->GetBinWidth(1);
   double xMin = hfit_p->GetXaxis()->GetXmin();
@@ -201,16 +201,13 @@ void CalcSigToBg(TF1* gfit, TH1F* hfit_p, TH1F* hfit_n, TH1F* hfit_bg) {
   std::cout << "bg Count   : " << bgCount << "\n";
   std::cout << "Total Count: " << totCount << "\n";
   std::cout << "------------- \n";
+  // filling output vector
+  output = {pCount,pCount_err,nCount,nCount_err,bgCount,bgCount_err};
 }
 
-void CalcNormYields(TH1F* gfit, TH1F* hfit_p, TH1F* hfit_n, TH1F* hfit_bg, std::vector<double> output) {
+void GetYields(TH1F* gfit, TH1F* hfit_p, TH1F* hfit_n, TH1F* hfit_bg, std::vector<double> &output) {
   /* Calculates normalized yields */
-  // // determining bin width and ranges
-  // double binW = hfit_p->GetBinWidth(1);
-  // double xMin = hfit_p->GetXaxis()->GetXmin();
-  // double xMax = hfit_p->GetXaxis()->GetXmax();
   // calculating the integral under total fit curve
-  //double totCount = gfit->Integral(xMin,xMax) / binW;
   double totCount_err;
   double totCount = gfit->IntegralAndError(1,gfit->GetNbinsX(),totCount_err);
   // calculating p counts
@@ -230,11 +227,7 @@ void CalcNormYields(TH1F* gfit, TH1F* hfit_p, TH1F* hfit_n, TH1F* hfit_bg, std::
   std::cout << "Total Count: " << totCount << "\n";
   std::cout << "------------- \n";
   // filling output vector
-  double sig_frac = (pCount+nCount)/totCount;
-  double bg_frac = bgCount/totCount;
-  double p_frac = pCount/totCount;
-  double n_frac = nCount/totCount;
-  output = {p_frac,n_frac,bg_frac};
+  output = {pCount,pCount_err,nCount,nCount_err,bgCount,bgCount_err};
 }
 
 int fit_dx (const char *configfilename, 
@@ -347,6 +340,9 @@ int fit_dx (const char *configfilename,
   TH1F *h_dxHCAL_bg_inel_p;
   TH1F *h_dxHCAL_bg_inel_n;
   TH1F *h_dxHCAL_bg_inel;
+  // kinematic histo "true"
+  TH1F *h_vQ2;
+  TH1F *h_vetheta;
   // vs Run number
   TH2F *h2_dxHCAL_vs_rnum;
 
@@ -417,7 +413,7 @@ int fit_dx (const char *configfilename,
 
   // various outputs
   outdata << "cut,min,max,RMCnf,RMCnferr,RpMC,chi20,NDF0,R0,R0err,B0,B0err,chi21,NDF1,R1,R1err,B1,B1err,chi22,NDF2,R2,R2err,B2,B2err,"
-	  << "chi23,NDF3,R3,R3err,B3,B3err,chi24,NDF4,R4,R4err,B4,B4err\n";
+	  << "chi23,NDF3,R3,R3err,B3,B3err,chi24,NDF4,R4,R4err,B4,B4err,Yp2,Yp2err,Yn2,Yn2err,Ybg2,Ybg2err\n";
   TString outGIF = outFile; outGIF.ReplaceAll(".root",".gif");
   TString outPNG = outFile; outPNG.ReplaceAll(".root","");
 
@@ -458,6 +454,11 @@ int fit_dx (const char *configfilename,
       h_dxHCAL_bg_inel_p = (TH1F*)inel_rdf_filtered.Filter("mc_fnucl==1").Histo1D({"h_dxHCAL_bg_inel_p","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_p","weight")->Clone();
       if (!is_elastic) h_dxHCAL_bg_inel_n = (TH1F*)inel_rdf_filtered.Filter("mc_fnucl==0").Histo1D({"h_dxHCAL_bg_inel_n","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_n","weight")->Clone();
       h_dxHCAL_bg_inel = (TH1F*)h_dxHCAL_bg_inel_p->Clone(); h_dxHCAL_bg_inel->Add(h_dxHCAL_bg_inel_p,h_dxHCAL_bg_inel_n);
+      // kinematic histos "true"
+      if (apply_to_data_only) {
+	h_vQ2 =  (TH1F*)simu_rdf_filtered.Filter(cuts[i]).Histo1D({"h_vQ2","",300,0,15},"vQ2","weight")->Clone();
+	h_vetheta = (TH1F*)simu_rdf_filtered.Filter(cuts[i]).Histo1D({"h_vetheta","",300,0.35,1.05},"vetheta","weight")->Clone();
+      }
       // ** vs Run number histos **
       h2_dxHCAL_vs_rnum = (TH2F*)data_rdf_filtered.Filter(cuts[i]).Histo2D({"h2_dxHCAL_vs_rnum","",nbinRnum,&(xbinsRnum)[0],int(h_dx[0]),h_dx[1],h_dx[2]},"rnum","dx")->Clone();
 
@@ -470,6 +471,11 @@ int fit_dx (const char *configfilename,
       h_dxHCAL_simu_p = (TH1F*)simu_rdf_filtered
  	.Filter(cuts_p[i]).Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"})
  	.Histo1D({"h_dxHCAL_simu_p","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_p","weight")->Clone();
+      // kinematic histos "true"
+      if (!apply_to_data_only) {
+	h_vQ2 =  (TH1F*)simu_rdf_filtered.Filter(cuts[i]).Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"}).Histo1D({"h_vQ2","",300,0,15},"vQ2","weight")->Clone();
+	h_vetheta = (TH1F*)simu_rdf_filtered.Filter(cuts[i]).Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"}).Histo1D({"h_vetheta","",300,0.35,1.05},"vetheta","weight")->Clone();
+      }
       // ** vs Run number histos **
       h2_dxHCAL_vs_rnum = (TH2F*)data_rdf_filtered
 	.Filter(cuts[i]).Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"})
@@ -488,7 +494,7 @@ int fit_dx (const char *configfilename,
       else
  	h_dxHCAL_bg_data = (TH1F*)bg_data_rdf_filtered.Histo1D({"h_dxHCAL_bg_data","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
       // (simu)
-      if (apply_to_bg_simu) { // applying custom fiduCut to simu bg
+      if (!apply_to_bg_simu) { // applying custom fiduCut to simu bg
  	h_dxHCAL_bg_inel_p = (TH1F*)inel_rdf_filtered
  	  .Filter("mc_fnucl==1").Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"})
  	  .Histo1D({"h_dxHCAL_bg_inel_p","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_p","weight")->Clone();
@@ -515,6 +521,11 @@ int fit_dx (const char *configfilename,
       h_dxHCAL_bg_inel_p->Write();
       h_dxHCAL_bg_inel_n->Write();
       h_dxHCAL_bg_inel->Write();
+      // kinematic histos "true"
+      if (!apply_to_data_only) {
+	h_vQ2->Write();
+	h_vetheta->Write();
+      }
       // vs Runnum histos
       h2_dxHCAL_vs_rnum->Write();
     }
@@ -853,7 +864,8 @@ int fit_dx (const char *configfilename,
       ho2[5]->Draw("same HIST"); customize_nsig(ho2[5]);
       ho2[2]->Draw("same HIST"); customize_hbg(ho2[2]);
       // calculating signal to bg
-      CalcSigToBg(f2,ho2[4],ho2[5],ho2[2]);
+      std::vector<double> yo2;
+      GetYields(f2,ho2[4],ho2[5],ho2[2],yo2);
       // redrawing the stat box
       st2->SetX1NDC(0.6); st2->SetX2NDC(0.9); st2->SetY2NDC(0.9);
       st2->Draw("same");    
@@ -1033,6 +1045,7 @@ int fit_dx (const char *configfilename,
 	//outdata << R_vals[i] << "," << Rerr_vals[i] << ",";
 	outdata << Form("%.1f,%.1f,%.4f,%.4f,%.4f,%.4f,",chi2[i],NDF[i],R_vals[i],Rerr_vals[i],B_vals[i],Berr_vals[i]);
       }
+      outdata << Form("%.0f,%.0f,%.0f,%.0f,%.0f,%.0f",yo2[0],yo2[1],yo2[2],yo2[3],yo2[4],yo2[5]);
       outdata << "\n";
       std::cout << "\n------\n";
 
