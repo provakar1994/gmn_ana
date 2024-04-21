@@ -365,10 +365,10 @@ int qelas_ana_data (const char *configfilename,
 
   // reading HCAL cut definitions
   std::vector<double> dx_p_cut; jmgr->GetVectorFromSubKey<double>(key,"dx_p_cut",dx_p_cut);
-  double sbs_kick = abs(dx_p_cut[0]);
   std::vector<double> dy_p_cut; jmgr->GetVectorFromSubKey<double>(key,"dy_p_cut",dy_p_cut);
   std::vector<double> dx_n_cut; jmgr->GetVectorFromSubKey<double>(key,"dx_n_cut",dx_n_cut);
   std::vector<double> dy_n_cut; jmgr->GetVectorFromSubKey<double>(key,"dy_n_cut",dy_n_cut);
+  double sbs_kick = abs(dx_p_cut[0]-dx_n_cut[0]); // I feel the diff should give the right amount of kick - 04/21/24
   double avg_dx_np_sig = (dx_n_cut[1]+dx_p_cut[1])/2.; 
   std::vector<double> hcal_active_area = cut::hcal_active_area_data(1,1,pass); // Exc. 1 blk from all 4 sides
   std::vector<double> hcal_safety_margin = cut::hcal_safety_margin(avg_dx_np_sig,avg_dx_np_sig,dy_p_cut[1],hcal_active_area);
