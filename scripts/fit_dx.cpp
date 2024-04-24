@@ -745,8 +745,8 @@ int fit_dx (const char *configfilename,
       R_vals.push_back(f0->GetParameter(1)); Rerr_vals.push_back(f0->GetParError(1));
       B_vals.push_back(0); Berr_vals.push_back(0);
       //ho[0]->Draw("E"); customize_data(ho[0]); customize_dx(ho[0]);
-      h_dxHCAL_data->Draw("E"); customize_data(h_dxHCAL_data);
-      ho[1]->Draw("same"); customize_hs(ho[1]); //customize_dx(ho[1]);
+      ho[1]->Draw(); customize_hs(ho[1]); ho[1]->SetStats(0);
+      h_dxHCAL_data->Draw("E same"); customize_data(h_dxHCAL_data);
       //f0->Draw("same");
       TLegend *l0 = new TLegend(0.10,0.73,0.35,0.9);
       l0->SetTextFont(42);
@@ -830,12 +830,12 @@ int fit_dx (const char *configfilename,
 					    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_inel_p,h_dxHCAL_bg_inel_n,pnXOff_range,
 					    ho2);
       } else {
-	// f2 = fit::fit_2hs_1hbg_THI(dx_fit_range,
-	// 			   h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_inel,
-	// 			   ho2);
-	f2 = fit::fit_2hs_2hbg_THI(dx_fit_range,
-				   h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_inel_p,h_dxHCAL_bg_inel_n,
+	f2 = fit::fit_2hs_1hbg_THI(dx_fit_range,
+				   h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_inel,
 				   ho2);
+	// f2 = fit::fit_2hs_2hbg_THI(dx_fit_range,
+	// 			   h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_inel_p,h_dxHCAL_bg_inel_n,
+	// 			   ho2);
       }
       if (is_vary_cut) {
 	htemp->SetBinContent(i+1,f2->GetParameter(1));
