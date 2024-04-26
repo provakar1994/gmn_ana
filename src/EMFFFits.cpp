@@ -249,6 +249,45 @@ int Ye2017::YeFit(const int kID, const double kQ2, double *GNGD_Fit, double* GNG
   return 0;
 }
 
+int Ye2017::YeFitNoTPE(const int kID, const double kQ2, double &FF, double &FF_err) {
+  // Only returs GEp, GMp, and the associated errors
+
+  /////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////
+  // The proton FFs w/o TPE correction are not included
+  // in the official supplymentary materials. The associated 
+  // lookup table have been collected from the authors via
+  // private communications. 
+
+  // GEp->kID=1, GMp->kID=2, GEn->kID=3, GMn->kID=4
+  if (kID>2) {
+    std::cerr<<"*** ERROR***, Ye fit w/o TPE only supports kID=1 & 2 ie GEp & GMp"<<std::endl;
+    FF = -1000;  FF_err= -1000;
+    return -1;
+  }
+
+  // Reading the lookup table
+  LookUpTableReader reader;
+  std::string filename = "data.csv";
+  reader.readCSV(filename);
+
+  // Reading the FFs and the errors
+  double GEp = reader.GetClosestValueByKey(kQ2,1);
+  double GEpErr = reader.GetClosestValueByKey(kQ2,2);
+  double GMp = reader.GetClosestValueByKey(kQ2,3); 
+  double GMpErr = reader.GetClosestValueByKey(kQ2,4);;
+
+  // Returning EMFF values
+  if (kID==1) {
+    FF = GEp; FF_err = GEpErr;
+  }
+  else {
+    FF = GMp; FF_err = GMpErr;
+  }
+
+  return 0;
+}
+
 // ########################
 // ## Christy Fit (2022) ##
 // ########################
@@ -287,6 +326,91 @@ int Christy2022::ChristyFit(const int kID, const double kQ2, double *GNGD_Fit, d
   // Returning EMFF values
   if (kID-1==1) GNGD_Fit[0] = GMp_ov_mun / EMFFFits::GetGDip(kQ2);
   else GNGD_Fit[0] = GEp / EMFFFits::GetGDip(kQ2);
+  GNGD_Err[0] = -1000.;
+
+  return 0;
+}
+
+// ##########################
+// ## Arrington Fit (2007) ##
+// ##########################
+int Arrington2007::ArringtonFit(const int kID, const double kQ2, double *GNGD_Fit, double* GNGD_Err) {
+  // ** Link to the original paper:
+  // https://journals.aps.org/prc/pdf/10.1103/PhysRevC.76.035205 (TABLE I)
+
+  // GEp->kID=1, GMp->kID=2, GEn->kID=3, GMn->kID=4
+  if (kID>2) {
+    std::cerr<<"*** ERROR***, Arrington fit only supports kID=1 & 2 ie GEp & GMp"<<std::endl;
+    GNGD_Fit[0] = -1000;  GNGD_Err[0] = -1000;
+    return -1;
+  }
+
+  ////////////////////////////////////////////////
+  //// a_i, b_i, & c_i Parameters for True Form Factor Values (with TPE corrections)
+  /////////////////////////////////////////////////*{{{*/
+  const double GN_Coef_Fit[2][8] ={
+    {-1.465, 1.260, 0.262, 9.627, 0.000, 0.000, 11.179, 13.245}, /*GMp/mu_p*/
+    {3.439, -1.602, 0.068, 15.055, 48.061, 99.304, 0.012, 8.650}  /*GEp*/
+  };/*}}}*/
+
+  //// Applying parametrization formula
+  double tau = kine::tau(kQ2,"p");
+  double numerator = 1.;
+  double denominator = 1.;
+
+  //// Implementing the parametrization
+  if (kID-1==1) { // GMp/mu_p
+    for (int i=0; i<3; i++) numerator += GN_Coef_Fit[0][i]*pow(tau,i+1);
+    for (int i=3; i<8; i++) denominator += GN_Coef_Fit[0][i]*pow(tau,i-2);
+    double GMp_ov_mup = numerator/denominator;
+    GNGD_Fit[0] = GMp_ov_mup / EMFFFits::GetGDip(kQ2);
+  } else { // GEp
+    for (int i=0; i<3; i++) numerator += GN_Coef_Fit[1][i]*pow(tau,i+1);
+    for (int i=3; i<8; i++) denominator += GN_Coef_Fit[1][i]*pow(tau,i-2);
+    double GEp = numerator/denominator;
+    GNGD_Fit[0] = GEp / EMFFFits::GetGDip(kQ2);    
+  }
+  GNGD_Err[0] = -1000.;
+
+  return 0;
+}
+
+int Arrington2007::ArringtonFitNoTPE(const int kID, const double kQ2, double *GNGD_Fit, double* GNGD_Err) {
+  // ** Link to the original paper:
+  // https://journals.aps.org/prc/pdf/10.1103/PhysRevC.76.035205 (TABLE IV)
+
+  // GEp->kID=1, GMp->kID=2, GEn->kID=3, GMn->kID=4
+  if (kID>2) {
+    std::cerr<<"*** ERROR***, Arrington fit only supports kID=1 & 2 ie GEp & GMp"<<std::endl;
+    GNGD_Fit[0] = -1000;  GNGD_Err[0] = -1000;
+    return -1;
+  }
+
+  ////////////////////////////////////////////////
+  //// a_i, b_i, & c_i Parameters for Effective Form Factor Values (No TPE Correction)
+  /////////////////////////////////////////////////*{{{*/
+  const double GN_Coef_Fit[2][8] ={
+    {-2.151, 4.261, 0.159, 8.647, 0.001, 5.245, 82.817, 14.191}, /*Fm/mu_p -> GMp/mu_p in OPE*/
+    {-1.651, 1.287, -0.185, 9.531, 0.591, 0.000, 0.000, 4.994}  /*Fe -> GEp in OPE*/
+  };/*}}}*/
+
+  //// Applying parametrization formula
+  double tau = kine::tau(kQ2,"p");
+  double numerator = 1.;
+  double denominator = 1.;
+
+  //// Implementing the parametrization
+  if (kID-1==1) { // GMp/mu_p
+    for (int i=0; i<3; i++) numerator += GN_Coef_Fit[0][i]*pow(tau,i+1);
+    for (int i=3; i<8; i++) denominator += GN_Coef_Fit[0][i]*pow(tau,i-2);
+    double GMp_ov_mup = numerator/denominator;
+    GNGD_Fit[0] = GMp_ov_mup / EMFFFits::GetGDip(kQ2);
+  } else { // GEp
+    for (int i=0; i<3; i++) numerator += GN_Coef_Fit[1][i]*pow(tau,i+1);
+    for (int i=3; i<8; i++) denominator += GN_Coef_Fit[1][i]*pow(tau,i-2);
+    double GEp = numerator/denominator;
+    GNGD_Fit[0] = GEp / EMFFFits::GetGDip(kQ2);    
+  }
   GNGD_Err[0] = -1000.;
 
   return 0;

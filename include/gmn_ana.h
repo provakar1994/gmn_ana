@@ -17,6 +17,7 @@
 #include "SetROOTVar.h"
 #include "KinematicVar.h"
 #include "ExpConstants.h"
+#include "LookUpTableReader.h"
 
 /*
 #include "Constants.h"                // namespace constant (General constants) 

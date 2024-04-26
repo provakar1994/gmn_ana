@@ -89,6 +89,8 @@ namespace kine{
   double ExtractGMn(double ebeam, double eeprime, double etheta, double GEp, double GMp, double GEn, double ratio);
   double ExtractGMn(SBSconfig sbsconf, double GEp, double GMp, double GEn, double ratio);
   double ExtractGMn(double etheta, double Q2, double GEp, double GMp, double GEn, double ratio);
+  double CalcGMnError(double etheta, double Q2, double GEp, double GMp, double GEn, double ratio, double ratioErr);
+  void ExtractGMnWithError(double etheta,double Q2,double GEp,double GMp,double GEn,double ratio,double ratioErr,std::vector<double> &output);
 }
 
 #endif

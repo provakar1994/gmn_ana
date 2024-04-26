@@ -295,8 +295,8 @@ namespace fit {
     f1->SetParName(4,"nOff");
 
     // setting limits for p and n peak offset varitations
-    //f1->SetParLimits(3,xOff_range[1],xOff_range[2]);
-    //f1->SetParLimits(4,xOff_range[3],xOff_range[4]);
+    f1->SetParLimits(3,xOff_range[1],xOff_range[2]);
+    f1->SetParLimits(4,xOff_range[3],xOff_range[4]);
 
     ht_cp->Fit(f1,"SQER");
     std::vector<double> pars = GetFitParams(f1);
@@ -389,6 +389,10 @@ namespace fit {
     f1->SetParName(2,"B");
     f1->SetParName(3,"pOff");
     f1->SetParName(4,"nOff");
+
+    // setting limits for p and n peak offset varitations
+    f1->SetParLimits(3,xOff_range[1],xOff_range[2]);
+    f1->SetParLimits(4,xOff_range[3],xOff_range[4]);
 
     ht_cp->Fit(f1,"R");
     std::vector<double> pars = GetFitParams(f1);
