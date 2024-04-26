@@ -375,8 +375,8 @@ int fit_dx (const char *configfilename,
     for (int i=0; i<iter; i++) {
       minval.push_back(low); maxval.push_back(high);
       std::string cut, cut_2;
-      char low_buff[20]; std::snprintf(low_buff,20,"%.2f",low); std::string low_str(low_buff);
-      char high_buff[20]; std::snprintf(high_buff,20,"%.2f",high); std::string high_str(high_buff);
+      char low_buff[20]; std::snprintf(low_buff,20,"%.3f",low); std::string low_str(low_buff);
+      char high_buff[20]; std::snprintf(high_buff,20,"%.3f",high); std::string high_str(high_buff);
       if (cut_vary_style==0 || cut_vary_style==1) {
 	cut = param_to_vary+">"+low_str+"&&"+param_to_vary+"<="+high_str; 
 	cut_2 = low_str+"<"+param_to_vary+"<="+high_str;
@@ -412,8 +412,16 @@ int fit_dx (const char *configfilename,
   }
 
   // various outputs
-  outdata << "cut,min,max,RMCnf,RMCnferr,RpMC,chi20,NDF0,R0,R0err,B0,B0err,chi21,NDF1,R1,R1err,B1,B1err,chi22,NDF2,R2,R2err,B2,B2err,"
-	  << "chi23,NDF3,R3,R3err,B3,B3err,chi24,NDF4,R4,R4err,B4,B4err,Yp2,Yp2err,Yn2,Yn2err,Ybg2,Ybg2err\n";
+  // outdata << "cut,min,max,RMCnf,RMCnferr,RpMC,chi20,NDF0,R0,R0err,B0,B0err,chi21,NDF1,R1,R1err,B1,B1err,chi22,NDF2,R2,R2err,B2,B2err,"
+  // 	  << "chi23,NDF3,R3,R3err,B3,B3err,chi24,NDF4,R4,R4err,B4,B4err,Yp2,Yp2err,Yn2,Yn2err,Ybg2,Ybg2err\n";
+  outdata << "cut,min,max,RMCnf,RMCnferr,RpMC,"
+	  << "chi20,NDF0,R0,R0err,"
+	  << "chi21,NDF1,R1,R1err,B1,B1err,Yp1,Yp1err,Yn1,Yn1err,Ybg1,Ybg1err,"
+	  << "chi22,NDF2,R2,R2err,B2,B2err,Yp2,Yp2err,Yn2,Yn2err,Ybg2,Ybg2err,"
+	  << "chi23,NDF3,R3,R3err,B3,B3err,Yp3,Yp3err,Yn3,Yn3err,Ybg3,Ybg3err,"
+    //<< "chi24,NDF4,R4,R4err,B4,B4err,Yp4,Yp4err,Yn4,Yn4err,Ybg4,Ybg4err,"
+	  << "\n";
+
   TString outGIF = outFile; outGIF.ReplaceAll(".root",".gif");
   TString outPNG = outFile; outPNG.ReplaceAll(".root","");
 
@@ -431,7 +439,9 @@ int fit_dx (const char *configfilename,
   if (cut_vary_style==3) cCut->Divide(2,2);
 
   // ## Explicit x bins for Rnum histos -- Needed to avoid round off error introduced by ROOT's default way of calculating bin edges
-  double minRnum = 13304, maxRnum = 13407;
+  // double minRnum = 13304, maxRnum = 13407; // SBS14
+  // double minRnum = 11996, maxRnum = 12073; // SBS7
+  double minRnum = 12314, maxRnum = 13063; // SBS11
   int nbinRnum = int(maxRnum-minRnum);
   std::vector<double> xbinsRnum = CalcRnumBinEdges(nbinRnum,minRnum-0.5,maxRnum+0.5,0);
   // --------- 
@@ -456,7 +466,7 @@ int fit_dx (const char *configfilename,
       h_dxHCAL_bg_inel = (TH1F*)h_dxHCAL_bg_inel_p->Clone(); h_dxHCAL_bg_inel->Add(h_dxHCAL_bg_inel_p,h_dxHCAL_bg_inel_n);
       // kinematic histos "true"
       if (apply_to_data_only) {
-	h_vQ2 =  (TH1F*)simu_rdf_filtered.Filter(cuts[i]).Histo1D({"h_vQ2","",300,0,15},"vQ2","weight")->Clone();
+	h_vQ2 =  (TH1F*)simu_rdf_filtered.Filter(cuts[i]).Histo1D({"h_vQ2","",300,0,16},"vQ2","weight")->Clone();
 	h_vetheta = (TH1F*)simu_rdf_filtered.Filter(cuts[i]).Histo1D({"h_vetheta","",300,0.35,1.05},"vetheta","weight")->Clone();
       }
       // ** vs Run number histos **
@@ -473,7 +483,7 @@ int fit_dx (const char *configfilename,
  	.Histo1D({"h_dxHCAL_simu_p","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_p","weight")->Clone();
       // kinematic histos "true"
       if (!apply_to_data_only) {
-	h_vQ2 =  (TH1F*)simu_rdf_filtered.Filter(cuts[i]).Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"}).Histo1D({"h_vQ2","",300,0,15},"vQ2","weight")->Clone();
+	h_vQ2 =  (TH1F*)simu_rdf_filtered.Filter(cuts[i]).Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"}).Histo1D({"h_vQ2","",300,0,16},"vQ2","weight")->Clone();
 	h_vetheta = (TH1F*)simu_rdf_filtered.Filter(cuts[i]).Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"}).Histo1D({"h_vetheta","",300,0.35,1.05},"vetheta","weight")->Clone();
       }
       // ** vs Run number histos **
@@ -589,6 +599,7 @@ int fit_dx (const char *configfilename,
       ## Fitting elastic dx distributions ##
       ###################################### */
     std::vector<double> R_vals,Rerr_vals,chi2,NDF,B_vals,Berr_vals;
+    std::vector<double> pCnt,pCnt_err,nCnt,nCnt_err,bgCnt,bgCnt_err;
     if (is_elastic) {
       // Canvas 0 : Fitting data/MC w/o any background
       TCanvas *c0 = util_pd::TC("c0",1,1);
@@ -744,6 +755,9 @@ int fit_dx (const char *configfilename,
       chi2.push_back(f0->GetChisquare()); NDF.push_back(f0->GetNDF());
       R_vals.push_back(f0->GetParameter(1)); Rerr_vals.push_back(f0->GetParError(1));
       B_vals.push_back(0); Berr_vals.push_back(0);
+      pCnt.push_back(0); pCnt_err.push_back(0);
+      nCnt.push_back(0); nCnt_err.push_back(0);
+      bgCnt.push_back(0); bgCnt_err.push_back(0);
       //ho[0]->Draw("E"); customize_data(ho[0]); customize_dx(ho[0]);
       ho[1]->Draw(); customize_hs(ho[1]); ho[1]->SetStats(0);
       h_dxHCAL_data->Draw("E same"); customize_data(h_dxHCAL_data);
@@ -796,6 +810,11 @@ int fit_dx (const char *configfilename,
       ho1[4]->Draw("same HIST"); customize_psig(ho1[4]);
       ho1[5]->Draw("same HIST"); customize_nsig(ho1[5]);
       ho1[2]->Draw("same HIST"); customize_hbg(ho1[2]);
+      // calculating yields
+      std::vector<double> yo1; GetYields(f1,ho1[4],ho1[5],ho1[2],yo1);
+      pCnt.push_back(yo1[0]); pCnt_err.push_back(yo1[1]);
+      nCnt.push_back(yo1[2]); nCnt_err.push_back(yo1[3]);
+      bgCnt.push_back(yo1[4]); bgCnt_err.push_back(yo1[5]);
       // redrawing the stat box
       st1->SetX1NDC(0.6); st1->SetX2NDC(0.9); st1->SetY2NDC(0.9);
       st1->Draw("same");    
@@ -863,9 +882,11 @@ int fit_dx (const char *configfilename,
       ho2[4]->Draw("same HIST"); customize_psig(ho2[4]);
       ho2[5]->Draw("same HIST"); customize_nsig(ho2[5]);
       ho2[2]->Draw("same HIST"); customize_hbg(ho2[2]);
-      // calculating signal to bg
-      std::vector<double> yo2;
-      GetYields(f2,ho2[4],ho2[5],ho2[2],yo2);
+      // calculating yields
+      std::vector<double> yo2; GetYields(f2,ho2[4],ho2[5],ho2[2],yo2);
+      pCnt.push_back(yo2[0]); pCnt_err.push_back(yo2[1]);
+      nCnt.push_back(yo2[2]); nCnt_err.push_back(yo2[3]);
+      bgCnt.push_back(yo2[4]); bgCnt_err.push_back(yo2[5]);
       // redrawing the stat box
       st2->SetX1NDC(0.6); st2->SetX2NDC(0.9); st2->SetY2NDC(0.9);
       st2->Draw("same");    
@@ -927,6 +948,11 @@ int fit_dx (const char *configfilename,
       ho3[4]->Draw("same HIST"); customize_psig(ho3[4]);
       ho3[5]->Draw("same HIST"); customize_nsig(ho3[5]);
       ho3[2]->Draw("same HIST"); customize_hbg(ho3[2]);
+      // calculating yields
+      std::vector<double> yo3; GetYields(f3,ho3[4],ho3[5],ho3[2],yo3);
+      pCnt.push_back(yo3[0]); pCnt_err.push_back(yo3[1]);
+      nCnt.push_back(yo3[2]); nCnt_err.push_back(yo3[3]);
+      bgCnt.push_back(yo3[4]); bgCnt_err.push_back(yo3[5]);
       // redrawing the stat box
       st3->SetX1NDC(0.62); st3->SetX2NDC(0.9); st3->SetY2NDC(0.9);
       st3->Draw("same");
@@ -1038,14 +1064,18 @@ int fit_dx (const char *configfilename,
       std::cout << "\n--- Reporting fit params ---\n";
       std::cout << "cut,min,max,R0,R0err,R1,R1err,R2,R2err,R3,R3err,R4,R4err\n";
       std::cout << cuts_2[i] << "," << minval[i] << "," << maxval[i] << ",";
-      //outdata << cuts_2[i] << "," << minval[i] << "," << maxval[i] << ",";
       outdata << cuts_2[i] << "," << minval[i] << "," << maxval[i] << "," << R_MC_nofit << "," << R_MC_nofit_err << "," << Rp_MC << ",";
       for(size_t i=0; i < R_vals.size(); i++){
 	std::cout << R_vals[i] << "," << Rerr_vals[i] << ",";
-	//outdata << R_vals[i] << "," << Rerr_vals[i] << ",";
-	outdata << Form("%.1f,%.1f,%.4f,%.4f,%.4f,%.4f,",chi2[i],NDF[i],R_vals[i],Rerr_vals[i],B_vals[i],Berr_vals[i]);
+	//outdata << Form("%.1f,%.1f,%.4f,%.4f,%.4f,%.4f,",chi2[i],NDF[i],R_vals[i],Rerr_vals[i],B_vals[i],Berr_vals[i]);
+	outdata << Form("%.1f,%.0f,",chi2[i],NDF[i]);
+	outdata << Form("%.4f,%.4f,",R_vals[i],Rerr_vals[i]);
+	if (i>0) {
+	  outdata << Form("%.4f,%.4f,",B_vals[i],Berr_vals[i]);
+	  outdata << Form("%.0f,%.0f,%.0f,%.0f,%.0f,%.0f,",pCnt[i],pCnt_err[i],nCnt[i],nCnt_err[i],bgCnt[i],bgCnt_err[i]);
+	}
       }
-      outdata << Form("%.0f,%.0f,%.0f,%.0f,%.0f,%.0f",yo2[0],yo2[1],yo2[2],yo2[3],yo2[4],yo2[5]);
+      // outdata << Form("%.0f,%.0f,%.0f,%.0f,%.0f,%.0f",yo2[0],yo2[1],yo2[2],yo2[3],yo2[4],yo2[5]);
       outdata << "\n";
       std::cout << "\n------\n";
 

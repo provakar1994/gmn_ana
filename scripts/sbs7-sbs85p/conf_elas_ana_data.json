@@ -1,10 +1,9 @@
 {
-"pass2":
+"pass2_model2":
 {
     "Ntype"              : "p",
     "SBS_config"         : 7,
     "SBS_magnet_percent" : 85,
-    "model"              : 2,
     "Nruns_to_ana"       : -1,
     "get_scaler_info"    : 0,
     "runsheet_dir"       : "../DB",
@@ -19,13 +18,18 @@
     "hcal_samp_frac_cutR": 0.01,
     "hcal_voffset"       : 0.0,
     "hcal_hoffset"       : 0.0,
-    "hcal_zoffset"       : 0.925,
-    "dx_p_cut"           : [-0.781943,0.0739548,1],
-    "dy_p_cut"           : [0.00994047,0.0925132,1],
+    "hcal_zoffset"       : 0.0,
+    "dx_p_cut"           : [-0.780591,0.0706107,2],
+    "dy_p_cut"           : [0.00161812,0.093414,2],
     "h_dxHCAL_lims"      : [260,-3.2,2],
     "h_dyHCAL_lims"      : [200,-1.5,1.5],
     "h_dxHCAL_p_fitR"    : [-1.2,-0.2,1.5,1.5],
-    "h_dyHCAL_fitR"      : [-1,1,0.5,0.8],
+    "h_dyHCAL_fitR"      : [-1,1,1,1],
+    "Other_parmas_block" : "-----FOLLOWING PARMAS ARE NEEDED TO RUN THE SCRIPT-----",
+    "NOTE"               : "verbose=0 & verbosefn=0 => Production; verbose<-1=>Debug, =-1=>Test; verbosefn>0=>Debug",
+    "verbose"            : -1,
+    "verbose_function"   : 0,
+    "outfile_prefix"     : "p2_t4",
     "README"             : "First look at pass2 data: 02/14/24"
 },
 "pass0":
