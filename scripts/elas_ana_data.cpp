@@ -303,6 +303,7 @@ int elas_ana_data (const char *configfilename,
   double T_cblkSH;        Tout->Branch("cblkSH", &T_cblkSH, "cblkSH/D"); 
   double T_idblkSH;       Tout->Branch("idblkSH", &T_idblkSH, "idblkSH/D"); 
   double T_atimeSH;       Tout->Branch("atimeSH", &T_atimeSH, "atimeSH/D"); 
+  double T_EovP;          Tout->Branch("EovP", &T_EovP, "EovP/D"); 
   //HCAL (HE HCAL cluster in time)
   double T_eHCAL;         Tout->Branch("eHCAL", &T_eHCAL, "eHCAL/D"); 
   double T_xHCAL;         Tout->Branch("xHCAL", &T_xHCAL, "xHCAL/D"); 
@@ -576,6 +577,8 @@ int elas_ana_data (const char *configfilename,
     T_cblkSH = cblkSH;
     T_idblkSH = idblkSH;
     T_atimeSH = atimeSH;
+
+    T_EovP = (eSH+ePS)/p[0];
 
     T_ncltmeanHODO = ncltmeanHODO;
     T_cltmeanHODO = cltmeanHODO[0];
