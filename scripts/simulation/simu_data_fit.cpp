@@ -175,6 +175,11 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
 	double simu = h_comb_MC[iR]->GetBinContent(ibin);
 	double data = h_dxHCAL_data->GetBinContent(ibin);
 	if (data>0) { 
+	  // The calculation of data error is a little tricky:
+	  // 1. The data histogram is normalized here by 1/N, so cosidering Poission dist.
+	  //    the stat error of each bin is sqrt(n_i) x 1/N, Here n_i is the content of ith bin
+	  // 2. However, the variable "data" here is actually n_i/N due to scaling.
+	  // 3. Hence, the correct stat error of ith bin should be sqrt(data)/sqrt(N) = sqrt(n_i)/N
 	  double dataErr = sqrt(data)/sqrt(h_dxHCAL_data->GetEntries());
 	  chi2 += (data-simu)*(data-simu) / ((dataErr)*(dataErr));
 	}
@@ -294,6 +299,11 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
 	  double simu = h_comb_MC_RB[iB]->GetBinContent(ibin);
 	  double data = h_dxHCAL_data->GetBinContent(ibin);
 	  if (data>0) { 
+	    // The calculation of data error is a little tricky:
+	    // 1. The data histogram is normalized here by 1/N, so cosidering Poission dist.
+	    //    the stat error of each bin is sqrt(n_i) x 1/N, Here n_i is the content of ith bin
+	    // 2. However, the variable "data" here is actually n_i/N due to scaling.
+	    // 3. Hence, the correct stat error of ith bin should be sqrt(data)/sqrt(N) = sqrt(n_i)/N
 	    double dataErr = sqrt(data)/sqrt(h_dxHCAL_data->GetEntries());
 	    chi2 += (data-simu)*(data-simu) / ((dataErr)*(dataErr));
 	  }
@@ -423,6 +433,11 @@ int simu_data_fit (const char *configfilename, std::string filebase="siout/test_
 	  double simu = h_comb_MC_RB_simul[iter]->GetBinContent(ibin);
 	  double data = h_dxHCAL_data->GetBinContent(ibin);
 	  if (data>0) { 
+	    // The calculation of data error is a little tricky:
+	    // 1. The data histogram is normalized here by 1/N, so cosidering Poission dist.
+	    //    the stat error of each bin is sqrt(n_i) x 1/N, Here n_i is the content of ith bin
+	    // 2. However, the variable "data" here is actually n_i/N due to scaling.
+	    // 3. Hence, the correct stat error of ith bin should be sqrt(data)/sqrt(N) = sqrt(n_i)/N
 	    double dataErr = sqrt(data)/sqrt(h_dxHCAL_data->GetEntries());
 	    chi2 += (data-simu)*(data-simu) / ((dataErr)*(dataErr));
 	  }
