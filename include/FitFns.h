@@ -124,6 +124,25 @@ class FitFn {
     double modx2 = x[0]-hs2xOff;
     return Norm*(fhs1->Interpolate(modx1)+R*fhs2->Interpolate(modx2)) + ffn_poly(x,&par[4]);
   }
+
+  // fits using 2 signal histos and 1 Gaussian bg (2+3 params)
+  double ffn_2hs_1gbg (double *x, double *par) const {
+    double Norm = par[0];
+    double R = par[1];
+    return Norm*(fhs1->Interpolate(x[0])+R*fhs2->Interpolate(x[0])) + ffn_gaus(x,&par[2]);
+  }
+
+  // fits using 2 signal (vary x offsets for both) histos and 1 poly bg (4+fpoly+1 params)
+  double ffn_2hs_1gbg_xOffVary (double *x, double *par) const {
+    double Norm = par[0];
+    double R = par[1];
+    double hs1xOff = par[2];
+    double hs2xOff = par[3];
+    //
+    double modx1 = x[0]-hs1xOff;
+    double modx2 = x[0]-hs2xOff;
+    return Norm*(fhs1->Interpolate(modx1)+R*fhs2->Interpolate(modx2)) + ffn_gaus(x,&par[4]);
+  }
 };
 
 #endif

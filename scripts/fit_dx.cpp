@@ -412,14 +412,12 @@ int fit_dx (const char *configfilename,
   }
 
   // various outputs
-  // outdata << "cut,min,max,RMCnf,RMCnferr,RpMC,chi20,NDF0,R0,R0err,B0,B0err,chi21,NDF1,R1,R1err,B1,B1err,chi22,NDF2,R2,R2err,B2,B2err,"
-  // 	  << "chi23,NDF3,R3,R3err,B3,B3err,chi24,NDF4,R4,R4err,B4,B4err,Yp2,Yp2err,Yn2,Yn2err,Ybg2,Ybg2err\n";
   outdata << "cut,min,max,RMCnf,RMCnferr,RpMC,"
 	  << "chi20,NDF0,R0,R0err,"
 	  << "chi21,NDF1,R1,R1err,B1,B1err,Yp1,Yp1err,Yn1,Yn1err,Ybg1,Ybg1err,"
 	  << "chi22,NDF2,R2,R2err,B2,B2err,Yp2,Yp2err,Yn2,Yn2err,Ybg2,Ybg2err,"
 	  << "chi23,NDF3,R3,R3err,B3,B3err,Yp3,Yp3err,Yn3,Yn3err,Ybg3,Ybg3err,"
-    //<< "chi24,NDF4,R4,R4err,B4,B4err,Yp4,Yp4err,Yn4,Yn4err,Ybg4,Ybg4err,"
+	  << "chi24,NDF4,R4,R4err,B4,B4err,Yp4,Yp4err,Yn4,Yn4err,Ybg4,Ybg4err,"
 	  << "\n";
 
   TString outGIF = outFile; outGIF.ReplaceAll(".root",".gif");
@@ -766,7 +764,7 @@ int fit_dx (const char *configfilename,
       l0->SetTextFont(42);
       l0->AddEntry(h_dxHCAL_data,"Data","p");
       //l0->AddEntry(f0,"Fit","l");
-      l0->AddEntry(ho[1],"MC Signal","p");
+      l0->AddEntry(ho[1],"MC (Signal)","p");
       l0->AddEntry((TObject*)0,Form("MC p peak offset: %.3fm",dx_offset_p),"");
       l0->AddEntry((TObject*)0,Form("MC n peak offset: %.3fm",dx_offset_n),"");
       if (is_vary_cut) AddCutToLegend(l0,cuts_2[i].c_str());
@@ -979,85 +977,154 @@ int fit_dx (const char *configfilename,
       // *******************
       //c3->SaveAs(Form("%s_c3_%d.png",outPNG.Data(),i)); 
 
+      // Canvas 4 : Fitting data/MC w/ polynomial background
+      TCanvas *c4 = util_pd::TC("c4",1,1); gStyleFitCanvas();
+      c4->cd(); 
+      // performing the fit
+      vector<TH1F*> ho4;
+      TF1 *f4;
+      std::vector<double> gfit_params; jmgr->GetVectorFromSubKey<double>(key,"Par_guess_of_gaus_bg",gfit_params);
+      if (is_vary_pnXOff) {
+	f4 = fit::fit_2hs_1gbg_THI_xOffVary(dx_fit_range,
+					    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,pnXOff_range,gfit_params,
+					    ho4);
+      } else {
+	f4 = fit::fit_2hs_1gbg_THI(dx_fit_range,
+				   h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,gfit_params,
+				   ho4);
+      }
+      // grabbing fit params for future use
+      chi2.push_back(f4->GetChisquare()); NDF.push_back(f4->GetNDF());
+      R_vals.push_back(f4->GetParameter(1)); Rerr_vals.push_back(f4->GetParError(1));
+      B_vals.push_back(f4->GetParameter(2)); Berr_vals.push_back(f4->GetParError(2));
+      // converting fit fn to a hostogram
+      TH1F *hf4 = (TH1F*)h_dxHCAL_data->Clone(); util_pd::TF1toTH1F(f4,hf4);
+      ho4[0]->Draw(); c4->Update(); 
+      // grabbing statbox of the fitted histo
+      TPaveStats *st4 = (TPaveStats*)ho4[0]->FindObject("stats");
+      // getting pads for pull plot
+      std::vector<TPad*> p4 = util_pd::GetPadsForPullPlot(c4);
+      //
+      // preparing the pad for data/MC fit
+      //
+      p4[0]->cd();
+      // drawing all the histograms
+      //ho4[0]->Draw(); customize_ht(ho4[0]); customize_dx(ho4[0]);
+      h_dxHCAL_data->Draw("E"); customize_data(h_dxHCAL_data);
+      hf4->Draw("same HIST"); customize_gfit(hf4);
+      ho4[4]->Draw("same HIST"); customize_psig(ho4[4]);
+      ho4[5]->Draw("same HIST"); customize_nsig(ho4[5]);
+      ho4[2]->Draw("same HIST"); customize_hbg(ho4[2]);
+      // calculating yields
+      std::vector<double> yo4; GetYields(f4,ho4[4],ho4[5],ho4[2],yo4);
+      pCnt.push_back(yo4[0]); pCnt_err.push_back(yo4[1]);
+      nCnt.push_back(yo4[2]); nCnt_err.push_back(yo4[4]);
+      bgCnt.push_back(yo4[4]); bgCnt_err.push_back(yo4[5]);
+      // redrawing the stat box
+      st4->SetX1NDC(0.62); st4->SetX2NDC(0.9); st4->SetY2NDC(0.9);
+      st4->Draw("same");
+      // drawing a legend
+      TLegend *l4=new TLegend(0.10,0.6,0.36,0.9);
+      l4->SetTextFont(42);
+      l4->AddEntry(h_dxHCAL_data,"Data","p");
+      //l4->AddEntry(f4,"Fit (MC + poly. bg.)","l");
+      l4->AddEntry(hf4,"Fit (QE MC + bg.)","lf");
+      l4->AddEntry(ho4[4],"p signal (from MC)","lf");
+      l4->AddEntry(ho4[5],"n signal (from MC)","lf");
+      l4->AddEntry(ho4[2],"Bg. (Gaussian)","lf");
+      l4->AddEntry(ho4[3],"Residual","p");
+      if (is_vary_cut) AddCutToLegend(l4,cuts_2[i].c_str());
+      //l4->SetFillStyle(0); // makes legend box transparent
+      l4->Draw();
+      //
+      // preparing the pad for residual
+      //  
+      p4[1]->cd();
+      ho4[3]->Draw(); customize_residual(ho4[3]);
+      // drawing a horizontal line at y = 0
+      util_pd::DrawZeroLine(p4[1],dx_fit_range[0],dx_fit_range[1]);
+      // *******************
+      //c4->SaveAs(Form("%s_c4_%d.png",outPNG.Data(),i)); 
+
       // ** --
-      // // Canvas 4 : Fitting w/ polynomial background using side band method
+      // // Canvas 5 : Fitting w/ polynomial background using side band method
       // // Steps: 1. Subrtact bg using sideband method, 2. Perform data/MC fit w/o bg
-      // TCanvas *c4 = util_pd::TC("c4",1,1); gStyleFitCanvas();
-      // c4->cd(); 
+      // TCanvas *c5 = util_pd::TC("c5",1,1); gStyleFitCanvas();
+      // c5->cd(); 
       // // Let's perform the sideband fit first
       // //vector<double> reject_points{-1.2,0.3};
-      // vector<TH1F*> hosb4;
-      // TF1* bgsb4 = fit::fit_1pbg_SB(dx_fit_range,
+      // vector<TH1F*> hosb5;
+      // TF1* bgsb5 = fit::fit_1pbg_SB(dx_fit_range,
       // 				    reject_points,
       // 				    Opoly,
       // 				    fit::GetFitParams(f3),
       // 				    h_dxHCAL_data,
-      // 				    hosb4);
-      // hosb4[0]->Draw(); c4->Update(); 
+      // 				    hosb5);
+      // hosb5[0]->Draw(); c5->Update(); 
       // // grabbing statbox of the fitted histo
-      // TPaveStats *stsb4 = (TPaveStats*)hosb4[0]->FindObject("stats"); 
-      // // hosb4[0]->Draw(); customize_ht(hosb4[0]); customize_dx(hosb4[0]);
-      // // hosb4[1]->Draw("same ep"); customize_hs(hosb4[1]); customize_dx(hosb4[1]);
-      // // hosb4[2]->Draw("same"); customize_hbg(hosb4[2]); customize_dx(hosb4[2]);
+      // TPaveStats *stsb5 = (TPaveStats*)hosb5[0]->FindObject("stats"); 
+      // // hosb5[0]->Draw(); customize_ht(hosb5[0]); customize_dx(hosb5[0]);
+      // // hosb5[1]->Draw("same ep"); customize_hs(hosb5[1]); customize_dx(hosb5[1]);
+      // // hosb5[2]->Draw("same"); customize_hbg(hosb5[2]); customize_dx(hosb5[2]);
 
       // // Now, let's fit the bg subtracted signal using MC signals
-      // vector<TH1F*> ho4;
-      // TF1 *f4 = fit::fit_2hs_nbg_THI(dx_fit_range,
-      // 				     hosb4[1],h_dxHCAL_simu_p,h_dxHCAL_simu_n,
-      // 				     ho4);
+      // vector<TH1F*> ho5;
+      // TF1 *f5 = fit::fit_2hs_nbg_THI(dx_fit_range,
+      // 				     hosb5[1],h_dxHCAL_simu_p,h_dxHCAL_simu_n,
+      // 				     ho5);
       // // grabbing fit params for future use
-      // chi2.push_back(f4->GetChisquare()); NDF.push_back(f4->GetNDF());
-      // R_vals.push_back(f4->GetParameter(1)); Rerr_vals.push_back(f4->GetParError(1));
-      // B_vals.push_back(bgsb4->GetParameter(0)); Berr_vals.push_back(bgsb4->GetParError(0));
+      // chi2.push_back(f5->GetChisquare()); NDF.push_back(f5->GetNDF());
+      // R_vals.push_back(f5->GetParameter(1)); Rerr_vals.push_back(f5->GetParError(1));
+      // B_vals.push_back(bgsb5->GetParameter(0)); Berr_vals.push_back(bgsb5->GetParError(0));
       // // converting fit fn to a hostogram
-      // TH1F *hf4 = (TH1F*)h_dxHCAL_data->Clone(); util_pd::TF1toTH1F(f4,hf4);
-      // ho4[0]->Draw(); c4->Update(); 
-      // // hosb4[0]->Draw("same"); customize_ht(hosb4[0]); customize_dx(hosb4[0]);
-      // // hosb4[1]->Draw("same HIST"); customize_hs(hosb4[1]); customize_dx(hosb4[1]);
-      // // hosb4[2]->Draw("same HIST"); customize_hbg(hosb4[2]); customize_dx(hosb4[2]);
+      // TH1F *hf5 = (TH1F*)h_dxHCAL_data->Clone(); util_pd::TF1toTH1F(f5,hf5);
+      // ho5[0]->Draw(); c5->Update(); 
+      // // hosb5[0]->Draw("same"); customize_ht(hosb5[0]); customize_dx(hosb5[0]);
+      // // hosb5[1]->Draw("same HIST"); customize_hs(hosb5[1]); customize_dx(hosb5[1]);
+      // // hosb5[2]->Draw("same HIST"); customize_hbg(hosb5[2]); customize_dx(hosb5[2]);
 
       // // grabbing statbox of the fitted histo
-      // TPaveStats *st4 = (TPaveStats*)ho4[0]->FindObject("stats");
+      // TPaveStats *st5 = (TPaveStats*)ho5[0]->FindObject("stats");
       // // getting pads for pull plot
-      // std::vector<TPad*> p4 = util_pd::GetPadsForPullPlot(c4);
+      // std::vector<TPad*> p5 = util_pd::GetPadsForPullPlot(c5);
       // //
       // // preparing the pad for data/MC fit
       // //
-      // p4[0]->cd();
+      // p5[0]->cd();
       // // drawing all the histograms
-      // hosb4[0]->Draw(); customize_ht(hosb4[0]); customize_dx(hosb4[0]);
-      // hosb4[2]->Draw("same"); customize_hbg(hosb4[2]); customize_dx(hosb4[2]);    
+      // hosb5[0]->Draw(); customize_ht(hosb5[0]); customize_dx(hosb5[0]);
+      // hosb5[2]->Draw("same"); customize_hbg(hosb5[2]); customize_dx(hosb5[2]);    
       // // h_dxHCAL_data->Draw("E"); customize_data(h_dxHCAL_data);
-      // hosb4[1]->Draw("same E"); customize_data(hosb4[1]); hosb4[1]->SetStats(0);
-      // hf4->Draw("same HIST"); customize_gfit(hf4);
-      // ho4[3]->Draw("same HIST"); customize_psig(ho4[3]);
-      // ho4[4]->Draw("same HIST"); customize_nsig(ho4[4]);
-      // //ho4[2]->Draw("same HIST"); customize_hbg(ho4[2]);
+      // hosb5[1]->Draw("same E"); customize_data(hosb5[1]); hosb5[1]->SetStats(0);
+      // hf5->Draw("same HIST"); customize_gfit(hf5);
+      // ho5[3]->Draw("same HIST"); customize_psig(ho5[3]);
+      // ho5[4]->Draw("same HIST"); customize_nsig(ho5[4]);
+      // //ho5[2]->Draw("same HIST"); customize_hbg(ho5[2]);
       // // redrawing the stat boxes
-      // stsb4->SetX1NDC(0.62); stsb4->SetX2NDC(0.9); stsb4->SetY2NDC(0.9);
-      // stsb4->Draw("same");
-      // st4->SetX1NDC(0.62); st4->SetX2NDC(0.9); st4->SetY2NDC(0.6);
-      // st4->Draw("same");
+      // stsb5->SetX1NDC(0.62); stsb5->SetX2NDC(0.9); stsb5->SetY2NDC(0.9);
+      // stsb5->Draw("same");
+      // st5->SetX1NDC(0.62); st5->SetX2NDC(0.9); st5->SetY2NDC(0.6);
+      // st5->Draw("same");
       // // drawing a legend
-      // TLegend *l4=new TLegend(0.10,0.6,0.36,0.9);
-      // l4->SetTextFont(42);
-      // l4->AddEntry(hosb4[0],"Data","l");
-      // l4->AddEntry(hosb4[2],Form("Bg w/ SB fit (poly. ord. %d)",Opoly),"lf");
-      // //l4->AddEntry(f4,"Fit (MC + poly. bg.)","l");
-      // l4->AddEntry(hosb4[1],"Data (bg subtracted)","p");
-      // l4->AddEntry(hf4,"Fit (QE MC + bg.)","lf");
-      // l4->AddEntry(ho4[3],"p signal (from MC)","lf");
-      // l4->AddEntry(ho4[4],"n signal (from MC)","lf");
-      // //l4->AddEntry(ho4[2],"Residual","p");
-      // if (is_vary_cut) AddCutToLegend(l4,cuts_2[i].c_str());
-      // //l4->SetFillStyle(0); // makes legend box transparent
-      // l4->Draw();
+      // TLegend *l5=new TLegend(0.10,0.6,0.36,0.9);
+      // l5->SetTextFont(42);
+      // l5->AddEntry(hosb5[0],"Data","l");
+      // l5->AddEntry(hosb5[2],Form("Bg w/ SB fit (poly. ord. %d)",Opoly),"lf");
+      // //l5->AddEntry(f5,"Fit (MC + poly. bg.)","l");
+      // l5->AddEntry(hosb5[1],"Data (bg subtracted)","p");
+      // l5->AddEntry(hf5,"Fit (QE MC + bg.)","lf");
+      // l5->AddEntry(ho5[3],"p signal (from MC)","lf");
+      // l5->AddEntry(ho5[4],"n signal (from MC)","lf");
+      // //l5->AddEntry(ho5[2],"Residual","p");
+      // if (is_vary_cut) AddCutToLegend(l5,cuts_2[i].c_str());
+      // //l5->SetFillStyle(0); // makes legend box transparent
+      // l5->Draw();
       // // //
       // // // preparing the pad for residual
-      // // p4[1]->cd();
-      // // ho4[2]->Draw(); customize_residual(ho4[2]);
+      // // p5[1]->cd();
+      // // ho5[2]->Draw(); customize_residual(ho5[2]);
       // // // drawing a horizontal line at y = 0
-      // // util_pd::DrawZeroLine(p4[1],dx_fit_range[0],dx_fit_range[1]);
+      // // util_pd::DrawZeroLine(p5[1],dx_fit_range[0],dx_fit_range[1]);
       // ----
 
       // Writing out fit parameters
@@ -1090,8 +1157,8 @@ int fit_dx (const char *configfilename,
       c1->Update(); c1->Write(); c1->SaveAs(Form("%s",outPlot.Data())); 
       c2->Update(); c2->Write(); c2->SaveAs(Form("%s",outPlot.Data())); 
       c3->Update(); c3->Write(); c3->SaveAs(Form("%s",outPlot.Data())); 
-      //c4->Update(); c4->Write(); c4->SaveAs(Form("%s",outPlot.Data())); 
-      if (i==iter-1) c3->SaveAs(Form("%s]",outPlot.Data())); 
+      c4->Update(); c4->Write(); c4->SaveAs(Form("%s",outPlot.Data())); 
+      if (i==iter-1) c4->SaveAs(Form("%s]",outPlot.Data())); 
     } // QE
   } // for, cut vairation
 

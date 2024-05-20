@@ -13,6 +13,15 @@ namespace fit {
     }
   }
 
+  void set_gaus_par_names (TF1* f1,
+			   int const Spar)
+  /* Sets the name of Gaussian fit parameters */
+  {
+    f1->SetParName(Spar,"Const");
+    f1->SetParName(Spar+1,"Mean");
+    f1->SetParName(Spar+2,"Sigma");
+  }
+
   std::vector<double> GetFitParams(TF1 * const f1)
   /* Returns a vector filled with fit pramater values from f1 */
   {
@@ -179,7 +188,7 @@ namespace fit {
     f1->SetParName(0,"Norm");
     f1->SetParName(1,"R");
 
-    ht_cp->Fit(f1,"R"); 
+    ht_cp->Fit(f1,"RWL"); 
     std::vector<double> pars = GetFitParams(f1);
     //for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
 
@@ -216,7 +225,7 @@ namespace fit {
     f1->SetParName(1,"R");
     f1->SetParName(2,"B");
 
-    ht_cp->Fit(f1,"R");
+    ht_cp->Fit(f1,"RWL");
     std::vector<double> pars = GetFitParams(f1);
     //for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
 
@@ -342,7 +351,7 @@ namespace fit {
     f1->SetParName(1,"R");
     f1->SetParName(2,"B");
 
-    ht_cp->Fit(f1,"R");
+    ht_cp->Fit(f1,"RWL");
     std::vector<double> pars = GetFitParams(f1);
     //for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
 
@@ -499,6 +508,113 @@ namespace fit {
     // drawing the polynomial background function
     FitFn *ffn2 = new FitFn(Opoly);
     TF1* bgf = new TF1("bgf",ffn2,&FitFn::ffn_poly,fit_range[0],fit_range[1],Opoly+1);
+    bgf->SetNpx(500);
+    bgf->SetParameters(&fit::GetFitParams(f1)[4]);
+    //bgf->SetLineColor(46);
+
+    // now get a bg histo from bgf
+    TH1F *hbg_sc = (TH1F*)hs1_cp1->Clone(); util_pd::TF1toTH1F(bgf,hbg_sc);
+    hbg_sc->SetMarkerColor(46); hbg_sc->SetLineColor(46); //hbg_sc->SetLineWidth(2);
+
+    TH1F *hs1_cp2 = (TH1F*)hs1_cp1->Clone(); hs1_cp2->Scale(pars[0]);
+    TH1F *hs2_cp2 = (TH1F*)hs2_cp1->Clone(); hs2_cp2->Scale(pars[0]*pars[1]);
+    TH1F *hst = (TH1F*)hs1_cp2->Clone(); hst->Add(hs1_cp2,hs2_cp2);
+    TH1F *hsANDbg = (TH1F*)hs1_cp2->Clone(); hsANDbg->Add(hst,hbg_sc);
+    TH1F *hres = (TH1F*)hs2_cp1->Clone(); hres->Add(ht_cp,hsANDbg,1,-1); 
+    ho = {ht_cp,hst,hbg_sc,hres,hs1_cp2,hs2_cp2};
+    
+    return f1;
+  }
+
+  TF1* fit_2hs_1gbg_THI (std::vector<double> const & fit_range,
+			 TH1F* ht,             // total histo to fit 
+			 TH1F* hs1,            // 1st signal histo for fit
+			 TH1F* hs2,            // 2nd signal histo for fit
+			 std::vector<double> const & gfit_params, // Gaussian fit params
+			 std::vector<TH1F*> &ho)    // Output: ht,hs,hbg,N*hs1,N*R*hs2 (N=par[0],R=par[1])
+  /* TH Interpolation fit using 2 signal histos & 1 poly bg (2+Opoly+1 pars) */
+  {
+    const int npars = 5;
+    std::vector<double> setpars{1,1}; for (int i=2;i<npars;i++) setpars.push_back(gfit_params[i-2]);
+    //std::vector<double> setpars{1,1,10,-0.36,0.4}; 
+
+    TH1F *ht_cp = (TH1F*)ht->Clone(); 
+    TH1F *hs1_cp1 = (TH1F*)hs1->Clone(); 
+    TH1F *hs2_cp1 = (TH1F*)hs2->Clone();
+ 
+    FitFn *ffn = new FitFn(hs1_cp1,hs2_cp1);
+    TF1 *f1 = new TF1("f1",ffn,&FitFn::ffn_2hs_1gbg,fit_range[0],fit_range[1],npars);
+    f1->SetNpx(2000);
+    f1->SetParameters(&setpars[0]);
+    f1->SetParName(0,"Norm");
+    f1->SetParName(1,"R");
+    set_gaus_par_names(f1,2);
+
+    ht_cp->Fit(f1,"R");
+    std::vector<double> pars = GetFitParams(f1);
+    //for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
+
+    // drawing the polynomial background function
+    FitFn *ffn2 = new FitFn();
+    TF1* bgf = new TF1("bgf",ffn2,&FitFn::ffn_gaus,fit_range[0],fit_range[1],3);
+    bgf->SetNpx(500);
+    bgf->SetParameters(&fit::GetFitParams(f1)[2]);
+    //bgf->SetLineColor(46);
+
+    // now get a bg histo from bgf
+    TH1F *hbg_sc = (TH1F*)hs1_cp1->Clone(); util_pd::TF1toTH1F(bgf,hbg_sc);
+    hbg_sc->SetMarkerColor(46); hbg_sc->SetLineColor(46); //hbg_sc->SetLineWidth(2);
+
+    TH1F *hs1_cp2 = (TH1F*)hs1_cp1->Clone(); hs1_cp2->Scale(pars[0]);
+    TH1F *hs2_cp2 = (TH1F*)hs2_cp1->Clone(); hs2_cp2->Scale(pars[0]*pars[1]);
+    TH1F *hst = (TH1F*)hs1_cp2->Clone(); hst->Add(hs1_cp2,hs2_cp2);
+    TH1F *hsANDbg = (TH1F*)hs1_cp2->Clone(); hsANDbg->Add(hst,hbg_sc);
+    TH1F *hres = (TH1F*)hs2_cp1->Clone(); hres->Add(ht_cp,hsANDbg,1,-1); 
+    ho = {ht_cp,hst,hbg_sc,hres,hs1_cp2,hs2_cp2};
+    
+    return f1;
+  }
+
+  TF1* fit_2hs_1gbg_THI_xOffVary (std::vector<double> const & fit_range,
+				  TH1F* ht,             // total histo to fit 
+				  TH1F* hs1,            // 1st signal histo for fit
+				  TH1F* hs2,            // 2nd signal histo for fit
+				  std::vector<double> const & xOff_range,  // ranges to vary hs1 & hs2 offsets
+				  std::vector<double> const & gfit_params, // Gaussian fit params
+				  std::vector<TH1F*> &ho)    // Output: ht,hs,hbg,N*hs1,N*R*hs2 (N=par[0],R=par[1])
+  /* TH Interpolation fit using 2 signal histos & 1 poly bg (2+2+Opoly+1 pars)
+     This time x position of the signal histos are also free parameters
+  */
+  {
+    const int npars = 4+3;
+    std::vector<double> setpars{1,1,xOff_range[1],xOff_range[3]};
+    for (int i=4;i<npars;i++) setpars.push_back(gfit_params[i-2]);
+
+    TH1F *ht_cp = (TH1F*)ht->Clone(); 
+    TH1F *hs1_cp1 = (TH1F*)hs1->Clone(); 
+    TH1F *hs2_cp1 = (TH1F*)hs2->Clone();
+ 
+    FitFn *ffn = new FitFn(hs1_cp1,hs2_cp1);
+    TF1 *f1 = new TF1("f1",ffn,&FitFn::ffn_2hs_1gbg_xOffVary,fit_range[0],fit_range[1],npars);
+    f1->SetNpx(2000);
+    f1->SetParameters(&setpars[0]);
+    f1->SetParName(0,"Norm");
+    f1->SetParName(1,"R");
+    f1->SetParName(2,"pOff");
+    f1->SetParName(3,"nOff");
+    set_gaus_par_names(f1,4);
+
+    // setting limits for p and n peak offset varitations
+    f1->SetParLimits(2,xOff_range[1],xOff_range[2]);
+    f1->SetParLimits(3,xOff_range[3],xOff_range[4]);
+
+    ht_cp->Fit(f1,"R");
+    std::vector<double> pars = GetFitParams(f1);
+    //for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
+
+    // drawing the polynomial background function
+    FitFn *ffn2 = new FitFn();
+    TF1* bgf = new TF1("bgf",ffn2,&FitFn::ffn_gaus,fit_range[0],fit_range[1],3);
     bgf->SetNpx(500);
     bgf->SetParameters(&fit::GetFitParams(f1)[4]);
     //bgf->SetLineColor(46);

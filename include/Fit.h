@@ -120,6 +120,24 @@ namespace fit {
 				  std::vector<double> const & xOff_range,  // ranges to vary hs1 & hs2 offsets
 				  std::vector<TH1F*> &ho);   // Output: ht,hs,hbg,N*hs1,N*R*hs2 (N=par[0],R=par[1])
 
+  // TH Interpolation fit using 2 signal histos & 1 Gaussian bg (2+3 pars)
+  TF1* fit_2hs_1gbg_THI (std::vector<double> const & fit_range,
+			 TH1F* ht,             // total histo to fit 
+			 TH1F* hs1,            // 1st signal histo for fit
+			 TH1F* hs2,            // 2nd signal histo for fit
+			 std::vector<double> const & gfit_params, // Gaussian fit params
+			 std::vector<TH1F*> &ho);   // Output: ht,hs,hbg,N*hs1,N*R*hs2 (N=par[0],R=par[1])
+
+  // TH Interpolation fit using 2 signal histos & 1 poly bg (2+2+3 pars)
+  // This time x positions of the signal histos are also free parameters
+  TF1* fit_2hs_1gbg_THI_xOffVary (std::vector<double> const & fit_range,
+				  TH1F* ht,             // total histo to fit 
+				  TH1F* hs1,            // 1st signal histo for fit
+				  TH1F* hs2,            // 2nd signal histo for fit
+				  std::vector<double> const & xOff_range,  // ranges to vary hs1 & hs2 offsets
+				  std::vector<double> const & gfit_params, // Gaussian fit params
+				  std::vector<TH1F*> &ho);   // Output: ht,hs,hbg,N*hs1,N*R*hs2 (N=par[0],R=par[1])
+
   // Fitting signal peak using a Gaussian (3 pars)
   TF1* fit_1gs_nbg (std::vector<double> const & fit_range, // [0]=>xmin,[1]=>xmax (for 1st fit)
                                                            // [2]=>nSLow,[3]=>nSHi (for 2nd fit)
