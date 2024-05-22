@@ -318,6 +318,7 @@ int elas_ana_data (const char *configfilename,
   double T_yHCAL_exp;     Tout->Branch("yHCAL_exp", &T_yHCAL_exp, "yHCAL_exp/D"); 
   double T_dx;            Tout->Branch("dx", &T_dx, "dx/D"); 
   double T_dy;            Tout->Branch("dy", &T_dy, "dy/D");
+  double T_p_def;         Tout->Branch("p_def", &T_p_def, "p_def/D"); // expected proton deflection
   double T_ToF;           Tout->Branch("ToF", &T_ToF, "ToF/D");
   //HCAL (All clusters)
   int T_idblkHCAL_aclN;   if (hcal_acl_ON) Tout->Branch("idblkHCAL_aclN", &T_idblkHCAL_aclN, "idblkHCAL_aclN/I"); 
@@ -599,9 +600,10 @@ int elas_ana_data (const char *configfilename,
     T_yHCAL_exp = xyHCAL_exp[1];
 
     // Calculating proton deflection angle
-    double BdL = (sbsmag / 100.) * 1.98; //expconst::sbsmaxfield * expconst::sbsdipolegap;
+    double BdL = (sbsmag / 100.) * expconst::sbsmaxfield_data(conf) * expconst::sbsdipolegap;
     double proton_thetabend = 0.3 * BdL / PNprime.Vect().Mag();  // p*theta = 0.3*BdL
     double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist()-(sbsconf.GetSBSdist()+expconst::sbsdipolegap/2.0));
+    T_p_def = proton_deflection;
 
     /*
       Implementing HCAL offline clustering algorithm

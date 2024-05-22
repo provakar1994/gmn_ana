@@ -53,7 +53,7 @@ int qelas_ana_simu (const char *configfilename,
   // seting up the desired SBS configuration
   int conf = jmgr->GetValueFromSubKey<int>(key,"SBS_config");
   int sbsmag = jmgr->GetValueFromSubKey<int>(key,"SBS_magnet_percent");
-  double sbsfield = jmgr->GetValueFromSubKey<double>(key,"SBS_field");
+  double sbsscalefield = jmgr->GetValueFromSubKey<double>(key,"SBS_scale_field");
   SBSconfig sbsconf(conf, sbsmag);
   std::cout << sbsconf;
 
@@ -255,6 +255,7 @@ int qelas_ana_simu (const char *configfilename,
   double T_yHCAL_exp;     Tout->Branch("yHCAL_exp", &T_yHCAL_exp, "yHCAL_exp/D"); 
   double T_dx;            Tout->Branch("dx", &T_dx, "dx/D"); 
   double T_dy;            Tout->Branch("dy", &T_dy, "dy/D");
+  double T_p_def;         Tout->Branch("p_def", &T_p_def, "p_def/D"); // expected proton deflection
   double T_ToF_n;         Tout->Branch("ToF_n", &T_ToF_n, "ToF_n/D");
   //GEM
   double T_nhitsGEM;      Tout->Branch("nhitsGEM", &T_nhitsGEM, "nhitsGEM/D");
@@ -556,9 +557,10 @@ int qelas_ana_simu (const char *configfilename,
     TVector3 n_dir = (HCAL_pos - vertex);
     T_thpq_n = acos(n_dir.Unit().Dot(pNhat));
     // p 
-    double BdL = sbsfield; //* expconst::sbsdipolegap;
+    double BdL = sbsscalefield * expconst::sbsmaxfield_simu * expconst::sbsdipolegap;
     double proton_thetabend = 0.3 * BdL / PNprime.Vect().Mag();  // p*theta = 0.3*BdL
     double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist()-(sbsconf.GetSBSdist()+expconst::sbsdipolegap/2.0));
+    T_p_def = proton_deflection;
     TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);
     T_thpq_p = acos(p_dir.Unit().Dot(pNhat));
 

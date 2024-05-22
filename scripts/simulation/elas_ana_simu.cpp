@@ -53,7 +53,7 @@ int elas_ana_simu (const char *configfilename,
   // seting up the desired SBS configuration
   int conf = jmgr->GetValueFromSubKey<int>(key,"SBS_config");
   int sbsmag = jmgr->GetValueFromSubKey<int>(key,"SBS_magnet_percent");
-  double sbsfield = jmgr->GetValueFromSubKey<double>(key,"SBS_field");
+  double sbsscalefield = jmgr->GetValueFromSubKey<double>(key,"SBS_scale_field");
   SBSconfig sbsconf(conf, sbsmag);
   std::cout << sbsconf;
 
@@ -120,8 +120,8 @@ int elas_ana_simu (const char *configfilename,
   setrootvar::setbranch(C,"bb.gem.track",gemvar,gemvar_mem);
 
   //MC variables
-  double mc_sigma, mc_fnucl, mc_ebeam;                    // mc_sigma => Cross-section weight
-  std::vector<std::string> mc = {"mc_sigma","mc_fnucl"};  // Default: g4sbs gen.
+  double mc_sigma, mc_fnucl, mc_ebeam, mc_np, mc_veE, mc_vetheta;  // mc_sigma => Cross-section weight  std::vector<std::string> mc = {"mc_sigma","mc_fnucl"};  // Default: g4sbs gen.
+  std::vector<std::string> mc = {"mc_sigma","mc_fnucl","mc_np"};   // Default: g4sbs gen.
   std::vector<void*> mc_mem = {&mc_sigma,&mc_fnucl}; 
   if (generator.compare("simc")==0) {
     mc = {"simc_Weight","simc_fnucl","simc_Ebeam","simc_veE","simc_vetheta"};  
@@ -238,6 +238,7 @@ int elas_ana_simu (const char *configfilename,
   double T_yHCAL_exp;     Tout->Branch("yHCAL_exp", &T_yHCAL_exp, "yHCAL_exp/D"); 
   double T_dx;            Tout->Branch("dx", &T_dx, "dx/D"); 
   double T_dy;            Tout->Branch("dy", &T_dy, "dy/D");
+  double T_p_def;         Tout->Branch("p_def", &T_p_def, "p_def/D"); // expected proton deflection
   //GEM
   double T_nhitsGEM;      Tout->Branch("nhitsGEM", &T_nhitsGEM, "nhitsGEM/D");
   double T_ngoodhitsGEM;  Tout->Branch("ngoodhitsGEM", &T_ngoodhitsGEM, "ngoodhitsGEM/D");
@@ -478,9 +479,10 @@ int elas_ana_simu (const char *configfilename,
     TVector3 n_dir = (HCAL_pos - vertex).Unit();
     T_thpq_n = acos(n_dir.Dot(pNhat));
     // p 
-    double BdL = sbsfield; //* expconst::sbsdipolegap;
+    double BdL = sbsscalefield * expconst::sbsmaxfield_simu * expconst::sbsdipolegap;
     double proton_thetabend = 0.3 * BdL / PNprime.Vect().Mag();  // p*theta = 0.3*BdL
     double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist()-(sbsconf.GetSBSdist()+expconst::sbsdipolegap/2.0));
+    T_p_def = proton_deflection;
     TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);
     T_thpq_p = acos(p_dir.Unit().Dot(pNhat));
 
@@ -611,7 +613,7 @@ int elas_ana_simu (const char *configfilename,
   if (usingRS) {
     pt->AddText(Form(" Rejection Sampling (RS) Summary:")); 
     pt->AddText(Form(" Chosen maximum weight: %f",maxwtRS)); 
-    pt->AddText(Form(" Total # tries: %.0Lf",totNtries[0])); 
+    //pt->AddText(Form(" Total # tries: %.0Lf",totNtriesNCh[0])); 
     TText *t5 = pt->GetLineWith(" Rejection"); t5->SetTextColor(kMagenta+2);
   }
   sw->Stop();

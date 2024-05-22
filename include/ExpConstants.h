@@ -93,7 +93,15 @@ namespace expconst {
   static const double bbmaxcurr = 750;   //A, 100% BB magnet current
   static const double sbsmaxcurr = 2100; //A, 100% SBS magnet current
   static const double sbsdipolegap = (48.0*2.54) / 100.;  // ~1.22 m
-  static const double sbsmaxfield = 3.1*atan(0.85 / (11.0-2.25-(sbsdipolegap/2.))) / (0.3*sbsdipolegap*0.7); // ~1.26 T (?)
+  //static const double sbsmaxfield = 3.1*atan(0.85 / (11.0-2.25-(sbsdipolegap/2.))) / (0.3*sbsdipolegap*0.7); // ~1.26 T (?)
+  static double sbsmaxfield_data (int sbsconf) { 
+    // 05/22/24 - These no. are based on Andrew's analysis. He estimated these "by plotting deltax versus the 
+    // expected proton momentum for LH2 elastic events". Needs fine tuning.
+    if (sbsconf==4) return 1.71; //T
+    else return 1.27; //T
+  }
+  // 05/22/24 - to match SBS11 100% we need 0.97 scale field. That implies, MC_field = sbsmaxfield_data/0.97. Needs fine tuning
+  static const double sbsmaxfield_simu = 1.31; //T 
   // Polyethylene (PE) shield near scattering chamber (Installed during SBS-11). See Utilities::GetElossInTgt for more info.
   static const double PE_Rho = 0.91;         //g/cc
   static const double PE_ShieldThick = 1.0;  //cm, 10 mm
