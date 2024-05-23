@@ -428,7 +428,7 @@ int fit_dx (const char *configfilename,
   vector<double> reject_points; jmgr->GetVectorFromSubKey<double>(key,"SB_reject_points",reject_points);
 
   // summary histo
-  TH1F *htemp = new TH1F("htemp","",iter,-0.5,iter-0.5);
+  TH1F *hgist_cv_2 = new TH1F("hgist_cv_2","",iter,-0.5,iter-0.5);
   // draawing cut histo
   TH1F *hcut = (TH1F*)data_rdf_filtered.Histo1D({"hcut","",int(h_cut_param[0]),h_cut_param[1],h_cut_param[2]},param_to_vary)->Clone();
   customize_hcut(hcut); hcut->SetTitle(Form("%s {%s}",param_to_vary.c_str(),cuts_for_signal_data.c_str()));
@@ -462,6 +462,9 @@ int fit_dx (const char *configfilename,
       h_dxHCAL_bg_inel_p = (TH1F*)inel_rdf_filtered.Filter("mc_fnucl==1").Histo1D({"h_dxHCAL_bg_inel_p","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_p","weight")->Clone();
       if (!is_elastic) h_dxHCAL_bg_inel_n = (TH1F*)inel_rdf_filtered.Filter("mc_fnucl==0").Histo1D({"h_dxHCAL_bg_inel_n","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_n","weight")->Clone();
       h_dxHCAL_bg_inel = (TH1F*)h_dxHCAL_bg_inel_p->Clone(); h_dxHCAL_bg_inel->Add(h_dxHCAL_bg_inel_p,h_dxHCAL_bg_inel_n);
+      // h_dxHCAL_bg_inel_p = (TH1F*)inel_rdf_filtered.Filter("mc_fnucl==1").Histo1D({"h_dxHCAL_bg_inel_p","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx","weight")->Clone();
+      // if (!is_elastic) h_dxHCAL_bg_inel_n = (TH1F*)inel_rdf_filtered.Filter("mc_fnucl==0").Histo1D({"h_dxHCAL_bg_inel_n","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx","weight")->Clone();
+      // h_dxHCAL_bg_inel = (TH1F*)h_dxHCAL_bg_inel_p->Clone(); h_dxHCAL_bg_inel->Add(h_dxHCAL_bg_inel_p,h_dxHCAL_bg_inel_n);
       // kinematic histos "true"
       if (apply_to_data_only) {
 	h_vQ2 =  (TH1F*)simu_rdf_filtered.Filter(cuts[i]).Histo1D({"h_vQ2","",300,0,16},"vQ2","weight")->Clone();
@@ -509,10 +512,18 @@ int fit_dx (const char *configfilename,
  	if (!is_elastic) h_dxHCAL_bg_inel_n = (TH1F*)inel_rdf_filtered
  			   .Filter("mc_fnucl==0").Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"})
  			   .Histo1D({"h_dxHCAL_bg_inel_n","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_n","weight")->Clone();
+ 	// h_dxHCAL_bg_inel_p = (TH1F*)inel_rdf_filtered
+ 	//   .Filter("mc_fnucl==1").Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"})
+ 	//   .Histo1D({"h_dxHCAL_bg_inel_p","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx","weight")->Clone();
+ 	// if (!is_elastic) h_dxHCAL_bg_inel_n = (TH1F*)inel_rdf_filtered
+ 	// 		   .Filter("mc_fnucl==0").Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"})
+ 	// 		   .Histo1D({"h_dxHCAL_bg_inel_n","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx","weight")->Clone();
       } 
       else {
  	h_dxHCAL_bg_inel_p = (TH1F*)inel_rdf_filtered.Filter("mc_fnucl==1").Histo1D({"h_dxHCAL_bg_inel_p","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_p","weight")->Clone();
  	if (!is_elastic) h_dxHCAL_bg_inel_n = (TH1F*)inel_rdf_filtered.Filter("mc_fnucl==0").Histo1D({"h_dxHCAL_bg_inel_n","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_n","weight")->Clone();
+ 	// h_dxHCAL_bg_inel_p = (TH1F*)inel_rdf_filtered.Filter("mc_fnucl==1").Histo1D({"h_dxHCAL_bg_inel_p","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx","weight")->Clone();
+ 	// if (!is_elastic) h_dxHCAL_bg_inel_n = (TH1F*)inel_rdf_filtered.Filter("mc_fnucl==0").Histo1D({"h_dxHCAL_bg_inel_n","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx","weight")->Clone();
       }
     }    
     h_dxHCAL_bg_inel = (TH1F*)h_dxHCAL_bg_inel_p->Clone(); h_dxHCAL_bg_inel->Add(h_dxHCAL_bg_inel_p,h_dxHCAL_bg_inel_n);
@@ -855,8 +866,8 @@ int fit_dx (const char *configfilename,
 	// 			   ho2);
       }
       if (is_vary_cut) {
-	htemp->SetBinContent(i+1,f2->GetParameter(1));
-	htemp->SetBinError(i+1,f2->GetParError(1));
+	hgist_cv_2->SetBinContent(i+1,f2->GetParameter(1));
+	hgist_cv_2->SetBinError(i+1,f2->GetParError(1));
       }
       // grabbing fit params for future use
       chi2.push_back(f2->GetChisquare()); NDF.push_back(f2->GetNDF());
@@ -1169,8 +1180,8 @@ int fit_dx (const char *configfilename,
     // Canvas : Plotting cut variation summary
     TCanvas *cGist = util_pd::TC("cGist",1,1); cGist->cd();
     cGist->SetBottomMargin(0.3);
-    customize_hsummary(htemp,cuts_2);
-    htemp->Draw(); htemp->Write();
+    customize_hsummary(hgist_cv_2,cuts_2);
+    hgist_cv_2->Draw(); hgist_cv_2->Write();
     cGist->Write();
   }
 
