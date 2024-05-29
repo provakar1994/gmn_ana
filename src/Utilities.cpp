@@ -111,9 +111,12 @@ namespace util_pd {
     /* NOTE: HCAL block id (ibblk) starts from 1 and goes up to 288 but both
        HCAL row (rowblk) and column starts from 0 and goes up to 23 and 
        11, respectively. Extremely annoying! */
+    // TH2F *h = new TH2F(hname.c_str(), ";HCAL columns;HCAL rows",
+    // 		       expconst::hcalcol, 0, expconst::hcalcol,
+    // 		       expconst::hcalrow, 0, expconst::hcalrow);
     TH2F *h = new TH2F(hname.c_str(), ";HCAL columns;HCAL rows",
-		       expconst::hcalcol, 0, expconst::hcalcol,
-		       expconst::hcalrow, 0, expconst::hcalrow);
+		       200, 0, expconst::hcalcol,
+		       200, 0, expconst::hcalrow);
     return h;
   }
   //_____________________________________
@@ -130,9 +133,12 @@ namespace util_pd {
     double x_min = xHCAL_t_DB - expconst::hcalblk_h/2.;
     double x_max = xHCAL_b_DB + expconst::hcalblk_h/2.;
     std::string ylabel = sbs_kick==0 ? "x_{HCAL}^{exp} (m)" : "x_{HCAL}^{exp}-" + std::to_string(sbs_kick) + " (m)";
+    // TH2F *h = new TH2F(hname.c_str(),Form(";y_{HCAL}^{exp} (m);%s",ylabel.c_str()),
+    // 		       expconst::hcalcol, y_min, y_max,
+    // 		       expconst::hcalrow, x_min, x_max);
     TH2F *h = new TH2F(hname.c_str(),Form(";y_{HCAL}^{exp} (m);%s",ylabel.c_str()),
-		       expconst::hcalcol, y_min, y_max,
-		       expconst::hcalrow, x_min, x_max);
+		       200, y_min, y_max,
+		       200, x_min, x_max);
     return h;
   }
   //_____________________________________
@@ -143,9 +149,12 @@ namespace util_pd {
     double x_min = expconst::xHCAL_t_DB_MC - expconst::hcalblk_h/2.;
     double x_max = expconst::xHCAL_b_DB_MC + expconst::hcalblk_h/2.;
     std::string ylabel = sbs_kick==0 ? "x_{HCAL}^{exp} (m)" : "x_{HCAL}^{exp}-" + std::to_string(sbs_kick) + " (m)";
+    // TH2F *h = new TH2F(hname.c_str(),Form(";y_{HCAL}^{exp} (m);%s",ylabel.c_str()),
+    // 		       expconst::hcalcol, y_min, y_max,
+    // 		       expconst::hcalrow, x_min, x_max);
     TH2F *h = new TH2F(hname.c_str(),Form(";y_{HCAL}^{exp} (m);%s",ylabel.c_str()),
-		       expconst::hcalcol, y_min, y_max,
-		       expconst::hcalrow, x_min, x_max);
+		       200, y_min, y_max,
+		       200, x_min, x_max);
     return h;
   }
   //_____________________________________
@@ -647,9 +656,9 @@ namespace util_pd {
     // Define the name of the summary file
     std::vector<TString> simu_logfile, processes;
     if (generator.compare("simc")==0 && process.compare("deeN")==0) {
-      TString temp = Form("%s_deep_summary.csv",filebase.Data());
+      TString temp = Form("simcout/%s_deep_summary.csv",filebase.Data());
       simu_logfile.push_back(temp); processes.push_back("deep");
-      temp = Form("%s_deen_summary.csv",filebase.Data());
+      temp = Form("simcout/%s_deen_summary.csv",filebase.Data());
       simu_logfile.push_back(temp); processes.push_back("deen");
     }else {
       TString temp = Form("%s_%s_summary.csv",filebase.Data(),process.c_str());
