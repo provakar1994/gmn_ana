@@ -2,10 +2,10 @@
    This macro will loop through the scaler tree (TSsbs) of every 
    run in a given SBS configuration and then generate 2 CSV files. 
    One file will contain:
-   1)runnum, 2)segnum, 3)index, 4)sevnum, 5)gevnum 6)dnew.cnt, 7)dnew.current, 8)cum. charge
+   1)runnum, 2)segnum, 3)index, 4)sevnum, 5)gevnum 6)dnew.cnt, 7)dnew.current, 8)cum. charge, 9) daq livetime
    ** charge calculated with gain factor: 3317.99 +/- 31.69 Hz/uA (https://sbs.jlab.org/DocDB/0001/000164/002/dflay_bcm-ana-update_02-21-22.pdf)
    Another will contain:
-   1)runnum, 2)tot. charge
+   1)runnum, 2)tot. charge, 3) daq livetime
    -----
    P. Datta  Created  03-19-2023 
 */
@@ -15,7 +15,7 @@
 #include "../../include/gmn_ana.h"
 //#include "../../dflay/src/JSONManager.cxx"
 
-static const int pass = 1; // replay pass
+static const int pass = 2; // replay pass
 static const double dnewgain = 3317.99; // +/- 31.69 [Hz/uA], bcm gain for dnew source
 static const std::string runsheet_dir = "../../DB";
 
@@ -23,7 +23,7 @@ int get_scalerdata_prun (const char *target,        // LH2/LD2
 			 int conf,                  // SBS config
 			 int sbsmagfield,           // -1=>No restriction
 			 int nruns,                 // # runs to analyze
-			 const char *rootfile_dir,  // path to ROOT files
+			 const char *data_dir,      // path to data directory containing rootfiles and logs
 			 int verbose)               // >0=>Debug
 {
   gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
@@ -41,23 +41,23 @@ int get_scalerdata_prun (const char *target,        // LH2/LD2
   if (verbose==0) {
     if (sbsmagfield<0) {
       outFile1 = Form("epout/scalerdata_prun_SBS%d_%s.root",conf,target);
-      outFile2 = Form("epout/beamcharge_prun_SBS%d_%s.csv",conf,target);
+      outFile2 = Form("epout/beamCh_n_daqLvTm_prun_SBS%d_%s.csv",conf,target);
     } else {
       outFile1 = Form("epout/scalerdata_prun_SBS%d_%dp_%s.root",conf,sbsmagfield,target);
-      outFile2 = Form("epout/beamcharge_prun_SBS%d_%dp_%s.csv",conf,sbsmagfield,target);
+      outFile2 = Form("epout/beamCh_n_daqLvTm_prun_SBS%d_%dp_%s.csv",conf,sbsmagfield,target);
     }  
   } else {
     if (sbsmagfield<0) {
       outFile1 = Form("epout/test_scalerdata_prun_SBS%d_%s.root",conf,target);
-      outFile2 = Form("epout/test_beamcharge_prun_SBS%d_%s.csv",conf,target);
+      outFile2 = Form("epout/test_beamCh_n_daqLvTm_prun_SBS%d_%s.csv",conf,target);
     } else {
       outFile1 = Form("epout/test_scalerdata_prun_SBS%d_%dp_%s.root",conf,sbsmagfield,target);
-      outFile2 = Form("epout/test_beamcharge_prun_SBS%d_%dp_%s.csv",conf,sbsmagfield,target);
+      outFile2 = Form("epout/test_beamCh_n_daqLvTm_prun_SBS%d_%dp_%s.csv",conf,sbsmagfield,target);
     }  
   }
   TFile *fout = new TFile(outFile1.Data(),"RECREATE");
   ofstream outFile_data2; outFile_data2.open(outFile2);
-  outFile_data2 << "runnum," << "totcharge(C)" << std::endl;
+  outFile_data2 << "runnum," << "totcharge(C)," << "daqlvtm" << std::endl;
 
   // defining interesting ROOT tree branches 
   TTree *Tout = new TTree("Tout", "");
@@ -71,12 +71,14 @@ int get_scalerdata_prun (const char *target,        // LH2/LD2
   double T_dnewcnt;     Tout->Branch("dnewcnt", &T_dnewcnt, "dnewcnt/D");
   double T_dnewcurr;    Tout->Branch("dnewcurr", &T_dnewcurr, "dnewcurr/D");
   double T_dnewcharge;  Tout->Branch("dnewcharge", &T_dnewcharge, "dnewcharge/D");
+  // trigger info
+  double T_ts1scaler;   Tout->Branch("ts1scaler", &T_ts1scaler, "ts1scaler/D");
 
   // looping through runs
   for (int irun=0; irun<nruns; irun++) {
     int runnum = crun[irun].runnum;
     std::cout << "Analyzing run " << crun[irun].runnum << std::endl;
-    C = new TChain("TSsbs"); int lr = util_pd::LoadROOTTree(rootfile_dir,crun[irun],1,verbose,C);
+    C = new TChain("TSsbs"); int lr = util_pd::LoadROOTTree(data_dir,crun[irun],1,verbose,1,C);
     if (lr!=0) continue;
 
     // setting up ROOT tree branch addresses ----------------------------
@@ -91,9 +93,12 @@ int get_scalerdata_prun (const char *target,        // LH2/LD2
     std::vector<void*> dnewvar_mem = {&dnewcnt,&dnewcurr};
     setrootvar::setbranch(C, "sbs.bcm.dnew", dnewvar, dnewvar_mem);
 
+    // trigger variables
+    double ts1scaler; C->SetBranchAddress("sbs.TS1_BB.scaler",&ts1scaler);
+
     // looping through the events ---------------------------------------
     std::cout << std::endl;
-    double dnewcharge_cum=0.;
+    double dnewcharge_cum=0., ts1scaler_cum=0.;
     long nevent=0, nevents=C->GetEntries(); 
     int treenum=0, currenttreenum=0, segnum=0, index=0;
     while (C->GetEntry(nevent++)) {
@@ -112,6 +117,9 @@ int get_scalerdata_prun (const char *target,        // LH2/LD2
       if (dnewcnt>0) //avoid last segment with zero count 
 	dnewcharge_cum = (dnewcnt / dnewgain) * 1e-6; //C 
 
+      if (ts1scaler>0) //avoid last segment with zero count 
+	ts1scaler_cum = ts1scaler;
+
       T_rnum = runnum;
       T_segnum = segnum;
       T_evindex = index;
@@ -122,6 +130,8 @@ int get_scalerdata_prun (const char *target,        // LH2/LD2
       T_dnewcurr = dnewcurr;
       T_dnewcharge = dnewcharge_cum;
 
+      T_ts1scaler = ts1scaler_cum;
+
       index++;  // gets reset at the beginning of every run
       if (verbose>0 && nevent<5)
 	std::cout << runnum << "," << segnum << "," << index << "," << sevnum << "," << gevnum << "," 
@@ -129,9 +139,13 @@ int get_scalerdata_prun (const char *target,        // LH2/LD2
 
       Tout->Fill();
     } //event loop
+
+    // DAQ livetime: Accepted BBCal singles trigger
+    double daqlvtm = (double)crun[irun].BBCalSinglesPassed / (double)ts1scaler_cum;
     
-    outFile_data2 << runnum << "," << dnewcharge_cum << std::endl;
-    if (verbose>0) std::cout << runnum << "," << dnewcharge_cum << std::endl;
+    // NOTE: Total charge is nothing but the last cumulative charge entry
+    outFile_data2 << runnum << "," << dnewcharge_cum << "," << daqlvtm << std::endl;
+    if (verbose>0) std::cout << runnum << "," << dnewcharge_cum << "," << daqlvtm << std::endl;
     
     // getting ready for next run
     C->Reset();

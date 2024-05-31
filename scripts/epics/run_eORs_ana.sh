@@ -30,12 +30,20 @@ if [[ "$#" -ne 6 ]]; then
 fi
 
 # List of ROOT file directories 
-sbs4dir='/w/halla-scshelf2102/sbs/sbs-gmn/pass0/SBS4/'$target'/rootfiles'
-sbs7dir='/w/halla-scshelf2102/sbs/sbs-gmn/pass0/SBS7/'$target'/rootfiles'
-sbs11dir='/lustre19/expphy/volatile/halla/sbs/sbs-gmn/GMN_REPLAYS/pass1/SBS11/'$target'/rootfiles'
-sbs14dir='/w/halla-scshelf2102/sbs/sbs-gmn/pass1/SBS14/'$target'/rootfiles'
-sbs8dir='/w/halla-scshelf2102/sbs/sbs-gmn/pass1/SBS8/'$target'/rootfiles'
-sbs9dir='/w/halla-scshelf2102/sbs/sbs-gmn/pass1/SBS9/'$target'/rootfiles'
+## -- Pass 0/1
+# sbs4dir='/w/halla-scshelf2102/sbs/sbs-gmn/pass0/SBS4/'$target''
+# sbs7dir='/w/halla-scshelf2102/sbs/sbs-gmn/pass0/SBS7/'$target''
+# sbs11dir='/lustre19/expphy/volatile/halla/sbs/sbs-gmn/GMN_REPLAYS/pass1/SBS11/'$target''
+# sbs14dir='/w/halla-scshelf2102/sbs/sbs-gmn/pass1/SBS14/'$target''
+# sbs8dir='/w/halla-scshelf2102/sbs/sbs-gmn/pass1/SBS8/'$target''
+# sbs9dir='/w/halla-scshelf2102/sbs/sbs-gmn/pass1/SBS9/'$target''
+## -- Pass 2
+sbs4dir='/w/halla-scshelf2102/sbs/pdbforce/gmn-data/pass2/SBS4/'$target''
+sbs7dir='/w/halla-scshelf2102/sbs/pdbforce/gmn-data/pass2/SBS7/'$target''
+sbs11dir='/w/halla-scshelf2102/sbs/pdbforce/gmn-data/pass2/SBS11/'$target''
+sbs14dir='/w/halla-scshelf2102/sbs/pdbforce/gmn-data/pass2/SBS14/'$target''
+sbs8dir='/w/halla-scshelf2102/sbs/pdbforce/gmn-data/pass2/SBS8/'$target''
+sbs9dir='/w/halla-scshelf2102/sbs/pdbforce/gmn-data/pass2/SBS9/'$target''
 
 # Defining arrays for combined analysis
 confarr=(4 7 11 14 8 9)

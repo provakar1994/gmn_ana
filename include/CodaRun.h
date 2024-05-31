@@ -12,6 +12,7 @@ typedef struct CodaRun {
   double ebeam_std;     // GeV, std. over entire run 
   double charge;        // C, total charge collected by the run
   double DAQltime;      // %
+  int BBCalSinglesPassed{-999}; // # of BBCal singles triggers accepted
 
   // constructor 
 CodaRun(): 

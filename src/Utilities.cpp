@@ -427,14 +427,14 @@ namespace util_pd {
 			  std::vector<std::pair<int, int>> &segB_segE,
 			  int verbose){
     /* Acknowledgement: Based on a function written by David Flay.
-    Determines the beginning and end segment number for a CODA run
-    input: 
-    - rfDirPath: path to where the ROOT file(s) are located 
-    - run: CODA run number 
-    output: vector containing:  
-    - stream number of the EVIO file associated with the run  
-    - number of files associated with the run
-    - list of sengment numbers of the run (sorted) */
+       Determines the beginning and end segment number for a CODA run
+       input: 
+       - rfDirPath: path to where the ROOT file(s) are located 
+       - run: CODA run number 
+       output: vector containing:  
+       - stream number of the EVIO file associated with the run  
+       - number of files associated with the run
+       - list of sengment numbers of the run (sorted) */
 
     int rc=-1; // assume fail 
 
@@ -506,6 +506,176 @@ namespace util_pd {
     return 0;
   } 
   //______________________________________________________________________________
+  int ReadLog(const std::string& filename) {
+    /* Bare bone function to read Pood generated log files to extract
+       accepted BBCal singles trigger. In future, it should be made generalized
+       so that it can be used to read other log file entries as well.
+    */
+    std::ifstream file(filename);
+    std::string line;
+
+    if (!file.is_open()) {
+      std::cerr << "Error: Unable to open file " << filename << std::endl;
+      return -999;
+    }
+
+    // Read each line of the file
+    std::string myStr;
+    while (std::getline(file, line)) {
+      if (line.find("BLOCK: Physics") != std::string::npos) {
+	// Start reading Physics block
+	while (std::getline(file, line)) {
+	  if (line.find("BBCalSingles") != std::string::npos) {
+	    myStr = line; // Return BBCalSingles entry
+
+	    // Tokenizing line to extract passed and called
+	    std::vector<std::string> tokens;
+	    util_pd::SplitString(' ',myStr,tokens);
+	  
+	    return stoi(tokens[3]); // 3=> Passed
+	  }
+	}
+      }
+    }
+
+    std::cerr << "Error: BBCalSingles entry not found in file " << filename << std::endl;
+    return -999;
+  }
+  //______________________________________________________________________________
+  int LoadROOTTree(std::string path,
+		   CodaRun &crun,           // single CODA run
+		   bool sort,
+		   int verbose,
+		   bool is_read_log,
+		   TChain* &C) 
+  /* if (is_read_log) - Reads log file and adds passed BBCALsingles to crun  */
+  {
+    
+    std::string rfpath = path + "/rootfiles";
+    std::string lfpath = path + "/logs";
+
+    if (crun.runnum != 0) {
+      std::cout << "Parsing ROOT files from run " << crun.runnum << std::endl;
+      if (!sort) {
+	std::string rfname = Form("/*%d*",rfpath.c_str(),crun.runnum);
+	std::string lfname = Form("/*%d*",lfpath.c_str(),crun.runnum);
+	if (verbose > 1) std::cout << rfname << std::endl;
+	C->Add(rfname.c_str());
+      } else {
+	std::cout << "Sorting by segments.." << std::endl;
+	int aRun, aNumFiles, aStream, rc;
+	std::vector<int> md;
+	std::vector<std::pair<int, int>> segB_segE;
+	// Looping through unique runs
+	aRun = crun.runnum;
+	rc = GetROOTFileMetaData(rfpath.c_str(),aRun,md,segB_segE,0);
+	if (rc==0) { // non-zero number of segments
+	  aStream   = md[0]; //stream no.
+	  aNumFiles = md[1]; //total # segments
+	  if (verbose > 0) {
+	    std::cout << "----" << std::endl;
+	    std::cout << Form(" Run %d, Total # of segments %d",aRun,aNumFiles) << std::endl;
+	    std::cout << Form(" Beg seg %d-%d, End seg %d-%d",segB_segE[0].first,segB_segE[0].second,
+			      segB_segE[aNumFiles-1].first,segB_segE[aNumFiles-1].second) << std::endl;
+	    std::cout << "----" << std::endl;
+	  }
+	  // Looping through segments and adding to tree
+	  double BBCalSingles_passed = 0;
+	  for (int iseg=0; iseg<aNumFiles; iseg++) {
+	    std::string rfname = Form("%s/e1209019_fullreplay_%d_stream%d_seg%d_%d.root",rfpath.c_str(),
+				      aRun,aStream,segB_segE[iseg].first,segB_segE[iseg].second);
+	    if (verbose > 1) std::cout << rfname << std::endl;
+	    C->Add(rfname.c_str());
+
+	    if (is_read_log) {
+	      // reading corresponding log files
+	      std::string lfname = Form("%s/e1209019_fullreplay_%d_stream%d_seg%d_%d.log",lfpath.c_str(),
+					aRun,aStream,segB_segE[iseg].first,segB_segE[iseg].second);
+	      int temp = ReadLog(lfname); //system(Form("python3 daq_livetime.py %s",lfname));
+	      if (temp<0) std::cerr << Form("[WARNING] %s doesn't exist!! \n",lfname);
+	      if (verbose > 1) {
+		std::cout << lfname << std::endl;
+		std::cout << temp << std::endl;
+	      }
+	      BBCalSingles_passed += temp;
+	    }
+	  }
+	  // adding total BBCalSingles to crun
+	  crun.BBCalSinglesPassed = BBCalSingles_passed;
+	  if (verbose > 0) 
+	    std::cout << Form("Total passed BBCal singles for run %d: %d\n",crun.runnum,crun.BBCalSinglesPassed);
+	} else {
+	  std::cout << std::endl << "--!!--" << std::endl  
+		    << "WARNING! [util_pd::LoadROOTTree]: No ROOT file exists for run " << crun.runnum << "!" 
+		    << std::endl << "--!!--" << std::endl;
+	  return -1;
+	}
+	// getting ready for next run
+	md.clear();
+	segB_segE.clear();
+      }
+    }else {
+      throw std::runtime_error("[util_pd::LoadROOTTree] CodaRun object is empty!");
+    }
+    
+    return 0;
+  }
+  // //______________________________________________________________________________
+  // int LoadROOTTree(std::string path,
+  // 		   CodaRun crun,           // single CODA run
+  // 		   bool sort,
+  // 		   int verbose,
+  // 		   TChain* &C) 
+  // {
+    
+  //   if (crun.runnum != 0) {
+  //      std::cout << "Parsing ROOT files from run " << crun.runnum << std::endl;
+  //     if (!sort) {
+  // 	std::string rfname = Form("%s/*%d*",path.c_str(),crun.runnum);
+  // 	if (verbose > 1) std::cout << rfname << std::endl;
+  // 	C->Add(rfname.c_str());
+  //     } else {
+  // 	std::cout << "Sorting by segments.." << std::endl;
+  // 	int aRun, aNumFiles, aStream, rc;
+  // 	std::vector<int> md;
+  // 	std::vector<std::pair<int, int>> segB_segE;
+  // 	// Looping through unique runs
+  // 	aRun = crun.runnum;
+  // 	rc = GetROOTFileMetaData(path.c_str(),aRun,md,segB_segE,0);
+  // 	if (rc==0) { // non-zero number of segments
+  // 	  aStream   = md[0]; //stream no.
+  // 	  aNumFiles = md[1]; //total # segments
+  // 	  if (verbose > 0) {
+  // 	    std::cout << "----" << std::endl;
+  // 	    std::cout << Form(" Run %d, Total # of segments %d",aRun,aNumFiles) << std::endl;
+  // 	    std::cout << Form(" Beg seg %d-%d, End seg %d-%d",segB_segE[0].first,segB_segE[0].second,
+  // 			      segB_segE[aNumFiles-1].first,segB_segE[aNumFiles-1].second) << std::endl;
+  // 	    std::cout << "----" << std::endl;
+  // 	  }
+  // 	  // Looping through segments and adding to tree
+  // 	  for (int iseg=0; iseg<aNumFiles; iseg++) {
+  // 	    std::string rfname = Form("%s/e1209019_fullreplay_%d_stream%d_seg%d_%d.root",path.c_str(),
+  // 				      aRun,aStream,segB_segE[iseg].first,segB_segE[iseg].second);
+  // 	    if (verbose > 1) std::cout << rfname << std::endl;
+  // 	    C->Add(rfname.c_str());
+  // 	  }
+  // 	} else {
+  // 	  std::cout << std::endl << "--!!--" << std::endl  
+  // 		    << "WARNING! [util_pd::LoadROOTTree]: No ROOT file exists for run " << crun.runnum << "!" 
+  // 		    << std::endl << "--!!--" << std::endl;
+  // 	  return -1;
+  // 	}
+  // 	// getting ready for next run
+  // 	md.clear();
+  // 	segB_segE.clear();
+  //     }
+  //   }else {
+  //     throw std::runtime_error("[util_pd::LoadROOTTree] CodaRun object is empty!");
+  //   }
+    
+  //   return 0;
+  // }
+  //______________________________________________________________________________
   int LoadROOTTree(std::string path,
 		   std::vector<CodaRun> crun,    // multiple CODA runs
 		   bool sort,
@@ -566,61 +736,7 @@ namespace util_pd {
 
     return 0;
   }
-  //______________________________________________________________________________
-  int LoadROOTTree(std::string path,
-		   CodaRun crun,           // single CODA run
-		   bool sort,
-		   int verbose,
-		   TChain* &C) 
-  {
-    
-    if (crun.runnum != 0) {
-       std::cout << "Parsing ROOT files from run " << crun.runnum << std::endl;
-      if (!sort) {
-	std::string rfname = Form("%s/*%d*",path.c_str(),crun.runnum);
-	if (verbose > 1) std::cout << rfname << std::endl;
-	C->Add(rfname.c_str());
-      } else {
-	std::cout << "Sorting by segments.." << std::endl;
-	int aRun, aNumFiles, aStream, rc;
-	std::vector<int> md;
-	std::vector<std::pair<int, int>> segB_segE;
-	// Looping through unique runs
-	aRun = crun.runnum;
-	rc = GetROOTFileMetaData(path.c_str(),aRun,md,segB_segE,0);
-	if (rc==0) { // non-zero number of segments
-	  aStream   = md[0]; //stream no.
-	  aNumFiles = md[1]; //total # segments
-	  if (verbose > 0) {
-	    std::cout << "----" << std::endl;
-	    std::cout << Form(" Run %d, Total # of segments %d",aRun,aNumFiles) << std::endl;
-	    std::cout << Form(" Beg seg %d-%d, End seg %d-%d",segB_segE[0].first,segB_segE[0].second,
-			      segB_segE[aNumFiles-1].first,segB_segE[aNumFiles-1].second) << std::endl;
-	    std::cout << "----" << std::endl;
-	  }
-	  // Looping through segments and adding to tree
-	  for (int iseg=0; iseg<aNumFiles; iseg++) {
-	    std::string rfname = Form("%s/e1209019_fullreplay_%d_stream%d_seg%d_%d.root",path.c_str(),
-				      aRun,aStream,segB_segE[iseg].first,segB_segE[iseg].second);
-	    if (verbose > 1) std::cout << rfname << std::endl;
-	    C->Add(rfname.c_str());
-	  }
-	} else {
-	  std::cout << std::endl << "--!!--" << std::endl  
-		    << "WARNING! [util_pd::LoadROOTTree]: No ROOT file exists for run " << crun.runnum << "!" 
-		    << std::endl << "--!!--" << std::endl;
-	  return -1;
-	}
-	// getting ready for next run
-	md.clear();
-	segB_segE.clear();
-      }
-    }else {
-      throw std::runtime_error("[util_pd::LoadROOTTree] CodaRun object is empty!");
-    }
-    
-    return 0;
-  }
+
 
   /* ##################################################
      ##   Function to read MC replay summary files   ##  
@@ -808,12 +924,12 @@ namespace util_pd {
   }
   //______________________________________________________________________________
   void GetElossInTgt(std::string const target, // Target type
-		    int const rnum,            // Run number
-		    int const sbsconf,         // SBS configuration
-		    double const vz,           // m, vertex z co-ordinate
-		    double const etheta,       // rad, scattering angle
-		    int const verbose,         // verbosity
-		    std::vector<double> &data) // Output: data[0]=>before scattering, data[1]=>after scattering,
+		     int const rnum,            // Run number
+		     int const sbsconf,         // SBS configuration
+		     double const vz,           // m, vertex z co-ordinate
+		     double const etheta,       // rad, scattering angle
+		     int const verbose,         // verbosity
+		     std::vector<double> &data) // Output: data[0]=>before scattering, data[1]=>after scattering,
   /* Calculates energy loss in the target before and after scattering */
   {
     double tgt_rho, tgt_dEdx_bs, tgt_dEdx_as, tgt_uwinthick, tgt_celldiam, tgt_cellthick; 
@@ -844,15 +960,15 @@ namespace util_pd {
     // Scattering chamber shielding 
     /* NOTE: 
        1. Additional shielding beside the scattering chamber was installed during SBS11 to reduce 
-          background rates in the front tracker (I think).
+       background rates in the front tracker (I think).
        2. Initially, Bogdan just put a 10mm plastic shielding leaning on the scattering chamber!
-          Bogdan did that on 12/04/2021 at 18:20. https://logbooks.jlab.org/entry/3956556
-	  First run after the installation: 12556
-	  - Andrew suggested to assume the material to be acrylic or polyethylene. I am going with
-	    polyethylene (PE). 
+       Bogdan did that on 12/04/2021 at 18:20. https://logbooks.jlab.org/entry/3956556
+       First run after the installation: 12556
+       - Andrew suggested to assume the material to be acrylic or polyethylene. I am going with
+       polyethylene (PE). 
        3. Then on 12/08/2021, Andrew (tech) replaced the plastic shielding with a permanent 1/8th
-          inch thick Al shield. https://logbooks.jlab.org/entry/3958901 
-	  First run after the installation: 12675
+       inch thick Al shield. https://logbooks.jlab.org/entry/3958901 
+       First run after the installation: 12675
     */
     bool PE_shield_in = (rnum<12556 || rnum>=12675) ? false : true;
     bool Al_shield_in = rnum<12675 ? false : true;

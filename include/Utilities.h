@@ -4,6 +4,7 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
+#include <cstdlib>
 #include <iostream>
 #include <dirent.h>
 #include <algorithm>
@@ -115,9 +116,10 @@ namespace util_pd {
 		   TChain* &C);               // Output: TChain with data
 
   int LoadROOTTree(std::string path,          // ROOT file directory path
-		   CodaRun crun,              // CodaRun object with run info
+		   CodaRun &crun,             // CodaRun object with run info
 		   bool sort,                 // Sort by segments before parsing?
 		   int verbose,               // verbosity
+		   bool is_read_log,          // want to read corresponding log files?
 		   TChain* &C);               // Output: TChain with data
 
   /* ##################################################
