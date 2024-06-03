@@ -11,12 +11,12 @@ typedef struct CodaRun {
   double ebeam;         // GeV, avg. over entire run 
   double ebeam_std;     // GeV, std. over entire run 
   double charge;        // C, total charge collected by the run
-  double DAQltime;      // %
+  double daqlvtm;       // %
   int BBCalSinglesPassed{-999}; // # of BBCal singles triggers accepted
 
   // constructor 
 CodaRun(): 
-  runnum(0),sbsconf(0),target("NONE"),sbsmag(0),bbmag(0),ebeam(0),ebeam_std(0),charge(0),DAQltime(0)
+  runnum(0),sbsconf(0),target("NONE"),sbsmag(0),bbmag(0),ebeam(0),ebeam_std(0),charge(0),daqlvtm(0)
   {}
 
   // define an ostream operator to print to screen conveniently
@@ -30,13 +30,14 @@ CodaRun():
     out << " Avg. ebeam (GeV)  : " << crun.ebeam << std::endl;
     out << " Ebeam std. (GeV)  : " << crun.ebeam_std << std::endl;
     out << " Tot. charge. (C)  : " << crun.charge << std::endl;
+    out << " DAQ livetime      : " << crun.daqlvtm << std::endl;
     out << " ------------" << std::endl << std::endl;
     return out;
   }
 
   // sets data by reading runsheet (exclusively for util::ReadRunList functions)
   void SetDataRunSheet(std::vector<std::string> data) {
-    if (data.size()==8) {
+    if (data.size()==9) {
         sbsconf   = stoi(data[0]);
         runnum    = stoi(data[1]);
         target    = data[2];
@@ -45,6 +46,7 @@ CodaRun():
         ebeam     = stod(data[5]);
         ebeam_std = stod(data[6]);
         charge    = stod(data[7]);
+	daqlvtm   = stod(data[8]);
      } else 
       throw std::runtime_error("Potential NaN column entry in the run sheet!");
     }

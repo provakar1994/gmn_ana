@@ -258,7 +258,10 @@ int elas_ana_data (const char *configfilename,
   //bcm/scaler
   //UInt_t T_segnumS;     if (get_scaler_info) Tout->Branch("segnumS", &T_segnumS, "segnumS/i");
   double T_dnewcnt;       if (get_scaler_info) Tout->Branch("dnewcnt", &T_dnewcnt, "dnewcnt/D"); 
-  double T_dnewcurr;      if (get_scaler_info) Tout->Branch("dnewcurr", &T_dnewcurr, "dnewcurr/D"); 
+  double T_dnewcurr;      if (get_scaler_info) Tout->Branch("dnewcurr", &T_dnewcurr, "dnewcurr/D");
+  //per run info
+  double T_dnewcharge;    Tout->Branch("dnewcharge", &T_dnewcharge, "dnewcharge/D");
+  double T_daqlvtm;       Tout->Branch("daqlvtm", &T_daqlvtm, "daqlvtm/D");
   //kine
   double T_nu;            Tout->Branch("nu", &T_nu, "nu/D");
   double T_Q2;            Tout->Branch("Q2", &T_Q2, "Q2/D");
@@ -381,7 +384,7 @@ int elas_ana_data (const char *configfilename,
   std::vector<double> ElossInTgt; // array to hold energy loss correction values per event
   long nevent=0, nevents=C->GetEntries(), neventsS=S->GetEntries(), index=0, tgevnumS, ngoodevs = 0; 
   int treenum=0, currenttreenum=0; UInt_t runnum=0, nseg, tsegnumS;
-  double ebeam=sbsconf.GetEbeam(), ebeam_std=0.; 
+  double ebeam=sbsconf.GetEbeam(), ebeam_std=0., dnewcharge, daqlvtm; 
   double tdnewcurr=0., tdnewcnt=0;  
   while (C->GetEntry(nevent++)) {
    
@@ -426,8 +429,8 @@ int elas_ana_data (const char *configfilename,
 	runnum = rnum; nseg=1;
 	auto it = std::find_if(crun.begin(), crun.end(), [=](CodaRun const& cr) {return cr.runnum == runnum;});
 	if (it != crun.end()) {
-	  ebeam = it->ebeam; 
-	  ebeam_std = it->ebeam_std;
+	  ebeam = it->ebeam; ebeam_std = it->ebeam_std;
+	  dnewcharge = it->charge; daqlvtm = it->daqlvtm;
 	}else 
 	  std::cerr << "**!** Run " << runnum << " is not in spreadsheet!" << std::endl;
       }
@@ -543,6 +546,9 @@ int elas_ana_data (const char *configfilename,
       T_dnewcnt = tdnewcnt;
       T_dnewcurr = tdnewcurr;
     }
+    // per run info
+    T_dnewcharge = dnewcharge;
+    T_daqlvtm = daqlvtm;
 
     T_vz = vz[0];
     T_trP = p[0];
