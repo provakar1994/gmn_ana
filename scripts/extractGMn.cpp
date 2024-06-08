@@ -2,7 +2,7 @@
 
 #include "EMFFFits.h"
 
-int extractGMn(double const etheta, double const Q2, double const R_fit, double const R_fit_err) {
+int extractGMn(double const etheta, double const Q2, double const R_fit, double const R_fit_err, double const R_fit_err_sys) {
 
   // EMFF fits
   Ye2017 yefit;
@@ -44,6 +44,9 @@ int extractGMn(double const etheta, double const Q2, double const R_fit, double 
   // ratio with the data/MC fit parameter "R".
   double sigmaBorn_Ratio_corr = sigmaBorn_Ratio_MC * R_fit;
   double sigmaBorn_Ratio_corr_error = abs(sigmaBorn_Ratio_MC) * R_fit_err;
+  double sigmaBorn_Ratio_corr_error_sys = abs(sigmaBorn_Ratio_MC) * R_fit_err_sys;
+  double sigmaBorn_Ratio_corr_error_tot = sqrt(pow(sigmaBorn_Ratio_corr_error,2) + pow(sigmaBorn_Ratio_corr_error_sys,2));
+  
 
   // -- No TPE Check - beta phase [04/26/2024]
   double GMn_data_christy_ye = kine::ExtractGMn(etheta,Q2,GEp_christy,GMp_christy,GEn_ye,sigmaBorn_Ratio_corr); 
@@ -89,6 +92,7 @@ int extractGMn(double const etheta, double const Q2, double const R_fit, double 
   // --
 
   std::cout << "\n----------\n";
+  std::cout << Form("Q2: %.1f, n/p ratio: %.4f +/- %.4f +/- %.4f, Tot err: %.4f\n\n",Q2,sigmaBorn_Ratio_corr,sigmaBorn_Ratio_corr_error,sigmaBorn_Ratio_corr_error_sys,sigmaBorn_Ratio_corr_error_tot);
   std::cout << "No TPE Corr (Beta): Christy, Ye \n";
   std::cout << Form("etheta: %.1f, Q2: %.1f, GMn: %.4f, GMn/(mun*GD): %.4f +/- %.4f\n",etheta,Q2,GMn_data_christy_ye,GMn_ov_munGD_data_christy_ye,GMn_ov_munGD_err_christy_ye);
   std::cout << "----- || ----- \n";
