@@ -5,7 +5,7 @@
     "SBS_config"         : 11,
     "SBS_magnet_percent" : 100,
     "Nruns_to_ana"       : -1,
-    "get_scaler_info"    : 0,
+    "get_scaler_info"    : 1,
     "runsheet_dir"       : "../DB",
     "rootfile_dir"       : "/w/halla-scshelf2102/sbs/pdbforce/gmn-data/pass2/SBS11/LD2/rootfiles",
     "global_cut"         : "fEvtHdr.fTrigBits==1&&bb.tr.n>0&&bb.gem.track.nhits>2&&abs(bb.tr.vz[0])<.08&&bb.tr.p[0]>2&&bb.ps.e>0.2&&bb.gem.track.ngoodhits[0]>2&&bb.gem.track.chi2ndf[0]<15",
@@ -32,7 +32,7 @@
     "NOTE"               : "verbose=0 & verbosefn=0 => Production; verbose<-1=>Debug, =-1=>Test; verbosefn>0=>Debug",
     "verbose"            : -1,
     "verbose_function"   : 0,
-    "outfile_prefix"     : "lWCut_1p27zoff",
+    "outfile_prefix"     : "test_lWCut_1p27zoff",
     "README"             : "First look at official pass2 data: 04/23/24"
 },
 "pass1":
