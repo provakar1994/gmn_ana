@@ -203,5 +203,24 @@ namespace util_pd {
     return indices;
   }
 
+  /* Function to Write out the contents of a vector */
+  template <typename T>
+  void printVector(const std::vector<T>& vec) {
+    for (const auto& element : vec) {
+      std::cout << element << " ";
+    }
+    std::cout << std::endl;
+  }
+  
+
+  /* ############################################
+     ##   Functions to manipulate histograms   ##  
+     ############################################ */
+  /* Function to return xrange of equal statistics*/
+  void findEqualStatBins(TH1F *h, // input histo
+			 double xlow, double xhi, // desired xrange
+			 int ndiv,    // desired # of slices
+			 int verbose, // verbosity
+			 std::vector<double> &xrange); // Output: ndiv # slices
 }
 #endif

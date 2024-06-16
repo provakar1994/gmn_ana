@@ -999,4 +999,58 @@ namespace util_pd {
       std::cerr << "[KinematicVar::Luminosity] Enter a valid target type! **!**" << std::endl;
     return lumi;
   }
+
+  /* ############################################
+     ##   Functions to manipulate histograms   ##  
+     ############################################ */
+  // Function to return xrange of equal statistics
+  void findEqualStatBins(TH1F *h,
+			 double xlow, double xhi, int ndiv,
+			 int verbose,
+			 std::vector<double> &xrange) {
+
+    int binlow = h->FindBin(xlow);
+    int binhi = h->FindBin(xhi);
+
+    double totstat = h->Integral(binlow, binhi);
+    double statpercut = totstat / double(ndiv);
+
+    xrange.push_back(xlow);
+    int loweredge = binlow;
+    int slices = 0;
+    double accumulatedStats = 0.0;
+
+    for (int ibin = binlow + 1; ibin <= binhi; ++ibin) {
+        accumulatedStats += h->GetBinContent(ibin);
+
+        if (accumulatedStats >= statpercut && slices < ndiv - 1) {
+            double diff1 = std::abs(accumulatedStats - statpercut);
+            double diff2 = std::abs((accumulatedStats - h->GetBinContent(ibin)) - statpercut);
+            if (diff2 < diff1) {
+                accumulatedStats -= h->GetBinContent(ibin);
+                ibin--;
+            }
+            xrange.push_back(h->GetBinCenter(ibin));
+            slices++;
+            accumulatedStats = 0.0;
+        }
+    }
+
+    xrange.push_back(xhi);
+
+    // Final adjustment to ensure equal statistics in the last bin
+    while (xrange.size() - 1 < ndiv) {
+        double lastBinCenter = (xrange.back() + xhi) / 2.0;
+        xrange.insert(xrange.end() - 1, lastBinCenter);
+    }
+    util_pd::printVector(xrange);
+
+    if (verbose==1) {
+      for (size_t i = 0; i < xrange.size() - 1; ++i) {
+        std::cout << "Range " << i + 1 << ": " << xrange[i] << " to " << xrange[i + 1]
+                  << " with integral " << h->Integral(h->FindBin(xrange[i]), h->FindBin(xrange[i + 1])) << std::endl;
+      }
+    }
+  }
+
 }

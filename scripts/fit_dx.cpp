@@ -366,16 +366,39 @@ int fit_dx (const char *configfilename,
   vector<double> h_cut_param; jmgr->GetVectorFromSubKey<double>(key,"h_cut_param",h_cut_param);
   double min = cut_range[1], width = cut_range[2]; 
   int iter = is_vary_cut ? (int)cut_range[0] : 1;
+  // draawing cut histo 
+  // ** for data
+  std::string cuts_sig_data_modified = use_custom_fiduCut ? cuts_for_signal_data + "&&fiduCut" : cuts_for_signal_data;
+  TH1F *hcut = (TH1F*)data_rdf_filtered.Histo1D({"hcut","",int(h_cut_param[0]),h_cut_param[1],h_cut_param[2]},param_to_vary)->Clone();
+  customize_hcut(hcut); hcut->SetTitle(Form("%s {%s}",param_to_vary.c_str(),cuts_sig_data_modified.c_str()));
+  TH1F *hcut_p = (TH1F*)data_rdf_filtered.Filter("pCut").Histo1D({"hcut_p","",int(h_cut_param[0]),h_cut_param[1],h_cut_param[2]},param_to_vary)->Clone();
+  customize_hcut_p(hcut_p); hcut_p->SetTitle(Form("%s {pCut&&%s}",param_to_vary.c_str(),cuts_sig_data_modified.c_str()));
+  TH1F *hcut_n = (TH1F*)data_rdf_filtered.Filter("nCut").Histo1D({"hcut_n","",int(h_cut_param[0]),h_cut_param[1],h_cut_param[2]},param_to_vary)->Clone();
+  customize_hcut_n(hcut_n); hcut_n->SetTitle(Form("%s {nCut&&%s}",param_to_vary.c_str(),cuts_sig_data_modified.c_str()));
+  // ** for simu
+  std::string cuts_sig_simu_modified = use_custom_fiduCut ? cuts_for_signal_simu + "&&fiduCut" : cuts_for_signal_simu;
+  TH1F *hcut_simu = (TH1F*)simu_rdf_filtered.Histo1D({"hcut_simu","",int(h_cut_param[0]),h_cut_param[1],h_cut_param[2]},param_to_vary,"weight")->Clone();
+  customize_hcut(hcut_simu); hcut_simu->SetTitle(Form("%s {%s}",param_to_vary.c_str(),cuts_sig_simu_modified.c_str()));
+  TH1F *hcut_p_simu = (TH1F*)simu_rdf_filtered.Filter("mc_fnucl==1").Histo1D({"hcut_p_simu","",int(h_cut_param[0]),h_cut_param[1],h_cut_param[2]},param_to_vary,"weight")->Clone();
+  customize_hcut_p(hcut_p_simu); hcut_p_simu->SetTitle(Form("%s {pCut&&%s}",param_to_vary.c_str(),cuts_sig_simu_modified.c_str()));
+  TH1F *hcut_n_simu = (TH1F*)simu_rdf_filtered.Filter("mc_fnucl==0").Histo1D({"hcut_n_simu","",int(h_cut_param[0]),h_cut_param[1],h_cut_param[2]},param_to_vary,"weight")->Clone();
+  customize_hcut_n(hcut_n_simu); hcut_n_simu->SetTitle(Form("%s {nCut&&%s}",param_to_vary.c_str(),cuts_sig_simu_modified.c_str()));
   // choosing cut variation style
   int cut_vary_style = jmgr->GetValueFromSubKey<int>(key,"cut_vary_style");
   // 0 -> scan from low to high with fixed width
-  // 1 -> scan around a fixed mean with increasing width. NOTE: cut_range[1] = mean, in this case
-  // 2 -> increase threshold by a fixed amount
-  // 3 -> vary fidu cut. NOTE: Only cut_range[0] matters, sets the range but fidu_vary_* dictates variation 
+  //      NOTE: cut_range[0] = # slices, [1] = low, [2] = slice width, in this case
+  // 1 -> scan around a fixed mean with increasing width.
+  //      NOTE: cut_range[0] = # slices, [1] = mean, [2] = width, in this case
+  // 2 -> scan from low to high with slices of equal statistics.
+  //      NOTE: cut_range[0] = # slices, [1] = low, [2] = high, in this case
+  // 3 -> increase threshold by a fixed amount
+  //      NOTE: cut_range[0] = # slices, [1] = low, [2] = threshold increment, in this case  
+  // 4 -> vary fidu cut.
+  //      NOTE: Only cut_range[0] matters, sets the range but fidu_vary_* dictates variation
   bool apply_to_data_only = jmgr->GetValueFromSubKey<int>(key,"apply_to_data_only");
   double low = cut_vary_style==1 ? min-width : min;
-  double high = cut_vary_style==2 ? h_cut_param[2] : min+width; 
-  // fidu cut variation (Cut style 3 -- Very different than the others)
+  double high = cut_vary_style==3 ? h_cut_param[2] : min+width; 
+  // fidu cut variation (Cut style 4 -- Very different than the others)
   std::vector<int> fvary_xp; jmgr->GetVectorFromSubKey<int>(key,"fidu_vary_xp",fvary_xp);
   std::vector<int> fvary_xn; jmgr->GetVectorFromSubKey<int>(key,"fidu_vary_xn",fvary_xn);
   std::vector<int> fvary_y; jmgr->GetVectorFromSubKey<int>(key,"fidu_vary_y",fvary_y);
@@ -384,21 +407,31 @@ int fit_dx (const char *configfilename,
   std::vector<double> minval, maxval;
   std::vector<std::string> cuts, cuts_p, cuts_n, cuts_2;  
   if (is_vary_cut) {
+    std::vector<double> xrangeEqStat;
+    
+    if (cut_vary_style==2) {
+      int ndiv = cut_range[0]; //desired # of equi-stat slices
+      low = cut_range[1]; high = cut_range[2];
+      std::cout << "Varying cut w/ equi-stat slices..\n";
+      util_pd::findEqualStatBins(hcut,low,high,ndiv,1,xrangeEqStat);
+      high = xrangeEqStat[1]; //initializing for the first slice
+    }
+    
     for (int i=0; i<iter; i++) {
       minval.push_back(low); maxval.push_back(high);
       std::string cut, cut_2;
       char low_buff[20]; std::snprintf(low_buff,20,"%.3f",low); std::string low_str(low_buff);
       char high_buff[20]; std::snprintf(high_buff,20,"%.3f",high); std::string high_str(high_buff);
-      if (cut_vary_style==0 || cut_vary_style==1) {
+      if (cut_vary_style==0 || cut_vary_style==1 || cut_vary_style==2) {
 	cut = param_to_vary+">"+low_str+"&&"+param_to_vary+"<="+high_str; 
 	cut_2 = low_str+"<"+param_to_vary+"<="+high_str;
 	hcal_SMs.push_back(hcal_SM);
       } 
-      else if (cut_vary_style==2) { 
+      else if (cut_vary_style==3) { 
 	cut = param_to_vary+">"+low_str; cut_2 = cut; 
 	hcal_SMs.push_back(hcal_SM);
       }
-      else if (cut_vary_style==3) {
+      else if (cut_vary_style==4) {
 	cut = "1"; cut_2 = "ARCut&&SMCut";
 	double SM_xp, SM_xn, SM_y;
 	SM_xp = fvary_xp[0] ? SM_w[0]*(1.+0.01*fvary_xp[i+1]) : SM_w[0];
@@ -415,7 +448,8 @@ int fit_dx (const char *configfilename,
       // update high and low
       if (cut_vary_style==0) { low = high; high += width; }
       else if (cut_vary_style==1) { low -= width; high += width; }
-      else if (cut_vary_style==2) { low += width; high = h_cut_param[2]; }
+      else if (cut_vary_style==2) { low = xrangeEqStat[i+1]; high = xrangeEqStat[i+2]; }
+      else if (cut_vary_style==3) { low += width; high = h_cut_param[2]; }
     }
   } else {
     cuts.push_back("1"); cuts_p.push_back("mc_fnucl==1"); cuts_n.push_back("mc_fnucl==0"); 
@@ -442,26 +476,9 @@ int fit_dx (const char *configfilename,
 
   // summary histo
   TH1F *hgist_cv_2 = new TH1F("hgist_cv_2","",iter,-0.5,iter-0.5);
-  // draawing cut histo 
-  // ** for data
-  std::string cuts_sig_data_modified = use_custom_fiduCut ? cuts_for_signal_data + "&&fiduCut" : cuts_for_signal_data;
-  TH1F *hcut = (TH1F*)data_rdf_filtered.Histo1D({"hcut","",int(h_cut_param[0]),h_cut_param[1],h_cut_param[2]},param_to_vary)->Clone();
-  customize_hcut(hcut); hcut->SetTitle(Form("%s {%s}",param_to_vary.c_str(),cuts_sig_data_modified.c_str()));
-  TH1F *hcut_p = (TH1F*)data_rdf_filtered.Filter("pCut").Histo1D({"hcut_p","",int(h_cut_param[0]),h_cut_param[1],h_cut_param[2]},param_to_vary)->Clone();
-  customize_hcut_p(hcut_p); hcut_p->SetTitle(Form("%s {pCut&&%s}",param_to_vary.c_str(),cuts_sig_data_modified.c_str()));
-  TH1F *hcut_n = (TH1F*)data_rdf_filtered.Filter("nCut").Histo1D({"hcut_n","",int(h_cut_param[0]),h_cut_param[1],h_cut_param[2]},param_to_vary)->Clone();
-  customize_hcut_n(hcut_n); hcut_n->SetTitle(Form("%s {nCut&&%s}",param_to_vary.c_str(),cuts_sig_data_modified.c_str()));
-  // ** for simu
-  std::string cuts_sig_simu_modified = use_custom_fiduCut ? cuts_for_signal_simu + "&&fiduCut" : cuts_for_signal_simu;
-  TH1F *hcut_simu = (TH1F*)simu_rdf_filtered.Histo1D({"hcut_simu","",int(h_cut_param[0]),h_cut_param[1],h_cut_param[2]},param_to_vary,"weight")->Clone();
-  customize_hcut(hcut_simu); hcut_simu->SetTitle(Form("%s {%s}",param_to_vary.c_str(),cuts_sig_simu_modified.c_str()));
-  TH1F *hcut_p_simu = (TH1F*)simu_rdf_filtered.Filter("mc_fnucl==1").Histo1D({"hcut_p_simu","",int(h_cut_param[0]),h_cut_param[1],h_cut_param[2]},param_to_vary,"weight")->Clone();
-  customize_hcut_p(hcut_p_simu); hcut_p_simu->SetTitle(Form("%s {pCut&&%s}",param_to_vary.c_str(),cuts_sig_simu_modified.c_str()));
-  TH1F *hcut_n_simu = (TH1F*)simu_rdf_filtered.Filter("mc_fnucl==0").Histo1D({"hcut_n_simu","",int(h_cut_param[0]),h_cut_param[1],h_cut_param[2]},param_to_vary,"weight")->Clone();
-  customize_hcut_n(hcut_n_simu); hcut_n_simu->SetTitle(Form("%s {nCut&&%s}",param_to_vary.c_str(),cuts_sig_simu_modified.c_str()));
   // Canvas to plot cut region
   TCanvas *cCut = new TCanvas("cCut","cCut",1400,800);
-  if (cut_vary_style==3) cCut->Divide(2,2);
+  if (cut_vary_style==4) cCut->Divide(2,2);
   else cCut->Divide(2,1);
 
   // ## Explicit x bins for Rnum histos -- Needed to avoid round off error introduced by ROOT's default way of calculating bin edges
@@ -582,7 +599,7 @@ int fit_dx (const char *configfilename,
       // drawing cut histos
       cCut->cd();
       gStyle->SetOptStat("e");
-      if (cut_vary_style!=3) { // Anything other than fidu cut
+      if (cut_vary_style!=4) { // Anything other than fidu cut
 	// data
 	cCut->cd(1);
 	gPad->SetGridx();
