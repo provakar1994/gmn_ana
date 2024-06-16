@@ -133,6 +133,18 @@ void customize_hcut(TH1F* h)
   h->GetXaxis()->CenterTitle(true);
 }
 
+void customize_hcut_p(TH1F* h)
+{
+  customize_hcut(h);
+  h->SetLineColor(kBlue);
+}
+
+void customize_hcut_n(TH1F* h)
+{
+  customize_hcut(h);
+  h->SetLineColor(kGreen+2);
+}
+
 void customize_h2fiduCut(TH2F* h2, char const * nORp, char const * DataORMC, double sbs_kick) 
 {
   h2->SetTitle(Form("%s Envelope (%s)",nORp,DataORMC));
@@ -418,6 +430,7 @@ int fit_dx (const char *configfilename,
 	  << "chi22,NDF2,R2,R2err,B2,B2err,Yp2,Yp2err,Yn2,Yn2err,Ybg2,Ybg2err,"
 	  << "chi23,NDF3,R3,R3err,B3,B3err,Yp3,Yp3err,Yn3,Yn3err,Ybg3,Ybg3err,"
 	  << "chi24,NDF4,R4,R4err,B4,B4err,Yp4,Yp4err,Yn4,Yn4err,Ybg4,Ybg4err,"
+	  << "chi25,NDF5,R5,R5err,B5,B5err,Yp5,Yp5err,Yn5,Yn5err,Ybg5,Ybg5err,"
 	  << "\n";
 
   TString outGIF = outFile; outGIF.ReplaceAll(".root",".gif");
@@ -429,12 +442,27 @@ int fit_dx (const char *configfilename,
 
   // summary histo
   TH1F *hgist_cv_2 = new TH1F("hgist_cv_2","",iter,-0.5,iter-0.5);
-  // draawing cut histo
+  // draawing cut histo 
+  // ** for data
+  std::string cuts_sig_data_modified = use_custom_fiduCut ? cuts_for_signal_data + "&&fiduCut" : cuts_for_signal_data;
   TH1F *hcut = (TH1F*)data_rdf_filtered.Histo1D({"hcut","",int(h_cut_param[0]),h_cut_param[1],h_cut_param[2]},param_to_vary)->Clone();
-  customize_hcut(hcut); hcut->SetTitle(Form("%s {%s}",param_to_vary.c_str(),cuts_for_signal_data.c_str()));
+  customize_hcut(hcut); hcut->SetTitle(Form("%s {%s}",param_to_vary.c_str(),cuts_sig_data_modified.c_str()));
+  TH1F *hcut_p = (TH1F*)data_rdf_filtered.Filter("pCut").Histo1D({"hcut_p","",int(h_cut_param[0]),h_cut_param[1],h_cut_param[2]},param_to_vary)->Clone();
+  customize_hcut_p(hcut_p); hcut_p->SetTitle(Form("%s {pCut&&%s}",param_to_vary.c_str(),cuts_sig_data_modified.c_str()));
+  TH1F *hcut_n = (TH1F*)data_rdf_filtered.Filter("nCut").Histo1D({"hcut_n","",int(h_cut_param[0]),h_cut_param[1],h_cut_param[2]},param_to_vary)->Clone();
+  customize_hcut_n(hcut_n); hcut_n->SetTitle(Form("%s {nCut&&%s}",param_to_vary.c_str(),cuts_sig_data_modified.c_str()));
+  // ** for simu
+  std::string cuts_sig_simu_modified = use_custom_fiduCut ? cuts_for_signal_simu + "&&fiduCut" : cuts_for_signal_simu;
+  TH1F *hcut_simu = (TH1F*)simu_rdf_filtered.Histo1D({"hcut_simu","",int(h_cut_param[0]),h_cut_param[1],h_cut_param[2]},param_to_vary,"weight")->Clone();
+  customize_hcut(hcut_simu); hcut_simu->SetTitle(Form("%s {%s}",param_to_vary.c_str(),cuts_sig_simu_modified.c_str()));
+  TH1F *hcut_p_simu = (TH1F*)simu_rdf_filtered.Filter("mc_fnucl==1").Histo1D({"hcut_p_simu","",int(h_cut_param[0]),h_cut_param[1],h_cut_param[2]},param_to_vary,"weight")->Clone();
+  customize_hcut_p(hcut_p_simu); hcut_p_simu->SetTitle(Form("%s {pCut&&%s}",param_to_vary.c_str(),cuts_sig_simu_modified.c_str()));
+  TH1F *hcut_n_simu = (TH1F*)simu_rdf_filtered.Filter("mc_fnucl==0").Histo1D({"hcut_n_simu","",int(h_cut_param[0]),h_cut_param[1],h_cut_param[2]},param_to_vary,"weight")->Clone();
+  customize_hcut_n(hcut_n_simu); hcut_n_simu->SetTitle(Form("%s {nCut&&%s}",param_to_vary.c_str(),cuts_sig_simu_modified.c_str()));
   // Canvas to plot cut region
-  TCanvas *cCut = new TCanvas("cCut","cCut",1000,800);
+  TCanvas *cCut = new TCanvas("cCut","cCut",1400,800);
   if (cut_vary_style==3) cCut->Divide(2,2);
+  else cCut->Divide(2,1);
 
   // ## Explicit x bins for Rnum histos -- Needed to avoid round off error introduced by ROOT's default way of calculating bin edges
   // double minRnum = 13304, maxRnum = 13407; // SBS14
@@ -555,13 +583,34 @@ int fit_dx (const char *configfilename,
       cCut->cd();
       gStyle->SetOptStat("e");
       if (cut_vary_style!=3) { // Anything other than fidu cut
+	// data
+	cCut->cd(1);
+	gPad->SetGridx();
 	hcut->Draw();
+	hcut_p->Draw("same");
+	hcut_n->Draw("same");
 	util_pd::PlotCutRegion(minval[i],maxval[i]);
-	TLegend *lCut = new TLegend(0.10,0.80,0.30,0.9);
-	lCut->SetTextFont(42);
-	lCut->AddEntry(hcut,Form("%s",param_to_vary.c_str()),"l");
+	TLegend *lCut = new TLegend(0.6,0.75,0.9,0.9);
+	lCut->SetTextFont(42); //lCut->SetFillStyle(0);
+	lCut->AddEntry(hcut,Form("%s (Data)",param_to_vary.c_str()),"l");
+	lCut->AddEntry(hcut_p,Form("%s w/ pCut",param_to_vary.c_str()),"l");
+	lCut->AddEntry(hcut_n,Form("%s w/ nCut",param_to_vary.c_str()),"l");
 	AddCutToLegend(lCut,cuts_2[i].c_str());
 	lCut->Draw();
+	// simu
+	cCut->cd(2);
+	gPad->SetGridx();
+	hcut_simu->Draw();
+	hcut_p_simu->Draw("same");
+	hcut_n_simu->Draw("same");
+	util_pd::PlotCutRegion(minval[i],maxval[i]);
+	TLegend *lCut_simu = new TLegend(0.6,0.75,0.9,0.9);
+	lCut_simu->SetTextFont(42); //lCut->SetFillStyle(0);
+	lCut_simu->AddEntry(hcut,Form("%s (MC)",param_to_vary.c_str()),"l");
+	lCut_simu->AddEntry(hcut_p,Form("%s w/ pCut",param_to_vary.c_str()),"l");
+	lCut_simu->AddEntry(hcut_n,Form("%s w/ nCut",param_to_vary.c_str()),"l");
+	AddCutToLegend(lCut_simu,cuts_2[i].c_str());
+	lCut_simu->Draw();
       } else {
 	TH2F *h2_fiduCut_n = (TH2F*)data_rdf_filtered
 	  .Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"})
@@ -920,7 +969,7 @@ int fit_dx (const char *configfilename,
       // ** ----- ***
       //c2->SaveAs(Form("%s_c2_%d.png",outPNG.Data(),i)); 
     
-      // Canvas 3 : Fitting data/MC w/ polynomial background
+      // Canvas 3 : Fitting data/MC w/ polynomial background (2nd order - fixed)
       TCanvas *c3 = util_pd::TC("c3",1,1); gStyleFitCanvas();
       c3->cd(); 
       // performing the fit
@@ -928,11 +977,11 @@ int fit_dx (const char *configfilename,
       TF1 *f3;
       if (is_vary_pnXOff) {
 	f3 = fit::fit_2hs_1pbg_THI_xOffVary(dx_fit_range,
-					    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,Opoly,pnXOff_range,
+					    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,2,pnXOff_range,
 					    ho3);
       } else {
 	f3 = fit::fit_2hs_1pbg_THI(dx_fit_range,
-				   h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,Opoly,
+				   h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,2,
 				   ho3);
       }
       // grabbing fit params for future use
@@ -973,7 +1022,7 @@ int fit_dx (const char *configfilename,
       l3->AddEntry(hf3,"Fit (QE MC + bg.)","lf");
       l3->AddEntry(ho3[4],"p signal (from MC)","lf");
       l3->AddEntry(ho3[5],"n signal (from MC)","lf");
-      l3->AddEntry(ho3[2],Form("Bg. (poly. of order %d)",Opoly),"lf");
+      l3->AddEntry(ho3[2],Form("Bg. (poly. of order %d)",2),"lf");
       l3->AddEntry(ho3[3],"Residual","p");
       if (is_vary_cut) AddCutToLegend(l3,cuts_2[i].c_str());
       //l3->SetFillStyle(0); // makes legend box transparent
@@ -1056,6 +1105,74 @@ int fit_dx (const char *configfilename,
       util_pd::DrawZeroLine(p4[1],dx_fit_range[0],dx_fit_range[1]);
       // *******************
       //c4->SaveAs(Form("%s_c4_%d.png",outPNG.Data(),i)); 
+
+      // Canvas 5 : Fitting data/MC w/ polynomial background
+      TCanvas *c5 = util_pd::TC("c5",1,1); gStyleFitCanvas();
+      c5->cd(); 
+      // performing the fit
+      vector<TH1F*> ho5;
+      TF1 *f5;
+      if (is_vary_pnXOff) {
+	f5 = fit::fit_2hs_1pbg_THI_xOffVary(dx_fit_range,
+					    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,Opoly,pnXOff_range,
+					    ho5);
+      } else {
+	f5 = fit::fit_2hs_1pbg_THI(dx_fit_range,
+				   h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,Opoly,
+				   ho5);
+      }
+      // grabbing fit params for future use
+      chi2.push_back(f5->GetChisquare()); NDF.push_back(f5->GetNDF());
+      R_vals.push_back(f5->GetParameter(1)); Rerr_vals.push_back(f5->GetParError(1));
+      B_vals.push_back(f5->GetParameter(2)); Berr_vals.push_back(f5->GetParError(2));
+      // converting fit fn to a hostogram
+      TH1F *hf5 = (TH1F*)h_dxHCAL_data->Clone(); util_pd::TF1toTH1F(f5,hf5);
+      ho5[0]->Draw(); c5->Update(); 
+      // grabbing statbox of the fitted histo
+      TPaveStats *st5 = (TPaveStats*)ho5[0]->FindObject("stats");
+      // getting pads for pull plot
+      std::vector<TPad*> p5 = util_pd::GetPadsForPullPlot(c5);
+      //
+      // preparing the pad for data/MC fit
+      //
+      p5[0]->cd();
+      // drawing all the histograms
+      //ho5[0]->Draw(); customize_ht(ho5[0]); customize_dx(ho5[0]);
+      h_dxHCAL_data->Draw("E"); customize_data(h_dxHCAL_data);
+      hf5->Draw("same HIST"); customize_gfit(hf5);
+      ho5[4]->Draw("same HIST"); customize_psig(ho5[4]);
+      ho5[5]->Draw("same HIST"); customize_nsig(ho5[5]);
+      ho5[2]->Draw("same HIST"); customize_hbg(ho5[2]);
+      // calculating yields
+      std::vector<double> yo5; GetYields(f5,ho5[4],ho5[5],ho5[2],yo5);
+      pCnt.push_back(yo5[0]); pCnt_err.push_back(yo5[1]);
+      nCnt.push_back(yo5[2]); nCnt_err.push_back(yo5[3]);
+      bgCnt.push_back(yo5[4]); bgCnt_err.push_back(yo5[5]);
+      // redrawing the stat box
+      st5->SetX1NDC(0.62); st5->SetX2NDC(0.9); st5->SetY2NDC(0.9);
+      st5->Draw("same");
+      // drawing a legend
+      TLegend *l5=new TLegend(0.10,0.6,0.36,0.9);
+      l5->SetTextFont(42);
+      l5->AddEntry(h_dxHCAL_data,"Data","p");
+      //l5->AddEntry(f5,"Fit (MC + poly. bg.)","l");
+      l5->AddEntry(hf5,"Fit (QE MC + bg.)","lf");
+      l5->AddEntry(ho5[4],"p signal (from MC)","lf");
+      l5->AddEntry(ho5[5],"n signal (from MC)","lf");
+      l5->AddEntry(ho5[2],Form("Bg. (poly. of order %d)",Opoly),"lf");
+      l5->AddEntry(ho5[3],"Residual","p");
+      if (is_vary_cut) AddCutToLegend(l5,cuts_2[i].c_str());
+      //l5->SetFillStyle(0); // makes legend box transparent
+      l5->Draw();
+      //
+      // preparing the pad for residual
+      //  
+      p5[1]->cd();
+      ho5[3]->Draw(); customize_residual(ho5[3]);
+      // drawing a horizontal line at y = 0
+      util_pd::DrawZeroLine(p5[1],dx_fit_range[0],dx_fit_range[1]);
+      // *******************
+      //c5->SaveAs(Form("%s_c5_%d.png",outPNG.Data(),i)); 
 
       // ** --
       // // Canvas 5 : Fitting w/ polynomial background using side band method
@@ -1169,7 +1286,8 @@ int fit_dx (const char *configfilename,
       c2->Update(); c2->Write(); c2->SaveAs(Form("%s",outPlot.Data())); 
       c3->Update(); c3->Write(); c3->SaveAs(Form("%s",outPlot.Data())); 
       c4->Update(); c4->Write(); c4->SaveAs(Form("%s",outPlot.Data())); 
-      if (i==iter-1) c4->SaveAs(Form("%s]",outPlot.Data())); 
+      c5->Update(); c5->Write(); c5->SaveAs(Form("%s",outPlot.Data())); 
+      if (i==iter-1) c5->SaveAs(Form("%s]",outPlot.Data())); 
     } // QE
   } // for, cut vairation
 
