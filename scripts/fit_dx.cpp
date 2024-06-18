@@ -28,15 +28,13 @@
 #include "../include/gmn_ana.h"
 #include "../dflay/src/JSONManager.cxx"
 
-std::vector<double> CalcRnumBinEdges(int nBins, double xmin, double xmax, bool debug) {
-  /* Calculates explicit bin edges based on # of bins and variable range */
-  double binWidth = (xmax-xmin)/(double)nBins;
-  std::vector<double> binEdges; 
-  for (int i = 0; i <= nBins; ++i) {
-    binEdges.push_back(xmin + i * binWidth);
-    if (debug) std::cout << xmin + i * binWidth << "\n";
+void CalcRnumBinEdges(int rmin, int rmax, bool debug, std::vector<double> &binEdges) {
+  /* Calculates explicit bin edges for run histo */
+  int nbins = rmax - rmin;
+  for (int i = rmin; i <= rmax; ++i) {
+    binEdges.push_back((double)i-0.5);
   }
-  return binEdges;
+  if (debug) util_pd::PrintVector(binEdges);
 }
 
 void gStyleFitCanvas() 
@@ -489,10 +487,11 @@ int fit_dx (const char *configfilename,
   else cCut->Divide(2,1);
 
   // ## Explicit x bins for Rnum histos -- Needed to avoid round off error introduced by ROOT's default way of calculating bin edges
-  std::vector<int> runrange; expconst::GetRunRange(conf,target,runrange);
-  double minRnum = (double)runrange[0], maxRnum = (double)runrange[1];
-  int nbinRnum = int(maxRnum-minRnum);
-  std::vector<double> xbinsRnum = CalcRnumBinEdges(nbinRnum,minRnum-0.5,maxRnum+0.5,0);
+  int nruns = -1; 
+  std::vector<CodaRun> cruns; util_pd::ReadRunList("../DB",nruns,conf,target,pass,sbsmag,0,cruns);
+  int minRnum = cruns[0].runnum; int maxRnum = cruns[cruns.size()-1].runnum;
+  std::vector<double> xbinsRnum; CalcRnumBinEdges(minRnum,maxRnum,1,xbinsRnum);
+  int nbinRnum = xbinsRnum.size()-1;
   // --------- 
  
   for (int i=0; i<iter; i++) {

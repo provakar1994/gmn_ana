@@ -206,6 +206,7 @@ namespace util_pd {
   /* Function to Write out the contents of a vector */
   template <typename T>
   void PrintVector(const std::vector<T>& vec) {
+    std::cout << vec.size() << "| ";
     for (const auto& element : vec) {
       std::cout << element << " ";
     }
