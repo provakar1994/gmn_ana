@@ -174,6 +174,59 @@ namespace expconst {
       return -1;
     }
   }
+  //--------------------------------------------
+  void GetRunRange(int const config,
+		   std::string const & target,
+		   std::vector<int> &runrange) // Output: [0] = low, [1] = high
+  /* Experiment run ranges for all GMn configs */
+  {
+    if (config==4) {
+      std::unordered_map<std::string,std::vector<int>> m = {{"LH2",    {11436,11616}},
+							    {"LD2",    {11449,11595}},
+							    {"Optics", {11611,11615}},
+							    {"Dummy",  {11498,11599}}};
+      runrange = m[target]; 
+    }
+    else if (config==7) {
+      std::unordered_map<std::string,std::vector<int>> m = {{"LH2",    {11989,12072}},
+							    {"LD2",    {11996,12073}},
+							    {"Optics", {11965,11985}},
+							    {"Dummy",  {12010,12054}}};
+      runrange = m[target]; 
+    }
+    else if (config==11) {
+      std::unordered_map<std::string,std::vector<int>> m = {{"LH2",    {12313,13057}},
+							    {"LD2",    {12314,13063}},
+							    {"Optics", {12278,12283}},
+							    {"Dummy",  {12334,13064}}};
+      runrange = m[target]; 
+    }
+    else if (config==14) {
+      std::unordered_map<std::string,std::vector<int>> m = {{"LH2",    {13239,13405}},
+							    {"LD2",    {13305,13407}},
+							    {"Optics", {13193,13196}},
+							    {"Dummy",  {13310,13404}}};
+      runrange = m[target]; 
+    }
+    else if (config==8) {
+      std::unordered_map<std::string,std::vector<int>> m = {{"LH2",    {13450,13580}},
+							    {"LD2",    {13453,13620}},
+							    {"Optics", {13435,13440}},
+							    {"Dummy",  {13457,13514}}};
+      runrange = m[target]; 
+    }
+    else if (config==9) {
+      std::unordered_map<std::string,std::vector<int>> m = {{"LH2",    {13656,13796}},
+							    {"LD2",    {13660,13799}},
+							    {"Optics", {13669,13675}},
+							    {"Dummy",  {13658,13794}}};
+      runrange = m[target]; 
+    }
+    else {
+      std::cerr << "[ExpConstants::GetRunRange] ERROR! Invalid sbsconfig\n";
+      throw;
+    }
+  }
 
   /* ###########################################################
      ##   Functions to get collision stopping powers (dEdx)   ##  

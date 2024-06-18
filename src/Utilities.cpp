@@ -1004,7 +1004,7 @@ namespace util_pd {
      ##   Functions to manipulate histograms   ##  
      ############################################ */
   // Function to return xrange of equal statistics
-  void findEqualStatBins(TH1F *h,
+  void FindEqualStatBins(TH1F *h,
 			 double xlow, double xhi, int ndiv,
 			 int verbose,
 			 std::vector<double> &xrange) {
@@ -1043,7 +1043,7 @@ namespace util_pd {
         double lastBinCenter = (xrange.back() + xhi) / 2.0;
         xrange.insert(xrange.end() - 1, lastBinCenter);
     }
-    util_pd::printVector(xrange);
+    util_pd::PrintVector(xrange);
 
     if (verbose==1) {
       for (size_t i = 0; i < xrange.size() - 1; ++i) {

@@ -15,6 +15,7 @@
 
 #include "TH1F.h"
 #include "TPad.h"
+#include "TList.h"
 #include "TFile.h"
 #include "TLatex.h"
 #include "TLegend.h"
@@ -168,6 +169,12 @@ void customize_hsummary(TH1F* h, std::vector<std::string> const & lcuts)
 void AddCutToLegend(TLegend *leg, std::string cut) {
   TLegendEntry* legE = leg->AddEntry((TObject*)0,Form("%s",cut.c_str()),"");
   legE->SetTextColor(2);
+}
+
+void customize_text(TText *tl) {
+  tl->SetTextFont(42);
+  tl->SetTextSize(0.04);
+  tl->SetTextColor(kRed);
 }
 
 // void AddFiduCutToLegend(TLegend *leg, std::vector<double> hcal_AR, std::vector<double> hcal_SM) {
@@ -413,7 +420,7 @@ int fit_dx (const char *configfilename,
       int ndiv = cut_range[0]; //desired # of equi-stat slices
       low = cut_range[1]; high = cut_range[2];
       std::cout << "Varying cut w/ equi-stat slices..\n";
-      util_pd::findEqualStatBins(hcut,low,high,ndiv,1,xrangeEqStat);
+      util_pd::FindEqualStatBins(hcut,low,high,ndiv,1,xrangeEqStat);
       high = xrangeEqStat[1]; //initializing for the first slice
     }
     
@@ -482,9 +489,8 @@ int fit_dx (const char *configfilename,
   else cCut->Divide(2,1);
 
   // ## Explicit x bins for Rnum histos -- Needed to avoid round off error introduced by ROOT's default way of calculating bin edges
-  // double minRnum = 13304, maxRnum = 13407; // SBS14
-  // double minRnum = 11996, maxRnum = 12073; // SBS7
-  double minRnum = 12314, maxRnum = 13063; // SBS11
+  std::vector<int> runrange; expconst::GetRunRange(conf,target,runrange);
+  double minRnum = (double)runrange[0], maxRnum = (double)runrange[1];
   int nbinRnum = int(maxRnum-minRnum);
   std::vector<double> xbinsRnum = CalcRnumBinEdges(nbinRnum,minRnum-0.5,maxRnum+0.5,0);
   // --------- 
@@ -872,6 +878,7 @@ int fit_dx (const char *configfilename,
       ho1[0]->Draw(); c1->Update(); 
       // grabbing statbox of the fitted histo
       TPaveStats *st1 = (TPaveStats*)ho1[0]->FindObject("stats");
+      ho1[0]->SetBit(TH1::kNoStats); // Sets up the stat box for later modification
       // getting pads for pull plot
       std::vector<TPad*> p1 = util_pd::GetPadsForPullPlot(c1);
       //
@@ -892,7 +899,12 @@ int fit_dx (const char *configfilename,
       bgCnt.push_back(yo1[4]); bgCnt_err.push_back(yo1[5]);
       // redrawing the stat box
       st1->SetX1NDC(0.6); st1->SetX2NDC(0.9); st1->SetY2NDC(0.9);
-      st1->Draw("same");    
+      // Modifying it to add yield ratio
+      double yRatio1 = f1->GetParameter(1)*R_MC_nofit;
+      double yRatio1_err = f1->GetParError(1)*R_MC_nofit;
+      TText *t1 = st1->AddText(Form("R_{Yield} = %.4f #pm %.4f",yRatio1,yRatio1_err));
+      customize_text(t1);
+      st1->Draw("same");
       // drawing a legend
       TLegend *l1=new TLegend(0.10,0.64,0.35,0.9);
       l1->SetTextFont(42);
@@ -944,6 +956,7 @@ int fit_dx (const char *configfilename,
       ho2[0]->Draw(); c2->Update(); 
       // grabbing statbox of the fitted histo
       TPaveStats *st2 = (TPaveStats*)ho2[0]->FindObject("stats");
+      ho2[0]->SetBit(TH1::kNoStats); // Sets up the stat box for later modification
       // getting pads for pull plot
       std::vector<TPad*> p2 = util_pd::GetPadsForPullPlot(c2);
       //
@@ -964,6 +977,11 @@ int fit_dx (const char *configfilename,
       bgCnt.push_back(yo2[4]); bgCnt_err.push_back(yo2[5]);
       // redrawing the stat box
       st2->SetX1NDC(0.6); st2->SetX2NDC(0.9); st2->SetY2NDC(0.9);
+      // Modifying it to add yield ratio
+      double yRatio2 = f2->GetParameter(1)*R_MC_nofit;
+      double yRatio2_err = f2->GetParError(1)*R_MC_nofit;
+      TText *t2 = st2->AddText(Form("R_{Yield} = %.4f #pm %.4f",yRatio2,yRatio2_err));
+      customize_text(t2);
       st2->Draw("same");    
       // drawing a legend
       TLegend *l2=new TLegend(0.10,0.64,0.35,0.9);
@@ -1010,6 +1028,7 @@ int fit_dx (const char *configfilename,
       ho3[0]->Draw(); c3->Update(); 
       // grabbing statbox of the fitted histo
       TPaveStats *st3 = (TPaveStats*)ho3[0]->FindObject("stats");
+      ho3[0]->SetBit(TH1::kNoStats); // Sets up the stat box for later modification
       // getting pads for pull plot
       std::vector<TPad*> p3 = util_pd::GetPadsForPullPlot(c3);
       //
@@ -1030,6 +1049,11 @@ int fit_dx (const char *configfilename,
       bgCnt.push_back(yo3[4]); bgCnt_err.push_back(yo3[5]);
       // redrawing the stat box
       st3->SetX1NDC(0.62); st3->SetX2NDC(0.9); st3->SetY2NDC(0.9);
+      // Modifying it to add yield ratio
+      double yRatio3 = f3->GetParameter(1)*R_MC_nofit;
+      double yRatio3_err = f3->GetParError(1)*R_MC_nofit;
+      TText *t3 = st3->AddText(Form("R_{Yield} = %.4f #pm %.4f",yRatio3,yRatio3_err));
+      customize_text(t3);
       st3->Draw("same");
       // drawing a legend
       TLegend *l3=new TLegend(0.10,0.6,0.36,0.9);
@@ -1079,6 +1103,7 @@ int fit_dx (const char *configfilename,
       ho4[0]->Draw(); c4->Update(); 
       // grabbing statbox of the fitted histo
       TPaveStats *st4 = (TPaveStats*)ho4[0]->FindObject("stats");
+      ho4[0]->SetBit(TH1::kNoStats); // Sets up the stat box for later modification
       // getting pads for pull plot
       std::vector<TPad*> p4 = util_pd::GetPadsForPullPlot(c4);
       //
@@ -1099,6 +1124,11 @@ int fit_dx (const char *configfilename,
       bgCnt.push_back(yo4[4]); bgCnt_err.push_back(yo4[5]);
       // redrawing the stat box
       st4->SetX1NDC(0.62); st4->SetX2NDC(0.9); st4->SetY2NDC(0.9);
+      // Modifying it to add yield ratio
+      double yRatio4 = f4->GetParameter(1)*R_MC_nofit;
+      double yRatio4_err = f4->GetParError(1)*R_MC_nofit;
+      TText *t4 = st4->AddText(Form("R_{Yield} = %.4f #pm %.4f",yRatio4,yRatio4_err));
+      customize_text(t4);
       st4->Draw("same");
       // drawing a legend
       TLegend *l4=new TLegend(0.10,0.6,0.36,0.9);
@@ -1147,6 +1177,7 @@ int fit_dx (const char *configfilename,
       ho5[0]->Draw(); c5->Update(); 
       // grabbing statbox of the fitted histo
       TPaveStats *st5 = (TPaveStats*)ho5[0]->FindObject("stats");
+      ho5[0]->SetBit(TH1::kNoStats); // Sets up the stat box for later modification
       // getting pads for pull plot
       std::vector<TPad*> p5 = util_pd::GetPadsForPullPlot(c5);
       //
@@ -1167,6 +1198,11 @@ int fit_dx (const char *configfilename,
       bgCnt.push_back(yo5[4]); bgCnt_err.push_back(yo5[5]);
       // redrawing the stat box
       st5->SetX1NDC(0.62); st5->SetX2NDC(0.9); st5->SetY2NDC(0.9);
+      // Modifying it to add yield ratio
+      double yRatio5 = f5->GetParameter(1)*R_MC_nofit;
+      double yRatio5_err = f5->GetParError(1)*R_MC_nofit;
+      TText *t5 = st5->AddText(Form("R_{Yield} = %.4f #pm %.4f",yRatio5,yRatio5_err));
+      customize_text(t5);
       st5->Draw("same");
       // drawing a legend
       TLegend *l5=new TLegend(0.10,0.6,0.36,0.9);

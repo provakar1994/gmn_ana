@@ -119,6 +119,8 @@ namespace expconst {
   double sbsdist(int config);   //m
   double hcaltheta(int config); //deg
   double hcaldist(int config);  //m
+  void GetRunRange(int const config, std::string const & target,
+		   std::vector<int> &runrange); // Output: [0]=low, [1]=high
   double GetdEdxCollH(int const config,                 // SBS config
 		      bool const is_before_scattering); // 1=>YES, 0=>NO (i.e. after scattering)
   double GetdEdxCollAl(int const config, bool const is_before_scattering);  //GeV*cm2/g
