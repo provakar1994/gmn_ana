@@ -43,18 +43,6 @@ void gStyleFitCanvas()
   gStyle->SetErrorX(0);
 }
 
-void customize_residual(TH1F* h)
-{
-  h->GetXaxis()->SetLabelOffset(0.03);
-  h->GetXaxis()->SetLabelSize(0.12);
-  h->GetYaxis()->SetLabelOffset(0.005);
-  h->GetYaxis()->SetLabelSize(0.11);
-  h->SetMarkerStyle(22);
-  h->SetMarkerColor(46);
-  h->SetLineColor(46);
-  h->SetStats(0);
-}
-
 void customize_gfit(TH1F* h)
 {
   h->SetLineColor(kRed);
@@ -133,6 +121,13 @@ void customize_text(TText *tl) {
   tl->SetTextFont(42);
   tl->SetTextSize(0.04);
   tl->SetTextColor(kRed);
+}
+
+void FurtherCustoizeDataHisto(TH1F *h_dxHCAL_data, std::string const &cuts_for_signal_data) {
+  h_dxHCAL_data->SetStats(0);
+  h_dxHCAL_data->SetTitle(Form("dx {%s}",cuts_for_signal_data.c_str()));
+  //h_dxHCAL_data->GetYaxis()->SetMaxDigits(3);
+  h_dxHCAL_data->GetYaxis()->SetRangeUser(-5,h_dxHCAL_data->GetMaximum()*1.1);
 }
 
 // void AddFiduCutToLegend(TLegend *leg, std::vector<double> hcal_AR, std::vector<double> hcal_SM) {
@@ -379,17 +374,8 @@ int fit_dx (const char *configfilename,
     cuts_2.push_back("N/A"); minval.push_back(0); maxval.push_back(0);
     hcal_SMs.push_back(hcal_SM);
   }
-  
-  // various outputs
-  outdata << "cut,min,max,RMCnf,RMCnferr,RpMC,"
-	  << "chi20,NDF0,R0,R0err,"
-	  << "chi21,NDF1,R1,R1err,B1,B1err,Yp1,Yp1err,Yn1,Yn1err,Ybg1,Ybg1err,"
-	  << "chi22,NDF2,R2,R2err,B2,B2err,Yp2,Yp2err,Yn2,Yn2err,Ybg2,Ybg2err,"
-	  << "chi23,NDF3,R3,R3err,B3,B3err,Yp3,Yp3err,Yn3,Yn3err,Ybg3,Ybg3err,"
-	  << "chi24,NDF4,R4,R4err,B4,B4err,Yp4,Yp4err,Yn4,Yn4err,Ybg4,Ybg4err,"
-	  << "chi25,NDF5,R5,R5err,B5,B5err,Yp5,Yp5err,Yn5,Yn5err,Ybg5,Ybg5err,"
-	  << "\n";
 
+  // Defining all the output files
   TString outGIF = outFile; outGIF.ReplaceAll(".root",".gif");
   TString outPNG = outFile; outPNG.ReplaceAll(".root","");
 
@@ -407,7 +393,7 @@ int fit_dx (const char *configfilename,
   // ## Explicit x bins for Rnum histos -- Needed to avoid round off error introduced by ROOT's default way of calculating bin edges
   int nruns = -1; 
   std::vector<CodaRun> cruns; util_pd::ReadRunList("../DB",nruns,conf,target,pass,sbsmag,0,cruns);
-  int minRnum = cruns[0].runnum; int maxRnum = cruns[cruns.size()-1].runnum;
+  int minRnum = cruns[0].runnum-1; int maxRnum = cruns[cruns.size()-1].runnum+2;
   std::vector<double> xbinsRnum; CalcRnumBinEdges(minRnum,maxRnum,0,xbinsRnum);
   int nbinRnum = xbinsRnum.size()-1;
   // --------- 
@@ -498,7 +484,7 @@ int fit_dx (const char *configfilename,
     h_dxHCAL_bg_inel = (TH1F*)h_dxHCAL_bg_inel_p->Clone();
     if (!is_elastic) h_dxHCAL_bg_inel->Add(h_dxHCAL_bg_inel_p,h_dxHCAL_bg_inel_n);
     // ------------
-
+    
     // Now that we have all the important histograms formed, let's write them to the output
     // tree for further analysis.
     if (!is_vary_cut) {
@@ -604,7 +590,7 @@ int fit_dx (const char *configfilename,
     std::vector<double> pCnt,pCnt_err,nCnt,nCnt_err,bgCnt,bgCnt_err;
     if (is_elastic) {
       // Canvas 0 : Fitting data/MC w/o any background
-      TCanvas *c0 = util_pd::TC("c0",1,1);
+      TCanvas *c0 = util_pd::TC("c0",1,1); gStyleFitCanvas();
       c0->cd(); gStyle->SetOptFit(1);
       vector<TH1F*> ho;
       TF1 *f0 = fit::fit_1hs_nbg_THI(dx_fit_range,
@@ -621,7 +607,7 @@ int fit_dx (const char *configfilename,
       // --- 
 
       // // Canvas 1 : Fitting data/MC w/ background from data
-      // TCanvas *c1 = util_pd::TC("c1",1,1);
+      // TCanvas *c1 = util_pd::TC("c1",1,1); gStyleFitCanvas();
       // c1->cd(); gStyle->SetOptFit(1);
       // vector<TH1F*> ho1;
       // TF1 *f1 = fit::fit_1hs_1hbg_THI(dx_fit_range,
@@ -639,35 +625,56 @@ int fit_dx (const char *configfilename,
       // // --- 
 
       // Canvas 2 : Fitting data/MC w/ polynomial background
-      TCanvas *c2 = util_pd::TC("c2",1,1);
+      TCanvas *c2 = util_pd::TC("c2",1,1); gStyleFitCanvas();
       c2->cd(); gStyle->SetOptFit(1);
       vector<TH1F*> ho2;
-      TF1 *f2 = fit::fit_1hs_1pbg_THI(dx_fit_range,
-				      h_dxHCAL_data,h_dxHCAL_simu_p,Opoly,
-				      ho2);
-      ho2[0]->Draw(); customize_ht(ho2[0]); customize_dx(ho2[0]);
-      ho2[1]->Draw("same"); customize_hs(ho2[1]); customize_dx(ho2[1]);
-      //cout << " *** " << ho2[1]->Integral() << "\n";
-      ho2[2]->Draw("same"); util_pd::customize_hbg(ho2[2],1);
-      //cout << " *** " << ho2[2]->Integral() << "\n";
-      // drawing the polynomial background as well
-      FitFn *ffn = new FitFn(Opoly);
-      TF1* bg2 = new TF1("bg2",ffn,&FitFn::ffn_poly,dx_fit_range[0],dx_fit_range[1],Opoly+1);
-      bg2->SetNpx(500);
-      bg2->SetParameters(&fit::GetFitParams(f2)[1]);
-      bg2->SetLineColor(kGreen+2);
-      bg2->Draw("same");
-      TLegend *l2=new TLegend(0.10,0.77,0.39,0.9);
+      TF1 *f2;
+      if (is_vary_pnXOff) {
+	f2 = fit::fit_1hs_1pbg_THI_xOffVary(dx_fit_range,
+					    h_dxHCAL_data,h_dxHCAL_simu_p,Opoly,pnXOff_range,
+					    ho2);
+      } else {
+	f2 = fit::fit_1hs_1pbg_THI(dx_fit_range,
+				   h_dxHCAL_data,h_dxHCAL_simu_p,Opoly,
+				   ho2);
+      }
+      // converting fit fn to a hostogram
+      TH1F *hf2 = (TH1F*)h_dxHCAL_data->Clone(); util_pd::TF1toTH1F(f2,hf2);
+      ho2[0]->Draw(); c2->Update(); 
+      // grabbing statbox of the fitted histo
+      TPaveStats *st2 = (TPaveStats*)ho2[0]->FindObject("stats");
+      ho2[0]->SetBit(TH1::kNoStats); // Sets up the stat box for later modification
+      // getting pads for pull plot
+      std::vector<TPad*> p2 = util_pd::GetPadsForPullPlot(c2);
+      //
+      // preparing the pad for data/MC fit
+      //
+      p2[0]->cd();
+      // plotting the histos
+      h_dxHCAL_data->Draw("E"); util_pd::customize_data(h_dxHCAL_data);
+      hf2->Draw("same HIST"); customize_gfit(hf2);
+      ho2[1]->Draw("same HIST"); util_pd::customize_nsig(ho2[1],1);
+      ho2[2]->Draw("same HIST"); util_pd::customize_hbg(ho2[2],1);
+      // redrawing the stat box
+      st2->SetX1NDC(0.62); st2->SetX2NDC(0.9); st2->SetY2NDC(0.9);
+      st2->Draw("same");
+      // drawing legend
+      TLegend *l2=new TLegend(0.10,0.74,0.33,0.9);
       l2->SetTextFont(42);
-      l2->AddEntry(ho2[0],"Data","l");
-      l2->AddEntry(f2,"Fit (MC + poly. bg.)","l");
-      l2->AddEntry(ho2[1],"Signal (from MC)","lep");
-      l2->AddEntry(ho2[2],Form("Bg. (%d^{th} order poly.)",Opoly),"lep");
-      l2->Draw();    
-      // ---
+      l2->AddEntry(h_dxHCAL_data,"Data","p");
+      l2->AddEntry(hf2,"Fit (MC + bg.)","lf");
+      l2->AddEntry(ho2[1],"Signal (from MC)","lf");
+      l2->AddEntry(ho2[2],Form("Bg. (Poly. %d)",Opoly),"lf");
+      l2->Draw();
+      // preparing the pad for residual
+      p2[1]->cd();
+      ho2[3]->Draw(); util_pd::customize_residual(ho2[3]);
+      // drawing a horizontal line at y = 0
+      util_pd::DrawZeroLine(p2[1],dx_fit_range[0],dx_fit_range[1]);
+      // --------
 
       // Canvas 3 : Sideband fit (distribution from data)
-      TCanvas *c3 = util_pd::TC("c3",1,1);
+      TCanvas *c3 = util_pd::TC("c3",1,1); gStyleFitCanvas();
       c3->cd(); gStyle->SetOptFit(1);
       //vector<double> reject_points{-1.3,-0.15};
       vector<TH1F*> ho3;
@@ -695,7 +702,7 @@ int fit_dx (const char *configfilename,
       // ---
 
       // Canvas 4 : Fitting w/ signal and background from MC
-      TCanvas *c4 = util_pd::TC("c4",1,1);
+      TCanvas *c4 = util_pd::TC("c4",1,1); gStyleFitCanvas();
       c4->cd(); gStyle->SetOptFit(1);
       vector<TH1F*> ho4;
       TF1 *f4 = fit::fit_1hs_1hbg_THI(dx_fit_range,
@@ -731,12 +738,36 @@ int fit_dx (const char *configfilename,
       // // fpfit->FixParameter(9,-98);
       // h_dxHCAL_data->Fit("fpfit","RV+","ep");
 
+      // further customization of the data histo
+      FurtherCustoizeDataHisto(h_dxHCAL_data,cuts_for_signal_data);
+      
+      // writing out the canvases
+      c0->Update(); c0->Write(); if (!is_vary_cut&&i==0) c0->SaveAs(Form("%s[",outPlot.Data())); 
+      c0->SaveAs(Form("%s",outPlot.Data())); 
+      //c1->Update(); c1->Write(); c1->SaveAs(Form("%s",outPlot.Data())); 
+      c2->Update(); c2->Write(); c2->SaveAs(Form("%s",outPlot.Data())); 
+      c3->Update(); c3->Write(); c3->SaveAs(Form("%s",outPlot.Data())); 
+      c4->Update(); c4->Write(); c4->SaveAs(Form("%s",outPlot.Data())); 
+      //c5->Update(); c5->Write(); c5->SaveAs(Form("%s",outPlot.Data())); 
+      if (i==iter-1) c4->SaveAs(Form("%s]",outPlot.Data()));      
     } // elastic
 
     /*#################################
       ## Fitting QE dx distributions ##
       ################################# */
     else {
+      // various outputs
+      if (i==0) {
+	outdata << "cut,min,max,RMCnf,RMCnferr,RpMC,"
+		<< "chi20,NDF0,R0,R0err,"
+		<< "chi21,NDF1,R1,R1err,B1,B1err,Yp1,Yp1err,Yn1,Yn1err,Ybg1,Ybg1err,"
+		<< "chi22,NDF2,R2,R2err,B2,B2err,Yp2,Yp2err,Yn2,Yn2err,Ybg2,Ybg2err,"
+		<< "chi23,NDF3,R3,R3err,B3,B3err,Yp3,Yp3err,Yn3,Yn3err,Ybg3,Ybg3err,"
+		<< "chi24,NDF4,R4,R4err,B4,B4err,Yp4,Yp4err,Yn4,Yn4err,Ybg4,Ybg4err,"
+		<< "chi25,NDF5,R5,R5err,B5,B5err,Yp5,Yp5err,Yn5,Yn5err,Ybg5,Ybg5err,"
+		<< "\n";
+      }
+      
       // calculating MC ratio (before fit) for comparisons
       double count_p_MC, error_p_MC;
       double count_n_MC, error_n_MC;
@@ -841,7 +872,7 @@ int fit_dx (const char *configfilename,
       // preparing the pad for residual
       //  
       p1[1]->cd();
-      ho1[3]->Draw(); customize_residual(ho1[3]);
+      ho1[3]->Draw(); util_pd::customize_residual(ho1[3]);
       // drawing a horizontal line at y = 0
       util_pd::DrawZeroLine(p1[1],dx_fit_range[0],dx_fit_range[1]);
       // ** ----- ***
@@ -919,7 +950,7 @@ int fit_dx (const char *configfilename,
       // preparing the pad for residual
       //  
       p2[1]->cd();
-      ho2[3]->Draw(); customize_residual(ho2[3]);
+      ho2[3]->Draw(); util_pd::customize_residual(ho2[3]);
       // drawing a horizontal line at y = 0
       util_pd::DrawZeroLine(p2[1],dx_fit_range[0],dx_fit_range[1]);
       // ** ----- ***
@@ -993,7 +1024,7 @@ int fit_dx (const char *configfilename,
       // preparing the pad for residual
       //  
       p3[1]->cd();
-      ho3[3]->Draw(); customize_residual(ho3[3]);
+      ho3[3]->Draw(); util_pd::customize_residual(ho3[3]);
       // drawing a horizontal line at y = 0
       util_pd::DrawZeroLine(p3[1],dx_fit_range[0],dx_fit_range[1]);
       // *******************
@@ -1068,7 +1099,7 @@ int fit_dx (const char *configfilename,
       // preparing the pad for residual
       //  
       p4[1]->cd();
-      ho4[3]->Draw(); customize_residual(ho4[3]);
+      ho4[3]->Draw(); util_pd::customize_residual(ho4[3]);
       // drawing a horizontal line at y = 0
       util_pd::DrawZeroLine(p4[1],dx_fit_range[0],dx_fit_range[1]);
       // *******************
@@ -1142,7 +1173,7 @@ int fit_dx (const char *configfilename,
       // preparing the pad for residual
       //  
       p5[1]->cd();
-      ho5[3]->Draw(); customize_residual(ho5[3]);
+      ho5[3]->Draw(); util_pd::customize_residual(ho5[3]);
       // drawing a horizontal line at y = 0
       util_pd::DrawZeroLine(p5[1],dx_fit_range[0],dx_fit_range[1]);
       // *******************
@@ -1224,7 +1255,7 @@ int fit_dx (const char *configfilename,
       // // //
       // // // preparing the pad for residual
       // // p5[1]->cd();
-      // // ho5[2]->Draw(); customize_residual(ho5[2]);
+      // // ho5[2]->Draw(); util_pd::customize_residual(ho5[2]);
       // // // drawing a horizontal line at y = 0
       // // util_pd::DrawZeroLine(p5[1],dx_fit_range[0],dx_fit_range[1]);
       // ----
@@ -1248,10 +1279,8 @@ int fit_dx (const char *configfilename,
       outdata << "\n";
       std::cout << "\n------\n";
 
-      // further customization of the data histo 
-      h_dxHCAL_data->SetStats(0); //[IMPORTANT!]
-      h_dxHCAL_data->SetTitle(Form("dx {%s}",cuts_for_signal_data.c_str()));
-      h_dxHCAL_data->GetYaxis()->SetRangeUser(-5,h_dxHCAL_data->GetMaximum()*1.1);
+      // further customization of the data histo
+      FurtherCustoizeDataHisto(h_dxHCAL_data,cuts_for_signal_data);
 
       // writing out the canvases
       c0->Update(); c0->Write(); if (!is_vary_cut&&i==0) c0->SaveAs(Form("%s[",outPlot.Data())); 
