@@ -191,7 +191,7 @@ namespace util_pd {
      ######################################### */
   /* Function to sort array indices by their values in descending order */
   template <typename T>
-    std::vector<size_t> SortIndices(const T* array, size_t size) {
+  std::vector<size_t> SortIndices(const T* array, size_t size) {
     // Initialize original indices
     std::vector<size_t> indices(size);
     for (size_t i = 0; i < size; ++i) {
@@ -223,5 +223,25 @@ namespace util_pd {
 			 int ndiv,    // desired # of slices
 			 int verbose, // verbosity
 			 std::vector<double> &xrange); // Output: ndiv # slices
+
+  /* #####################################
+     ##   Function toCalculate Yields   ##  
+     ##################################### */
+  /* Functions to calculate yields */
+  // TODO: Implement better error calculation
+  void GetYields(TF1* gfit, TH1F* hfit_p, TH1F* hfit_n, TH1F* hfit_bg,
+		 std::vector<double> &output); // Output: pC,pCerr,nC,nCerr,bgC,bgCerr
+
+  void GetYields(TH1F* gfit, TH1F* hfit_p, TH1F* hfit_n, TH1F* hfit_bg,
+		 std::vector<double> &output); // Output: pC,pCerr,nC,nCerr,bgC,bgCerr
+
+  /* ######################################################
+     ##   Functions to customize fit histos and canvas   ##  
+     ###################################################### */
+  void customize_data(TH1F* h);
+  void customize_psig(TH1F* h, bool isTransp);
+  void customize_nsig(TH1F* h, bool isTransp);
+  void customize_hbg(TH1F* h, bool isTransp);
+
 }
 #endif

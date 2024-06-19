@@ -1053,4 +1053,110 @@ namespace util_pd {
     }
   }
 
+  /* #####################################
+     ##   Function toCalculate Yields   ##  
+     ##################################### */
+  void GetYields(TF1* gfit, TH1F* hfit_p, TH1F* hfit_n, TH1F* hfit_bg, std::vector<double> &output) {
+    // TODO: Implement better error calculation
+    // determining bin width and ranges
+    double binW = hfit_p->GetBinWidth(1);
+    double xMin = hfit_p->GetXaxis()->GetXmin();
+    double xMax = hfit_p->GetXaxis()->GetXmax();
+    // calculating the integral under total fit curve
+    double totCount = gfit->Integral(xMin,xMax) / binW;
+    // calculating p counts
+    double pCount_err;
+    double pCount = hfit_p->IntegralAndError(1,hfit_p->GetNbinsX(),pCount_err);
+    pCount_err = sqrt(pCount);
+    // calculating n counts
+    double nCount_err;
+    double nCount = hfit_n->IntegralAndError(1,hfit_n->GetNbinsX(),nCount_err);
+    nCount_err = sqrt(nCount);
+    // calculating bg counts
+    double bgCount_err;
+    double bgCount = hfit_bg->IntegralAndError(1,hfit_bg->GetNbinsX(),bgCount_err);
+    bgCount_err = sqrt(bgCount);
+    // summary
+    std::cout << "\n---- Various counts ----\n";
+    std::cout << "p Count    : " << pCount << " +/- " << pCount_err << "\n";
+    std::cout << "n Count    : " << nCount << " +/- " << nCount_err << "\n";
+    std::cout << "bg Count   : " << bgCount << " +/- " << bgCount_err << "\n";
+    std::cout << "Total Count: " << totCount << "\n";
+    std::cout << "------------- \n";
+    // filling output vector
+    output = {pCount,pCount_err,nCount,nCount_err,bgCount,bgCount_err};
+  }
+
+  void GetYields(TH1F* gfit, TH1F* hfit_p, TH1F* hfit_n, TH1F* hfit_bg, std::vector<double> &output) {
+    /* Calculates normalized yields */
+    // TODO: Implement better error calculation
+    // calculating the integral under total fit curve
+    double totCount_err;
+    double totCount = gfit->IntegralAndError(1,gfit->GetNbinsX(),totCount_err);
+    // calculating p counts
+    double pCount_err;
+    double pCount = hfit_p->IntegralAndError(1,hfit_p->GetNbinsX(),pCount_err);
+    pCount_err = sqrt(pCount);
+    // calculating n counts
+    double nCount_err;
+    double nCount = hfit_n->IntegralAndError(1,hfit_n->GetNbinsX(),nCount_err);
+    nCount_err = sqrt(nCount);
+    // calculating bg counts
+    double bgCount_err;
+    double bgCount = hfit_bg->IntegralAndError(1,hfit_bg->GetNbinsX(),bgCount_err);
+    bgCount_err = sqrt(bgCount);
+    // summary
+    std::cout << "\n---- Various counts ----\n";
+    std::cout << "p Count    : " << pCount << " +/- " << pCount_err << "\n";
+    std::cout << "n Count    : " << nCount << " +/- " << nCount_err << "\n";
+    std::cout << "bg Count   : " << bgCount << " +/- " << bgCount_err << "\n";
+    std::cout << "Total Count: " << totCount << "\n";
+    std::cout << "------------- \n";
+    // filling output vector
+    output = {pCount,pCount_err,nCount,nCount_err,bgCount,bgCount_err};
+  }
+
+
+  /* ######################################################
+     ##   Functions to customize fit histos and canvas   ##  
+     ###################################################### */
+  void customize_data(TH1F* h)
+  {
+    h->SetMarkerStyle(21);
+    h->SetMarkerSize(0.8);
+    h->SetMarkerColor(kBlack);
+    h->SetLineColor(kBlack);
+  }
+
+  void customize_psig(TH1F* h, bool isTransp)
+  {
+    h->SetLineColor(kBlue);
+    h->SetLineStyle(4);
+    h->SetLineWidth(3);
+    //***
+    h->SetFillColor(kBlue);
+    if (isTransp) h->SetFillColorAlpha(kBlue,0.3);
+  }
+
+  void customize_nsig(TH1F* h, bool isTransp)
+  {
+    h->SetLineColor(kGreen+2);
+    h->SetLineStyle(8);
+    h->SetLineWidth(3);
+    //***
+    h->SetFillColor(kGreen+2);
+    if (isTransp) h->SetFillColorAlpha(kGreen+2,0.3);
+  }
+
+  void customize_hbg(TH1F* h, bool isTransp) 
+  {
+    h->SetMarkerColor(6);
+    h->SetMarkerStyle(29);
+    h->SetLineColor(6);
+    h->SetLineStyle(9);
+    h->SetLineWidth(3);
+    //***
+    h->SetFillColor(6);
+    if (isTransp) h->SetFillColorAlpha(6,0.3);
+  }
 }

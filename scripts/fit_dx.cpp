@@ -55,14 +55,6 @@ void customize_residual(TH1F* h)
   h->SetStats(0);
 }
 
-void customize_data(TH1F* h)
-{
-  h->SetMarkerStyle(21);
-  h->SetMarkerSize(0.8);
-  h->SetMarkerColor(kBlack);
-  h->SetLineColor(kBlack);
-}
-
 void customize_gfit(TH1F* h)
 {
   h->SetLineColor(kRed);
@@ -71,26 +63,6 @@ void customize_gfit(TH1F* h)
   //***
   h->SetFillColor(kRed);
   h->SetFillColorAlpha(kRed,0.2);
-}
-
-void customize_psig(TH1F* h)
-{
-  h->SetLineColor(kBlue);
-  h->SetLineStyle(4);
-  h->SetLineWidth(3);
-  //***
-  h->SetFillColor(kBlue);
-  h->SetFillColorAlpha(kBlue,0.3);
-}
-
-void customize_nsig(TH1F* h)
-{
-  h->SetLineColor(kGreen+2);
-  h->SetLineStyle(8);
-  h->SetLineWidth(3);
-  //***
-  h->SetFillColor(kGreen+2);
-  h->SetFillColorAlpha(kGreen+2,0.3);
 }
 
 void customize_dx(TH1F* h)
@@ -110,18 +82,6 @@ void customize_hs(TH1F* h)
   h->SetMarkerSize(0.8);
   h->SetMarkerStyle(22);
   h->SetLineColor(kRed);
-}
-
-void customize_hbg(TH1F* h) 
-{
-  h->SetMarkerColor(6);
-  h->SetMarkerStyle(29);
-  h->SetLineColor(6);
-  h->SetLineStyle(9);
-  h->SetLineWidth(3);
-  //***
-  h->SetFillColor(6);
-  h->SetFillColorAlpha(6,0.3);
 }
 
 void customize_hcut(TH1F* h)
@@ -195,57 +155,6 @@ double total_fit (double * x, double * par) {
   return ffn->ffn_gaus(x,&par[0]) + ffn->ffn_poly(x,&par[3]);
 }
 
-void GetYields(TF1* gfit, TH1F* hfit_p, TH1F* hfit_n, TH1F* hfit_bg, std::vector<double> &output) {
-  // determining bin width and ranges
-  double binW = hfit_p->GetBinWidth(1);
-  double xMin = hfit_p->GetXaxis()->GetXmin();
-  double xMax = hfit_p->GetXaxis()->GetXmax();
-  // calculating the integral under total fit curve
-  double totCount = gfit->Integral(xMin,xMax) / binW;
-  // calculating p counts
-  double pCount_err;
-  double pCount = hfit_p->IntegralAndError(1,hfit_p->GetNbinsX(),pCount_err);
-  // calculating n counts
-  double nCount_err;
-  double nCount = hfit_n->IntegralAndError(1,hfit_n->GetNbinsX(),nCount_err);
-  // calculating bg counts
-  double bgCount_err;
-  double bgCount = hfit_bg->IntegralAndError(1,hfit_bg->GetNbinsX(),bgCount_err);
-  // summary
-  std::cout << "\n---- Various counts ----\n";
-  std::cout << "p Count    : " << pCount << "\n";
-  std::cout << "n Count    : " << nCount << "\n";
-  std::cout << "bg Count   : " << bgCount << "\n";
-  std::cout << "Total Count: " << totCount << "\n";
-  std::cout << "------------- \n";
-  // filling output vector
-  output = {pCount,pCount_err,nCount,nCount_err,bgCount,bgCount_err};
-}
-
-void GetYields(TH1F* gfit, TH1F* hfit_p, TH1F* hfit_n, TH1F* hfit_bg, std::vector<double> &output) {
-  /* Calculates normalized yields */
-  // calculating the integral under total fit curve
-  double totCount_err;
-  double totCount = gfit->IntegralAndError(1,gfit->GetNbinsX(),totCount_err);
-  // calculating p counts
-  double pCount_err;
-  double pCount = hfit_p->IntegralAndError(1,hfit_p->GetNbinsX(),pCount_err);
-  // calculating n counts
-  double nCount_err;
-  double nCount = hfit_n->IntegralAndError(1,hfit_n->GetNbinsX(),nCount_err);
-  // calculating bg counts
-  double bgCount_err;
-  double bgCount = hfit_bg->IntegralAndError(1,hfit_bg->GetNbinsX(),bgCount_err);
-  // summary
-  std::cout << "\n---- Various counts ----\n";
-  std::cout << "p Count    : " << pCount << "\n";
-  std::cout << "n Count    : " << nCount << "\n";
-  std::cout << "bg Count   : " << bgCount << "\n";
-  std::cout << "Total Count: " << totCount << "\n";
-  std::cout << "------------- \n";
-  // filling output vector
-  output = {pCount,pCount_err,nCount,nCount_err,bgCount,bgCount_err};
-}
 
 int fit_dx (const char *configfilename, 
 	    bool is_elastic = 1) // 1=>Yes, 0=>QE 
@@ -258,6 +167,10 @@ int fit_dx (const char *configfilename,
   // reading input config file ---------------------------------------
   JSONManager *jmgr = new JSONManager(configfilename);
   char const * key = is_elastic ? "elas" : "qelas";
+
+  // Get the keys of the JSON object
+  // std::vector<std::string> subkeys; jmgr->GetSubKeys(key,subkeys);
+  // util_pd::PrintVector(subkeys);
 
   // reading in proper data and simu output files
   int conf = jmgr->GetValueFromSubKey<int>(key,"SBS_config");
@@ -490,7 +403,7 @@ int fit_dx (const char *configfilename,
   int nruns = -1; 
   std::vector<CodaRun> cruns; util_pd::ReadRunList("../DB",nruns,conf,target,pass,sbsmag,0,cruns);
   int minRnum = cruns[0].runnum; int maxRnum = cruns[cruns.size()-1].runnum;
-  std::vector<double> xbinsRnum; CalcRnumBinEdges(minRnum,maxRnum,1,xbinsRnum);
+  std::vector<double> xbinsRnum; CalcRnumBinEdges(minRnum,maxRnum,0,xbinsRnum);
   int nbinRnum = xbinsRnum.size()-1;
   // --------- 
  
@@ -726,7 +639,7 @@ int fit_dx (const char *configfilename,
       ho2[0]->Draw(); customize_ht(ho2[0]); customize_dx(ho2[0]);
       ho2[1]->Draw("same"); customize_hs(ho2[1]); customize_dx(ho2[1]);
       //cout << " *** " << ho2[1]->Integral() << "\n";
-      ho2[2]->Draw("same"); customize_hbg(ho2[2]);
+      ho2[2]->Draw("same"); util_pd::customize_hbg(ho2[2],1);
       //cout << " *** " << ho2[2]->Integral() << "\n";
       // drawing the polynomial background as well
       FitFn *ffn = new FitFn(Opoly);
@@ -758,7 +671,7 @@ int fit_dx (const char *configfilename,
       //bg3->Draw("same");
       ho3[0]->Draw(); customize_ht(ho3[0]); customize_dx(ho3[0]);
       ho3[1]->Draw("same ep"); customize_hs(ho3[1]); customize_dx(ho3[1]);
-      ho3[2]->Draw("same"); customize_hbg(ho3[2]); customize_dx(ho3[2]);    
+      ho3[2]->Draw("same"); util_pd::customize_hbg(ho3[2],1); customize_dx(ho3[2]);    
 
       //double bgcount = (int)bg3->Integral(dx_fit_range[0],dx_fit_range[1])/h_dxHCAL_data->GetBinWidth(1);
       double bgcount = ho3[2]->Integral(ho3[2]->FindBin(dx_fit_range[0]),ho3[2]->FindBin(dx_fit_range[1]));;
@@ -781,7 +694,7 @@ int fit_dx (const char *configfilename,
 				      ho4);
       ho4[0]->Draw(); customize_ht(ho4[0]); customize_dx(ho4[0]);
       ho4[1]->Draw("same"); customize_hs(ho4[1]); customize_dx(ho4[1]);
-      ho4[2]->Draw("same"); customize_hbg(ho4[2]); customize_dx(ho4[2]);
+      ho4[2]->Draw("same"); util_pd::customize_hbg(ho4[2],1); customize_dx(ho4[2]);
       TLegend *l4=new TLegend(0.10,0.77,0.38,0.9);
       l4->SetTextFont(42);
       l4->AddEntry(ho4[0],"Data","l");
@@ -838,9 +751,9 @@ int fit_dx (const char *configfilename,
       pCnt.push_back(0); pCnt_err.push_back(0);
       nCnt.push_back(0); nCnt_err.push_back(0);
       bgCnt.push_back(0); bgCnt_err.push_back(0);
-      //ho[0]->Draw("E"); customize_data(ho[0]); customize_dx(ho[0]);
+      //ho[0]->Draw("E"); util_pd::customize_data(ho[0]); customize_dx(ho[0]);
       ho[1]->Draw(); customize_hs(ho[1]); ho[1]->SetStats(0);
-      h_dxHCAL_data->Draw("E same"); customize_data(h_dxHCAL_data);
+      h_dxHCAL_data->Draw("E same"); util_pd::customize_data(h_dxHCAL_data);
       //f0->Draw("same");
       TLegend *l0 = new TLegend(0.10,0.73,0.35,0.9);
       l0->SetTextFont(42);
@@ -886,13 +799,13 @@ int fit_dx (const char *configfilename,
       p1[0]->cd();
       // drawing all the histograms
       //ho1[0]->Draw(); customize_ht(ho1[0]); customize_dx(ho1[0]);
-      h_dxHCAL_data->Draw("E"); customize_data(h_dxHCAL_data);
+      h_dxHCAL_data->Draw("E"); util_pd::customize_data(h_dxHCAL_data);
       hf1->Draw("same HIST"); customize_gfit(hf1);
-      ho1[4]->Draw("same HIST"); customize_psig(ho1[4]);
-      ho1[5]->Draw("same HIST"); customize_nsig(ho1[5]);
-      ho1[2]->Draw("same HIST"); customize_hbg(ho1[2]);
+      ho1[4]->Draw("same HIST"); util_pd::customize_psig(ho1[4],1);
+      ho1[5]->Draw("same HIST"); util_pd::customize_nsig(ho1[5],1);
+      ho1[2]->Draw("same HIST"); util_pd::customize_hbg(ho1[2],1);
       // calculating yields
-      std::vector<double> yo1; GetYields(f1,ho1[4],ho1[5],ho1[2],yo1);
+      std::vector<double> yo1; util_pd::GetYields(f1,ho1[4],ho1[5],ho1[2],yo1);
       pCnt.push_back(yo1[0]); pCnt_err.push_back(yo1[1]);
       nCnt.push_back(yo1[2]); nCnt_err.push_back(yo1[3]);
       bgCnt.push_back(yo1[4]); bgCnt_err.push_back(yo1[5]);
@@ -964,13 +877,13 @@ int fit_dx (const char *configfilename,
       p2[0]->cd();
       // drawing all the histograms
       //ho2[0]->Draw(); customize_ht(ho2[0]); customize_dx(ho2[0]);
-      h_dxHCAL_data->Draw("E"); customize_data(h_dxHCAL_data);
+      h_dxHCAL_data->Draw("E"); util_pd::customize_data(h_dxHCAL_data);
       hf2->Draw("same HIST"); customize_gfit(hf2);
-      ho2[4]->Draw("same HIST"); customize_psig(ho2[4]);
-      ho2[5]->Draw("same HIST"); customize_nsig(ho2[5]);
-      ho2[2]->Draw("same HIST"); customize_hbg(ho2[2]);
+      ho2[4]->Draw("same HIST"); util_pd::customize_psig(ho2[4],1);
+      ho2[5]->Draw("same HIST"); util_pd::customize_nsig(ho2[5],1);
+      ho2[2]->Draw("same HIST"); util_pd::customize_hbg(ho2[2],1);
       // calculating yields
-      std::vector<double> yo2; GetYields(f2,ho2[4],ho2[5],ho2[2],yo2);
+      std::vector<double> yo2; util_pd::GetYields(f2,ho2[4],ho2[5],ho2[2],yo2);
       pCnt.push_back(yo2[0]); pCnt_err.push_back(yo2[1]);
       nCnt.push_back(yo2[2]); nCnt_err.push_back(yo2[3]);
       bgCnt.push_back(yo2[4]); bgCnt_err.push_back(yo2[5]);
@@ -1036,13 +949,13 @@ int fit_dx (const char *configfilename,
       p3[0]->cd();
       // drawing all the histograms
       //ho3[0]->Draw(); customize_ht(ho3[0]); customize_dx(ho3[0]);
-      h_dxHCAL_data->Draw("E"); customize_data(h_dxHCAL_data);
+      h_dxHCAL_data->Draw("E"); util_pd::customize_data(h_dxHCAL_data);
       hf3->Draw("same HIST"); customize_gfit(hf3);
-      ho3[4]->Draw("same HIST"); customize_psig(ho3[4]);
-      ho3[5]->Draw("same HIST"); customize_nsig(ho3[5]);
-      ho3[2]->Draw("same HIST"); customize_hbg(ho3[2]);
+      ho3[4]->Draw("same HIST"); util_pd::customize_psig(ho3[4],1);
+      ho3[5]->Draw("same HIST"); util_pd::customize_nsig(ho3[5],1);
+      ho3[2]->Draw("same HIST"); util_pd::customize_hbg(ho3[2],1);
       // calculating yields
-      std::vector<double> yo3; GetYields(f3,ho3[4],ho3[5],ho3[2],yo3);
+      std::vector<double> yo3; util_pd::GetYields(f3,ho3[4],ho3[5],ho3[2],yo3);
       pCnt.push_back(yo3[0]); pCnt_err.push_back(yo3[1]);
       nCnt.push_back(yo3[2]); nCnt_err.push_back(yo3[3]);
       bgCnt.push_back(yo3[4]); bgCnt_err.push_back(yo3[5]);
@@ -1111,13 +1024,13 @@ int fit_dx (const char *configfilename,
       p4[0]->cd();
       // drawing all the histograms
       //ho4[0]->Draw(); customize_ht(ho4[0]); customize_dx(ho4[0]);
-      h_dxHCAL_data->Draw("E"); customize_data(h_dxHCAL_data);
+      h_dxHCAL_data->Draw("E"); util_pd::customize_data(h_dxHCAL_data);
       hf4->Draw("same HIST"); customize_gfit(hf4);
-      ho4[4]->Draw("same HIST"); customize_psig(ho4[4]);
-      ho4[5]->Draw("same HIST"); customize_nsig(ho4[5]);
-      ho4[2]->Draw("same HIST"); customize_hbg(ho4[2]);
+      ho4[4]->Draw("same HIST"); util_pd::customize_psig(ho4[4],1);
+      ho4[5]->Draw("same HIST"); util_pd::customize_nsig(ho4[5],1);
+      ho4[2]->Draw("same HIST"); util_pd::customize_hbg(ho4[2],1);
       // calculating yields
-      std::vector<double> yo4; GetYields(f4,ho4[4],ho4[5],ho4[2],yo4);
+      std::vector<double> yo4; util_pd::GetYields(f4,ho4[4],ho4[5],ho4[2],yo4);
       pCnt.push_back(yo4[0]); pCnt_err.push_back(yo4[1]);
       nCnt.push_back(yo4[2]); nCnt_err.push_back(yo4[4]);
       bgCnt.push_back(yo4[4]); bgCnt_err.push_back(yo4[5]);
@@ -1185,13 +1098,13 @@ int fit_dx (const char *configfilename,
       p5[0]->cd();
       // drawing all the histograms
       //ho5[0]->Draw(); customize_ht(ho5[0]); customize_dx(ho5[0]);
-      h_dxHCAL_data->Draw("E"); customize_data(h_dxHCAL_data);
+      h_dxHCAL_data->Draw("E"); util_pd::customize_data(h_dxHCAL_data);
       hf5->Draw("same HIST"); customize_gfit(hf5);
-      ho5[4]->Draw("same HIST"); customize_psig(ho5[4]);
-      ho5[5]->Draw("same HIST"); customize_nsig(ho5[5]);
-      ho5[2]->Draw("same HIST"); customize_hbg(ho5[2]);
+      ho5[4]->Draw("same HIST"); util_pd::customize_psig(ho5[4],1);
+      ho5[5]->Draw("same HIST"); util_pd::customize_nsig(ho5[5],1);
+      ho5[2]->Draw("same HIST"); util_pd::customize_hbg(ho5[2],1);
       // calculating yields
-      std::vector<double> yo5; GetYields(f5,ho5[4],ho5[5],ho5[2],yo5);
+      std::vector<double> yo5; util_pd::GetYields(f5,ho5[4],ho5[5],ho5[2],yo5);
       pCnt.push_back(yo5[0]); pCnt_err.push_back(yo5[1]);
       nCnt.push_back(yo5[2]); nCnt_err.push_back(yo5[3]);
       bgCnt.push_back(yo5[4]); bgCnt_err.push_back(yo5[5]);
@@ -1245,7 +1158,7 @@ int fit_dx (const char *configfilename,
       // TPaveStats *stsb5 = (TPaveStats*)hosb5[0]->FindObject("stats"); 
       // // hosb5[0]->Draw(); customize_ht(hosb5[0]); customize_dx(hosb5[0]);
       // // hosb5[1]->Draw("same ep"); customize_hs(hosb5[1]); customize_dx(hosb5[1]);
-      // // hosb5[2]->Draw("same"); customize_hbg(hosb5[2]); customize_dx(hosb5[2]);
+      // // hosb5[2]->Draw("same"); util_pd::customize_hbg(hosb5[2],1); customize_dx(hosb5[2]);
 
       // // Now, let's fit the bg subtracted signal using MC signals
       // vector<TH1F*> ho5;
@@ -1261,7 +1174,7 @@ int fit_dx (const char *configfilename,
       // ho5[0]->Draw(); c5->Update(); 
       // // hosb5[0]->Draw("same"); customize_ht(hosb5[0]); customize_dx(hosb5[0]);
       // // hosb5[1]->Draw("same HIST"); customize_hs(hosb5[1]); customize_dx(hosb5[1]);
-      // // hosb5[2]->Draw("same HIST"); customize_hbg(hosb5[2]); customize_dx(hosb5[2]);
+      // // hosb5[2]->Draw("same HIST"); util_pd::customize_hbg(hosb5[2],1); customize_dx(hosb5[2]);
 
       // // grabbing statbox of the fitted histo
       // TPaveStats *st5 = (TPaveStats*)ho5[0]->FindObject("stats");
@@ -1273,13 +1186,13 @@ int fit_dx (const char *configfilename,
       // p5[0]->cd();
       // // drawing all the histograms
       // hosb5[0]->Draw(); customize_ht(hosb5[0]); customize_dx(hosb5[0]);
-      // hosb5[2]->Draw("same"); customize_hbg(hosb5[2]); customize_dx(hosb5[2]);    
-      // // h_dxHCAL_data->Draw("E"); customize_data(h_dxHCAL_data);
-      // hosb5[1]->Draw("same E"); customize_data(hosb5[1]); hosb5[1]->SetStats(0);
+      // hosb5[2]->Draw("same"); util_pd::customize_hbg(hosb5[2],1); customize_dx(hosb5[2]);    
+      // // h_dxHCAL_data->Draw("E"); util_pd::customize_data(h_dxHCAL_data);
+      // hosb5[1]->Draw("same E"); util_pd::customize_data(hosb5[1]); hosb5[1]->SetStats(0);
       // hf5->Draw("same HIST"); customize_gfit(hf5);
-      // ho5[3]->Draw("same HIST"); customize_psig(ho5[3]);
-      // ho5[4]->Draw("same HIST"); customize_nsig(ho5[4]);
-      // //ho5[2]->Draw("same HIST"); customize_hbg(ho5[2]);
+      // ho5[3]->Draw("same HIST"); util_pd::customize_psig(ho5[3],1);
+      // ho5[4]->Draw("same HIST"); util_pd::customize_nsig(ho5[4],1);
+      // //ho5[2]->Draw("same HIST"); util_pd::customize_hbg(ho5[2],1);
       // // redrawing the stat boxes
       // stsb5->SetX1NDC(0.62); stsb5->SetX2NDC(0.9); stsb5->SetY2NDC(0.9);
       // stsb5->Draw("same");
