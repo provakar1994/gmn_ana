@@ -21,6 +21,7 @@ void gStyleFitCanvas()
   gStyle->SetErrorX(0);
 }
 
+//______________________________________________________________________________
 TFile * ReadRootFile(char const * filename) {
   // Open the ROOT file
   TFile *file = TFile::Open(filename, "READ");
@@ -35,6 +36,7 @@ TFile * ReadRootFile(char const * filename) {
 
 }
 
+//______________________________________________________________________________
 void FitGraphWithConstant(TGraph* graph) {
   // Define a constant function
   TF1* constantFit = new TF1("constantFit", "[0]", graph->GetX()[0], graph->GetX()[graph->GetN()-1]);
@@ -52,6 +54,7 @@ void FitGraphWithConstant(TGraph* graph) {
   constantFit->Draw("SAME");  // Draw fit function on top of graph
 }
 
+//______________________________________________________________________________
 void DrawTGraphWithErrors(const std::vector<double>& xValues, const std::vector<double>& yValues, const std::vector<double>& yErrors,
 			  std::string gtitle, std::string gxtitle, std::string gytitle, bool doFit=1,
 			  bool yrange=0, double ylow=0, double yhi=0) {
@@ -81,6 +84,7 @@ void DrawTGraphWithErrors(const std::vector<double>& xValues, const std::vector<
   if (doFit) FitGraphWithConstant(graph);
 }
 
+//______________________________________________________________________________
 TCanvas *FitYields( std::string const &canvname, std::string const &bgshape,
 		    std::vector<double> const &rnums, std::vector<double> const &stats,
 		    std::vector<double> const &R_fit, std::vector<double> const &R_fit_err,
@@ -106,7 +110,6 @@ TCanvas *FitYields( std::string const &canvname, std::string const &bgshape,
   DrawTGraphWithErrors(rnums,CNnY,CNnYerr,Form("Normalized n Yield vs Runs | %s",bgshape.c_str()),"Run Number","Normalized n Yield (1/C)",1,1,0,1E7);
   return cfit;
 }
-
 
 void projectBins() {
     
