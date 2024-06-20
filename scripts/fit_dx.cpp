@@ -43,16 +43,6 @@ void gStyleFitCanvas()
   gStyle->SetErrorX(0);
 }
 
-void customize_gfit(TH1F* h)
-{
-  h->SetLineColor(kRed);
-  h->SetLineStyle(7);
-  h->SetLineWidth(3);
-  //***
-  h->SetFillColor(kRed);
-  h->SetFillColorAlpha(kRed,0.2);
-}
-
 void customize_dx(TH1F* h)
 {
   h->GetXaxis()->SetTitle("x_{HCAL}^{obs} - x_{HCAL}^{exp} (m)");
@@ -652,7 +642,7 @@ int fit_dx (const char *configfilename,
       p2[0]->cd();
       // plotting the histos
       h_dxHCAL_data->Draw("E"); util_pd::customize_data(h_dxHCAL_data);
-      hf2->Draw("same HIST"); customize_gfit(hf2);
+      hf2->Draw("same HIST"); util_pd::customize_gfit(hf2,1);
       ho2[1]->Draw("same HIST"); util_pd::customize_nsig(ho2[1],1);
       ho2[2]->Draw("same HIST"); util_pd::customize_hbg(ho2[2],1);
       // redrawing the stat box
@@ -840,7 +830,7 @@ int fit_dx (const char *configfilename,
       // drawing all the histograms
       //ho1[0]->Draw(); customize_ht(ho1[0]); customize_dx(ho1[0]);
       h_dxHCAL_data->Draw("E"); util_pd::customize_data(h_dxHCAL_data);
-      hf1->Draw("same HIST"); customize_gfit(hf1);
+      hf1->Draw("same HIST"); util_pd::customize_gfit(hf1,1);
       ho1[4]->Draw("same HIST"); util_pd::customize_psig(ho1[4],1);
       ho1[5]->Draw("same HIST"); util_pd::customize_nsig(ho1[5],1);
       ho1[2]->Draw("same HIST"); util_pd::customize_hbg(ho1[2],1);
@@ -918,7 +908,7 @@ int fit_dx (const char *configfilename,
       // drawing all the histograms
       //ho2[0]->Draw(); customize_ht(ho2[0]); customize_dx(ho2[0]);
       h_dxHCAL_data->Draw("E"); util_pd::customize_data(h_dxHCAL_data);
-      hf2->Draw("same HIST"); customize_gfit(hf2);
+      hf2->Draw("same HIST"); util_pd::customize_gfit(hf2,1);
       ho2[4]->Draw("same HIST"); util_pd::customize_psig(ho2[4],1);
       ho2[5]->Draw("same HIST"); util_pd::customize_nsig(ho2[5],1);
       ho2[2]->Draw("same HIST"); util_pd::customize_hbg(ho2[2],1);
@@ -990,7 +980,7 @@ int fit_dx (const char *configfilename,
       // drawing all the histograms
       //ho3[0]->Draw(); customize_ht(ho3[0]); customize_dx(ho3[0]);
       h_dxHCAL_data->Draw("E"); util_pd::customize_data(h_dxHCAL_data);
-      hf3->Draw("same HIST"); customize_gfit(hf3);
+      hf3->Draw("same HIST"); util_pd::customize_gfit(hf3,1);
       ho3[4]->Draw("same HIST"); util_pd::customize_psig(ho3[4],1);
       ho3[5]->Draw("same HIST"); util_pd::customize_nsig(ho3[5],1);
       ho3[2]->Draw("same HIST"); util_pd::customize_hbg(ho3[2],1);
@@ -1065,7 +1055,7 @@ int fit_dx (const char *configfilename,
       // drawing all the histograms
       //ho4[0]->Draw(); customize_ht(ho4[0]); customize_dx(ho4[0]);
       h_dxHCAL_data->Draw("E"); util_pd::customize_data(h_dxHCAL_data);
-      hf4->Draw("same HIST"); customize_gfit(hf4);
+      hf4->Draw("same HIST"); util_pd::customize_gfit(hf4,1);
       ho4[4]->Draw("same HIST"); util_pd::customize_psig(ho4[4],1);
       ho4[5]->Draw("same HIST"); util_pd::customize_nsig(ho4[5],1);
       ho4[2]->Draw("same HIST"); util_pd::customize_hbg(ho4[2],1);
@@ -1139,7 +1129,7 @@ int fit_dx (const char *configfilename,
       // drawing all the histograms
       //ho5[0]->Draw(); customize_ht(ho5[0]); customize_dx(ho5[0]);
       h_dxHCAL_data->Draw("E"); util_pd::customize_data(h_dxHCAL_data);
-      hf5->Draw("same HIST"); customize_gfit(hf5);
+      hf5->Draw("same HIST"); util_pd::customize_gfit(hf5,1);
       ho5[4]->Draw("same HIST"); util_pd::customize_psig(ho5[4],1);
       ho5[5]->Draw("same HIST"); util_pd::customize_nsig(ho5[5],1);
       ho5[2]->Draw("same HIST"); util_pd::customize_hbg(ho5[2],1);
@@ -1229,7 +1219,7 @@ int fit_dx (const char *configfilename,
       // hosb5[2]->Draw("same"); util_pd::customize_hbg(hosb5[2],1); customize_dx(hosb5[2]);    
       // // h_dxHCAL_data->Draw("E"); util_pd::customize_data(h_dxHCAL_data);
       // hosb5[1]->Draw("same E"); util_pd::customize_data(hosb5[1]); hosb5[1]->SetStats(0);
-      // hf5->Draw("same HIST"); customize_gfit(hf5);
+      // hf5->Draw("same HIST"); util_pd::customize_gfit(hf5,1);
       // ho5[3]->Draw("same HIST"); util_pd::customize_psig(ho5[3],1);
       // ho5[4]->Draw("same HIST"); util_pd::customize_nsig(ho5[4],1);
       // //ho5[2]->Draw("same HIST"); util_pd::customize_hbg(ho5[2],1);
