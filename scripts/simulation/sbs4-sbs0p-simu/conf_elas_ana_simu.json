@@ -1,0 +1,34 @@
+{
+"simc_heep_model2":
+{
+    "Ntype"              : "p",
+    "SBS_config"         : 4,
+    "SBS_magnet_percent" : 0,
+    "prefix_to_filebase" : "OT0",
+    "Njobs_to_ana"       : -1,
+    "rootfile_dir"       : "/lustre19/expphy/volatile/halla/sbs/pdbforce/g4sbs_output/dMCcomp/sbs4_sbs0p/simc/rs/lh2/rc",
+    "global_cut"         : "bb.tr.n>0&&bb.gem.track.nhits>2&&abs(bb.tr.vz[0])<0.08&&bb.tr.p[0]>1.6&&bb.ps.e>0.2",
+    "dy_offset"          : 0,
+    "W2_offset"          : 0,
+    "W_cutR"             : [0.7,1.12],
+    "bbfidu_cutR"        : [0.02,0.33],
+    "max_N_tracks"       : 250,
+    "SBS_scale_field"    : 0,
+    "hcal_voffset"       : 0,
+    "hcal_hoffset"       : -0.0122,
+    "hcal_zoffset"       : 0.65,
+    "sbs_kick"           : 0,    
+    "dx_p_cut"           : [0.00803162,0.0625798,1],
+    "dy_p_cut"           : [-0.0288251,0.152388,1],
+    "h_dxHCAL_lims"      : [260,-3.2,2],
+    "h_dyHCAL_lims"      : [200,-1.5,1.5],
+    "h_dxHCAL_fitR"      : [-0.33,0.5,1.5,1.5],
+    "h_dyHCAL_fitR"      : [-1,1,1,1.5],
+    "Other_parmas_block" : "-----FOLLOWING PARMAS ARE NEEDED TO RUN THE SCRIPT-----",
+    "NOTE"               : "verbose=0 & verbosefn=0 => Production; verbose<-1=>Debug, =-1=>Test; verbosefn>0=>Debug",
+    "verbose"            : -1,
+    "verbose_function"   : 0,
+    "outfile_prefix"     : "rcOT0_0p65zoff",    
+    "README"             : "06/19/24"
+}
+}

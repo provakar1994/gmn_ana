@@ -1,4 +1,39 @@
 {
+"pass2_model2":
+{
+    "Ntype"              : "p",
+    "SBS_config"         : 4,
+    "SBS_magnet_percent" : 0,
+    "Nruns_to_ana"       : -1,
+    "get_scaler_info"    : 1,
+    "runsheet_dir"       : "../DB",
+    "rootfile_dir"       : "/w/halla-scshelf2102/sbs/pdbforce/gmn-data/pass2/SBS4/LH2/rootfiles",
+    "global_cut"         : "fEvtHdr.fTrigBits==1&&bb.tr.n>0&&bb.gem.track.nhits>2&&abs(bb.tr.vz[0])<0.08&&bb.tr.p[0]>1.6&&bb.ps.e>0.2",
+    "W_cutR"             : [0.7,1.12],
+    "bbfidu_cutR"        : [0.02,0.33],
+    "coinT_ADC_cutR"     : [-0.36,1.26,5],
+    "max_N_tracks"       : 250,
+    "max_N_HCAL_clusters": 30,
+    "hcal_acl_ON"        : 1,
+    "hcal_samp_frac_cutR": 0.01,
+    "hcal_voffset"       : 0.0,
+    "hcal_hoffset"       : 0.0,
+    "hcal_zoffset"       : 0.65,
+    "dx_p_cut"           : [-0.0366381,0.0615726,2],
+    "dy_p_cut"           : [-0.0145584,0.142248,2],
+    "h_dxHCAL_lims"      : [260,-3.2,2],
+    "h_dyHCAL_lims"      : [200,-1.5,1.5],
+    "h_dxHCAL_p_fitR"    : [-0.5,0.5,1,1],
+    "h_dyHCAL_fitR"      : [-1,1,0.8,1],
+    "Other_parmas_block" : "-----FOLLOWING PARMAS ARE NEEDED TO RUN THE SCRIPT-----",
+    "NOTE"               : "verbose=0 & verbosefn=0 => Production; verbose<-1=>Debug, =-1=>Test; verbosefn>0=>Debug",
+    "verbose"            : -1,
+    "verbose_function"   : 0,
+    "outfile_prefix"     : "0p65zoff",
+    "README"             : "First look at official pass2 data: 06/19/24"
+},
+"old":
+{
     "Ntype"              : "p",
     "SBS_config"         : 4,
     "SBS_magnet_percent" : 0,
@@ -20,11 +55,4 @@
     "rootfile_dir"       : "/w/halla-scshelf2102/sbs/sbs-gmn/pass0/SBS4/LH2/rootfiles",
     "runnums"            : [11573, 11587, 11588]
 }
-
-"
-## This is a config file for qelas_ana_data.cpp script. 
-# README:
-dx_p : deltax dist. of p. dx_p[0] => Peak position, dx_p[1] => Peak RMS
-dy_p : deltay dist. of p. dy_p[0] => Peak position, dy_p[1] => Peak RMS
-Nsigma_cut_dx(dy)_p : # of sigma to include in the deltax(deltay) cut for p
-"
+}
