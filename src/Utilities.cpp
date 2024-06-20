@@ -1021,27 +1021,27 @@ namespace util_pd {
     double accumulatedStats = 0.0;
 
     for (int ibin = binlow + 1; ibin <= binhi; ++ibin) {
-        accumulatedStats += h->GetBinContent(ibin);
+      accumulatedStats += h->GetBinContent(ibin);
 
-        if (accumulatedStats >= statpercut && slices < ndiv - 1) {
-            double diff1 = std::abs(accumulatedStats - statpercut);
-            double diff2 = std::abs((accumulatedStats - h->GetBinContent(ibin)) - statpercut);
-            if (diff2 < diff1) {
-                accumulatedStats -= h->GetBinContent(ibin);
-                ibin--;
-            }
-            xrange.push_back(h->GetBinCenter(ibin));
-            slices++;
-            accumulatedStats = 0.0;
-        }
+      if (accumulatedStats >= statpercut && slices < ndiv - 1) {
+	double diff1 = std::abs(accumulatedStats - statpercut);
+	double diff2 = std::abs((accumulatedStats - h->GetBinContent(ibin)) - statpercut);
+	if (diff2 < diff1) {
+	  accumulatedStats -= h->GetBinContent(ibin);
+	  ibin--;
+	}
+	xrange.push_back(h->GetBinCenter(ibin));
+	slices++;
+	accumulatedStats = 0.0;
+      }
     }
 
     xrange.push_back(xhi);
 
     // Final adjustment to ensure equal statistics in the last bin
     while (xrange.size() - 1 < ndiv) {
-        double lastBinCenter = (xrange.back() + xhi) / 2.0;
-        xrange.insert(xrange.end() - 1, lastBinCenter);
+      double lastBinCenter = (xrange.back() + xhi) / 2.0;
+      xrange.insert(xrange.end() - 1, lastBinCenter);
     }
     util_pd::PrintVector(xrange);
 
@@ -1056,6 +1056,32 @@ namespace util_pd {
   /* #####################################
      ##   Function toCalculate Yields   ##  
      ##################################### */
+    void GetYields(TF1* gfit, TH1F* hfit_p, TH1F* hfit_bg, std::vector<double> &output) {
+    // TODO: Implement better error calculation
+    // determining bin width and ranges
+    double binW = hfit_p->GetBinWidth(1);
+    double xMin = hfit_p->GetXaxis()->GetXmin();
+    double xMax = hfit_p->GetXaxis()->GetXmax();
+    // calculating the integral under total fit curve
+    double totCount = gfit->Integral(xMin,xMax) / binW;
+    // calculating p counts
+    double pCount_err;
+    double pCount = hfit_p->IntegralAndError(1,hfit_p->GetNbinsX(),pCount_err);
+    pCount_err = sqrt(pCount);
+    // calculating bg counts
+    double bgCount_err;
+    double bgCount = hfit_bg->IntegralAndError(1,hfit_bg->GetNbinsX(),bgCount_err);
+    bgCount_err = sqrt(bgCount);
+    // summary
+    std::cout << "\n---- Various counts ----\n";
+    std::cout << "Total Count: " << totCount << "\n";
+    std::cout << "p Count    : " << pCount << " +/- " << pCount_err << "\n";
+    std::cout << "bg Count   : " << bgCount << " +/- " << bgCount_err << "\n";
+    std::cout << "------------- \n";
+    // filling output vector
+    output = {pCount,pCount_err,bgCount,bgCount_err};
+  }
+  //______________________________________________________________________________
   void GetYields(TF1* gfit, TH1F* hfit_p, TH1F* hfit_n, TH1F* hfit_bg, std::vector<double> &output) {
     // TODO: Implement better error calculation
     // determining bin width and ranges
@@ -1078,15 +1104,15 @@ namespace util_pd {
     bgCount_err = sqrt(bgCount);
     // summary
     std::cout << "\n---- Various counts ----\n";
+    std::cout << "Total Count: " << totCount << "\n";
     std::cout << "p Count    : " << pCount << " +/- " << pCount_err << "\n";
     std::cout << "n Count    : " << nCount << " +/- " << nCount_err << "\n";
     std::cout << "bg Count   : " << bgCount << " +/- " << bgCount_err << "\n";
-    std::cout << "Total Count: " << totCount << "\n";
     std::cout << "------------- \n";
     // filling output vector
     output = {pCount,pCount_err,nCount,nCount_err,bgCount,bgCount_err};
   }
-
+  //______________________________________________________________________________
   void GetYields(TH1F* gfit, TH1F* hfit_p, TH1F* hfit_n, TH1F* hfit_bg, std::vector<double> &output) {
     /* Calculates normalized yields */
     // TODO: Implement better error calculation
@@ -1107,15 +1133,14 @@ namespace util_pd {
     bgCount_err = sqrt(bgCount);
     // summary
     std::cout << "\n---- Various counts ----\n";
+    std::cout << "Total Count: " << totCount << "\n";
     std::cout << "p Count    : " << pCount << " +/- " << pCount_err << "\n";
     std::cout << "n Count    : " << nCount << " +/- " << nCount_err << "\n";
     std::cout << "bg Count   : " << bgCount << " +/- " << bgCount_err << "\n";
-    std::cout << "Total Count: " << totCount << "\n";
     std::cout << "------------- \n";
     // filling output vector
     output = {pCount,pCount_err,nCount,nCount_err,bgCount,bgCount_err};
   }
-
 
   /* ######################################################
      ##   Functions to customize fit histos and canvas   ##  
@@ -1127,7 +1152,7 @@ namespace util_pd {
     h->SetMarkerColor(kBlack);
     h->SetLineColor(kBlack);
   }
-
+  //______________________________________________________________________________
   void customize_psig(TH1F* h, bool isTransp)
   {
     h->SetLineColor(kBlue);
@@ -1137,7 +1162,7 @@ namespace util_pd {
     h->SetFillColor(kBlue);
     if (isTransp) h->SetFillColorAlpha(kBlue,0.3);
   }
-
+  //______________________________________________________________________________
   void customize_nsig(TH1F* h, bool isTransp)
   {
     h->SetLineColor(kGreen+2);
@@ -1147,7 +1172,7 @@ namespace util_pd {
     h->SetFillColor(kGreen+2);
     if (isTransp) h->SetFillColorAlpha(kGreen+2,0.3);
   }
-
+  //______________________________________________________________________________
   void customize_hbg(TH1F* h, bool isTransp) 
   {
     h->SetMarkerColor(6);
@@ -1158,5 +1183,27 @@ namespace util_pd {
     //***
     h->SetFillColor(6);
     if (isTransp) h->SetFillColorAlpha(6,0.3);
+  }
+  //______________________________________________________________________________
+  void customize_gfit(TH1F* h, bool isTransp)
+  {
+    h->SetLineColor(kRed);
+    h->SetLineStyle(7);
+    h->SetLineWidth(3);
+    //***
+    h->SetFillColor(kRed);
+    if (isTransp) h->SetFillColorAlpha(kRed,0.2);
+  }
+  //______________________________________________________________________________
+  void customize_residual(TH1F* h)
+  {
+    h->GetXaxis()->SetLabelOffset(0.03);
+    h->GetXaxis()->SetLabelSize(0.12);
+    h->GetYaxis()->SetLabelOffset(0.005);
+    h->GetYaxis()->SetLabelSize(0.11);
+    h->SetMarkerStyle(22);
+    h->SetMarkerColor(46);
+    h->SetLineColor(46);
+    h->SetStats(0);
   }
 }

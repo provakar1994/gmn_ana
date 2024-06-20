@@ -229,6 +229,9 @@ namespace util_pd {
      ##################################### */
   /* Functions to calculate yields */
   // TODO: Implement better error calculation
+  void GetYields(TF1* gfit, TH1F* hfit_p, TH1F* hfit_bg,
+		 std::vector<double> &output); // Output: pC,pCerr,bgC,bgCerr
+  
   void GetYields(TF1* gfit, TH1F* hfit_p, TH1F* hfit_n, TH1F* hfit_bg,
 		 std::vector<double> &output); // Output: pC,pCerr,nC,nCerr,bgC,bgCerr
 
@@ -239,9 +242,11 @@ namespace util_pd {
      ##   Functions to customize fit histos and canvas   ##  
      ###################################################### */
   void customize_data(TH1F* h);
+  void customize_residual(TH1F* h);
   void customize_psig(TH1F* h, bool isTransp);
   void customize_nsig(TH1F* h, bool isTransp);
   void customize_hbg(TH1F* h, bool isTransp);
+  void customize_gfit(TH1F* h, bool isTransp);
 
 }
 #endif
