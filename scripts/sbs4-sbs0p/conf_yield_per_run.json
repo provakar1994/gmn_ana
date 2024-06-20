@@ -1,0 +1,10 @@
+{
+    "qelas":
+    {
+	"parent_config"     : "sbs4-sbs0p/conf_fit_dx.json",
+	"parent_config_key" : "qelas_prod",
+	"has_beamcurr_cut"  : 0,
+	"runs_to_exclude"   : [],
+	"README"            : "06/19/24"
+    }
+}

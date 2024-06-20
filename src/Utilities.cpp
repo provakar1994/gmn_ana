@@ -1098,6 +1098,9 @@ namespace util_pd {
     double nCount_err;
     double nCount = hfit_n->IntegralAndError(1,hfit_n->GetNbinsX(),nCount_err);
     nCount_err = sqrt(nCount);
+    // calculating total yield and error
+    double totSigCount = pCount + nCount;
+    double totSigCount_err = sqrt(totSigCount);
     // calculating bg counts
     double bgCount_err;
     double bgCount = hfit_bg->IntegralAndError(1,hfit_bg->GetNbinsX(),bgCount_err);
@@ -1110,7 +1113,7 @@ namespace util_pd {
     std::cout << "bg Count   : " << bgCount << " +/- " << bgCount_err << "\n";
     std::cout << "------------- \n";
     // filling output vector
-    output = {pCount,pCount_err,nCount,nCount_err,bgCount,bgCount_err};
+    output = {pCount,pCount_err,nCount,nCount_err,bgCount,bgCount_err,totSigCount,totSigCount_err};
   }
   //______________________________________________________________________________
   void GetYields(TH1F* gfit, TH1F* hfit_p, TH1F* hfit_n, TH1F* hfit_bg, std::vector<double> &output) {
@@ -1127,6 +1130,9 @@ namespace util_pd {
     double nCount_err;
     double nCount = hfit_n->IntegralAndError(1,hfit_n->GetNbinsX(),nCount_err);
     nCount_err = sqrt(nCount);
+    // calculating total yield and error
+    double totSigCount = pCount + nCount;
+    double totSigCount_err = sqrt(totSigCount);
     // calculating bg counts
     double bgCount_err;
     double bgCount = hfit_bg->IntegralAndError(1,hfit_bg->GetNbinsX(),bgCount_err);
@@ -1139,7 +1145,7 @@ namespace util_pd {
     std::cout << "bg Count   : " << bgCount << " +/- " << bgCount_err << "\n";
     std::cout << "------------- \n";
     // filling output vector
-    output = {pCount,pCount_err,nCount,nCount_err,bgCount,bgCount_err};
+    output = {pCount,pCount_err,nCount,nCount_err,bgCount,bgCount_err,totSigCount,totSigCount_err};
   }
 
   /* ######################################################

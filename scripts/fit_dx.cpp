@@ -28,6 +28,7 @@
 #include "../include/gmn_ana.h"
 #include "../dflay/src/JSONManager.cxx"
 
+//______________________________________________________________________________
 void CalcRnumBinEdges(int rmin, int rmax, bool debug, std::vector<double> &binEdges) {
   /* Calculates explicit bin edges for run histo */
   int nbins = rmax - rmin;
@@ -37,23 +38,27 @@ void CalcRnumBinEdges(int rmin, int rmax, bool debug, std::vector<double> &binEd
   if (debug) util_pd::PrintVector(binEdges);
 }
 
+//______________________________________________________________________________
 void gStyleFitCanvas() 
 {
   gStyle->SetOptStat("e"); gStyle->SetOptFit(1); 
   gStyle->SetErrorX(0);
 }
 
+//______________________________________________________________________________
 void customize_dx(TH1F* h)
 {
   h->GetXaxis()->SetTitle("x_{HCAL}^{obs} - x_{HCAL}^{exp} (m)");
 }
 
+//______________________________________________________________________________
 void customize_ht(TH1F* h) 
 {
   h->SetLineColor(kBlue);
   h->SetLineWidth(2);
 }
 
+//______________________________________________________________________________
 void customize_hs(TH1F* h) 
 {
   h->SetMarkerColor(kRed);
@@ -62,6 +67,7 @@ void customize_hs(TH1F* h)
   h->SetLineColor(kRed);
 }
 
+//______________________________________________________________________________
 void customize_hcut(TH1F* h)
 {
   h->SetLineWidth(2);
@@ -70,18 +76,21 @@ void customize_hcut(TH1F* h)
   h->GetXaxis()->CenterTitle(true);
 }
 
+//______________________________________________________________________________
 void customize_hcut_p(TH1F* h)
 {
   customize_hcut(h);
   h->SetLineColor(kBlue);
 }
 
+//______________________________________________________________________________
 void customize_hcut_n(TH1F* h)
 {
   customize_hcut(h);
   h->SetLineColor(kGreen+2);
 }
 
+//______________________________________________________________________________
 void customize_h2fiduCut(TH2F* h2, char const * nORp, char const * DataORMC, double sbs_kick) 
 {
   h2->SetTitle(Form("%s Envelope (%s)",nORp,DataORMC));
@@ -90,6 +99,7 @@ void customize_h2fiduCut(TH2F* h2, char const * nORp, char const * DataORMC, dou
   h2->GetYaxis()->SetTitle(ytitle.c_str());
 }
 
+//______________________________________________________________________________
 void customize_hsummary(TH1F* h, std::vector<std::string> const & lcuts)
 {
   gStyle->SetErrorX(0);
@@ -102,17 +112,20 @@ void customize_hsummary(TH1F* h, std::vector<std::string> const & lcuts)
   h->LabelsOption("v","X");
 }
 
+//______________________________________________________________________________
 void AddCutToLegend(TLegend *leg, std::string cut) {
   TLegendEntry* legE = leg->AddEntry((TObject*)0,Form("%s",cut.c_str()),"");
   legE->SetTextColor(2);
 }
 
+//______________________________________________________________________________
 void customize_text(TText *tl) {
   tl->SetTextFont(42);
   tl->SetTextSize(0.04);
   tl->SetTextColor(kRed);
 }
 
+//______________________________________________________________________________
 void FurtherCustoizeDataHisto(TH1F *h_dxHCAL_data, std::string const &cuts_for_signal_data) {
   h_dxHCAL_data->SetStats(0);
   h_dxHCAL_data->SetTitle(Form("dx {%s}",cuts_for_signal_data.c_str()));
@@ -126,6 +139,7 @@ void FurtherCustoizeDataHisto(TH1F *h_dxHCAL_data, std::string const &cuts_for_s
 //   TLegendEntry* legE0 = leg->AddEntry((TObject*)0,Form("%.1fb(x), %.1fb(y)",),"");
 // }
 
+//______________________________________________________________________________
 void PlotFiduCut(int pass, std::vector<double> hcal_AR, std::vector<double> hcal_SM) {
   std::vector<double> hcal_area = cut::hcal_active_area_data(0,0,pass); 
   //std::vector<double> hcal_AR = cut::hcal_active_area_data(AR_w[0],AR_w[1],pass); 
@@ -135,12 +149,13 @@ void PlotFiduCut(int pass, std::vector<double> hcal_AR, std::vector<double> hcal
   util_pd::DrawArea(hcal_SM,4,4,9);
 }
 
+//______________________________________________________________________________
 double total_fit (double * x, double * par) {
   FitFn *ffn = new FitFn(6);
   return ffn->ffn_gaus(x,&par[0]) + ffn->ffn_poly(x,&par[3]);
 }
 
-
+//______________________________________________________________________________
 int fit_dx (const char *configfilename, 
 	    bool is_elastic = 1) // 1=>Yes, 0=>QE 
 {

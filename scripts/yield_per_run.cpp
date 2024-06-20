@@ -15,6 +15,7 @@
 #include "TLatex.h"
 
 #include "gmn_ana.h"
+#include "../dflay/src/JSONManager.cxx"
 
 void gStyleFitCanvas() 
 {
@@ -90,10 +91,11 @@ TCanvas *FitYields( std::string const &canvname, std::string const &bgshape,
 		    std::vector<double> const &rnums, std::vector<double> const &stats,
 		    std::vector<double> const &R_fit, std::vector<double> const &R_fit_err,
 		    std::vector<double> const &CNpY, std::vector<double> const &CNpYerr,
-		    std::vector<double> const &CNnY, std::vector<double> const &CNnYerr) {
+		    std::vector<double> const &CNnY, std::vector<double> const &CNnYerr,
+		    std::vector<double> const &CNtotY, std::vector<double> const &CNtotYerr) {
 
   TCanvas *cfit = new TCanvas(canvname.c_str(),bgshape.c_str(), 1200, 1000);
-  cfit->Divide(2,2);
+  cfit->Divide(3,2);
   gStyleFitCanvas(); cfit->SetGridy();  cfit->SetGridx();
   // 
   std::vector<double> statsErr;
@@ -109,6 +111,8 @@ TCanvas *FitYields( std::string const &canvname, std::string const &bgshape,
   DrawTGraphWithErrors(rnums,CNpY,CNpYerr,Form("Normalized p Yield vs Runs | %s",bgshape.c_str()),"Run Number","Normalized p Yield (1/C)",1,1,0,1E7);
   cfit->cd(4); // Charge-normalized n yield
   DrawTGraphWithErrors(rnums,CNnY,CNnYerr,Form("Normalized n Yield vs Runs | %s",bgshape.c_str()),"Run Number","Normalized n Yield (1/C)",1,1,0,1E7);
+  cfit->cd(5); // Charge-normalized n yield
+  DrawTGraphWithErrors(rnums,CNtotY,CNtotYerr,Form("Normalized n+p Yield vs Runs | %s",bgshape.c_str()),"Run Number","Normalized n+p Yield (1/C)",1,1,0,1E7);
   return cfit;
 }
 
@@ -134,33 +138,45 @@ TCanvas *FitYields( std::string const &canvname, std::string const &bgshape,
 }
 
 //______________________________________________________________________________
-void yield_per_run ()
+void yield_per_run (const char *configfilename, 
+		    bool is_elastic = 1) // 1=>Yes, 0=>QE
 {
   gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
 
-  bool is_elastic = true;
-  bool has_beamcurrcut = true;
+  // Define a clock to get macro processing time
+  TStopwatch *sw = new TStopwatch(); sw->Start();
 
+  // reading input config file ---------------------------------------
+  JSONManager *jmgr = new JSONManager(configfilename);
   char const * key = is_elastic ? "elas" : "qelas";
-  
-  int nruns = -1;
-  int conf = 4;
-  int pass = 2;
-  int model = 2;
-  int sbsmag = 30;
-  int verbosefn = 0;
+
+  // reading parent config file ---------------------------------------
+  std::string config_p = jmgr->GetValueFromSubKey_str(key,"parent_config"); 
+  std::string key_p = jmgr->GetValueFromSubKey_str(key,"parent_config_key");
+  JSONManager *jmgr_p = new JSONManager(config_p.c_str());  
+
+  // reading in proper data and simu output files based on parent config
+  int conf = jmgr_p->GetValueFromSubKey<int>(key_p.c_str(),"SBS_config");
+  int sbsmag = jmgr_p->GetValueFromSubKey<int>(key_p.c_str(),"SBS_magnet_percent");
+  int model = jmgr_p->GetValueFromSubKey<int>(key_p.c_str(),"model");
+  int pass = jmgr_p->GetValueFromSubKey<int>(key_p.c_str(),"pass");
+  std::string file_prefix = jmgr_p->GetValueFromSubKey_str(key_p.c_str(),"output_filebase");
   std::string target = is_elastic ? "LH2" : "LD2";
-  std::string file_prefix = "0p65zoff_0p39sf";
-  std::vector<double> dx_fit_range{-2,1};
-  std::vector<int> exclude_runs;// = {11436,11616};
+
+  // reading analysis params from parent config
+  vector<double> dx_fit_range; jmgr_p->GetVectorFromSubKey<double>(key_p.c_str(),"dx_fit_range",dx_fit_range);
+
+  // reading stuff from the local config
+  int nruns = -1;
+  bool has_BC_cut = jmgr->GetValueFromSubKey<int>(key,"has_beamcurr_cut");
+  std::vector<int> runs_to_exclude; jmgr->GetVectorFromSubKey<int>(key,"runs_to_exclude",runs_to_exclude);
+  //= {11449,11451,11452}; // = {11436,11616};
 
   // input and output filename format
   char const * in_script = "fit_dx";
   char const * out_script = "yield_per_run";
-  // std::string in_file_prefix = is_elastic ? file_prefix + "_fit_dx_elas" : file_prefix + "_fit_dx_qelas";
-  // std::string out_file_prefix = is_elastic ? file_prefix + "_yield_per_run_elas" : file_prefix + "_yield_per_qelas";
   std::string rootdir_path = Form("pdout/fits/sbs%dsbs%dp",conf,sbsmag);
-  file_prefix = has_beamcurrcut ? "BCcut_" + file_prefix : file_prefix;
+  file_prefix = has_BC_cut ? "BCcut_" + file_prefix : file_prefix;
   TString inFile = Form("%s/%s_%s_%s_pass%d_simc_sbs%d_sbs%dp_model%d.root"
 			,rootdir_path.c_str(),file_prefix.c_str(),in_script,key,pass,conf,sbsmag,model);
   TString outFile = Form("%s/%s_%s_%s_pass%d_simc_sbs%d_sbs%dp_model%d.root"
@@ -170,7 +186,7 @@ void yield_per_run ()
   TFile * file = ReadRootFile(inFile);
   
   // Reading run list
-  std::vector<CodaRun> cruns; util_pd::ReadRunList("../DB",nruns,conf,target,pass,sbsmag,verbosefn,cruns);
+  std::vector<CodaRun> cruns; util_pd::ReadRunList("../DB",nruns,conf,target,pass,sbsmag,0,cruns);
   // implementing hashtable w/ run number as key, for efficiency
   std::unordered_map<int,CodaRun> mrun;
   for (auto & crun: cruns) mrun[crun.runnum] = crun;
@@ -189,8 +205,8 @@ void yield_per_run ()
   // Define arrays to store fit results
   int nBinsX = h_dxHCAL_vs_rnum->GetNbinsX();
   std::vector<double> rnums, stats;
-  std::vector<double> R2, Rerr2, CNpY2, CNpYerr2, CNnY2, CNnYerr2; 
-  std::vector<double> R3, Rerr3, CNpY3, CNpYerr3, CNnY3, CNnYerr3;
+  std::vector<double> R2, Rerr2, CNpY2, CNpYerr2, CNnY2, CNnYerr2, CNtotY2, CNtotYerr2; 
+  std::vector<double> R3, Rerr3, CNpY3, CNpYerr3, CNnY3, CNnYerr3, CNtotY3, CNtotYerr3;
 
   // creating output file
   TFile *fout = new TFile(outFile, "RECREATE");
@@ -207,8 +223,8 @@ void yield_per_run ()
       // extracting the run number for this bin
       int rnum = (int)h_dxHCAL_vs_rnum->GetXaxis()->GetBinCenter(i);
       // check if want to include this run in the analysis or not
-      if (!exclude_runs.empty()) {
-	if (std::find(exclude_runs.begin(), exclude_runs.end(), rnum) != exclude_runs.end())
+      if (!runs_to_exclude.empty()) {
+	if (std::find(runs_to_exclude.begin(), runs_to_exclude.end(), rnum) != runs_to_exclude.end())
 	  continue;
       }
       rnums.push_back(rnum);
@@ -287,6 +303,7 @@ void yield_per_run ()
 	std::vector<double> yo2; util_pd::GetYields(f2,ho2[4],ho2[5],ho2[2],yo2);
 	CNpY2.push_back(yo2[0]/charge/daqlt); CNpYerr2.push_back(yo2[1]/charge/daqlt);
 	CNnY2.push_back(yo2[2]/charge/daqlt); CNnYerr2.push_back(yo2[3]/charge/daqlt);
+	CNtotY2.push_back(yo2[6]/charge/daqlt); CNtotYerr2.push_back(yo2[7]/charge/daqlt);
 	// grad the stat box of the fitted histo
 	cA->Update();
 	TPaveStats *st2 = (TPaveStats*)ho2[0]->FindObject("stats");
@@ -315,6 +332,7 @@ void yield_per_run ()
 	std::vector<double> yo3; util_pd::GetYields(f3,ho3[4],ho3[5],ho3[2],yo3);
 	CNpY3.push_back(yo3[0]/charge/daqlt); CNpYerr3.push_back(yo3[1]/charge/daqlt);
 	CNnY3.push_back(yo3[2]/charge/daqlt); CNnYerr3.push_back(yo3[3]/charge/daqlt);
+	CNtotY3.push_back(yo3[6]/charge/daqlt); CNtotYerr3.push_back(yo3[7]/charge/daqlt);
 	// grad the stat box of the fitted histo
 	cA->Update();
 	TPaveStats *st3 = (TPaveStats*)ho3[0]->FindObject("stats");
@@ -330,13 +348,13 @@ void yield_per_run ()
   // Time to plot and fit yields vs run
   if (is_elastic) {
     TCanvas *cfit2 = FitYields("cfit2","Pol2 Bg",rnums,stats,CNpY2,CNpYerr2);
-    cfit2->Write();
+    cfit2->Update(); cfit2->Write();
   }
   else {
-    TCanvas *cfit2 = FitYields("cfit2","MC Bg",rnums,stats,R2,Rerr2,CNpY2,CNpYerr2,CNnY2,CNnYerr2);
-    cfit2->Write();
-    TCanvas *cfit3 = FitYields("cfit3","Pol2 Bg",rnums,stats,R3,Rerr3,CNpY3,CNpYerr3,CNnY3,CNnYerr3);
-    cfit3->Write();
+    TCanvas *cfit2 = FitYields("cfit2","MC Bg",rnums,stats,R2,Rerr2,CNpY2,CNpYerr2,CNnY2,CNnYerr2,CNtotY2,CNtotYerr2);
+    cfit2->Update(); cfit2->Write();
+    TCanvas *cfit3 = FitYields("cfit3","Pol2 Bg",rnums,stats,R3,Rerr3,CNpY3,CNpYerr3,CNnY3,CNnYerr3,CNtotY3,CNtotYerr3);
+    cfit3->Update(); cfit3->Write();
   }
   std::cout << totc << " " << gc << "\n";
 

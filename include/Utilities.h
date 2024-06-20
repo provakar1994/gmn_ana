@@ -233,10 +233,10 @@ namespace util_pd {
 		 std::vector<double> &output); // Output: pC,pCerr,bgC,bgCerr
   
   void GetYields(TF1* gfit, TH1F* hfit_p, TH1F* hfit_n, TH1F* hfit_bg,
-		 std::vector<double> &output); // Output: pC,pCerr,nC,nCerr,bgC,bgCerr
+		 std::vector<double> &output); // Output: pC,pCerr,nC,nCerr,bgC,bgCerr,totSigC,totSigC_err
 
   void GetYields(TH1F* gfit, TH1F* hfit_p, TH1F* hfit_n, TH1F* hfit_bg,
-		 std::vector<double> &output); // Output: pC,pCerr,nC,nCerr,bgC,bgCerr
+		 std::vector<double> &output); // Output: pC,pCerr,nC,nCerr,bgC,bgCerr,totSigC,totSigC_err
 
   /* ######################################################
      ##   Functions to customize fit histos and canvas   ##  
