@@ -51,11 +51,13 @@ class JSONManager {
 
   int Print();
   int ReadFile(const char *filepath);
-
+  
   bool DoesKeyExist(std::string keyName) const;
 
+  void GetKeys (std::vector<std::string> &keys);
+  void GetSubKeys (const std::string& parentKey, std::vector<std::string> &subkeys);
+  
   int GetVectorFromKey_str(std::string key,std::vector<std::string> &data);
-
   std::string GetValueFromKey_str(std::string key) const;
   std::string GetValueFromSubKey_str(std::string key,std::string subKey) const;
 

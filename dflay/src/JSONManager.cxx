@@ -68,3 +68,17 @@ int JSONManager::Print(){
    std::cout << fObject << std::endl;
    return 0;
 }
+//______________________________________________________________________________
+void JSONManager::GetKeys(std::vector<std::string> &keys){
+  // Loop through the JSON object to get the keys
+  for (nlohmann::json::iterator it = fObject.begin(); it != fObject.end(); ++it) {
+    keys.push_back(it.key());
+  }
+}
+//______________________________________________________________________________
+void JSONManager::GetSubKeys(const std::string& parentKey, std::vector<std::string> &subkeys){
+  // Loop through the JSON object to get the keys
+  for (nlohmann::json::iterator it = fObject[parentKey].begin(); it != fObject[parentKey].end(); ++it) {
+    subkeys.push_back(it.key());
+  }
+}
