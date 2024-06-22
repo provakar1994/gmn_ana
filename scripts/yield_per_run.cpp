@@ -170,7 +170,7 @@ void yield_per_run (const char *configfilename,
   int nruns = -1;
   bool has_BC_cut = jmgr->GetValueFromSubKey<int>(key,"has_beamcurr_cut");
   std::vector<int> runs_to_exclude; jmgr->GetVectorFromSubKey<int>(key,"runs_to_exclude",runs_to_exclude);
-  //= {11449,11451,11452}; // = {11436,11616};
+  // ^ 1st entry of the vector is treated as bool
 
   // input and output filename format
   char const * in_script = "fit_dx";
@@ -224,8 +224,10 @@ void yield_per_run (const char *configfilename,
       int rnum = (int)h_dxHCAL_vs_rnum->GetXaxis()->GetBinCenter(i);
       // check if want to include this run in the analysis or not
       if (!runs_to_exclude.empty()) {
-	if (std::find(runs_to_exclude.begin(), runs_to_exclude.end(), rnum) != runs_to_exclude.end())
-	  continue;
+	if (runs_to_exclude[0]!=0) { // first entry of the vector is treated a bool
+	  if (std::find(runs_to_exclude.begin(), runs_to_exclude.end(), rnum) != runs_to_exclude.end())
+	    continue;
+	}
       }
       rnums.push_back(rnum);
 

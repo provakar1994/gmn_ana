@@ -4,7 +4,15 @@
 	"parent_config"     : "sbs4-sbs30p/conf_fit_dx.json",
 	"parent_config_key" : "qelas_prod",
 	"has_beamcurr_cut"  : 0,
-	"runs_to_exclude"   : [11449,11451,11452],
+	"runs_to_exclude"   : [1,11449,11451,11452],
 	"README"            : "06/19/24"
-    }
+    },
+    "elas":
+    {
+	"parent_config"     : "sbs4-sbs30p/conf_fit_dx.json",
+	"parent_config_key" : "elas_prod",
+	"has_beamcurr_cut"  : 0,
+	"runs_to_exclude"   : [1,11436,11616],
+	"README"            : "06/19/24"
+    }    
 }
