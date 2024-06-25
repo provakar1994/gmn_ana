@@ -1056,14 +1056,14 @@ namespace util_pd {
   /* #####################################
      ##   Function toCalculate Yields   ##  
      ##################################### */
-    void GetYields(TF1* gfit, TH1F* hfit_p, TH1F* hfit_bg, std::vector<double> &output) {
+    void GetYields(TH1F* hfit_p, TH1F* hfit_bg, std::vector<double> &output) {
     // TODO: Implement better error calculation
     // determining bin width and ranges
     double binW = hfit_p->GetBinWidth(1);
     double xMin = hfit_p->GetXaxis()->GetXmin();
     double xMax = hfit_p->GetXaxis()->GetXmax();
-    // calculating the integral under total fit curve
-    double totCount = gfit->Integral(xMin,xMax) / binW;
+    // // calculating the integral under total fit curve
+    // double totCount = gfit->Integral(xMin,xMax) / binW;
     // calculating p counts
     double pCount_err;
     double pCount = hfit_p->IntegralAndError(1,hfit_p->GetNbinsX(),pCount_err);
@@ -1074,7 +1074,7 @@ namespace util_pd {
     bgCount_err = sqrt(bgCount);
     // summary
     std::cout << "\n---- Various counts ----\n";
-    std::cout << "Total Count: " << totCount << "\n";
+    //std::cout << "Total Count: " << totCount << "\n";
     std::cout << "p Count    : " << pCount << " +/- " << pCount_err << "\n";
     std::cout << "bg Count   : " << bgCount << " +/- " << bgCount_err << "\n";
     std::cout << "------------- \n";

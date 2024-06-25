@@ -229,7 +229,7 @@ namespace util_pd {
      ##################################### */
   /* Functions to calculate yields */
   // TODO: Implement better error calculation
-  void GetYields(TF1* gfit, TH1F* hfit_p, TH1F* hfit_bg,
+  void GetYields(TH1F* hfit_p, TH1F* hfit_bg,
 		 std::vector<double> &output); // Output: pC,pCerr,bgC,bgCerr
   
   void GetYields(TF1* gfit, TH1F* hfit_p, TH1F* hfit_n, TH1F* hfit_bg,

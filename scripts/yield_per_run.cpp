@@ -17,10 +17,18 @@
 #include "gmn_ana.h"
 #include "../dflay/src/JSONManager.cxx"
 
+//______________________________________________________________________________
 void gStyleFitCanvas() 
 {
   gStyle->SetOptStat("e"); gStyle->SetOptFit(1); 
   gStyle->SetErrorX(0);
+}
+
+//______________________________________________________________________________
+void FurtherCustomizeDxHisto(TH1F* h, std::string const &bgshape, int rnum)
+{
+  h->SetTitle(Form("%s | Run: %d",bgshape.c_str(),rnum));
+  h->GetXaxis()->SetTitle("#Deltax (m)");
 }
 
 //______________________________________________________________________________
@@ -108,11 +116,11 @@ TCanvas *FitYields( std::string const &canvname, std::string const &bgshape,
   cfit->cd(2); // R_fit
   DrawTGraphWithErrors(rnums,R_fit,R_fit_err,Form("R_fit vs Runs | %s",bgshape.c_str()),"Run Number","R_fit");
   cfit->cd(3); // Charge-normalized p yield
-  DrawTGraphWithErrors(rnums,CNpY,CNpYerr,Form("Normalized p Yield vs Runs | %s",bgshape.c_str()),"Run Number","Normalized p Yield (1/C)",1,1,0,1E7);
+  DrawTGraphWithErrors(rnums,CNpY,CNpYerr,Form("Normalized p Yield vs Runs | %s",bgshape.c_str()),"Run Number","Normalized p Yield (1/C)",1,1,0,1.5E6);//,1E7);
   cfit->cd(4); // Charge-normalized n yield
-  DrawTGraphWithErrors(rnums,CNnY,CNnYerr,Form("Normalized n Yield vs Runs | %s",bgshape.c_str()),"Run Number","Normalized n Yield (1/C)",1,1,0,1E7);
+  DrawTGraphWithErrors(rnums,CNnY,CNnYerr,Form("Normalized n Yield vs Runs | %s",bgshape.c_str()),"Run Number","Normalized n Yield (1/C)",1,1,0,1.5E6);//,1E7);
   cfit->cd(5); // Charge-normalized n yield
-  DrawTGraphWithErrors(rnums,CNtotY,CNtotYerr,Form("Normalized n+p Yield vs Runs | %s",bgshape.c_str()),"Run Number","Normalized n+p Yield (1/C)",1,1,0,1E7);
+  DrawTGraphWithErrors(rnums,CNtotY,CNtotYerr,Form("Normalized n+p Yield vs Runs | %s",bgshape.c_str()),"Run Number","Normalized n+p Yield (1/C)",1,1,0,1.5E6);//,1E7);
   return cfit;
 }
 
@@ -133,7 +141,7 @@ TCanvas *FitYields( std::string const &canvname, std::string const &bgshape,
   cfit->cd(1); // Data statistics
   DrawTGraphWithErrors(rnums,stats,statsErr,"# Entries in the Data Histogram","Run Number","# of Entries",0);
   cfit->cd(2); // Charge-normalized p yield
-  DrawTGraphWithErrors(rnums,CNpY,CNpYerr,Form("Normalized p Yield vs Runs | %s",bgshape.c_str()),"Run Number","Normalized p Yield (1/C)",1,1,0,3E7);
+  DrawTGraphWithErrors(rnums,CNpY,CNpYerr,Form("Normalized p Yield vs Runs | %s",bgshape.c_str()),"Run Number","Normalized p Yield (1/C)",1,1,0,5E6);//,1E7);3E7);
   return cfit;
 }
 
@@ -165,6 +173,7 @@ void yield_per_run (const char *configfilename,
 
   // reading analysis params from parent config
   vector<double> dx_fit_range; jmgr_p->GetVectorFromSubKey<double>(key_p.c_str(),"dx_fit_range",dx_fit_range);
+  vector<double> reject_points; jmgr_p->GetVectorFromSubKey<double>(key_p.c_str(),"SB_reject_points",reject_points);
 
   // reading stuff from the local config
   int nruns = -1;
@@ -245,7 +254,9 @@ void yield_per_run (const char *configfilename,
 	## Fitting elastic dx distributions per run ##
 	############################################## */
       if (is_elastic) {
-	TCanvas *cA = util_pd::TC("cA",1,2); gStyleFitCanvas();
+	//TCanvas *cA = util_pd::TC("cA",1,2); gStyleFitCanvas();
+	TCanvas *cA = new TCanvas("cA","cA",1200,1000);
+	cA->Divide(2,1); gStyleFitCanvas();
 	// --------
 	// Fitting data/MC w/ polynomial ---
 	// --------
@@ -255,19 +266,15 @@ void yield_per_run (const char *configfilename,
 					sliceY,h_dxHCAL_simu_p,2,
 					ho2);
 	// recording fit params
-	std::cout << Form("Pol2 Bg: Run #: %d, R: %f",rnum,f2->GetParameter(1)) << "\n";
-	R2.push_back(f2->GetParameter(1)); Rerr2.push_back(f2->GetParError(1));
+	std::cout << Form("Pol2 Bg: Run #: %d",rnum) << "\n";
 	// drawing fit histos
 	ho2[0]->Draw("E"); util_pd::customize_data(ho2[0]);
+	FurtherCustomizeDxHisto(ho2[0],"Pol2 Bg",rnum);
 	ho2[1]->Draw("same HIST"); util_pd::customize_nsig(ho2[1],0);
 	ho2[2]->Draw("same HIST"); util_pd::customize_hbg(ho2[2],0);
 	// calculating yields
-	std::vector<double> yo2; util_pd::GetYields(f2,ho2[1],ho2[2],yo2);
+	std::vector<double> yo2; util_pd::GetYields(ho2[1],ho2[2],yo2);
 	CNpY2.push_back(yo2[0]/charge/daqlt); CNpYerr2.push_back(yo2[1]/charge/daqlt);
-	// calculating charge normalized yields
-	std::cout << "---- \n Run: " << rnum << "\n";
-	std::cout << "Charge: " << charge << " DAQ LT: " << daqlt << "\n";
-	std::cout << "Charge norm. p Yield: " << yo2[0]/charge/daqlt << " +/- " << yo2[1]/charge/daqlt << "\n---\n";
 	// grad the stat box of the fitted histo
 	cA->Update();
 	TPaveStats *st2 = (TPaveStats*)ho2[0]->FindObject("stats");
@@ -275,6 +282,38 @@ void yield_per_run (const char *configfilename,
 	//
 	ho2[0]->Write();
 	// ----
+	// --------
+	// Fitting data/MC w/ polynomial ---
+	// --------
+	cA->cd(2);
+	vector<TH1F*> ho3;
+	TF1* bg3 = fit::fit_1pbg_SB(dx_fit_range,
+				    reject_points,
+				    3,//Opoly,
+				    fit::GetFitParams(f2),
+				    sliceY,
+				    ho3);
+	// recording fit params
+	std::cout << Form("Side Band: Run #: %d",rnum) << "\n";
+	// drawing fit histos
+	ho3[0]->Draw("E"); util_pd::customize_data(ho3[0]);
+	FurtherCustomizeDxHisto(ho3[0],"Side Band",rnum);
+	ho3[1]->Draw("same HIST"); util_pd::customize_nsig(ho3[1],0);
+	ho3[2]->Draw("same HIST"); util_pd::customize_hbg(ho3[2],0);
+	// calculating yields
+	std::vector<double> yo3; util_pd::GetYields(ho3[1],ho3[2],yo3);
+	CNpY3.push_back(yo3[0]/charge/daqlt); CNpYerr3.push_back(yo3[1]/charge/daqlt);
+	// calculating charge normalized yields
+	std::cout << "---- \n Run: " << rnum << "\n";
+	std::cout << "Charge: " << charge << " DAQ LT: " << daqlt << "\n";
+	std::cout << "Charge norm. p Yield: " << yo3[0]/charge/daqlt << " +/- " << yo3[1]/charge/daqlt << "\n---\n";
+	// grad the stat box of the fitted histo
+	cA->Update();
+	TPaveStats *st3 = (TPaveStats*)ho3[0]->FindObject("stats");
+	st3->SetOptStat(1); st3->SetOptFit(1111); 
+	//
+	ho3[0]->Write();
+	// ----	
 	cA->Write();
       }
 
@@ -282,22 +321,23 @@ void yield_per_run (const char *configfilename,
 	## Fitting QE dx distributions per run ##
 	######################################### */      
       else {      
-	TCanvas *cA = util_pd::TC("cA",1,2); gStyleFitCanvas();
+	//TCanvas *cA = util_pd::TC("cA",1,2); gStyleFitCanvas();
+	TCanvas *cA = new TCanvas("cA","cA",1200,1000);
+	cA->Divide(2,1); gStyleFitCanvas();
 	// --------
-	// Fitting data/MC w/ background from MC ---
+	// Fitting data/MC w/ polynomial background (2nd order - fixed) ---
 	// --------
 	cA->cd(1);
 	vector<TH1F*> ho2;
-	TF1 *f2 = fit::fit_2hs_2hbg_THI(dx_fit_range,
-					sliceY,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_inel_p,h_dxHCAL_bg_inel_n,
+	TF1 *f2 = fit::fit_2hs_1pbg_THI(dx_fit_range,
+					sliceY,h_dxHCAL_simu_p,h_dxHCAL_simu_n,3,
 					ho2);
 	// recording fit params
-	std::cout << Form("MC Bg: Run #: %d, R: %f",rnum,f2->GetParameter(1)) << "\n";
+	std::cout << Form("Pol2 Bg: Run #: %d, R: %f",rnum,f2->GetParameter(1)) << "\n";
 	R2.push_back(f2->GetParameter(1)); Rerr2.push_back(f2->GetParError(1));
 	// drawing fit histos
-	ho2[0]->SetTitle(Form("MC Bg | Run: %d",rnum));
-	ho2[0]->GetXaxis()->SetTitle("#Deltax (m)");
 	ho2[0]->Draw("E"); util_pd::customize_data(ho2[0]);
+	FurtherCustomizeDxHisto(ho2[0],"Pol2 Bg",rnum);
 	ho2[4]->Draw("same HIST"); util_pd::customize_psig(ho2[4],0);
 	ho2[5]->Draw("same HIST"); util_pd::customize_nsig(ho2[5],0);
 	ho2[2]->Draw("same HIST"); util_pd::customize_hbg(ho2[2],0);
@@ -312,35 +352,73 @@ void yield_per_run (const char *configfilename,
 	st2->SetOptStat(1); st2->SetOptFit(1111); 
 	//
 	ho2[0]->Write();
-	// --------
-	// Fitting data/MC w/ polynomial background (2nd order - fixed) ---
-	// --------
-	cA->cd(2);
-	vector<TH1F*> ho3;
-	TF1 *f3 = fit::fit_2hs_1pbg_THI(dx_fit_range,
-					sliceY,h_dxHCAL_simu_p,h_dxHCAL_simu_n,2,
-					ho3);
-	// recording fit params
-	std::cout << Form("Pol2 Bg: Run #: %d, R: %f",rnum,f3->GetParameter(1)) << "\n";
-	R3.push_back(f3->GetParameter(1)); Rerr3.push_back(f3->GetParError(1));
-	// drawing fit histos
-	ho3[0]->SetTitle(Form("Pol2 Bg | Run: %d",rnum));
-	ho3[0]->GetXaxis()->SetTitle("#Deltax (m)");
-	ho3[0]->Draw("E"); util_pd::customize_data(ho3[0]);
-	ho3[4]->Draw("same HIST"); util_pd::customize_psig(ho3[4],0);
-	ho3[5]->Draw("same HIST"); util_pd::customize_nsig(ho3[5],0);
-	ho3[2]->Draw("same HIST"); util_pd::customize_hbg(ho3[2],0);
-	// calculating yields
-	std::vector<double> yo3; util_pd::GetYields(f3,ho3[4],ho3[5],ho3[2],yo3);
-	CNpY3.push_back(yo3[0]/charge/daqlt); CNpYerr3.push_back(yo3[1]/charge/daqlt);
-	CNnY3.push_back(yo3[2]/charge/daqlt); CNnYerr3.push_back(yo3[3]/charge/daqlt);
-	CNtotY3.push_back(yo3[6]/charge/daqlt); CNtotYerr3.push_back(yo3[7]/charge/daqlt);
-	// grad the stat box of the fitted histo
-	cA->Update();
-	TPaveStats *st3 = (TPaveStats*)ho3[0]->FindObject("stats");
-	st3->SetOptStat(1); st3->SetOptFit(1111); 
-	//
-	ho3[0]->Write();
+	// ***** -- \\//
+	// If 0 field data, then try simple side band fit instead of MC bg
+	if (sbsmag==0) {
+	  // --------
+	  // Fitting data w/ bg estimate from side band fit ---
+	  // --------
+	  cA->cd(2);
+	  vector<TH1F*> ho3;
+	  TF1* bg3 = fit::fit_1pbg_SB(dx_fit_range,
+				      reject_points,
+				      3,//Opoly,
+				      fit::GetFitParams(f2),
+				      sliceY,
+				      ho3);
+	  // recording fit params
+	  std::cout << Form("Side Band: Run #: %d",rnum) << "\n";
+	  R3.push_back(0); Rerr3.push_back(0);
+	  // drawing fit histos
+	  ho3[0]->Draw("E"); util_pd::customize_data(ho3[0]);
+	  FurtherCustomizeDxHisto(ho3[0],"Side Band",rnum);
+	  ho3[1]->Draw("same HIST"); util_pd::customize_nsig(ho3[1],0);
+	  ho3[2]->Draw("same HIST"); util_pd::customize_hbg(ho3[2],0);
+	  // calculating yields
+	  std::vector<double> yo3; util_pd::GetYields(ho3[1],ho3[2],yo3);
+	  CNpY3.push_back(0); CNpYerr3.push_back(0);
+	  CNnY3.push_back(0); CNnYerr3.push_back(0);
+	  CNtotY3.push_back(yo3[0]/charge/daqlt); CNtotYerr3.push_back(yo3[1]/charge/daqlt);
+	  // grad the stat box of the fitted histo
+	  cA->Update();
+	  TPaveStats *st3 = (TPaveStats*)ho3[0]->FindObject("stats");
+	  st3->SetOptStat(1); st3->SetOptFit(1111); 
+	  //
+	  ho3[0]->Write();	  
+	}
+	else {
+	  // --------
+	  // Fitting data/MC w/ background from MC ---
+	  // --------
+	  cA->cd(2);
+	  vector<TH1F*> ho3;
+	  // TF1 *f3 = fit::fit_2hs_2hbg_THI(dx_fit_range,
+	  // 				  sliceY,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_inel_p,h_dxHCAL_bg_inel_n,
+	  // 				  ho3);
+	  TF1 *f3 = fit::fit_2hs_1hbg_THI(dx_fit_range,
+					  sliceY,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_data,
+					  ho3);
+	  // recording fit params
+	  std::cout << Form("MC Bg: Run #: %d, R: %f",rnum,f3->GetParameter(1)) << "\n";
+	  R3.push_back(f3->GetParameter(1)); Rerr3.push_back(f3->GetParError(1));
+	  // drawing fit histos
+	  ho3[0]->Draw("E"); util_pd::customize_data(ho3[0]);
+	  FurtherCustomizeDxHisto(ho3[0],"MC Bg",rnum);
+	  ho3[4]->Draw("same HIST"); util_pd::customize_psig(ho3[4],0);
+	  ho3[5]->Draw("same HIST"); util_pd::customize_nsig(ho3[5],0);
+	  ho3[2]->Draw("same HIST"); util_pd::customize_hbg(ho3[2],0);
+	  // calculating yields
+	  std::vector<double> yo3; util_pd::GetYields(f3,ho3[4],ho3[5],ho3[2],yo3);
+	  CNpY3.push_back(yo3[0]/charge/daqlt); CNpYerr3.push_back(yo3[1]/charge/daqlt);
+	  CNnY3.push_back(yo3[2]/charge/daqlt); CNnYerr3.push_back(yo3[3]/charge/daqlt);
+	  CNtotY3.push_back(yo3[6]/charge/daqlt); CNtotYerr3.push_back(yo3[7]/charge/daqlt);
+	  // grad the stat box of the fitted histo
+	  cA->Update();
+	  TPaveStats *st3 = (TPaveStats*)ho3[0]->FindObject("stats");
+	  st3->SetOptStat(1); st3->SetOptFit(1111); 
+	  //
+	  ho3[0]->Write();
+	}
 	// ----
 	cA->Write();
       }
@@ -351,12 +429,20 @@ void yield_per_run (const char *configfilename,
   if (is_elastic) {
     TCanvas *cfit2 = FitYields("cfit2","Pol2 Bg",rnums,stats,CNpY2,CNpYerr2);
     cfit2->Update(); cfit2->Write();
+    TCanvas *cfit3 = FitYields("cfit3","Side Band",rnums,stats,CNpY3,CNpYerr3);
+    cfit3->Update(); cfit3->Write();
   }
   else {
-    TCanvas *cfit2 = FitYields("cfit2","MC Bg",rnums,stats,R2,Rerr2,CNpY2,CNpYerr2,CNnY2,CNnYerr2,CNtotY2,CNtotYerr2);
+    TCanvas *cfit2 = FitYields("cfit2","Pol2 Bg",rnums,stats,R2,Rerr2,CNpY2,CNpYerr2,CNnY2,CNnYerr2,CNtotY2,CNtotYerr2);
     cfit2->Update(); cfit2->Write();
-    TCanvas *cfit3 = FitYields("cfit3","Pol2 Bg",rnums,stats,R3,Rerr3,CNpY3,CNpYerr3,CNnY3,CNnYerr3,CNtotY3,CNtotYerr3);
-    cfit3->Update(); cfit3->Write();
+    if (sbsmag==0) {
+      TCanvas *cfit3 = FitYields("cfit3","Side Band",rnums,stats,R3,Rerr3,CNpY3,CNpYerr3,CNnY3,CNnYerr3,CNtotY3,CNtotYerr3);
+      cfit3->Update(); cfit3->Write();
+    }
+    else {
+      TCanvas *cfit3 = FitYields("cfit3","MC Bg",rnums,stats,R3,Rerr3,CNpY3,CNpYerr3,CNnY3,CNnYerr3,CNtotY3,CNtotYerr3);
+      cfit3->Update(); cfit3->Write();
+    }
   }
   std::cout << totc << " " << gc << "\n";
 
