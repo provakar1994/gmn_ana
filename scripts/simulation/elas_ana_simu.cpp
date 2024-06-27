@@ -172,7 +172,8 @@ int elas_ana_simu (const char *configfilename,
   bool ARCut;             Tout->Branch("ARCut", &ARCut, "ARCut/B");
   bool fiduCut;           Tout->Branch("fiduCut", &fiduCut, "fiduCut/B");
   //MC related
-  double weight;          Tout->Branch("weight", &weight, "weight/D");  
+  double weight;          Tout->Branch("weight", &weight, "weight/D");
+  double weight_norm;     Tout->Branch("weight_norm", &weight_norm, "weight_norm/D");  
   int T_mc_fnucl;         Tout->Branch("mc_fnucl", &T_mc_fnucl, "mc_fnucl/I");
   //
   double T_ebeam;         Tout->Branch("ebeam", &T_ebeam, "ebeam/D");
@@ -292,7 +293,8 @@ int elas_ana_simu (const char *configfilename,
 
   // looping through the tree ---------------------------------------
   std::cout << std::endl;
-  long double ntries = totNtriesnCh[0];
+  double charge;
+  long double totntries = totNtriesnCh[0];
   long nevent = 0, nevents = C->GetEntries(), ngoodevs = 0; 
   int treenum = 0, currenttreenum = 0, treeitr = 0;
   while (C->GetEntry(nevent++)) {
@@ -310,7 +312,8 @@ int elas_ana_simu (const char *configfilename,
       // getting normalization factors per run
       const char* rftemp = C->GetFile()->GetName();
       SimuJob sjtemp = mnorm[rftemp];
-      lumi = sjtemp.lumi; mc_omega = sjtemp.genvol; ebeam = sjtemp.ebeam; 
+      ebeam = sjtemp.ebeam; charge = sjtemp.charge;
+      lumi = sjtemp.lumi; mc_omega = sjtemp.genvol; 
       if (sjtemp.usingRS) maxwtRS = sjtemp.maxwtRS;
     } 
     bool passedgCut = GlobalCut->EvalInstance(0) != 0;   
@@ -318,7 +321,8 @@ int elas_ana_simu (const char *configfilename,
     ngoodevs++;
 
     // cross section weighted normalization factor
-    weight = usingRS ? maxwtRS*mc_omega*lumi/ntries : mc_sigma*mc_omega*lumi/ntries;
+    weight = usingRS ? maxwtRS*mc_omega*lumi/totntries : mc_sigma*mc_omega*lumi/totntries;
+    weight_norm = usingRS ? maxwtRS*mc_omega*lumi/totntries/charge : mc_sigma*mc_omega*lumi/totntries/charge;
 
     // kinematic parameters
     double ebeam_corr = ebeam; //- MeanEloss;

@@ -261,7 +261,8 @@ int elas_ana_data (const char *configfilename,
   double T_dnewcurr;      if (get_scaler_info) Tout->Branch("dnewcurr", &T_dnewcurr, "dnewcurr/D");
   //per run info
   double T_dnewcharge;    Tout->Branch("dnewcharge", &T_dnewcharge, "dnewcharge/D");
-  double T_daqlvtm;       Tout->Branch("daqlvtm", &T_daqlvtm, "daqlvtm/D");
+  //double T_daqlvtm;       Tout->Branch("daqlvtm", &T_daqlvtm, "daqlvtm/D");
+  double T_weight_norm;   Tout->Branch("weight_norm", &T_weight_norm, "weight_norm/D"); // = 1/charge/daqlvtm
   //kine
   double T_nu;            Tout->Branch("nu", &T_nu, "nu/D");
   double T_Q2;            Tout->Branch("Q2", &T_Q2, "Q2/D");
@@ -424,7 +425,8 @@ int elas_ana_data (const char *configfilename,
       // apply global cuts efficiently (AJRP method)
       GlobalCut->UpdateFormulaLeaves();
 
-      // read ebeam once per run
+      // code block to read run specific info
+      // ebeam, charge, daqlvtm are read
       if (nevent == 1 || rnum != runnum) {
 	runnum = rnum; nseg=1;
 	auto it = std::find_if(crun.begin(), crun.end(), [=](CodaRun const& cr) {return cr.runnum == runnum;});
@@ -548,7 +550,8 @@ int elas_ana_data (const char *configfilename,
     }
     // per run info
     T_dnewcharge = dnewcharge;
-    T_daqlvtm = daqlvtm;
+    //T_daqlvtm = daqlvtm;
+    T_weight_norm = 1./dnewcharge/daqlvtm;
 
     T_vz = vz[0];
     T_trP = p[0];
