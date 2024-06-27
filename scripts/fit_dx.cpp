@@ -28,6 +28,8 @@
 #include "../include/gmn_ana.h"
 #include "../dflay/src/JSONManager.cxx"
 
+bool temp = 0;
+
 //______________________________________________________________________________
 void CalcRnumBinEdges(int rmin, int rmax, bool debug, std::vector<double> &binEdges) {
   /* Calculates explicit bin edges for run histo */
@@ -130,7 +132,7 @@ void FurtherCustoizeDataHisto(TH1F *h_dxHCAL_data, std::string const &cuts_for_s
   h_dxHCAL_data->SetStats(0);
   h_dxHCAL_data->SetTitle(Form("dx {%s}",cuts_for_signal_data.c_str()));
   //h_dxHCAL_data->GetYaxis()->SetMaxDigits(3);
-  h_dxHCAL_data->GetYaxis()->SetRangeUser(-5,h_dxHCAL_data->GetMaximum()*1.1);
+  h_dxHCAL_data->GetYaxis()->SetRangeUser(-1000,h_dxHCAL_data->GetMaximum()*1.1);
 }
 
 // void AddFiduCutToLegend(TLegend *leg, std::vector<double> hcal_AR, std::vector<double> hcal_SM) {
@@ -261,10 +263,13 @@ int fit_dx (const char *configfilename,
 
   // Creating important histograms
   vector<double> h_dx; jmgr->GetVectorFromSubKey<double>(key,"h_dx",h_dx);
-  TH1F *h_dxHCAL_data; 
+  TH1F *h_dxHCAL_data;
+  TH1F *h_dxHCAL_data_norm; // charge normalized & live time corrected 
   TH1F *h_dxHCAL_data_CT;
   TH1F *h_dxHCAL_simu_p;
   TH1F *h_dxHCAL_simu_n;
+  TH1F *h_dxHCAL_simu_p_norm; // Charge normalized
+  TH1F *h_dxHCAL_simu_n_norm; // Charge normalized
   TH1F *h_dxHCAL_bg_data;
   TH1F *h_dxHCAL_bg_inel_p;
   TH1F *h_dxHCAL_bg_inel_n;
@@ -274,6 +279,7 @@ int fit_dx (const char *configfilename,
   TH1F *h_vetheta;
   // vs Run number
   TH2F *h2_dxHCAL_vs_rnum;
+  TH2F *h2_dxHCAL_vs_rnum_norm; // charge normalized & live time corrected
 
   // Cut variation **************
   // Although not necessary, keeping this loop separate gives more control and clarity
@@ -413,9 +419,14 @@ int fit_dx (const char *configfilename,
     // Filling physics histograms with appropriate cuts -----
     if (!use_custom_fiduCut) { // don't use custom fidu cut
       h_dxHCAL_data = (TH1F*)data_rdf_filtered.Filter(cuts[i]).Histo1D({"h_dxHCAL_data","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
+      if (temp) h_dxHCAL_data_norm = (TH1F*)data_rdf_filtered.Filter(cuts[i]).Histo1D({"h_dxHCAL_data_norm","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx","weight_norm")->Clone();
       h_dxHCAL_data_CT = (TH1F*)data_rdf_filtered.Filter(coinT_cut.c_str()).Histo1D({"h_dxHCAL_data_CT","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
       h_dxHCAL_simu_p = (TH1F*)simu_rdf_filtered.Filter(cuts_p[i]).Histo1D({"h_dxHCAL_simu_p","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_p","weight")->Clone();
-      if (!is_elastic) h_dxHCAL_simu_n = (TH1F*)simu_rdf_filtered.Filter(cuts_n[i]).Histo1D({"h_dxHCAL_simu_n","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_n","weight")->Clone();
+      h_dxHCAL_simu_p_norm = (TH1F*)simu_rdf_filtered.Filter(cuts_p[i]).Histo1D({"h_dxHCAL_simu_p_norm","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_p","weight_norm")->Clone();
+      if (!is_elastic) {
+	h_dxHCAL_simu_n = (TH1F*)simu_rdf_filtered.Filter(cuts_n[i]).Histo1D({"h_dxHCAL_simu_n","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_n","weight")->Clone();
+	h_dxHCAL_simu_n_norm = (TH1F*)simu_rdf_filtered.Filter(cuts_n[i]).Histo1D({"h_dxHCAL_simu_n_norm","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_n","weight_norm")->Clone();
+      }
       // bg histos
       h_dxHCAL_bg_data = (TH1F*)bg_data_rdf_filtered.Histo1D({"h_dxHCAL_bg_data","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
       h_dxHCAL_bg_inel_p = (TH1F*)inel_rdf_filtered.Filter("mc_fnucl==1").Histo1D({"h_dxHCAL_bg_inel_p","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_p","weight")->Clone();
@@ -432,16 +443,32 @@ int fit_dx (const char *configfilename,
       }
       // ** vs Run number histos **
       h2_dxHCAL_vs_rnum = (TH2F*)data_rdf_filtered.Filter(cuts[i]).Histo2D({"h2_dxHCAL_vs_rnum","",nbinRnum,&(xbinsRnum)[0],int(h_dx[0]),h_dx[1],h_dx[2]},"rnum","dx")->Clone();
+      if (temp) h2_dxHCAL_vs_rnum_norm = (TH2F*)data_rdf_filtered
+		  .Filter(cuts[i]).Histo2D({"h2_dxHCAL_vs_rnum_norm","",nbinRnum,&(xbinsRnum)[0],int(h_dx[0]),h_dx[1],h_dx[2]},"rnum","dx","weight_norm")->Clone();
 
     } else { // use custom fidu cut
       h_dxHCAL_data = (TH1F*)data_rdf_filtered
 	.Filter(cuts[i]).Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"})
 	.Histo1D({"h_dxHCAL_data","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
+      if (temp) h_dxHCAL_data_norm = (TH1F*)data_rdf_filtered
+		  .Filter(cuts[i]).Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"})
+		  .Histo1D({"h_dxHCAL_data_norm","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx","weight_norm")->Clone();
       h_dxHCAL_data_CT = (TH1F*)data_rdf_filtered.Filter(coinT_cut.c_str())
 	.Histo1D({"h_dxHCAL_data_CT","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
       h_dxHCAL_simu_p = (TH1F*)simu_rdf_filtered
 	.Filter(cuts_p[i]).Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"})
 	.Histo1D({"h_dxHCAL_simu_p","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_p","weight")->Clone();
+      h_dxHCAL_simu_p_norm = (TH1F*)simu_rdf_filtered
+	.Filter(cuts_p[i]).Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"})
+	.Histo1D({"h_dxHCAL_simu_p_norm","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_p","weight_norm")->Clone();
+      if (!is_elastic) {
+	h_dxHCAL_simu_n = (TH1F*)simu_rdf_filtered
+	  .Filter(cuts_n[i]).Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"})
+	  .Histo1D({"h_dxHCAL_simu_n","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_n","weight")->Clone();
+	h_dxHCAL_simu_n_norm = (TH1F*)simu_rdf_filtered
+	  .Filter(cuts_n[i]).Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"})
+	  .Histo1D({"h_dxHCAL_simu_n_norm","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_n","weight_norm")->Clone();
+      }
       // kinematic histos "true"
       if (!apply_to_data_only||!is_elastic) {
 	h_vQ2 =  (TH1F*)simu_rdf_filtered.Filter(cuts[i]).Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"}).Histo1D({"h_vQ2","",300,0,16},"vQ2","weight")->Clone();
@@ -451,11 +478,10 @@ int fit_dx (const char *configfilename,
       h2_dxHCAL_vs_rnum = (TH2F*)data_rdf_filtered
 	.Filter(cuts[i]).Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"})
 	.Histo2D({"h2_dxHCAL_vs_rnum","",nbinRnum,&(xbinsRnum)[0],int(h_dx[0]),h_dx[1],h_dx[2]},"rnum","dx")->Clone();
+      if (temp) h2_dxHCAL_vs_rnum_norm = (TH2F*)data_rdf_filtered
+		  .Filter(cuts[i]).Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"})
+		  .Histo2D({"h2_dxHCAL_vs_rnum_norm","",nbinRnum,&(xbinsRnum)[0],int(h_dx[0]),h_dx[1],h_dx[2]},"rnum","dx","weight_norm")->Clone();
       
-      if (!is_elastic) h_dxHCAL_simu_n = (TH1F*)simu_rdf_filtered
-			 .Filter(cuts_n[i]).Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"})
-			 .Histo1D({"h_dxHCAL_simu_n","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_n","weight")->Clone();
-
       // bg histos ----- 
       // (data)
       if (apply_to_bg_data) // applying custom fiduCut to data bg
@@ -493,13 +519,16 @@ int fit_dx (const char *configfilename,
     // Now that we have all the important histograms formed, let's write them to the output
     // tree for further analysis.
     if (!is_vary_cut) {
-      h_dxHCAL_data->Write(); 
+      h_dxHCAL_data->Write();
+      if (temp) h_dxHCAL_data_norm->Write(); 
       h_dxHCAL_data_CT->Write();
       h_dxHCAL_simu_p->Write();
+      h_dxHCAL_simu_p_norm->Write();
       h_dxHCAL_bg_data->Write();
       h_dxHCAL_bg_inel_p->Write();
       if (!is_elastic) {
 	h_dxHCAL_simu_n->Write();
+	h_dxHCAL_simu_n_norm->Write();
 	h_dxHCAL_bg_inel->Write();
 	h_dxHCAL_bg_inel_n->Write();
       }
@@ -510,6 +539,7 @@ int fit_dx (const char *configfilename,
       }
       // vs Runnum histos
       h2_dxHCAL_vs_rnum->Write();
+      if (temp) h2_dxHCAL_vs_rnum_norm->Write();
     }
     // ------------
 
@@ -685,14 +715,40 @@ int fit_dx (const char *configfilename,
       vector<TH1F*> ho3;
       TF1* bg3 = fit::fit_1pbg_SB(dx_fit_range,
 				  reject_points,
-				  Opoly,
+				  3,//Opoly,
 				  fit::GetFitParams(f2),
 				  h_dxHCAL_data,
 				  ho3);
-      //bg3->Draw("same");
-      ho3[0]->Draw(); customize_ht(ho3[0]); customize_dx(ho3[0]);
-      ho3[1]->Draw("same ep"); customize_hs(ho3[1]); customize_dx(ho3[1]);
-      ho3[2]->Draw("same"); util_pd::customize_hbg(ho3[2],1); customize_dx(ho3[2]);    
+      ho3[0]->Draw(); c3->Update(); 
+      // grabbing statbox of the fitted histo
+      TPaveStats *st3 = (TPaveStats*)ho3[0]->FindObject("stats");
+      ho3[0]->SetBit(TH1::kNoStats); // Sets up the stat box for later modification
+      // // getting pads for pull plot
+      // std::vector<TPad*> p3 = util_pd::GetPadsForPullPlot(c3);
+      // //
+      // // preparing the pad for data/MC fit
+      // //
+      // p3[0]->cd();
+      // plotting the histos
+      ho3[0]->Draw("E"); util_pd::customize_data(ho3[0]);
+      ho3[1]->Draw("same HIST"); util_pd::customize_nsig(ho3[1],1);
+      ho3[2]->Draw("same HIST"); util_pd::customize_hbg(ho3[2],1);
+      // redrawing the stat box
+      st3->SetX1NDC(0.62); st3->SetX2NDC(0.9); st3->SetY2NDC(0.9);
+      st3->Draw("same");
+      // // preparing the pad for residual
+      // p3[1]->cd();
+      // ho3[3]->Draw(); util_pd::customize_residual(ho3[3]);
+      // // drawing a horizontal line at y = 0
+      // util_pd::DrawZeroLine(p3[1],dx_fit_range[0],dx_fit_range[1]);
+      // drawing legend
+      TLegend *l3=new TLegend(0.10,0.74,0.33,0.9);
+      l3->SetTextFont(42);
+      l3->AddEntry(h_dxHCAL_data,"Data","p");
+      l3->AddEntry(ho3[2],Form("Bg. (Side Band)"),"lf");
+      l3->AddEntry(ho3[1],"Signal (Data-Bg.)","lf");
+      //l3->AddEntry(ho3[3],"Residual","p");
+      l3->Draw();
 
       //double bgcount = (int)bg3->Integral(dx_fit_range[0],dx_fit_range[1])/h_dxHCAL_data->GetBinWidth(1);
       double bgcount = ho3[2]->Integral(ho3[2]->FindBin(dx_fit_range[0]),ho3[2]->FindBin(dx_fit_range[1]));;
