@@ -182,7 +182,8 @@ int qelas_ana_simu (const char *configfilename,
   bool ARCut;             Tout->Branch("ARCut", &ARCut, "ARCut/B");
   bool fiduCut;           Tout->Branch("fiduCut", &fiduCut, "fiduCut/O");
   //MC related
-  double weight;          Tout->Branch("weight", &weight, "weight/D");  
+  double weight;          Tout->Branch("weight", &weight, "weight/D");
+  double weight_norm;     Tout->Branch("weight_norm", &weight_norm, "weight_norm/D");  
   int T_mc_fnucl;         Tout->Branch("mc_fnucl", &T_mc_fnucl, "mc_fnucl/I");
   //
   double T_ebeam;         Tout->Branch("ebeam", &T_ebeam, "ebeam/D");
@@ -196,6 +197,7 @@ int qelas_ana_simu (const char *configfilename,
   double T_nu;            Tout->Branch("nu", &T_nu, "nu/D");
   double T_Q2;            Tout->Branch("Q2", &T_Q2, "Q2/D");
   double T_W2;            Tout->Branch("W2", &T_W2, "W2/D");
+  //double T_W2_c;          Tout->Branch("W2_c", &T_W2_c, "W2_c/D"); //centered properly based on LH2 data/MC comparison
   double T_W;             Tout->Branch("W", &T_W, "W/D");
   double T_dpel;          Tout->Branch("dpel", &T_dpel, "dpel/D");
   double T_ephi;          Tout->Branch("ephi", &T_ephi, "ephi/D");
@@ -265,7 +267,9 @@ int qelas_ana_simu (const char *configfilename,
   // Do the energy loss calculation here (only for g4sbs generator)
   double ebeam = sbsconf.GetEbeam(); // gets overwritten in the event loop
 
-  // reading W cut limits
+  // reading W2 offset and W cut limits
+  double dy_offset = jmgr->GetValueFromSubKey<double>(key,"dy_offset");
+  double W2_offset = jmgr->GetValueFromSubKey<double>(key,"W2_offset");
   std::vector<double> W_cutR; jmgr->GetVectorFromSubKey<double>(key,"W_cutR",W_cutR);
   // reading BB fiducial cut limits
   std::vector<double> bbfidu_cutR; jmgr->GetVectorFromSubKey<double>(key,"bbfidu_cutR",bbfidu_cutR);
@@ -347,7 +351,8 @@ int qelas_ana_simu (const char *configfilename,
 
   // looping through the tree ---------------------------------------
   std::cout << std::endl;
-  long double ntries = totNtries[0];
+  double charge;
+  long double totntries = totNtries[0];
   long nevent = 0, nevents = C->GetEntries(), ngoodevs = 0; 
   int treenum = 0, currenttreenum = 0, treeitr = 0;
   while (C->GetEntry(nevent++)) {
@@ -362,13 +367,14 @@ int qelas_ana_simu (const char *configfilename,
       // apply global cuts efficiently (AJRP method)
       GlobalCut->UpdateFormulaLeaves();
       
-      // getting normalization factors per run
+      // getting normalization factors per job
       const char* rftemp = C->GetFile()->GetName();
       SimuJob sjtemp = mnorm[rftemp];
-      lumi = sjtemp.lumi; mc_omega = sjtemp.genvol; ebeam = sjtemp.ebeam; 
+      ebeam = sjtemp.ebeam; charge = sjtemp.charge;
+      lumi = sjtemp.lumi; mc_omega = sjtemp.genvol; 
       if (is_simcdeeN) {
-	if (sjtemp.process.compare("deep")==0) ntries = totNtries[0]; //p events
-	else {ntries = totNtries[1]; maxwtRS_n = sjtemp.maxwtRS;} // n events
+	if (sjtemp.process.compare("deep")==0) totntries = totNtries[0]; //p events
+	else {totntries = totNtries[1]; maxwtRS_n = sjtemp.maxwtRS;} // n events
       }
       if (sjtemp.usingRS) maxwtRS = sjtemp.maxwtRS;
     } 
@@ -377,7 +383,8 @@ int qelas_ana_simu (const char *configfilename,
     ngoodevs++;
 
     // cross section weighted normalization factor
-    weight = usingRS ? maxwtRS*mc_omega*lumi/ntries : mc_sigma*mc_omega*lumi/ntries;
+    weight = usingRS ? maxwtRS*mc_omega*lumi/totntries : mc_sigma*mc_omega*lumi/totntries;
+    weight_norm = usingRS ? maxwtRS*mc_omega*lumi/totntries/charge : mc_sigma*mc_omega*lumi/totntries/charge;
 
     // kinematic parameters
     double ebeam_corr = ebeam; //- MeanEloss;
@@ -463,7 +470,8 @@ int qelas_ana_simu (const char *configfilename,
 
     T_nu = nu;
     T_Q2 = Q2recon;
-    T_W2 = W2recon;
+    T_W2 = W2recon+W2_offset;
+    //zT_W2_c = W2recon-W2_offset;
     T_W = Wrecon;
     T_dpel = dpel;
     T_ephi = ephi;
@@ -549,7 +557,7 @@ int qelas_ana_simu (const char *configfilename,
     T_xHCAL_exp = xyHCAL_exp[0];
     T_yHCAL_exp = xyHCAL_exp[1];
     T_dx = dx;
-    T_dy = dy;
+    T_dy = dy+dy_offset;
 
     /* Calculating thpq (both p & n hypothesis) */
     // n (no deflection)
