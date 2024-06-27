@@ -45,6 +45,14 @@ namespace fit {
 			 int Opoly,            // Order of poly to fit bg
 			 std::vector<TH1F*> &ho);   // Output: ht,hs,hbg
 
+  // TH Interpolation fit using 1 signal histo & 1 poly bg (1+Opoly+1 pars)
+  TF1* fit_1hs_1pbg_THI_xOffVary (std::vector<double> const & fit_range,
+				  TH1F* ht,             // total histo to fit 
+				  TH1F* hs,             // 1st signal histo for fit
+				  int Opoly,            // Order of poly to fit bg
+				  std::vector<double> const & xOff_range,  // ranges to vary hs1 & hs2 offsets
+				  std::vector<TH1F*> &ho);   // Output: ht,hs,hbg
+
   // TH Interpolation fit using 1 signal histo & 1 bg histo (2 pars)
   TF1* fit_1hs_1hbg_THI (std::vector<double> const & fit_range,
 			 TH1F* ht,             // total histo to fit 
@@ -52,12 +60,30 @@ namespace fit {
 			 TH1F* hbg,            // bg histo for fit
 			 std::vector<TH1F*> &ho);   // Output: ht,hs,hbg,N*hs (N=par[0],B=par[1])
 
+  // TH Interpolation fit using 1 signal histo (vary x offsets for both) & 1 bg histo (2+2 pars)
+  // This time x position of the signal histo is also free parameter
+  TF1* fit_1hs_1hbg_THI_xOffVary (std::vector<double> const & fit_range,
+				  TH1F* ht,             // total histo to fit 
+				  TH1F* hs,             // signal histo for fit
+				  TH1F* hbg,            // bg histo for fit
+				  std::vector<double> const & xOff_range,  // ranges to vary hs & hbg offsets
+				  std::vector<TH1F*> &ho);    // Output: ht,hs,hres,N*hs1,N*R*hs2 (N=par[0],R=par[1])
+  
   // TH Interpolation fit using 2 signal histos & no background (2 pars)
   TF1* fit_2hs_nbg_THI (std::vector<double> const & fit_range,
 			TH1F* ht,             // total histo to fit 
 			TH1F* hs1,            // 1st signal histo for fit
 			TH1F* hs2,            // 2nd signal histo for fit
 			std::vector<TH1F*> &ho);   // Output: ht,hs,hbg,N*hs1,N*R*hs2 (N=par[0],R=par[1])
+
+  // TH Interpolation fit using 2 signal histos (vary x offsets for both) & no background (2+2 pars)
+  // This time x position of the signal histo is also free parameter
+  TF1* fit_2hs_nbg_THI_xOffVary (std::vector<double> const & fit_range,
+				 TH1F* ht,             // total histo to fit 
+				 TH1F* hs1,            // 1st signal histo for fit
+				 TH1F* hs2,            // 2nd signal histo for fit
+				 std::vector<double> const & xOff_range,  // ranges to vary hs1 & hs2 offsets
+				 std::vector<TH1F*> &ho);   // Output: ht,hs,hbg,N*hs1,N*R*hs2 (N=par[0],R=par[1])
 
   // TH Interpolation fit using 2 signal histos & 1 bg histo (3 pars)
   TF1* fit_2hs_1hbg_THI (std::vector<double> const & fit_range,

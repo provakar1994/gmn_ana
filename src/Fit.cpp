@@ -1,7 +1,7 @@
 #include "../include/Fit.h"
 
 namespace fit {
-
+  //______________________________________________________________________________
   void set_poly_par_names (TF1* f1,
 			   int const Spar,
 			   int const Opoly)
@@ -12,7 +12,7 @@ namespace fit {
       f1->SetParName(i,s.c_str());
     }
   }
-
+  //______________________________________________________________________________
   void set_gaus_par_names (TF1* f1,
 			   int const Spar)
   /* Sets the name of Gaussian fit parameters */
@@ -21,7 +21,7 @@ namespace fit {
     f1->SetParName(Spar+1,"Mean");
     f1->SetParName(Spar+2,"Sigma");
   }
-
+  //______________________________________________________________________________
   std::vector<double> GetFitParams(TF1 * const f1)
   /* Returns a vector filled with fit pramater values from f1 */
   {
@@ -30,7 +30,7 @@ namespace fit {
     for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
     return pars;
   }
-
+  //______________________________________________________________________________
   std::vector<double> GetFitParamErrors(TF1 * const f1)
   /* Returns a vector filled with fit pramater errors from f1 */
   {
@@ -39,7 +39,7 @@ namespace fit {
     for (int i=0;i<npars;i++) {parerrs.push_back(f1->GetParError(i));}
     return parerrs;
   }
-
+  //______________________________________________________________________________
   TF1* fit_1pbg_SB (std::vector<double> const & fit_range,
 		    std::vector<double> const & reject_points,
 		    int Opoly,          // Order of poly to fit bg
@@ -57,6 +57,9 @@ namespace fit {
     TF1* f1 = new TF1("f1",ffn,&FitFn::ffn_1pbg_sb_2rp,fit_range[0],fit_range[1],Opoly+1);
     f1->SetNpx(1000);
     f1->SetParameters(&initial_guesses[0]);
+    // customizing
+    f1->SetLineWidth(4);
+    f1->SetLineColor(kBlue);
 
     ht_cp->Fit(f1,"R");
 
@@ -70,11 +73,14 @@ namespace fit {
     // let's extract the signal histo
     TH1F *hbg = (TH1F*)ht_cp->Clone(); util_pd::TF1toTH1F(bg,hbg);
     TH1F *hs = (TH1F*)ht_cp->Clone(); hs->Add(ht_cp,hbg,1,-1);
-    ho = {ht_cp,hs,hbg};
+    // 06/25/24 - Couldn't make the residual work! Still leaving it as is
+    TH1F *hsANDbg = (TH1F*)hs->Clone(); hsANDbg->Add(hs,hbg);
+    TH1F *hres = (TH1F*)hs->Clone(); hres->Add(ht,hsANDbg,1,-1); 
+    ho = {ht_cp,hs,hbg,hres};
 
     return bg;
   }
-
+  //______________________________________________________________________________
   TF1* fit_1hs_nbg_THI (std::vector<double> const & fit_range,
 			TH1F* ht,           // total histo to fit 
 			TH1F* hs,           // signal histo for
@@ -102,7 +108,7 @@ namespace fit {
     
     return f1;    
   }
-
+  //______________________________________________________________________________
   TF1* fit_1hs_1pbg_THI (std::vector<double> const & fit_range,
 			 TH1F* ht,             // total histo to fit 
 			 TH1F* hs,             // 1st signal histo for fit
@@ -124,16 +130,74 @@ namespace fit {
     set_poly_par_names(f1,1,Opoly);
 
     ht_cp->Fit(f1,"R");
-    // std::vector<double> pars;
-    // for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
+    std::vector<double> pars = GetFitParams(f1);
 
-    TH1F *hs_cp2 = (TH1F*)hs_cp1->Clone(); hs_cp2->Scale(GetFitParams(f1)[0]); //hs_cp2->Scale(pars[0]);
-    TH1F *hbg = (TH1F*)ht_cp->Clone(); hbg->Add(ht_cp,hs_cp2,1,-1); 
-    ho = {ht_cp,hs_cp2,hbg};
+    // drawing the polynomial background function
+    FitFn *ffn2 = new FitFn(Opoly);
+    TF1* bgf = new TF1("bgf",ffn2,&FitFn::ffn_poly,fit_range[0],fit_range[1],Opoly+1);
+    bgf->SetNpx(500);
+    bgf->SetParameters(&pars[1]);
+
+    // now get a bg histo from bgf
+    TH1F *hbg_sc = (TH1F*)hs_cp1->Clone(); util_pd::TF1toTH1F(bgf,hbg_sc);
+    hbg_sc->SetMarkerColor(46); hbg_sc->SetLineColor(46); //hbg_sc->SetLineWidth(2);
+
+    TH1F *hs_cp2 = (TH1F*)hs_cp1->Clone(); hs_cp2->Scale(pars[0]); 
+    TH1F *hsANDbg = (TH1F*)hs_cp2->Clone(); hsANDbg->Add(hs_cp2,hbg_sc);
+    TH1F *hres = (TH1F*)hs_cp1->Clone(); hres->Add(ht_cp,hsANDbg,1,-1); 
+    ho = {ht_cp,hs_cp2,hbg_sc,hres};
     
     return f1;
   }
+  //______________________________________________________________________________
+  TF1* fit_1hs_1pbg_THI_xOffVary (std::vector<double> const & fit_range,
+				  TH1F* ht,             // total histo to fit 
+				  TH1F* hs,             // 1st signal histo for fit
+				  int Opoly,            // Order of poly to fit bg
+				  std::vector<double> const & xOff_range,  // ranges to vary hs1 & hs2 offsets
+				  std::vector<TH1F*> &ho)    // Output: ht,hs,hbg
+  /* TH Interpolation fit using 1 signal histo & 1 poly bg (1+Opoly+1 pars) 
+     This time x position of the signal histo is also free parameter
+  */
+  {
+    const int npars = 2+Opoly+1;
+    std::vector<double> setpars{1,xOff_range[1]}; for (int i=1;i<npars;i++) setpars.push_back(0);
 
+    TH1F *ht_cp = (TH1F*)ht->Clone(); 
+    TH1F *hs_cp1 = (TH1F*)hs->Clone(); 
+ 
+    FitFn *ffn = new FitFn(hs_cp1,Opoly);
+    TF1 *f1 = new TF1("f1",ffn,&FitFn::ffn_1hs_1pbg_xOffVary,fit_range[0],fit_range[1],npars);
+    f1->SetNpx(2000);
+    f1->SetParameters(&setpars[0]);
+    f1->SetParName(0,"Norm");
+    f1->SetParName(1,"xOff");
+    set_poly_par_names(f1,2,Opoly);
+
+    // setting limits for p and n peak offset varitations
+    f1->SetParLimits(1,xOff_range[1],xOff_range[2]);
+
+    ht_cp->Fit(f1,"R");
+    std::vector<double> pars = GetFitParams(f1);
+
+    // drawing the polynomial background function
+    FitFn *ffn2 = new FitFn(Opoly);
+    TF1* bgf = new TF1("bgf",ffn2,&FitFn::ffn_poly,fit_range[0],fit_range[1],Opoly+1);
+    bgf->SetNpx(500);
+    bgf->SetParameters(&pars[2]);
+
+    // now get a bg histo from bgf
+    TH1F *hbg_sc = (TH1F*)hs_cp1->Clone(); util_pd::TF1toTH1F(bgf,hbg_sc);
+    hbg_sc->SetMarkerColor(46); hbg_sc->SetLineColor(46); 
+
+    TH1F *hs_cp2 = (TH1F*)hs_cp1->Clone(); hs_cp2->Scale(pars[0]); 
+    TH1F *hsANDbg = (TH1F*)hs_cp2->Clone(); hsANDbg->Add(hs_cp2,hbg_sc);
+    TH1F *hres = (TH1F*)hs_cp1->Clone(); hres->Add(ht_cp,hsANDbg,1,-1); 
+    ho = {ht_cp,hs_cp2,hbg_sc,hres};
+    
+    return f1;
+  }
+  //______________________________________________________________________________
   TF1* fit_1hs_1hbg_THI (std::vector<double> const & fit_range,
 			 TH1F* ht,             // total histo to fit 
 			 TH1F* hs,             // signal histo for fit
@@ -155,18 +219,62 @@ namespace fit {
     f1->SetParName(0,"Norm");
     f1->SetParName(1,"B");
 
-    ht_cp->Fit(f1,"R");
+    ht_cp->Fit(f1,"RLW");
     std::vector<double> pars = GetFitParams(f1);
     //for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
 
     TH1F *hs_cp2 = (TH1F*)hs_cp1->Clone(); hs_cp2->Scale(pars[0]);
-    TH1F *hst = (TH1F*)hs_cp2->Clone();
-    TH1F *hbg_cp2 = (TH1F*)hbg_cp1->Clone(); hbg_cp2->Scale(pars[0]*pars[1]); 
-    ho = {ht_cp,hst,hbg_cp2,hs_cp2};
+    TH1F *hbg_cp2 = (TH1F*)hbg_cp1->Clone(); hbg_cp2->Scale(pars[0]*pars[1]);
+    TH1F *hst = (TH1F*)hs_cp2->Clone(); hst->Add(hs_cp2,hbg_cp2);
+    TH1F *hres = (TH1F*)ht_cp->Clone(); hres->Add(ht_cp,hst,1,-1); 
+    ho = {ht_cp,hst,hres,hs_cp2,hbg_cp2};
     
     return f1;
   }
+  //______________________________________________________________________________
+  TF1* fit_1hs_1hbg_THI_xOffVary (std::vector<double> const & fit_range,
+				  TH1F* ht,             // total histo to fit 
+				  TH1F* hs,             // signal histo for fit
+				  TH1F* hbg,            // bg histo for fit
+				  std::vector<double> const & xOff_range,  // ranges to vary hs & hbg offsets
+				  std::vector<TH1F*> &ho)    // Output: ht,hs,hres,N*hs1,N*R*hs2 (N=par[0],R=par[1])
+  /* TH Interpolation fit using 2 signal histo (vary x offsets for both) & no background (2+2 pars) 
+     This time x position of the signal histo is also free parameter
+  */
+  {
+    const int npars = 4;
+    std::vector<double> setpars{1,1,xOff_range[1],xOff_range[3]};
 
+    TH1F *ht_cp = (TH1F*)ht->Clone(); 
+    TH1F *hs_cp1 = (TH1F*)hs->Clone(); 
+    TH1F *hbg_cp1 = (TH1F*)hbg->Clone();
+
+    FitFn *ffn = new FitFn(hs_cp1,hbg_cp1);
+    TF1 *f1 = new TF1("f1",ffn,&FitFn::ffn_2hs_nbg_xOffVary,fit_range[0],fit_range[1],npars);
+    f1->SetNpx(2000);
+    f1->SetParameters(&setpars[0]);
+    f1->SetParName(0,"Norm");
+    f1->SetParName(1,"B");
+    f1->SetParName(2,"xOff_s");
+    f1->SetParName(3,"xOff_bg");
+
+    // setting limits for p and n peak offset varitations
+    f1->SetParLimits(2,xOff_range[1],xOff_range[2]);
+    f1->SetParLimits(3,xOff_range[3],xOff_range[4]);
+
+    ht_cp->Fit(f1,"RWL"); 
+    std::vector<double> pars = GetFitParams(f1);
+    //for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
+
+    TH1F *hs_cp2 = (TH1F*)hs_cp1->Clone(); hs_cp2->Scale(pars[0]);
+    TH1F *hbg_cp2 = (TH1F*)hbg_cp1->Clone(); hbg_cp2->Scale(pars[0]*pars[1]);
+    TH1F *hst = (TH1F*)hs_cp2->Clone(); hst->Add(hs_cp2,hbg_cp2);
+    TH1F *hres = (TH1F*)ht_cp->Clone(); hres->Add(ht_cp,hst,1,-1); 
+    ho = {ht_cp,hst,hres,hs_cp2,hbg_cp2};
+    
+    return f1;
+  }
+  //______________________________________________________________________________
   TF1* fit_2hs_nbg_THI (std::vector<double> const & fit_range,
 			TH1F* ht,             // total histo to fit 
 			TH1F* hs1,            // 1st signal histo for fit
@@ -200,7 +308,50 @@ namespace fit {
     
     return f1;
   }
+  //______________________________________________________________________________
+  TF1* fit_2hs_nbg_THI_xOffVary (std::vector<double> const & fit_range,
+				 TH1F* ht,             // total histo to fit 
+				 TH1F* hs1,            // 1st signal histo for fit
+				 TH1F* hs2,            // 2nd signal histo for fit
+				 std::vector<double> const & xOff_range,  // ranges to vary hs1 & hs2 offsets
+				 std::vector<TH1F*> &ho)    // Output: ht,hs,hres,N*hs1,N*R*hs2 (N=par[0],R=par[1])
+  /* TH Interpolation fit using 2 signal histo (vary x offsets for both) & no background (2+2 pars) 
+     This time x position of the signal histo is also free parameter
+  */
+  {
+    const int npars = 4;
+    std::vector<double> setpars{1,1,xOff_range[1],xOff_range[3]};
 
+    TH1F *ht_cp = (TH1F*)ht->Clone(); 
+    TH1F *hs1_cp1 = (TH1F*)hs1->Clone(); 
+    TH1F *hs2_cp1 = (TH1F*)hs2->Clone();
+
+    FitFn *ffn = new FitFn(hs1_cp1,hs2_cp1);
+    TF1 *f1 = new TF1("f1",ffn,&FitFn::ffn_2hs_nbg_xOffVary,fit_range[0],fit_range[1],npars);
+    f1->SetNpx(2000);
+    f1->SetParameters(&setpars[0]);
+    f1->SetParName(0,"Norm");
+    f1->SetParName(1,"R");
+    f1->SetParName(2,"s1Off");
+    f1->SetParName(3,"s2Off");
+
+    // setting limits for p and n peak offset varitations
+    f1->SetParLimits(2,xOff_range[1],xOff_range[2]);
+    f1->SetParLimits(3,xOff_range[3],xOff_range[4]);
+
+    ht_cp->Fit(f1,"RWL"); 
+    std::vector<double> pars = GetFitParams(f1);
+    //for (int i=0;i<npars;i++) {pars.push_back(f1->GetParameter(i));}
+
+    TH1F *hs1_cp2 = (TH1F*)hs1_cp1->Clone(); hs1_cp2->Scale(pars[0]);
+    TH1F *hs2_cp2 = (TH1F*)hs2_cp1->Clone(); hs2_cp2->Scale(pars[0]*pars[1]);
+    TH1F *hst = (TH1F*)hs1_cp2->Clone(); hst->Add(hs1_cp2,hs2_cp2);
+    TH1F *hres = (TH1F*)ht_cp->Clone(); hres->Add(ht_cp,hst,1,-1); 
+    ho = {ht_cp,hst,hres,hs1_cp2,hs2_cp2};
+    
+    return f1;
+  }
+  //______________________________________________________________________________
   TF1* fit_2hs_1hbg_THI (std::vector<double> const & fit_range,
 			 TH1F* ht,             // total histo to fit 
 			 TH1F* hs1,            // 1st signal histo for fit
@@ -240,11 +391,11 @@ namespace fit {
     return f1;
   }
 
-  
+  //______________________________________________________________________________
   void ShiftHistogramX(TH1F* hist, double shiftAmount) {
     /* Shifts the histogram x by a constant amount
        WARNING: Doesn't work very well if the shift amount is
-                much smaller than the bin width!
+       much smaller than the bin width!
     */
     // Get the number of bins in the histogram
     int nBins = hist->GetNbinsX();
@@ -273,7 +424,7 @@ namespace fit {
     
     delete tempHist;  // Delete the temporary histogram
   }
-
+  //______________________________________________________________________________
   TF1* fit_2hs_1hbg_THI_xOffVary (std::vector<double> const & fit_range,
 				  TH1F* ht,             // total histo to fit 
 				  TH1F* hs1,            // 1st signal histo for fit
@@ -324,7 +475,7 @@ namespace fit {
     
     return f1;
   }
-
+  //______________________________________________________________________________
   TF1* fit_2hs_2hbg_THI (std::vector<double> const & fit_range,
 			 TH1F* ht,             // total histo to fit 
 			 TH1F* hs1,            // 1st signal histo for fit
@@ -367,7 +518,7 @@ namespace fit {
     
     return f1;
   }
-
+  //______________________________________________________________________________
   TF1* fit_2hs_2hbg_THI_xOffVary (std::vector<double> const & fit_range,
 				  TH1F* ht,             // total histo to fit 
 				  TH1F* hs1,            // 1st signal histo for fit
@@ -419,7 +570,7 @@ namespace fit {
     
     return f1;
   }
-
+  //______________________________________________________________________________
   TF1* fit_2hs_1pbg_THI (std::vector<double> const & fit_range,
 			 TH1F* ht,             // total histo to fit 
 			 TH1F* hs1,            // 1st signal histo for fit
@@ -430,6 +581,7 @@ namespace fit {
   {
     const int npars = 2+Opoly+1;
     std::vector<double> setpars{1,1}; for (int i=2;i<npars;i++) setpars.push_back(0);
+    //std::vector<double> setpars{1,1,222,-102,-84}; 
 
     TH1F *ht_cp = (TH1F*)ht->Clone(); 
     TH1F *hs1_cp1 = (TH1F*)hs1->Clone(); 
@@ -451,7 +603,7 @@ namespace fit {
     FitFn *ffn2 = new FitFn(Opoly);
     TF1* bgf = new TF1("bgf",ffn2,&FitFn::ffn_poly,fit_range[0],fit_range[1],Opoly+1);
     bgf->SetNpx(500);
-    bgf->SetParameters(&fit::GetFitParams(f1)[2]);
+    bgf->SetParameters(&pars[2]);
     //bgf->SetLineColor(46);
 
     // now get a bg histo from bgf
@@ -467,7 +619,7 @@ namespace fit {
     
     return f1;
   }
-
+  //______________________________________________________________________________
   TF1* fit_2hs_1pbg_THI_xOffVary (std::vector<double> const & fit_range,
 				  TH1F* ht,             // total histo to fit 
 				  TH1F* hs1,            // 1st signal histo for fit
@@ -525,7 +677,7 @@ namespace fit {
     
     return f1;
   }
-
+  //______________________________________________________________________________
   TF1* fit_2hs_1gbg_THI (std::vector<double> const & fit_range,
 			 TH1F* ht,             // total histo to fit 
 			 TH1F* hs1,            // 1st signal histo for fit
@@ -574,7 +726,7 @@ namespace fit {
     
     return f1;
   }
-
+  //______________________________________________________________________________
   TF1* fit_2hs_1gbg_THI_xOffVary (std::vector<double> const & fit_range,
 				  TH1F* ht,             // total histo to fit 
 				  TH1F* hs1,            // 1st signal histo for fit
@@ -632,7 +784,7 @@ namespace fit {
     
     return f1;
   }
-
+  //______________________________________________________________________________
   TF1* fit_1gs_nbg (std::vector<double> const & fit_range, // [0]=>xmin,[1]=>xmax (for 1st fit)
                                                            // [2]=>nSLow,[3]=>nSHi (for 2nd fit)
   		    TH1F const * ht)                       // input histogram
