@@ -44,6 +44,8 @@
     "Njobs_to_ana"       : -1,
     "rootfile_dir"       : "/lustre19/expphy/volatile/halla/sbs/pdbforce/g4sbs_output/dMCcomp/sbs11_sbs100p/1p0sf/simc/rs/ld2/rc",
     "global_cut"         : "bb.tr.n>0&&bb.gem.track.nhits>3&&abs(bb.tr.vz[0])<0.08&&bb.tr.p[0]>1.8&&bb.ps.e>0.2",
+    "dy_offset"          : 0,
+    "W2_offset"          : 0,
     "W_cutR"             : [0.7,1.2],
     "bbfidu_cutR"        : [0.0,0.32],
     "max_N_tracks"       : 250,
