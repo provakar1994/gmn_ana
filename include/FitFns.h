@@ -36,6 +36,16 @@ class FitFn {
     return poly;
   }
 
+  // double ffn_poly (double *x, double *par) const {
+  //   double poly = 0;
+  //   // Ensure the highest-order term has a negative coefficient to enforce concavity (concave down)
+  //   poly += -fabs(par[fpoly]) * pow(x[0], fpoly);
+  //   for (int i = 0; i < fpoly; i++) {
+  //       poly += par[i] * pow(x[0], i);
+  //   }
+  //   return poly;
+  // }
+
   // returns polynomial fit fn of order fpoly considering the reject points (Sideband method)
   double ffn_1pbg_sb_2rp(double *x, double *par) const {
     if (x[0]>frp1 && x[0]<frp2){

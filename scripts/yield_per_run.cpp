@@ -48,6 +48,27 @@ void FurtherCustomizeDxHisto(TH1F* h, std::string const &bgshape, int rnum)
 }
 
 //______________________________________________________________________________
+bool ExcludeThisRun(int rnum, std::vector<int> const & runs_to_exclude) {
+  bool exclude = false;
+  if (!runs_to_exclude.empty()) {
+    if (runs_to_exclude[0]==1) { // first entry of the vector is treated a bool
+      if (std::find(runs_to_exclude.begin(), runs_to_exclude.end(), rnum) != runs_to_exclude.end())
+	exclude = true;
+    }
+    else if (runs_to_exclude[0]==2) {
+      if (rnum<runs_to_exclude[1]) exclude = true;
+    }
+    else if (runs_to_exclude[0]==3) {
+      if (rnum>runs_to_exclude[1]) exclude = true;
+    }
+    else if (runs_to_exclude[0]==4) {
+      if (rnum<runs_to_exclude[1]||rnum>runs_to_exclude[2]) exclude = true;
+    }
+  }
+  return exclude;
+}
+
+//______________________________________________________________________________
 TFile * ReadRootFile(char const * filename) {
   // Open the ROOT file
   TFile *file = TFile::Open(filename, "READ");
@@ -160,6 +181,7 @@ TCanvas *FitYields( std::string const &canvname, std::string const &config,
 				    "Run Number","# of Entries",1,0,h_stats_range_hi);
   cfit->cd(2); // R_fit
   TF1 *f1 = DrawTGraphAndFit(rnums,R_fit,R_fit_err,Form("R_fit vs Runs | %s",bgshape.c_str()),"Run Number","R_fit");
+  //TF1 *f1 = DrawTGraphAndFit(rnums,R_fit,R_fit_err,Form("R_fit vs Runs | %s",bgshape.c_str()),"Run Number","R_fit",1,0,3);
   cfit->cd(3); // Charge-normalized p yield
   TF1 *f2 = DrawTGraphAndFit(rnums,CNpY,CNpYerr,Form("Normalized p Yield vs Runs | %s",bgshape.c_str()),"Run Number",
 			     "Normalized p Yield (1/C)",1,0,h_yield_range_hi);
@@ -233,8 +255,10 @@ void yield_per_run (const char *configfilename,
   vector<double> dx_fit_range; jmgr_p->GetVectorFromSubKey<double>(key_p.c_str(),"dx_fit_range",dx_fit_range);
   vector<double> reject_points; jmgr_p->GetVectorFromSubKey<double>(key_p.c_str(),"SB_reject_points",reject_points);
 
-  double RpMC = 0.4;
-
+  // Calculating R_MC
+  SBSconfig sbsconf(conf,sbsmag);
+  double Rp_MC = kine::sigmaBorn_ratio_MC(sbsconf,"np");
+  
   // reading stuff from the local config
   int nruns = -1;
   bool has_BC_cut = jmgr->GetValueFromSubKey<int>(key,"has_beamcurr_cut");
@@ -247,12 +271,14 @@ void yield_per_run (const char *configfilename,
   // input and output filename format
   char const * in_script = "fit_dx";
   char const * out_script = "yield_per_run";
+  std::string outfile_prefix = jmgr->GetValueFromSubKey_str(key,"outfile_prefix");
+  outfile_prefix = outfile_prefix.empty() ? "" : outfile_prefix + "_";
   std::string rootdir_path = Form("pdout/fits/sbs%dsbs%dp",conf,sbsmag);
   file_prefix = has_BC_cut ? "BCcut_" + file_prefix : file_prefix;
   TString inFile = Form("%s/%s_%s_%s_pass%d_simc_sbs%d_sbs%dp_model%d.root"
 			,rootdir_path.c_str(),file_prefix.c_str(),in_script,key,pass,conf,sbsmag,model);
-  TString outFile = Form("%s/%s_%s_%s_pass%d_simc_sbs%d_sbs%dp_model%d.root"
-			 ,rootdir_path.c_str(),file_prefix.c_str(),out_script,key,pass,conf,sbsmag,model);
+  TString outFile = Form("%s/%s%s_%s_%s_pass%d_simc_sbs%d_sbs%dp_model%d.root",rootdir_path.c_str()
+			 ,outfile_prefix.c_str(),file_prefix.c_str(),out_script,key,pass,conf,sbsmag,model);
   TString outPlot = outFile; outPlot.ReplaceAll(".root",".pdf");
   TString outData = outFile; outData.ReplaceAll(".root",".csv");
   ofstream outdata; outdata.open(outData);
@@ -299,7 +325,7 @@ void yield_per_run (const char *configfilename,
 
   // creating output file
   TFile *fout = new TFile(outFile, "RECREATE");
-
+  
   bool fRun = true;
   //bool is_heading = true;
   int totc = 0; int gc = 0;
@@ -318,12 +344,23 @@ void yield_per_run (const char *configfilename,
       // extracting the run number for this bin
       int rnum = (int)h_dxHCAL_vs_rnum->GetXaxis()->GetBinCenter(i);
       // check if want to include this run in the analysis or not
-      if (!runs_to_exclude.empty()) {
-	if (runs_to_exclude[0]!=0) { // first entry of the vector is treated a bool
-	  if (std::find(runs_to_exclude.begin(), runs_to_exclude.end(), rnum) != runs_to_exclude.end())
-	    continue;
-	}
-      }
+      // if (!runs_to_exclude.empty()) {
+      // 	if (runs_to_exclude[0]==1) { // first entry of the vector is treated a bool
+      // 	  if (std::find(runs_to_exclude.begin(), runs_to_exclude.end(), rnum) != runs_to_exclude.end())
+      // 	    continue;
+      // 	}
+      // 	else if (runs_to_exclude[0]==2) {
+      // 	  if (rnum>runs_to_exclude[1]) continue;
+      // 	}
+      // 	else if (runs_to_exclude[0]==3) {
+      // 	  if (rnum<runs_to_exclude[1]) continue;
+      // 	}
+      // 	else if (runs_to_exclude[0]==4) {
+      // 	  if (rnum<runs_to_exclude[1]&&rnum>runs_to_exclude[2]) continue;
+      // 	}
+      // }
+      bool exclude_run = ExcludeThisRun(rnum,runs_to_exclude);
+      if (exclude_run) continue;
       rnums.push_back(rnum);
 
       // getting the charge and DAQ livetime for the run
@@ -385,7 +422,7 @@ void yield_per_run (const char *configfilename,
 	vector<TH1F*> ho3;
 	TF1* bg3 = fit::fit_1pbg_SB(dx_fit_range,
 				    reject_points,
-				    3,//Opoly,
+				    2,//Opoly,
 				    fit::GetFitParams(f2),
 				    sliceY,
 				    ho3);
@@ -433,7 +470,7 @@ void yield_per_run (const char *configfilename,
 	  }
 	  outdata << "\n";
 	}
-	outdata << rnum << "," << RpMC << ",";
+	outdata << rnum << "," << Rp_MC << ",";
 	// --
 	// Defining the dx fit canvas
 	TCanvas *cA = new TCanvas("cA","cA",1200,1200);
@@ -444,7 +481,7 @@ void yield_per_run (const char *configfilename,
 	cA->cd(1);
 	vector<TH1F*> ho2;
 	TF1 *f2 = fit::fit_2hs_1pbg_THI(dx_fit_range,
-					sliceY,h_dxHCAL_simu_p,h_dxHCAL_simu_n,3,
+					sliceY,h_dxHCAL_simu_p,h_dxHCAL_simu_n,2,
 					ho2);
 	// recording fit params
 	std::cout << Form("Pol2 Bg: Run #: %d, R: %f",rnum,f2->GetParameter(1)) << "\n";

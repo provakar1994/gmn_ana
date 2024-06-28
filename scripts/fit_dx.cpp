@@ -132,7 +132,7 @@ void FurtherCustoizeDataHisto(TH1F *h_dxHCAL_data, std::string const &cuts_for_s
   h_dxHCAL_data->SetStats(0);
   h_dxHCAL_data->SetTitle(Form("dx {%s}",cuts_for_signal_data.c_str()));
   //h_dxHCAL_data->GetYaxis()->SetMaxDigits(3);
-  h_dxHCAL_data->GetYaxis()->SetRangeUser(-1000,h_dxHCAL_data->GetMaximum()*1.1);
+  h_dxHCAL_data->GetYaxis()->SetRangeUser(-5,h_dxHCAL_data->GetMaximum()*1.1);
 }
 
 // void AddFiduCutToLegend(TLegend *leg, std::vector<double> hcal_AR, std::vector<double> hcal_SM) {
