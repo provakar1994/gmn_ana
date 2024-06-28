@@ -6,7 +6,7 @@
 	"model"                : 2,
 	"pass"                 : 2,
 	"generator"            : "simc",
-	"data_file_prefix"     : "all_0p77zoff",
+	"data_file_prefix"     : "0p77zoff",
 	"simu_file_prefix"     : "0p77zoff_0p63797sf",
 	"inel_file_prefix"     : "0p77zoff_0p637sf",
 	"-\/ FIDU CUT SECTION" : "--\/-- Forming Custom Fiducial Cut ------",
