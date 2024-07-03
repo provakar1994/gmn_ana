@@ -37,7 +37,7 @@ CodaRun():
 
   // sets data by reading runsheet (exclusively for util::ReadRunList functions)
   void SetDataRunSheet(std::vector<std::string> data) {
-    if (data.size()==9) {
+    if (data.size()==11) {
         sbsconf   = stoi(data[0]);
         runnum    = stoi(data[1]);
         target    = data[2];
@@ -45,8 +45,8 @@ CodaRun():
         bbmag     = stoi(data[4]);
         ebeam     = stod(data[5]);
         ebeam_std = stod(data[6]);
-        charge    = stod(data[7]);
-	daqlvtm   = stod(data[8]);
+        charge    = stod(data[7])>0 ? stod(data[7]) : stod(data[8]); // use Bob's value unless its negative
+	daqlvtm   = stod(data[9]); // use BBHi scaler as default
      } else 
       throw std::runtime_error("Potential NaN column entry in the run sheet!");
     }
