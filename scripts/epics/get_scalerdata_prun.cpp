@@ -2,10 +2,10 @@
    This macro will loop through the scaler tree (TSsbs) of every 
    run in a given SBS configuration and then generate 2 CSV files. 
    One file will contain:
-   1)runnum, 2)segnum, 3)index, 4)sevnum, 5)gevnum 6)dnew.cnt, 7)dnew.current, 8)cum. charge, 9) daq livetime
+   1)runnum, 2)segnum, 3)index, 4)sevnum, 5)gevnum 6)dnew.cnt, 7)dnew.current, 8)cum. charge, 9) daq livetime from both bbhi and ts1 scalers
    ** charge calculated with gain factor: 3317.99 +/- 31.69 Hz/uA (https://sbs.jlab.org/DocDB/0001/000164/002/dflay_bcm-ana-update_02-21-22.pdf)
    Another will contain:
-   1)runnum, 2)tot. charge, 3) daq livetime
+   1)runnum, 2)tot. charge, 3) daq livetime from BBHi scaler, 4) daq livetime from TS1 scaler
    -----
    P. Datta  Created  03-19-2023 
 */
@@ -57,7 +57,7 @@ int get_scalerdata_prun (const char *target,        // LH2/LD2
   }
   TFile *fout = new TFile(outFile1.Data(),"RECREATE");
   ofstream outFile_data2; outFile_data2.open(outFile2);
-  outFile_data2 << "runnum," << "totcharge(C)," << "daqlvtm" << std::endl;
+  outFile_data2 << "runnum," << "totcharge_pd(C)," << "daqlvtm_bbhi," << "daqlvtm_ts1" << std::endl;
 
   // defining interesting ROOT tree branches 
   TTree *Tout = new TTree("Tout", "");
@@ -72,6 +72,8 @@ int get_scalerdata_prun (const char *target,        // LH2/LD2
   double T_dnewcurr;    Tout->Branch("dnewcurr", &T_dnewcurr, "dnewcurr/D");
   double T_dnewcharge;  Tout->Branch("dnewcharge", &T_dnewcharge, "dnewcharge/D");
   // trigger info
+  double T_l1ascaler;   Tout->Branch("l1ascaler", &T_l1ascaler, "l1ascaler/D");
+  double T_bbhiscaler;   Tout->Branch("bbhiscaler", &T_bbhiscaler, "bbhiscaler/D");
   double T_ts1scaler;   Tout->Branch("ts1scaler", &T_ts1scaler, "ts1scaler/D");
 
   // looping through runs
@@ -94,11 +96,13 @@ int get_scalerdata_prun (const char *target,        // LH2/LD2
     setrootvar::setbranch(C, "sbs.bcm.dnew", dnewvar, dnewvar_mem);
 
     // trigger variables
+    double l1ascaler; C->SetBranchAddress("sbs.L1A.scaler",&l1ascaler);
+    double bbhiscaler; C->SetBranchAddress("sbs.BBCalHi.BBCALTRG.scaler",&bbhiscaler);
     double ts1scaler; C->SetBranchAddress("sbs.TS1_BB.scaler",&ts1scaler);
 
     // looping through the events ---------------------------------------
     std::cout << std::endl;
-    double dnewcharge_cum=0., ts1scaler_cum=0.;
+    double dnewcharge_cum=0., l1ascaler_cum=0., bbhiscaler_cum=0., ts1scaler_cum=0.;
     long nevent=0, nevents=C->GetEntries(); 
     int treenum=0, currenttreenum=0, segnum=0, index=0;
     while (C->GetEntry(nevent++)) {
@@ -117,6 +121,12 @@ int get_scalerdata_prun (const char *target,        // LH2/LD2
       if (dnewcnt>0) //avoid last segment with zero count 
 	dnewcharge_cum = (dnewcnt / dnewgain) * 1e-6; //C 
 
+      if (l1ascaler>0) //avoid last segment with zero count 
+	l1ascaler_cum = l1ascaler;
+
+      if (bbhiscaler>0) //avoid last segment with zero count 
+	bbhiscaler_cum = bbhiscaler;
+      
       if (ts1scaler>0) //avoid last segment with zero count 
 	ts1scaler_cum = ts1scaler;
 
@@ -130,6 +140,8 @@ int get_scalerdata_prun (const char *target,        // LH2/LD2
       T_dnewcurr = dnewcurr;
       T_dnewcharge = dnewcharge_cum;
 
+      T_l1ascaler = l1ascaler_cum;
+      T_bbhiscaler = bbhiscaler_cum;
       T_ts1scaler = ts1scaler_cum;
 
       index++;  // gets reset at the beginning of every run
@@ -141,11 +153,12 @@ int get_scalerdata_prun (const char *target,        // LH2/LD2
     } //event loop
 
     // DAQ livetime: Accepted BBCal singles trigger
-    double daqlvtm = (double)crun[irun].BBCalSinglesPassed / (double)ts1scaler_cum;
+    double daqlvtm_bbhi = (double)crun[irun].BBCalSinglesPassed / (double)bbhiscaler_cum;
+    double daqlvtm_ts1 = (double)crun[irun].BBCalSinglesPassed / (double)ts1scaler_cum;
     
     // NOTE: Total charge is nothing but the last cumulative charge entry
-    outFile_data2 << runnum << "," << dnewcharge_cum << "," << daqlvtm << std::endl;
-    if (verbose>0) std::cout << runnum << "," << dnewcharge_cum << "," << daqlvtm << std::endl;
+    outFile_data2 << runnum << "," << dnewcharge_cum << "," << daqlvtm_bbhi << "," << daqlvtm_ts1 << std::endl;
+    if (verbose>0) std::cout << runnum << "," << dnewcharge_cum << "," << daqlvtm_bbhi << "," << daqlvtm_ts1 << std::endl;
     
     // getting ready for next run
     C->Reset();

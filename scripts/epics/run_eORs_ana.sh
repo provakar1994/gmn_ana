@@ -19,7 +19,7 @@ if [[ "$#" -ne 6 ]]; then
     echo -e "This script expects 6 arguments:" 
     echo -e " ---- "
     echo -e " <anamode>      : e=>EPICS, s=>Scaler"
-    echo -e " <target>       : LH2/LD2"
+    echo -e " <target>       : LH2/LD2/Optics/Dummy"
     echo -e " <conf>         : SBS config, -1=>All"
     echo -e " <sbsmagfield>  : -1=>No restriction"
     echo -e " <nruns>        : # runs to analyze"
