@@ -17,6 +17,7 @@
 #include "SetROOTVar.h"
 #include "KinematicVar.h"
 #include "ExpConstants.h"
+#include "PlotCustomizer.h"
 #include "LookUpTableReader.h"
 
 /*

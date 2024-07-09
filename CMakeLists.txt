@@ -20,6 +20,7 @@ SET(src
   KinematicVar.cpp
   ExpConstants.cpp
   EMFFFits.cpp
+  PlotCustomizer.cpp
 )	
 
 # headers
