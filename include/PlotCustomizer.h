@@ -21,6 +21,7 @@
 #include <TAxis.h>
 #include <TFrame.h>
 #include <TStyle.h>
+#include <TPaletteAxis.h> 
 
 class PlotCustomizer {
  public:
@@ -34,11 +35,15 @@ class PlotCustomizer {
   void customize_yaxis(TAxis *ax) const;
   void customize_frame(TFrame *frame) const;
   void customize_margin(TPad *p) const;
+  void customize_palette(TPaletteAxis *pal) const;
   void customize_pad(TPad *p) const;
   void customize_canvas(TCanvas *c) const;
 
  private:
   bool fgridON; // Attribute to control grid lines
+  //
+  int kFont = 62;
+  double kLabelSize = 0.04;
 };
 
 #endif // PLOT_CUSTOMIZER_H
