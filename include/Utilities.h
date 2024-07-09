@@ -13,6 +13,7 @@
 #include "TBox.h"
 #include "TH1F.h"
 #include "TH2F.h"
+#include "TFile.h"
 #include "TLine.h"
 #include "TChain.h"
 #include "TLatex.h"
@@ -29,6 +30,9 @@ namespace util_pd {
   /* #########################################
      ##                General              ##  
      ######################################### */
+  // opens and then returns a ROOT file
+  TFile *ReadRootFile(char const * filename);
+    
   // returns TCanvas object with optimized size
   TCanvas *TC(std::string hname,  // name of the canvas
  	      int rdiv,           // # divisions in row

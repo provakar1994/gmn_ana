@@ -6,6 +6,20 @@ namespace util_pd {
      ##                General              ##  
      ######################################### */
   //_____________________________________
+  TFile *ReadRootFile(char const * filename)
+  /* Open and return a ROOT file */
+  {
+    // Open the ROOT file
+    TFile *file = TFile::Open(filename, "READ");
+    // Check if the file is open and the histogram exists
+    if (!file || file->IsZombie()){ //|| !file->GetListOfKeys()->Contains(histname)) {
+      std::cerr << "Error: Failed to open the file or histogram not found!" << std::endl;
+      throw;
+    }
+    return file;
+  }
+  
+  //_____________________________________
   TCanvas *TC(std::string name,   // name of the canvas
  	      int rdiv,           // # divisions in row
 	      int cdiv)           // # divisions in column 
