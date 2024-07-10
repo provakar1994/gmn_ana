@@ -1,7 +1,30 @@
 #include "PlotCustomizer.h"
 
 PlotCustomizer::PlotCustomizer(bool gridON) : fgridON(gridON) {}
-
+//______________________________________________________________________________
+void PlotCustomizer::customize_pvtext(TPaveText *pt) const {
+  pt->SetFillColor(0); // Transparent fill
+  pt->SetTextAlign(12);
+  pt->SetTextFont(kFont);     // Helvetica font
+  pt->SetTextSize(kLabelSize);   // Text size
+  pt->SetShadowColor(kGray+1);   // Shadow color
+  //pt->SetLineWidth(2);     // Border width
+}
+//______________________________________________________________________________
+void PlotCustomizer::AddText(TString const &text,
+			     double x1NDC, double y1NDC,
+			     double x2NDC, double y2NDC) const {
+  /* Adds a TPaveText in the place of the title */
+  TPaveText *pt = new TPaveText(x1NDC, y1NDC, x2NDC, y2NDC, "NDC");
+  pt->AddText(text);
+  customize_pvtext(pt);
+  pt->Draw();
+}
+//______________________________________________________________________________
+void PlotCustomizer::AddTitleText(TString const &text, double x2NDC) const {
+  /* Adds a TPaveText in the place of the title */
+  AddText(text,0.15,0.92,x2NDC,0.98);
+}
 //______________________________________________________________________________
 Int_t PlotCustomizer::GetNumberOfPads(TCanvas const *canvas) const {
   /* Returns # pads in a canvas */
@@ -36,7 +59,7 @@ void PlotCustomizer::customize_title(TPaveText *title) const {
   /* Customizes the canvas title */
   title->SetTextSize(0.05);
   title->SetTextFont(kFont);
-  title->Clear();
+  //title->Clear();
 }
 //______________________________________________________________________________
 void PlotCustomizer::customize_stats(TPaveText *stats) const {
@@ -142,6 +165,7 @@ void PlotCustomizer::customize_pad(TPad *p) const {
       TH1 *hist = dynamic_cast<TH1*>(obj);
       if (hist) {
 	hist->SetStats(0);
+	hist->SetTitle("");
 	customize_axes(hist->GetXaxis());
 	customize_axes(hist->GetYaxis());
       }
@@ -149,6 +173,7 @@ void PlotCustomizer::customize_pad(TPad *p) const {
       TH2 *hist = dynamic_cast<TH2*>(obj);
       if (hist) {
 	hist->SetStats(0);
+	hist->SetTitle("");
 	customize_axes(hist->GetXaxis());
 	customize_axes(hist->GetYaxis());
       }
@@ -156,6 +181,7 @@ void PlotCustomizer::customize_pad(TPad *p) const {
       TGraph *graph = dynamic_cast<TGraph*>(obj);
       if (graph) {
 	graph->SetStats(0);
+	graph->SetTitle("");
 	customize_axes(graph->GetXaxis());
 	customize_axes(graph->GetYaxis());
       }
