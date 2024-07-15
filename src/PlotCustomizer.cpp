@@ -55,7 +55,7 @@ void PlotCustomizer::GrabAllPads(TCanvas const *c, std::vector<TPad*> &pads) con
   }
 }
 //______________________________________________________________________________
-void PlotCustomizer::customize_1D_hist(TH1 *h) const {
+void PlotCustomizer::customize_TH1(TH1 *h) const {
   /* Customizes 1D histos */
   h->SetTitle("");
   h->SetStats(0);
@@ -63,6 +63,22 @@ void PlotCustomizer::customize_1D_hist(TH1 *h) const {
   h->SetLineColor(kBlack);
   customize_axes(h->GetXaxis());
   customize_axes(h->GetYaxis());
+}
+//______________________________________________________________________________
+void PlotCustomizer::customize_TH2(TH2 *h) const {
+  /* Customizes 1D histos */
+  h->SetTitle("");
+  h->SetStats(0);
+  customize_axes(h->GetXaxis());
+  customize_axes(h->GetYaxis());
+}
+//______________________________________________________________________________
+void PlotCustomizer::customize_TGraph(TGraph *g) const {
+  /* Customizes 1D histos */
+  g->SetTitle("");
+  g->SetStats(0);
+  customize_axes(g->GetXaxis());
+  customize_axes(g->GetYaxis());
 }
 //______________________________________________________________________________
 void PlotCustomizer::customize_title(TPaveText *title) const {
@@ -180,23 +196,17 @@ void PlotCustomizer::customize_pad(TPad *p) const {
     } else if (obj->InheritsFrom("TH1")) {
       TH1 *hist = dynamic_cast<TH1*>(obj);
       if (hist) {
-	customize_1D_hist(hist);
+	customize_TH1(hist);
       }
     } else if (obj->InheritsFrom("TH2")) {
       TH2 *hist = dynamic_cast<TH2*>(obj);
       if (hist) {
-	hist->SetStats(0);
-	hist->SetTitle("");
-	customize_axes(hist->GetXaxis());
-	customize_axes(hist->GetYaxis());
+	customize_TH2(hist);
       }
     } else if (obj->InheritsFrom("TGraph") || obj->InheritsFrom("TGraphWithError")) {
       TGraph *graph = dynamic_cast<TGraph*>(obj);
       if (graph) {
-	graph->SetStats(0);
-	graph->SetTitle("");
-	customize_axes(graph->GetXaxis());
-	customize_axes(graph->GetYaxis());
+	customize_TGraph(graph);
       }
     }
   }
