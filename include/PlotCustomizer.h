@@ -29,6 +29,7 @@ class PlotCustomizer {
 
   Int_t GetNumberOfPads(TCanvas const *canvas) const;
   void GrabAllPads(TCanvas const *c, std::vector<TPad*> &pads) const;
+  void customize_1D_hist(TH1 *h) const;
   void customize_title(TPaveText *title) const;
   void customize_stats(TPaveText *stats) const;
   void customize_axes(TAxis *ax) const;

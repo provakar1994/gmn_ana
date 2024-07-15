@@ -6,7 +6,7 @@ void PlotCustomizer::customize_pvtext(TPaveText *pt) const {
   pt->SetFillColor(0); // Transparent fill
   pt->SetTextAlign(12);
   pt->SetTextFont(kFont);     // Helvetica font
-  pt->SetTextSize(kLabelSize);   // Text size
+  pt->SetTextSize(0.05);   // Text size
   pt->SetShadowColor(kGray+1);   // Shadow color
   //pt->SetLineWidth(2);     // Border width
 }
@@ -55,6 +55,16 @@ void PlotCustomizer::GrabAllPads(TCanvas const *c, std::vector<TPad*> &pads) con
   }
 }
 //______________________________________________________________________________
+void PlotCustomizer::customize_1D_hist(TH1 *h) const {
+  /* Customizes 1D histos */
+  h->SetTitle("");
+  h->SetStats(0);
+  h->SetLineWidth(2);
+  h->SetLineColor(kBlack);
+  customize_axes(h->GetXaxis());
+  customize_axes(h->GetYaxis());
+}
+//______________________________________________________________________________
 void PlotCustomizer::customize_title(TPaveText *title) const {
   /* Customizes the canvas title */
   title->SetTextSize(0.05);
@@ -96,6 +106,8 @@ void PlotCustomizer::customize_palette(TPaletteAxis *pal) const {
   pal->SetLabelSize(kLabelSize);
   pal->SetNdivisions(6);
   pal->SetLineWidth(2);
+  // set maxdigits to 3  
+  pal->SetMaxDigits(3);
 }
 //______________________________________________________________________________
 void PlotCustomizer::customize_margin(TPad *p) const {
@@ -117,7 +129,10 @@ void PlotCustomizer::customize_margin(TPad *p) const {
 	if (palette) {
 	  std::cout << "TPaletteAxis found, adjusting right margin\n";
 	  double paletteWidth = palette->GetX2NDC() - palette->GetX1NDC();
-	  p->SetRightMargin(0.055 + paletteWidth);
+	  p->SetRightMargin(0.062 + paletteWidth);
+	  // Adjust the X1NDC of palette accordingly
+	  palette->SetX1NDC(1.0-p->GetRightMargin()+0.003);
+	  palette->SetX2NDC(palette->GetX1NDC()+paletteWidth);
 
 	  // Adjust the Y1NDC and Y2NDC of the palette to match the pad
 	  palette->SetY1NDC(p->GetBottomMargin());
@@ -155,19 +170,17 @@ void PlotCustomizer::customize_pad(TPad *p) const {
     if (obj->InheritsFrom("TFrame")) {
       TFrame *frame = dynamic_cast<TFrame*>(obj);
       if (frame) customize_frame(frame);
-    } else if (obj->InheritsFrom("TPaveText")) {
-      TPaveText *title = dynamic_cast<TPaveText*>(obj);
-      if (title) customize_title(title);
-    } else if (obj->InheritsFrom("TPaveStats")) {
+    } // else if (obj->InheritsFrom("TPaveText")) {
+    //   TPaveText *title = dynamic_cast<TPaveText*>(obj);
+    //   if (title) customize_title(title);
+    // }
+    else if (obj->InheritsFrom("TPaveStats")) {
       TPaveStats *stats = dynamic_cast<TPaveStats*>(obj);
       if (stats) customize_stats(stats);
     } else if (obj->InheritsFrom("TH1")) {
       TH1 *hist = dynamic_cast<TH1*>(obj);
       if (hist) {
-	hist->SetStats(0);
-	hist->SetTitle("");
-	customize_axes(hist->GetXaxis());
-	customize_axes(hist->GetYaxis());
+	customize_1D_hist(hist);
       }
     } else if (obj->InheritsFrom("TH2")) {
       TH2 *hist = dynamic_cast<TH2*>(obj);
@@ -202,6 +215,8 @@ void PlotCustomizer::customize_canvas(TCanvas *c) const {
       TPad *pad = (TPad*)c->GetPad(0);
       if (pad) customize_pad(pad);
     }
+    if (fgridON) c->RedrawAxis("g");
+
   } else {
     std::cout << "ERROR!! Canvas doesn't exist!!\n";
   }
