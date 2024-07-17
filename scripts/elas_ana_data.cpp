@@ -7,9 +7,6 @@
    P. Datta  Created  02-01-2023 
 */
 
-// TO-DO
-// 1. Energy loss calculations - Done (Cell diameter and thickness are guesses)
-
 #include <vector>
 #include <iostream>
 
@@ -202,7 +199,7 @@ int elas_ana_data (const char *configfilename,
 
   // defining the outputfile
   std::string filebase = jmgr->GetValueFromSubKey_str(key,"outfile_prefix");
-  filebase = (verbose==0 && verbosefn==0) ? "" : filebase + "_";
+  filebase = filebase.empty() ? "" : filebase + "_";
   TString outFile = Form("pdout/%selas_ana_data_sbs%d_sbs%dp_model%d_pass%d.root",filebase.c_str(),conf,sbsmag,model,pass);
   TFile *fout = new TFile(outFile.Data(), "RECREATE");
 
@@ -272,6 +269,7 @@ int elas_ana_data (const char *configfilename,
   double T_ephi;          Tout->Branch("ephi", &T_ephi, "ephi/D");
   double T_etheta;        Tout->Branch("etheta", &T_etheta, "etheta/D");
   double T_pelas;         Tout->Branch("pelas", &T_pelas, "pelas/D");
+  double T_ethbend;       Tout->Branch("ethbend", &T_ethbend, "ethbend/D");
   double T_pN_exp;        Tout->Branch("pN_exp", &T_pN_exp, "pN_exp/D"); //exp. nucleon momentum
   double T_thN_exp;       Tout->Branch("thN_exp", &T_thN_exp, "thN_exp/D"); //exp. nucelon theta
   double T_epsilon;       Tout->Branch("epsilon", &T_epsilon, "epsilon/D"); // calculated using general eqn.
@@ -571,6 +569,9 @@ int elas_ana_data (const char *configfilename,
     T_fpTh = thfp[0];
     T_fpPh = phfp[0];
 
+    // calculating bend angle
+    T_ethbend = kine::ethbend(T_tgTh,T_tgPh,T_fpTh,T_fpPh);
+    
     // defining BB fiducial cut
     bbfiduCut = abs(T_fpX - 0.9*T_fpTh - bbfidu_cutR[0]) <= bbfidu_cutR[1];
 

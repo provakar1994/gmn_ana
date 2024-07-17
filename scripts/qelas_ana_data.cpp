@@ -7,9 +7,6 @@
    P. Datta  Created  11-02-2022 
 */
 
-// TO-DO
-// 1. Energy loss calculations - Done (Cell thickness is a guess)
-
 #include <vector>
 #include <iostream>
 
@@ -28,18 +25,16 @@
 #include "../include/gmn_ana.h"
 #include "../dflay/src/JSONManager.cxx"
 
-/* this script will only analyze LD2 data */
-static const std::string target = "LD2";
-
 int qelas_ana_data (const char *configfilename,
-		    int pass, //replay pass
+		    std::string target="LD2", // LD2/Dummy
+		    int pass=2, //replay pass
                     int model=2) //Analysis model
 {
   gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
 
   // Define a clock to get macro processing time
   TStopwatch *sw = new TStopwatch(); sw->Start();
-
+  
   // reading input config file ---------------------------------------
   JSONManager *jmgr = new JSONManager(configfilename);
   std::string key = "pass" + std::to_string(pass) + "_model" + std::to_string(model);
@@ -203,7 +198,9 @@ int qelas_ana_data (const char *configfilename,
 
   // defining the outputfile
   std::string filebase = jmgr->GetValueFromSubKey_str(key,"outfile_prefix");
-  filebase = (verbose==0 && verbosefn==0) ? "" : filebase + "_";
+  //filebase = (verbose==0 && verbosefn==0) ? "" : filebase + "_"; // doesn't make sense!
+  filebase = filebase.empty() ? "" : filebase + "_";
+  if (target.compare("Dummy")==0) filebase = filebase + "dummy_"; 
   TString outFile = Form("pdout/%sqelas_ana_data_sbs%d_sbs%dp_model%d_pass%d.root",filebase.c_str(),conf,sbsmag,model,pass);
   TFile *fout = new TFile(outFile.Data(), "RECREATE");
 
@@ -275,6 +272,7 @@ int qelas_ana_data (const char *configfilename,
   double T_ephi;          Tout->Branch("ephi", &T_ephi, "ephi/D");
   double T_etheta;        Tout->Branch("etheta", &T_etheta, "etheta/D");
   double T_pelas;         Tout->Branch("pelas", &T_pelas, "pelas/D");
+  double T_ethbend;       Tout->Branch("ethbend", &T_ethbend, "ethbend/D");
   double T_pN_exp;        Tout->Branch("pN_exp", &T_pN_exp, "pN_exp/D"); //exp. nucleon momentum
   double T_thN_exp;       Tout->Branch("thN_exp", &T_thN_exp, "thN_exp/D"); //exp. nucelon theta
   double T_epsilon;       Tout->Branch("epsilon", &T_epsilon, "epsilon/D"); // calculated using general eqn.
@@ -403,10 +401,11 @@ int qelas_ana_data (const char *configfilename,
 
   // looping through the events ---------------------------------------
   std::cout << std::endl;
+  bool is_ld2 = 1 ? target.compare("LD2")==0 : 0; // for efficiency and convenience
   std::vector<double> ElossInTgt; // array to hold energy loss correction values per event
   long nevent=0, nevents=C->GetEntries(), neventsS=S->GetEntries(), index=0, tgevnumS, ngoodevs = 0; 
   int treenum=0, currenttreenum=0; UInt_t runnum=0, nseg, tsegnumS;
-  double ebeam=sbsconf.GetEbeam(), ebeam_std=0., dnewcharge, daqlvtm; 
+  double ebeam=sbsconf.GetEbeam(), ebeam_std=-99.0, dnewcharge, daqlvtm; 
   double tdnewcurr=0., tdnewcnt=0; 
   while (C->GetEntry(nevent++)) {
 
@@ -453,7 +452,7 @@ int qelas_ana_data (const char *configfilename,
 	/* In search of a faster algorithm */
 	auto it = std::find_if(crun.begin(), crun.end(), [&](CodaRun const& cr) {return cr.runnum == runnum;});
 	if (it != crun.end()) {
-	  ebeam = it->ebeam; ebeam_std = it->ebeam_std;
+	  if (is_ld2) {ebeam = it->ebeam; ebeam_std = it->ebeam_std;}
 	  dnewcharge = it->charge; daqlvtm = it->daqlvtm;
 	}else 
 	  std::cerr << "**!** Run " << runnum << " is not in spreadsheet!" << std::endl;
@@ -485,7 +484,7 @@ int qelas_ana_data (const char *configfilename,
     TLorentzVector Peprime(px[0] * (trP_corr/p[0]), // scattered e- 4-vector
 			   py[0] * (trP_corr/p[0]),
 			   pz[0] * (trP_corr/p[0]),
-			   trP_corr);                 
+			   trP_corr);    
     TLorentzVector PN;                              // target nucleon 4-vector
     kine::SetPN(Ntype, PN);
     TLorentzVector PNprime;                         // Recoil nucleon 4-vector
@@ -596,6 +595,9 @@ int qelas_ana_data (const char *configfilename,
     T_fpY = yfp[0];
     T_fpTh = thfp[0];
     T_fpPh = phfp[0];
+
+    // calculating bend angle
+    T_ethbend = kine::ethbend(T_tgTh,T_tgPh,T_fpTh,T_fpPh);
 
     // defining BB fiducial cut
     bbfiduCut = abs(T_fpX - 0.9*T_fpTh - bbfidu_cutR[0]) <= bbfidu_cutR[1];
