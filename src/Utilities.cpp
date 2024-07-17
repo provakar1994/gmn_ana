@@ -18,7 +18,7 @@ namespace util_pd {
     }
     return file;
   }
-  
+    
   //_____________________________________
   TCanvas *TC(std::string name,   // name of the canvas
  	      int rdiv,           // # divisions in row
@@ -37,6 +37,39 @@ namespace util_pd {
     return c;
   }
 
+  // //_____________________________________
+  // void SetAxTitles(TH1* obj, TString const & xtitle, TString const & ytitle) {
+  //   obj->GetXaxis()->SetTitle(xtitle);
+  //   obj->GetYaxis()->SetTitle(ytitle);
+  // }
+  // //_____________________________________
+  // void SetAxTitles(TH2* obj, TString const & xtitle, TString const & ytitle) {
+  //   obj->GetXaxis()->SetTitle(xtitle);
+  //   obj->GetYaxis()->SetTitle(ytitle);
+  // }  
+  // //_____________________________________
+  // void SetAxTitles(TGraph* obj, TString const & xtitle, TString const & ytitle) {
+  //   obj->GetXaxis()->SetTitle(xtitle);
+  //   obj->GetYaxis()->SetTitle(ytitle);
+  // }
+  
+  //_____________________________________
+  int GetSigDigit(double value, int position)
+  /* returns the desired significant digit */
+  {
+    // Shift the decimal point to the right by (position) places
+    double scaledValue = value * std::pow(10, position);
+
+    // Take the integer part of the scaled value
+    int integerPart = static_cast<int>(scaledValue);
+
+    // Extract the digit in the desired position
+    int significantDigit = integerPart % 10;
+
+    // Return the significant digit
+    return significantDigit;
+  }
+  
   //_____________________________________
   std::vector<TPad*> GetPadsForPullPlot(TCanvas *c1) 
   /* splits a given canvas into two pads suitable for pull plots */
@@ -946,30 +979,43 @@ namespace util_pd {
 		     std::vector<double> &data) // Output: data[0]=>before scattering, data[1]=>after scattering,
   /* Calculates energy loss in the target before and after scattering */
   {
-    double tgt_rho, tgt_dEdx_bs, tgt_dEdx_as, tgt_uwinthick, tgt_celldiam, tgt_cellthick; 
+    // for efficiency and brevity
+    bool is_lh2 = 1 ? target.compare("LH2")==0 : 0;
+    bool is_ld2 = 1 ? target.compare("LD2")==0 : 0;
+    bool is_dummy = 1 ? target.compare("Dummy")==0 : 0;
+    
+    double tgt_rho, tgt_dEdx_bs, tgt_dEdx_as, tgt_uwinthick, tgt_celldiam, tgt_cellthick;
+    double tgt_ufoilthick, tgt_dfoilthick;
     double Al_dEdx_bs = expconst::GetdEdxCollAl(sbsconf,1), Al_dEdx_as = expconst::GetdEdxCollAl(sbsconf,0);
     double PE_dEdx_bs = expconst::GetdEdxCollPE(sbsconf,1), PE_dEdx_as = expconst::GetdEdxCollPE(sbsconf,0); 
-    if (target.compare("LH2")==0) {
+    if (is_lh2) {
       tgt_rho = expconst::lh2_TgtRho;
       tgt_dEdx_bs = expconst::GetdEdxCollH(sbsconf,1);
       tgt_dEdx_as = expconst::GetdEdxCollH(sbsconf,0);
       tgt_uwinthick = expconst::lh2_uWinThick;
       tgt_celldiam = expconst::lh2_CellDiam;
       tgt_cellthick = expconst::lh2_CellThick;
-    }else if (target.compare("LD2")==0) {
+    }else if (is_ld2) {
       tgt_rho = expconst::ld2_TgtRho;
       tgt_dEdx_bs = expconst::GetdEdxCollH(sbsconf,1) * 0.5; // Z/A =1 for H2 & 0.5 for D2 (See expconst::GetdEdxCollH)
       tgt_dEdx_as = expconst::GetdEdxCollH(sbsconf,0) * 0.5; // Z/A =1 for H2 & 0.5 for D2 (See expconst::GetdEdxCollH)
       tgt_uwinthick = expconst::ld2_uWinThick;
       tgt_celldiam = expconst::ld2_CellDiam;
       tgt_cellthick = expconst::ld2_CellThick;
+    }else if (is_dummy) {
+      tgt_rho = expconst::dummy_TgtRho;
+      tgt_dEdx_bs = Al_dEdx_bs;
+      tgt_dEdx_as = Al_dEdx_bs;
+      tgt_ufoilthick = expconst::dummy_uFoilThick;
+      tgt_dfoilthick = expconst::dummy_dFoilThick;
     }else
       throw std::invalid_argument("[util_pd::GetElossInTgt] Given target type is invalid!");
 
+    // handling unphysical values ***
     // Scaling vz properly
     double vz_scaled = vz*1E2 + expconst::tgtlen*0.5; //cm
-    if (vz_scaled<0) vz_scaled = 0.;  // handling unphysical values
-    else if (vz_scaled>expconst::tgtlen) vz_scaled = expconst::tgtlen;
+    if (vz_scaled<0) vz_scaled = 0.; // upstream of the tg 
+    else if (vz_scaled>expconst::tgtlen) vz_scaled = expconst::tgtlen; //dwnstream of the tg
       
     // Scattering chamber shielding 
     /* NOTE: 
@@ -989,6 +1035,16 @@ namespace util_pd {
 
     double Eloss_bs = vz_scaled*tgt_rho*tgt_dEdx_bs + tgt_uwinthick*expconst::Al_Rho*Al_dEdx_bs;
     double Eloss_as = tgt_celldiam/2.0/sin(etheta)*tgt_rho*tgt_dEdx_as + tgt_cellthick/sin(etheta)*expconst::Al_Rho*Al_dEdx_as;
+    if (is_dummy) { // slightly diff calculations for dummy
+      if (vz_scaled<0.5*expconst::tgtlen) { // scattering just from the upstream foil
+	Eloss_bs = 0.0; // nothing upstream
+	Eloss_as = tgt_ufoilthick*tgt_rho*tgt_dEdx_as;
+      } else { // scattering just from the downstream foil
+	Eloss_bs = tgt_ufoilthick*tgt_rho*tgt_dEdx_bs; // ufoil is sitting upstream
+	Eloss_as = tgt_dfoilthick*tgt_rho*tgt_dEdx_as;
+      }
+    }
+    // add contribution from shield
     if (PE_shield_in) Eloss_as += expconst::PE_ShieldThick*expconst::PE_Rho*PE_dEdx_as;
     if (Al_shield_in) Eloss_as += expconst::Al_ShieldThick*expconst::Al_Rho*Al_dEdx_as;
     data = {Eloss_bs,Eloss_as};

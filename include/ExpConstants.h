@@ -71,7 +71,7 @@ namespace expconst {
 	 - https://pdg.lbl.gov/2023/AtomicNuclearProperties/index.html
 	 - Powerpoint presentation titled "eloss_in_tgt".
   */
-  // target
+  // target (tg doc => document on target specifics by Dave Meekins)
   static const double tgtlen = 15.0;  //cm 
   // LH2
   static const double lh2_TgtRho = 0.0725;      //g/cc, target density
@@ -88,7 +88,10 @@ namespace expconst {
   static const double ld2_uWinThick = 0.0125;   //cm, upstream window thickness
   static const double ld2_dWinThick = 0.0138;   //cm, downstream window (tip) thickness
   static const double ld2_dWallThick = 0.0136;  //cm, downstream wall thickness
-  //static const double ld2_dEdx = 0.005771;      //GeV*cm2/g, collisional stopping power (2GeV energy), NIST ESTAR 
+  // Dummy (Al 7075 - tg doc)
+  static const double dummy_TgtRho = 2.81;        //g/cc, from Google
+  static const double dummy_uFoilThick = 0.350/dummy_TgtRho; //cm, upstream foil thickness, using tg doc
+  static const double dummy_dFoilThick = 0.349/dummy_TgtRho; //cm, downstream foil thickness, using tg doc
   // magnet
   static const double bbmaxcurr = 750;   //A, 100% BB magnet current
   static const double sbsmaxcurr = 2100; //A, 100% SBS magnet current
@@ -106,7 +109,7 @@ namespace expconst {
   static const double PE_Rho = 0.91;         //g/cc
   static const double PE_ShieldThick = 1.0;  //cm, 10 mm
   // Al shield near scattering chamber (Installed during SBS-11). See Utilities::GetElossInTgt for more info.
-  static const double Al_Rho = 2.7;              //g/cc
+  static const double Al_Rho = dummy_TgtRho;     //g/cc (assuming Al 7075 is used by default for JLab stuff)
   static const double Al_ShieldThick = 2.54/8.0; //cm, 1/8th inch
   //static const double Al_dEdx = 0.0021;          //GeV*cm2/g, collisional stopping power (1-4GeV energy), NIST ESTAR 
 

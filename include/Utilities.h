@@ -15,6 +15,7 @@
 #include "TH2F.h"
 #include "TFile.h"
 #include "TLine.h"
+#include "TGraph.h"
 #include "TChain.h"
 #include "TLatex.h"
 #include "TCanvas.h"
@@ -36,8 +37,23 @@ namespace util_pd {
   // returns TCanvas object with optimized size
   TCanvas *TC(std::string hname,  // name of the canvas
  	      int rdiv,           // # divisions in row
-	      int cdiv);          // # divisions in column 
+	      int cdiv);          // # divisions in column
 
+  // Template function to set axis titles
+  template <typename T>
+  void SetAxTitles(T* obj, TString const & ytitle, TString const & xtitle) {
+    if constexpr (std::is_base_of<TH1, T>::value || std::is_base_of<TGraph, T>::value) {
+      obj->GetXaxis()->SetTitle(xtitle);
+      obj->GetYaxis()->SetTitle(ytitle);
+    } else {
+      static_assert(std::is_base_of<TH1, T>::value || std::is_base_of<TGraph, T>::value,
+		    "Unsupported type. Only TH1, TH2, and TGraph are supported.");
+    }
+  }
+  
+  // returns the desired significant digit
+  int GetSigDigit(double value, int position);
+      
   // splits a given canvas into two pads suitable for pull plots
   std::vector<TPad*> GetPadsForPullPlot(TCanvas *c1);
 
