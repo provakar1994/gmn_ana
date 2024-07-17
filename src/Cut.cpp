@@ -105,8 +105,9 @@ namespace cut {
     bool inSM_p = yHCAL_exp>yHCAL_r && yHCAL_exp<yHCAL_l && xHCAL_exp_p>xHCAL_t && xHCAL_exp_p<xHCAL_b;
 
     // We return "True" if both isFidu_n and isFidu_p are satisfied
-    if (target.compare("LD2")==0) inSM = inSM_n && inSM_p;
-    else if (target.compare("LH2")==0) inSM = inSM_p; // there aren't any neutrons 
+    if (target.compare("LH2")==0) inSM = inSM_p; // there aren't any neutrons 
+    else inSM = inSM_n && inSM_p;
+
     //inSM = yHCAL_exp>yHCAL_r && yHCAL_exp<yHCAL_l && xHCAL_exp<xHCAL_b && xHCAL_exp_p>xHCAL_t;
     return inSM;
   } 
