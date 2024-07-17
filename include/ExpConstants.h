@@ -75,19 +75,18 @@ namespace expconst {
   static const double tgtlen = 15.0;  //cm 
   // LH2
   static const double lh2_TgtRho = 0.0725;      //g/cc, target density
-  static const double lh2_CellThick = 0.02;     //cm, target cell thickness (Andrew's guess)
-  static const double lh2_CellDiam  = 1.6*2.54; //cm, target cell diameter (Provided by Dave M.)
   static const double lh2_uWinThick = 0.0145;   //cm, upstream window thickness
   static const double lh2_dWinThick = 0.0158;   //cm, downstream window (tip) thickness
   static const double lh2_dWallThick = 0.0143;  //cm, downstream wall thickness
-  //static const double lh2_dEdx = 0.005771;      //GeV*cm2/g, collisional stopping power (2.5GeV energy), NIST ESTAR 
+  static const double lh2_CellThick = lh2_dWallThick;  //cm, target cell thickness
+  static const double lh2_CellDiam  = 1.6*2.54; //cm, target cell diameter (Provided by Dave M.)
   // LD2
   static const double ld2_TgtRho = 0.167;       //g/cc, target density
-  static const double ld2_CellThick = 0.02;     //cm, target cell thickness (Andrew's guess)
-  static const double ld2_CellDiam  = 1.6*2.54; //cm, target cell diameter (Andrew's guess)
   static const double ld2_uWinThick = 0.0125;   //cm, upstream window thickness
   static const double ld2_dWinThick = 0.0138;   //cm, downstream window (tip) thickness
   static const double ld2_dWallThick = 0.0136;  //cm, downstream wall thickness
+  static const double ld2_CellThick = ld2_dWallThick;  //cm, target cell thickness
+  static const double ld2_CellDiam  = 1.6*2.54; //cm, target cell diameter (Andrew's guess)
   // Dummy (Al 7075 - tg doc)
   static const double dummy_TgtRho = 2.81;        //g/cc, from Google
   static const double dummy_uFoilThick = 0.350/dummy_TgtRho; //cm, upstream foil thickness, using tg doc
