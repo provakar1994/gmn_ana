@@ -51,6 +51,32 @@ namespace kine {
     return atan2(Peprime.Py(), Peprime.Px());
   }
   //--------------------------------------------
+  double ethbend(double thtg, double phtg, double thfp, double phfp) {
+    /* trajectory bend angle calculation */
+
+    // track direction at target
+    TVector3 enhat_tgt( thtg, phtg, 1.0 );
+    enhat_tgt = enhat_tgt.Unit();
+
+    // track direction at focal plane
+    TVector3 enhat_fp( thfp, phfp, 1.0 );
+    enhat_fp = enhat_fp.Unit();
+
+    // rotating focal plane Csys by 10deg clockwise about Y to match
+    // target csys
+    double GEMpitch = 10.0*TMath::DegToRad();
+    TVector3 GEMzaxis(-sin(GEMpitch),0,cos(GEMpitch));
+    TVector3 GEMyaxis(0,1,0);
+    TVector3 GEMxaxis = (GEMyaxis.Cross(GEMzaxis)).Unit();
+
+    // calculate the transformed fp coordinates
+    TVector3 enhat_fp_rot = enhat_fp.X()*GEMxaxis + enhat_fp.Y()*GEMyaxis + enhat_fp.Z()*GEMzaxis;
+
+    // trajectory bend angle
+    double thbend = acos( enhat_fp_rot.Dot( enhat_tgt ) );
+    return thbend;
+  }
+  //--------------------------------------------
   void SetPN(std::string Ntype, TLorentzVector &PN) {
     PN.SetPxPyPzE(0., 0., 0., kine::M_N(Ntype));
   } 

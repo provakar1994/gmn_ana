@@ -32,6 +32,9 @@ namespace kine{
   double etheta(TLorentzVector Peprime);  // Scattering angle (rad)
   double ephi(TLorentzVector Peprime);    // Angle of scattering plane (rad)
 
+  // trajectory bend anlge
+  double ethbend(double thtg, double phtg, double thfp, double phfp);
+
   // Constructing target nucleon 4-momentum (assuming at rest)
   void SetPN(std::string Ntype, TLorentzVector &PN);
 
