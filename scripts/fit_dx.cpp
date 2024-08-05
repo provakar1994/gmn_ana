@@ -162,6 +162,7 @@ int fit_dx (const char *configfilename,
 	    bool is_elastic = 1) // 1=>Yes, 0=>QE 
 {
   gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
+  //TH1::SetDefaultSumw2();
 
   // Define a clock to get macro processing time
   TStopwatch *sw = new TStopwatch(); sw->Start();
@@ -263,23 +264,30 @@ int fit_dx (const char *configfilename,
 
   // Creating important histograms
   vector<double> h_dx; jmgr->GetVectorFromSubKey<double>(key,"h_dx",h_dx);
-  TH1F *h_dxHCAL_data;
-  TH1F *h_dxHCAL_data_norm; // charge normalized & live time corrected 
-  TH1F *h_dxHCAL_data_CT;
-  TH1F *h_dxHCAL_simu_p;
-  TH1F *h_dxHCAL_simu_n;
-  TH1F *h_dxHCAL_simu_p_norm; // Charge normalized
-  TH1F *h_dxHCAL_simu_n_norm; // Charge normalized
-  TH1F *h_dxHCAL_bg_data;
-  TH1F *h_dxHCAL_bg_inel_p;
-  TH1F *h_dxHCAL_bg_inel_n;
-  TH1F *h_dxHCAL_bg_inel;
+  TH1F *h_dxHCAL_data = new TH1F("h_dxHCAL_data","",int(h_dx[0]),h_dx[1],h_dx[2]); h_dxHCAL_data->Sumw2();
+  TH1F *h_dxHCAL_data_norm = new TH1F("h_dxHCAL_data_norm","",int(h_dx[0]),h_dx[1],h_dx[2]); // charge normalized & live time corrected 
+  TH1F *h_dxHCAL_data_CT = new TH1F("h_dxHCAL_data_CT","",int(h_dx[0]),h_dx[1],h_dx[2]);
+  TH1F *h_dxHCAL_simu_p = new TH1F("h_dxHCAL_simu_p","",int(h_dx[0]),h_dx[1],h_dx[2]); h_dxHCAL_simu_p->Sumw2();
+  TH1F *h_dxHCAL_simu_n = new TH1F("h_dxHCAL_simu_n","",int(h_dx[0]),h_dx[1],h_dx[2]); h_dxHCAL_simu_n->Sumw2();
+  TH1F *h_dxHCAL_simu_p_norm = new TH1F("h_dxHCAL_simu_p_norm","",int(h_dx[0]),h_dx[1],h_dx[2]); // Charge normalized
+  TH1F *h_dxHCAL_simu_n_norm = new TH1F("h_dxHCAL_simu_n_norm","",int(h_dx[0]),h_dx[1],h_dx[2]); // Charge normalized
+  TH1F *h_dxHCAL_bg_data = new TH1F("h_dxHCAL_bg_data","",int(h_dx[0]),h_dx[1],h_dx[2]); h_dxHCAL_bg_data->Sumw2();
+  TH1F *h_dxHCAL_bg_inel_p = new TH1F("h_dxHCAL_bg_inel_p","",int(h_dx[0]),h_dx[1],h_dx[2]); h_dxHCAL_bg_inel_p->Sumw2();
+  TH1F *h_dxHCAL_bg_inel_n = new TH1F("h_dxHCAL_bg_inel_n","",int(h_dx[0]),h_dx[1],h_dx[2]); h_dxHCAL_bg_inel_n->Sumw2();
+  TH1F *h_dxHCAL_bg_inel = new TH1F("h_dxHCAL_bg_inel","",int(h_dx[0]),h_dx[1],h_dx[2]); h_dxHCAL_bg_inel->Sumw2();
   // kinematic histo "true"
-  TH1F *h_vQ2;
-  TH1F *h_vetheta;
+  TH1F *h_vQ2 = new TH1F("h_vQ2","",300,0,16);
+  TH1F *h_vetheta= new TH1F("h_vetheta","",300,0.35,1.05);
   // vs Run number
-  TH2F *h2_dxHCAL_vs_rnum;
-  TH2F *h2_dxHCAL_vs_rnum_norm; // charge normalized & live time corrected
+  // ## Explicit x bins for Rnum histos -- Needed to avoid round off error introduced by ROOT's default way of calculating bin edges
+  int nruns = -1; 
+  std::vector<CodaRun> cruns; util_pd::ReadRunList("../DB",nruns,conf,target,pass,sbsmag,0,cruns);
+  int minRnum = cruns[0].runnum-1; int maxRnum = cruns[cruns.size()-1].runnum+2;
+  std::vector<double> xbinsRnum; CalcRnumBinEdges(minRnum,maxRnum,0,xbinsRnum);
+  int nbinRnum = xbinsRnum.size()-1;
+  //
+  TH2F *h2_dxHCAL_vs_rnum = new TH2F("h2_dxHCAL_vs_rnum","",nbinRnum,&(xbinsRnum)[0],int(h_dx[0]),h_dx[1],h_dx[2]);
+  TH2F *h2_dxHCAL_vs_rnum_norm = new TH2F("h2_dxHCAL_vs_rnum","",nbinRnum,&(xbinsRnum)[0],int(h_dx[0]),h_dx[1],h_dx[2]); // charge normalized & live time corrected
 
   // Cut variation **************
   // Although not necessary, keeping this loop separate gives more control and clarity
@@ -296,7 +304,7 @@ int fit_dx (const char *configfilename,
   customize_hcut(hcut); hcut->SetTitle(Form("%s {%s}",param_to_vary.c_str(),cuts_sig_data_modified.c_str()));
   TH1F *hcut_p = (TH1F*)data_rdf_filtered.Filter("pCut").Histo1D({"hcut_p","",int(h_cut_param[0]),h_cut_param[1],h_cut_param[2]},param_to_vary)->Clone();
   customize_hcut_p(hcut_p); hcut_p->SetTitle(Form("%s {pCut&&%s}",param_to_vary.c_str(),cuts_sig_data_modified.c_str()));
-  TH1F *hcut_n;
+  TH1F *hcut_n = new TH1F("hcut_n","",int(h_cut_param[0]),h_cut_param[1],h_cut_param[2]);
   if (!is_elastic) {
     hcut_n = (TH1F*)data_rdf_filtered.Filter("nCut").Histo1D({"hcut_n","",int(h_cut_param[0]),h_cut_param[1],h_cut_param[2]},param_to_vary)->Clone();
     customize_hcut_n(hcut_n); hcut_n->SetTitle(Form("%s {nCut&&%s}",param_to_vary.c_str(),cuts_sig_data_modified.c_str()));
@@ -307,7 +315,7 @@ int fit_dx (const char *configfilename,
   customize_hcut(hcut_simu); hcut_simu->SetTitle(Form("%s {%s}",param_to_vary.c_str(),cuts_sig_simu_modified.c_str()));
   TH1F *hcut_p_simu = (TH1F*)simu_rdf_filtered.Filter("mc_fnucl==1").Histo1D({"hcut_p_simu","",int(h_cut_param[0]),h_cut_param[1],h_cut_param[2]},param_to_vary,"weight")->Clone();
   customize_hcut_p(hcut_p_simu); hcut_p_simu->SetTitle(Form("%s {pCut&&%s}",param_to_vary.c_str(),cuts_sig_simu_modified.c_str()));
-  TH1F *hcut_n_simu;
+  TH1F *hcut_n_simu = new TH1F("hcut_n_simu","",int(h_cut_param[0]),h_cut_param[1],h_cut_param[2]);
   if (!is_elastic) {
     hcut_n_simu = (TH1F*)simu_rdf_filtered.Filter("mc_fnucl==0").Histo1D({"hcut_n_simu","",int(h_cut_param[0]),h_cut_param[1],h_cut_param[2]},param_to_vary,"weight")->Clone();
     customize_hcut_n(hcut_n_simu); hcut_n_simu->SetTitle(Form("%s {nCut&&%s}",param_to_vary.c_str(),cuts_sig_simu_modified.c_str()));
@@ -401,14 +409,7 @@ int fit_dx (const char *configfilename,
   if (cut_vary_style==4) cCut->Divide(2,2);
   else cCut->Divide(2,1);
 
-  // ## Explicit x bins for Rnum histos -- Needed to avoid round off error introduced by ROOT's default way of calculating bin edges
-  int nruns = -1; 
-  std::vector<CodaRun> cruns; util_pd::ReadRunList("../DB",nruns,conf,target,pass,sbsmag,0,cruns);
-  int minRnum = cruns[0].runnum-1; int maxRnum = cruns[cruns.size()-1].runnum+2;
-  std::vector<double> xbinsRnum; CalcRnumBinEdges(minRnum,maxRnum,0,xbinsRnum);
-  int nbinRnum = xbinsRnum.size()-1;
-  // --------- 
- 
+  // ---- 
   for (int i=0; i<iter; i++) {
 
     // forming the fiducial cut
