@@ -25,6 +25,15 @@
 #include "../include/gmn_ana.h"
 #include "../dflay/src/JSONManager.cxx"
 
+void ReplaceString(std::string &instr, std::string const &strtorep, std::string const &replacement) {
+  // Find the starting position of the substring to replace
+  size_t startPos = instr.find(strtorep);
+  if (startPos != std::string::npos) {
+    // Replace the substring
+    instr.replace(startPos, strtorep.length(), replacement);
+  }
+}
+
 int qelas_ana_data (const char *configfilename,
 		    std::string target="LD2", // LD2/Dummy
 		    int pass=2, //replay pass
@@ -54,6 +63,7 @@ int qelas_ana_data (const char *configfilename,
   int nruns = jmgr->GetValueFromSubKey<int>(key,"Nruns_to_ana"); // # of runs to analyze
   vector<CodaRun> crun; util_pd::ReadRunList(runsheet_dir,nruns,conf,target,pass,sbsmag,verbosefn,crun);
   std::string rootfile_dir = jmgr->GetValueFromSubKey_str(key,"rootfile_dir");
+  if (target.compare("LD2")!=0) ReplaceString(rootfile_dir,"LD2",target);
   TChain *C = new TChain("T"); util_pd::LoadROOTTree(rootfile_dir,crun,1,verbosefn,C); 
  
   // reading scaler tree
