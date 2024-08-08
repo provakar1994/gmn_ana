@@ -109,6 +109,14 @@ namespace util_pd {
   }
 
   //_____________________________________
+  double GetyNDC(double y)
+  /* Returns normalized coordinate for a given y value */
+  {
+    gPad->Update();
+    return (y - gPad->GetY1())/(gPad->GetY2()-gPad->GetY1());
+  }  
+
+  //_____________________________________
   double UnfoldyNDC(double yNDC) 
   /* Returns y value for a given y coordinate in NDC */
   {

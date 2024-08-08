@@ -65,8 +65,9 @@ namespace util_pd {
   // creates a TH1F object from a given TF1 object
   void TF1toTH1F(TF1* const func, TH1F* &hist);
 
-  // Returns normalized coordinate for a given x value
+  // Returns normalized coordinate for a given x & y values
   double GetxNDC(double x);
+  double GetyNDC(double y);
 
   // Returns y value for a given y coordinate in NDC
   double UnfoldyNDC(double yNDC);
