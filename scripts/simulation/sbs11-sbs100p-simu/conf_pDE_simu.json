@@ -1,0 +1,26 @@
+{
+    "prod":
+    {
+	"SBS_config"           : 11,
+	"SBS_magnet_percent"   : 100,
+	"model"                : 2,
+	"pass"                 : 2,
+	"generator"            : "simc",
+	"simu_file_prefix"     : "rcOT0_1p27zoff_0p97sf",
+	"global_cut"           : "bbfiduCut&&abs(vz)<0.065&&trchi2ndf<15",
+	"w2_cut"               : "W2>0.65&&W2<0.95",
+	"harm_cut"             : "pdx_nS<3.5&&dy_nS<3.5",
+	"-\/ FIDU CUT SECTION" : "--\/-- Forming Custom Fiducial Cut ------",
+	"apply_fidu_cut"       : 0,
+	"AR_width_x_y"         : [1,1],
+	"sbs_kick"             : 0.71,
+	"SM_width_xp_xn_y"     : [0.19,0.19,0.24],
+	"--"                   : "",
+	"h_xexp_lim"           : [100,-1.25,1.25],
+	"h_xexp_fitR"          : [-1.25,1.25],
+	"h_yexp_lim"           : [100,-0.7,0.7],
+	"h_yexp_fitR"          : [-0.2,0.5],
+	"h_w2_lim"             : [200,-1,6]
+    }
+}
+
