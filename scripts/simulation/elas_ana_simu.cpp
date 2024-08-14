@@ -169,6 +169,8 @@ int elas_ana_simu (const char *configfilename,
   double dy_nS;           Tout->Branch("dy_nS", &dy_nS, "dy_nS/D"); //# sigma away from dy peak 
   // --
   bool SMCut;             Tout->Branch("SMCut", &SMCut, "SMCut/B");
+  double SMy_nS;          Tout->Branch("SMy_nS", &SMy_nS, "SMy_nS/D"); //min. # sigma away from left & right margins
+  double SMx_nS_p;        Tout->Branch("SMx_nS_p", &SMx_nS_p, "SMx_nS_p/D"); //min. # sigma away from top & bot. margins   
   bool ARCut;             Tout->Branch("ARCut", &ARCut, "ARCut/B");
   bool fiduCut;           Tout->Branch("fiduCut", &fiduCut, "fiduCut/B");
   //MC related
@@ -498,6 +500,21 @@ int elas_ana_simu (const char *configfilename,
     ARCut = cut::inHCAL_activeA(xHCAL,yHCAL,hcal_active_area);
     SMCut = cut::inHCAL_safety_margin(target,xyHCAL_exp[0],xyHCAL_exp[1],sbs_kick,hcal_safety_margin);
     fiduCut = ARCut && SMCut; 
+    // *** Implementing Sebastian Seed's idea for flexible SMCut
+    // First step is to evalute current xyHCAL_exp values are how many sigmas away from the active area boundaries
+    double SMy_nS_l = fabs(T_yHCAL_exp-hcal_active_area[3])/dy_p_cut[1];
+    double SMy_nS_r = fabs(T_yHCAL_exp-hcal_active_area[2])/dy_p_cut[1]; 
+    double SMx_nS_t_p = fabs(T_xHCAL_exp-sbs_kick-hcal_active_area[0])/dx_p_cut[1];
+    double SMx_nS_b_p = fabs(T_xHCAL_exp-sbs_kick-hcal_active_area[1])/dx_p_cut[1];
+    // The above calculation is symmetric for the events landing on either sides of AR boundaries. Hence, it is
+    // necessary to identify the events landing outside of AR to be able to exclude them from Cut. The easiest I can
+    // think of right now is to define a bool that turns 1 if xyHCAL_exp values are within AR
+    bool p_xyexp_in_AR = cut::inHCAL_activeA(T_xHCAL_exp-sbs_kick,T_yHCAL_exp,hcal_active_area);
+    // Now, its time to define just one variable to be able to cut on both sides of boundaries for a given direction.
+    // The way I can think of is to cut on the minimum # sigmas for a given direction to accomplish this. At the same
+    // time be sure to assign garbage value for events with xyHCAL_exp values landing outside of AR
+    SMy_nS = p_xyexp_in_AR ? min(SMy_nS_l,SMy_nS_r) : -99;
+    SMx_nS_p = p_xyexp_in_AR ? min(SMx_nS_t_p,SMx_nS_b_p) : -99;
     // defining HCAL cuts
     pCut = cut::SpotCut(dx,dx_p_cut[0],dx_p_cut[1],dx_p_cut[2],dy,dy_p_cut[0],dy_p_cut[1],dy_p_cut[2]);
     // ***
