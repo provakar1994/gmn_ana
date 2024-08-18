@@ -660,7 +660,7 @@ int qelas_ana_data (const char *configfilename,
     // Calculating proton deflection angle
     double BdL = (sbsmag / 100.) * expconst::sbsmaxfield_data(conf) * expconst::sbsdipolegap;
     double proton_thetabend = 0.3 * BdL / PNprime.Vect().Mag();  // p*theta = 0.3*BdL
-    double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist()-(sbsconf.GetSBSdist()+expconst::sbsdipolegap/2.0));
+    double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist()+hcal_zoffset-(sbsconf.GetSBSdist()+expconst::sbsdipolegap/2.0));
     T_p_def = proton_deflection;
 
     /*

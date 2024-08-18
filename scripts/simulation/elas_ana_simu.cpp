@@ -33,7 +33,7 @@
 static const std::string target = "LH2";
 
 int elas_ana_simu (const char *configfilename, 
-		    int model=2, //Analysis model
+		    int model=1, //Analysis model
 		    std::string generator="simc",
 		    std::string process="heep")
 {
@@ -144,6 +144,7 @@ int elas_ana_simu (const char *configfilename,
   TH1F *h_W = util_pd::TH1FhW("h_W");
   TH1F *h_W_cut = util_pd::TH1FhW("h_W_cut");
   TH1F *h_W_acut = util_pd::TH1FhW("h_W_acut");
+  TH1F *h_W2_cut = new TH1F("h_W2_cut","",200,-1,4);
   TH1F *h_dpel = new TH1F("h_dpel",";p/p_{elastic}(#theta)-1;",100,-0.3,0.3);
   
   TH1F *h_Q2 = util_pd::TH1FhQ2("h_Q2", conf);
@@ -154,6 +155,8 @@ int elas_ana_simu (const char *configfilename,
   TH1F *h_dyHCAL = new TH1F("h_dyHCAL","W & fiducial cuts;y_{HCAL}^{obs} - y_{HCAL}^{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
   TH1F *h_dyHCAL_nfc = new TH1F("h_dyHCAL_nfc","W cut;y_{HCAL}^{obs} - y_{HCAL}^{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
   TH1F *h_dxHCAL_p = new TH1F("h_dxHCAL_p","mc_fnucl = p;x_{HCAL}^{obs} - x_{HCAL}^{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
+
+  TH1F *h_dx_w_p_def = new TH1F("h_dx_w_p_def",";dx+p_def (m);",200,-1,1);
 
   TH2F *h2_rcHCAL = util_pd::TH2FHCALface_rc("h2_rcHCAL");
   TH2F *h2_dxdyHCAL = util_pd::TH2FdxdyHCAL("h2_dxdyHCAL");
@@ -239,7 +242,8 @@ int elas_ana_simu (const char *configfilename,
   double T_atimeHCAL;     Tout->Branch("atimeHCAL", &T_atimeHCAL, "atimeHCAL/D"); 
   double T_tdcHCAL;       Tout->Branch("tdcHCAL", &T_tdcHCAL, "tdcHCAL/D"); 
   double T_xHCAL_exp;     Tout->Branch("xHCAL_exp", &T_xHCAL_exp, "xHCAL_exp/D"); 
-  double T_yHCAL_exp;     Tout->Branch("yHCAL_exp", &T_yHCAL_exp, "yHCAL_exp/D"); 
+  double T_yHCAL_exp;     Tout->Branch("yHCAL_exp", &T_yHCAL_exp, "yHCAL_exp/D");
+  double T_xHCAL_exp_p;   Tout->Branch("xHCAL_exp_p", &T_xHCAL_exp_p, "xHCAL_exp_p/D"); // average sbs_kick included   
   double T_dx;            Tout->Branch("dx", &T_dx, "dx/D"); 
   double T_dy;            Tout->Branch("dy", &T_dy, "dy/D");
   double T_p_def;         Tout->Branch("p_def", &T_p_def, "p_def/D"); // expected proton deflection
@@ -261,8 +265,11 @@ int elas_ana_simu (const char *configfilename,
   vector<double> hcal_safety_margin_p10p = cut::hcal_safety_margin(dx_p_cut[1]*1.1,dx_p_cut[1]*1.1,dy_p_cut[1],hcal_active_area);
   vector<double> hcal_safety_margin_m10p = cut::hcal_safety_margin(dx_p_cut[1]*.9,dx_p_cut[1]*.9,dy_p_cut[1],hcal_active_area);
   TH2F *h2_xyHCAL_p = util_pd::TH2FHCALface_xy_simu("h2_xyHCAL_p",sbs_kick);
+  TH2F *h2_xyHCAL_p_nfc = util_pd::TH2FHCALface_xy_simu("h2_xyHCAL_p_nfc",sbs_kick);
 
-  // reading W cut limits
+  // reading W2 offset and W cut limits
+  double dy_offset = jmgr->GetValueFromSubKey<double>(key,"dy_offset");
+  double W2_offset = jmgr->GetValueFromSubKey<double>(key,"W2_offset");
   std::vector<double> W_cutR; jmgr->GetVectorFromSubKey<double>(key,"W_cutR",W_cutR);
   // reading BB fiducial cut limits
   std::vector<double> bbfidu_cutR; jmgr->GetVectorFromSubKey<double>(key,"bbfidu_cutR",bbfidu_cutR);
@@ -408,7 +415,7 @@ int elas_ana_simu (const char *configfilename,
 
     T_nu = nu;
     T_Q2 = Q2recon;
-    T_W2 = W2recon;
+    T_W2 = W2recon+W2_offset;
     T_W = Wrecon;
     T_dpel = dpel;
     T_ephi = ephi;
@@ -481,8 +488,9 @@ int elas_ana_simu (const char *configfilename,
 
     T_xHCAL_exp = xyHCAL_exp[0];
     T_yHCAL_exp = xyHCAL_exp[1];
+    T_xHCAL_exp_p = xyHCAL_exp[0]-sbs_kick;
     T_dx = dx;
-    T_dy = dy;
+    T_dy = dy+dy_offset;
 
     /* Calculating thpq (p hypothesis) */
     TVector3 HCAL_pos = HCAL_origin + xHCAL*HCAL_axes[0] + yHCAL*HCAL_axes[1];
@@ -491,7 +499,7 @@ int elas_ana_simu (const char *configfilename,
     // p 
     double BdL = sbsscalefield * expconst::sbsmaxfield_simu * expconst::sbsdipolegap;
     double proton_thetabend = 0.3 * BdL / PNprime.Vect().Mag();  // p*theta = 0.3*BdL
-    double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist()-(sbsconf.GetSBSdist()+expconst::sbsdipolegap/2.0));
+    double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist()+hcal_zoffset-(sbsconf.GetSBSdist()+expconst::sbsdipolegap/2.0));
     T_p_def = proton_deflection;
     TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);
     T_thpq_p = acos(p_dir.Unit().Dot(pNhat));
@@ -525,11 +533,14 @@ int elas_ana_simu (const char *configfilename,
     WCut = Wrecon >= W_cutR[0] && Wrecon <= W_cutR[1];
 
     // W cut
-    if (WCut) {
-      h_dxHCAL_nfc->Fill(dx, weight);
+    if (WCut&&bbfiduCut&&T_eHCAL>0) {
+      if (abs(dy)<0.4) h_dxHCAL_nfc->Fill(dx, weight);
       h_dyHCAL_nfc->Fill(dy, weight);
       if (fiduCut) {
-	h_dxHCAL->Fill(dx, weight);
+	if (abs(dy)<0.4) {
+	  h_dxHCAL->Fill(dx, weight);
+	  h_dx_w_p_def->Fill(dx+T_p_def, weight);
+	}
 	h_dyHCAL->Fill(dy, weight);
 	// dx dist. for p & n separately using MC info
 	if (int(mc_fnucl)==1) {
@@ -545,8 +556,9 @@ int elas_ana_simu (const char *configfilename,
 	h2_dxdyHCAL->Fill(dy, dx, weight);
 
 	// hit map to show p & n in fiducial region
-	// if (pCut) h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick, weight);
+	if (pCut) h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick, weight);
       }
+      if (pCut) h2_xyHCAL_p_nfc->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick, weight);
     }
 
     // fiducial cut but no W cut
@@ -555,6 +567,7 @@ int elas_ana_simu (const char *configfilename,
 	h_W->Fill(Wrecon,weight);
 	if (pCut) { 
 	  h_W_cut->Fill(Wrecon,weight);
+	  h_W2_cut->Fill(W2recon,weight);
 	} else {
 	  h_W_acut->Fill(Wrecon,weight);
 	}
@@ -581,9 +594,11 @@ int elas_ana_simu (const char *configfilename,
   h_W_cut->Draw("same"); h_W_cut->SetLineColor(2);
   h_W_acut->Draw("same");
   c1->cd(3); //
+  h2_xyHCAL_p_nfc->Draw("colz");
+  util_pd::PlotFiduCut(2,hcal_active_area,hcal_safety_margin);
+  c1->cd(4); //
   h2_xyHCAL_p->Draw("colz");
-  util_pd::DrawArea(hcal_active_area,2,4,9);
-  util_pd::DrawArea(hcal_safety_margin,4,4,9);
+  util_pd::PlotFiduCut(2,hcal_active_area,hcal_safety_margin);
   c1->SaveAs(Form("%s[",outPlot.Data())); c1->SaveAs(Form("%s",outPlot.Data())); c1->Write();
   //**** -- ***//
 
@@ -593,19 +608,46 @@ int elas_ana_simu (const char *configfilename,
   std::vector<double> hdy_fitR; jmgr->GetVectorFromSubKey<double>(key,"h_dyHCAL_fitR", hdy_fitR);
   gStyle->SetOptFit(1);
   c2->cd(1); //
+  gPad->SetGridx();
   TF1 *fdxp = fit::fit_1gs_nbg(hdx_fitR,h_dxHCAL);
   double dxpM = fdxp->GetParameter(1); double dxpS = fdxp->GetParameter(2);
   c2->cd(2); //
+  gPad->SetGridx();
   TF1 *fdyp = fit::fit_1gs_nbg(hdy_fitR,h_dyHCAL);
   double dypM = fdyp->GetParameter(1); double dypS = fdyp->GetParameter(2);
   c2->cd(3); //
+  gPad->SetGridx();
   TF1 *fdxp_nfc = fit::fit_1gs_nbg(hdx_fitR,h_dxHCAL_nfc);
   double dxpM_nfc = fdxp_nfc->GetParameter(1); double dxpS_nfc = fdxp_nfc->GetParameter(2);
   c2->cd(4); //
+  gPad->SetGridx();
   TF1 *fdyp_nfc = fit::fit_1gs_nbg(hdy_fitR,h_dyHCAL_nfc);
   double dypM_nfc = fdyp_nfc->GetParameter(1); double dypS_nfc = fdyp_nfc->GetParameter(2);
   c2->SaveAs(Form("%s",outPlot.Data())); c2->Write();
   //**** -- ***//
+
+  /**** Canvas 3 (Deflection and W2) ****/
+  TCanvas *c3 = util_pd::TC("c3",1,2);
+  c3->SetGridx();
+  gStyle->SetOptFit(1);
+  //
+  c3->cd(1);
+  gPad->SetGridx();
+  std::vector<double> hpdef_fitR{-0.5,0.5,1.2,1.2};
+  TF1 *fpdef = fit::fit_1gs_nbg(hpdef_fitR,h_dx_w_p_def);
+  double pdefM = fpdef->GetParameter(1); double pdefS = fpdef->GetParameter(2);
+  h_dx_w_p_def->Draw("same");
+  h_dx_w_p_def->SetLineColor(kBlack);
+  //
+  c3->cd(2);
+  gPad->SetGridx();
+  std::vector<double> hW2_fitR{0.6,1.2,1.2,1.2};
+  TF1 *fW2 = fit::fit_1gs_nbg(hW2_fitR,h_W2_cut);
+  double W2M = fW2->GetParameter(1); double W2S = fW2->GetParameter(2);
+  h_W2_cut->Draw("same");
+  h_W2_cut->SetLineColor(kBlack); 
+  c3->SaveAs(Form("%s",outPlot.Data())); c3->Write();
+  //**** -- ***//  
 
   /**** Summary Canvas ****/
   TCanvas *cSummary = new TCanvas("cSummary","Summary");
@@ -616,6 +658,7 @@ int elas_ana_simu (const char *configfilename,
   pt->AddText(Form(" Analyzing %s generated QE events for SBS%d-SBS%dp settings",generator.c_str(),conf,sbsmag));
   pt->AddText(Form(" Analysis model: %d",model));
   pt->AddText(Form(" HCAL offsets: v = %.4f, h = %.4f, z = %.4f",hcal_voffset,hcal_hoffset,hcal_zoffset));
+  pt->AddText(Form(" W2 offset = %.4f, dy offset = %.4f",W2_offset,dy_offset));
   pt->AddText(Form(" Total # events analyzed: %ld",nevents));
   pt->AddText(Form(" Global cuts: "));
     std::string tmpstr = "";
@@ -668,10 +711,13 @@ int elas_ana_simu (const char *configfilename,
   h_Q2->Write();
   h_dpel->Write(); h_W->Write();
   h_W_cut->Write(); h_W_acut->Write();
+  h_W2_cut->Write();
   h_dxHCAL->Write(); h_dxHCAL_nfc->Write();
   h_dyHCAL->Write(); h_dyHCAL_nfc->Write();
   h_dxHCAL_p->Write(); h2_xyHCAL_p->Write();
+  h2_xyHCAL_p_nfc->Write();
   h2_rcHCAL->Write(); h2_dxdyHCAL->Write();
+  h_dx_w_p_def->Write();
   sw->Delete();
   delete jmgr;
   return 0;

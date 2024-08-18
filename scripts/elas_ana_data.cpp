@@ -207,6 +207,7 @@ int elas_ana_data (const char *configfilename,
   TH1F *h_W = util_pd::TH1FhW("h_W");
   TH1F *h_W_cut = util_pd::TH1FhW("h_W_cut");
   TH1F *h_W_acut = util_pd::TH1FhW("h_W_acut");
+  TH1F *h_W2_cut = new TH1F("h_W2_cut","",200,-1,4);
   TH1F *h_dpel = new TH1F("h_dpel",";p/p_{elastic}(#theta)-1;",100,-0.3,0.3);
   
   TH1F *h_Q2 = util_pd::TH1FhQ2("h_Q2", conf);
@@ -217,7 +218,11 @@ int elas_ana_data (const char *configfilename,
   TH1F *h_dyHCAL = new TH1F("h_dyHCAL","W & fiducial cuts;y_{HCAL}^{obs} - y_{HCAL}^{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
   TH1F *h_dyHCAL_nfc = new TH1F("h_dyHCAL_nfc","W cut;y_{HCAL}^{obs} - y_{HCAL}^{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
   TH1F *h_coinT_trig = new TH1F("h_coinT_trig","BBCAL-HCAL trigger coincidence time (ns)",200,380,660);
+  TH1F *h_coinT_ADC = new TH1F("h_coinT_ADC","HCAL-SH ADC time",200,-20,20);
+  TH1F *h_coinT_ADC_c = new TH1F("h_coinT_ADC_c","HCAL-SH ADC time (Corrected)",200,-20,20);
 
+  TH1F *h_dx_w_p_def = new TH1F("h_dx_w_p_def",";dx+p_def (m);",200,-1,1);
+  
   TH2F *h2_rcHCAL = util_pd::TH2FHCALface_rc("h2_rcHCAL");
   TH2F *h2_dxdyHCAL = util_pd::TH2FdxdyHCAL("h2_dxdyHCAL");
 
@@ -247,6 +252,7 @@ int elas_ana_data (const char *configfilename,
   bool ARCut;             Tout->Branch("ARCut", &ARCut, "ARCut/O");
   bool fiduCut;           Tout->Branch("fiduCut", &fiduCut, "fiduCut/O");
   bool coinTADCCut;       Tout->Branch("coinTADCCut", &coinTADCCut, "coinTADCCut/O"); //HCAL/SH ADC coin time cut
+  double coinTADC_nS;     Tout->Branch("coinTADC_nS", &coinTADC_nS, "coinTADC_nS/D"); //# sigma away from HCAL-SH good coinT zone
   //run info
   UInt_t T_rnum;          Tout->Branch("rnum", &T_rnum, "rnum/i");
   UInt_t T_segnum;        Tout->Branch("segnum", &T_segnum, "segnum/i");
@@ -319,7 +325,8 @@ int elas_ana_data (const char *configfilename,
   double T_atimeHCAL;     Tout->Branch("atimeHCAL", &T_atimeHCAL, "atimeHCAL/D"); 
   double T_tdcHCAL;       Tout->Branch("tdcHCAL", &T_tdcHCAL, "tdcHCAL/D"); 
   double T_xHCAL_exp;     Tout->Branch("xHCAL_exp", &T_xHCAL_exp, "xHCAL_exp/D"); 
-  double T_yHCAL_exp;     Tout->Branch("yHCAL_exp", &T_yHCAL_exp, "yHCAL_exp/D"); 
+  double T_yHCAL_exp;     Tout->Branch("yHCAL_exp", &T_yHCAL_exp, "yHCAL_exp/D");
+  double T_xHCAL_exp_p;   Tout->Branch("xHCAL_exp_p", &T_xHCAL_exp_p, "xHCAL_exp_p/D"); // average sbs_kick included 
   double T_dx;            Tout->Branch("dx", &T_dx, "dx/D"); 
   double T_dy;            Tout->Branch("dy", &T_dy, "dy/D");
   double T_p_def;         Tout->Branch("p_def", &T_p_def, "p_def/D"); // expected proton deflection
@@ -371,6 +378,7 @@ int elas_ana_data (const char *configfilename,
   vector<double> hcal_safety_margin_p10p = cut::hcal_safety_margin(dx_p_cut[1]*1.1,dx_p_cut[1]*1.1,dy_p_cut[1],hcal_active_area);
   vector<double> hcal_safety_margin_m10p = cut::hcal_safety_margin(dx_p_cut[1]*.9,dx_p_cut[1]*.9,dy_p_cut[1],hcal_active_area);
   TH2F *h2_xyHCAL_p = util_pd::TH2FHCALface_xy_data("h2_xyHCAL_p",sbs_kick,pass);
+  TH2F *h2_xyHCAL_p_nfc = util_pd::TH2FHCALface_xy_data("h2_xyHCAL_p_nfc",sbs_kick,pass);
 
   // costruct axes of HCAL CoS in Hall CoS
   double hcal_voffset = jmgr->GetValueFromSubKey<double>(key,"hcal_voffset");
@@ -610,11 +618,12 @@ int elas_ana_data (const char *configfilename,
     kine::GetxyHCALexpect(vertex, pNhat, HCAL_origin, HCAL_axes, xyHCAL_exp);
     T_xHCAL_exp = xyHCAL_exp[0];
     T_yHCAL_exp = xyHCAL_exp[1];
+    T_xHCAL_exp_p = xyHCAL_exp[0]-sbs_kick;
 
     // Calculating proton deflection angle
     double BdL = (sbsmag / 100.) * expconst::sbsmaxfield_data(conf) * expconst::sbsdipolegap;
     double proton_thetabend = 0.3 * BdL / PNprime.Vect().Mag();  // p*theta = 0.3*BdL
-    double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist()-(sbsconf.GetSBSdist()+expconst::sbsdipolegap/2.0));
+    double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist()+hcal_zoffset-(sbsconf.GetSBSdist()+expconst::sbsdipolegap/2.0));
     T_p_def = proton_deflection;
 
     /*
@@ -788,8 +797,10 @@ int elas_ana_data (const char *configfilename,
     double dy = T_dy;
 
     // HCAL/SH SDC coincidence time
-    coinTADCCut = abs(T_atimeHCAL - atimeSH - coinTADC_cutR[0]) <= coinTADC_cutR[2]*coinTADC_cutR[1];
-    T_coinT_ADC_c = T_atimeHCAL - atimeSH - coinTADC_cutR[0];
+    double coinTADC_corr_pos = T_atimeHCAL - atimeSH - coinTADC_cutR[0];
+    coinTADCCut = abs(coinTADC_corr_pos) <= coinTADC_cutR[2]*coinTADC_cutR[1];
+    coinTADC_nS = abs(coinTADC_corr_pos)/coinTADC_cutR[1];
+    T_coinT_ADC_c = coinTADC_corr_pos;
 
     // Calculating thpq (both w & w/o deflection due to SBS dipole)
     // assuming no deflection (using "n" for no deflection)
@@ -829,18 +840,30 @@ int elas_ana_data (const char *configfilename,
     dy_nS = fabs(dy-dy_p_cut[0])/dy_p_cut[1];
 
     // W cut
-    if (WCut&&idblkHCAL_aclN!=0) {
-      h_dxHCAL_nfc->Fill(dx);
-      h_dyHCAL_nfc->Fill(dy);
+    if (WCut&&idblkHCAL_aclN!=0&&bbfiduCut) {
+      if (T_eHCAL>0) {
+	if (abs(dy)<0.3) h_dxHCAL_nfc->Fill(dx);
+	h_dyHCAL_nfc->Fill(dy);
+      }
       // fiducial cut (Should we use it for LH2 data?)
       if (fiduCut) {
-	h_dxHCAL->Fill(dx);
-	h_dyHCAL->Fill(dy);
-	h2_rcHCAL->Fill(T_cblkHCAL, T_rblkHCAL);
-	h2_dxdyHCAL->Fill(dy, dx);
+	if (T_eHCAL>0) {
+	  if (abs(dy)<0.3) {
+	    h_dxHCAL->Fill(dx);
+	    h_dx_w_p_def->Fill(dx+T_p_def);
+	  }
+	  if (pCut) {
+	    h_coinT_ADC->Fill(T_atimeHCAL - atimeSH);
+	    h_coinT_ADC_c->Fill(T_coinT_ADC_c);
+	  }
+	  h_dyHCAL->Fill(dy);
+	  h2_rcHCAL->Fill(T_cblkHCAL, T_rblkHCAL);
+	  h2_dxdyHCAL->Fill(dy, dx);
+	}
 
 	if (pCut) h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick);
       }
+      if (pCut) h2_xyHCAL_p_nfc->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick);
     }
 
     // fiducial cut but no W cut
@@ -849,6 +872,7 @@ int elas_ana_data (const char *configfilename,
 	h_W->Fill(T_W);
 	if (pCut) { 
 	  h_W_cut->Fill(T_W);
+	  h_W2_cut->Fill(T_W2);
 	} else {
 	  h_W_acut->Fill(T_W);
 	}
@@ -878,30 +902,68 @@ int elas_ana_data (const char *configfilename,
   h_W_cut->Draw("same"); h_W_cut->SetLineColor(2);
   h_W_acut->Draw("same");
   c1->cd(3); //
+  h2_xyHCAL_p_nfc->Draw("colz");
+  util_pd::PlotFiduCut(pass,hcal_active_area,hcal_safety_margin);
+  c1->cd(4); //
   h2_xyHCAL_p->Draw("colz");
-  util_pd::DrawArea(hcal_active_area,2,4,9);
-  util_pd::DrawArea(hcal_safety_margin,4,4,9);
+  util_pd::PlotFiduCut(pass,hcal_active_area,hcal_safety_margin);
   c1->SaveAs(Form("%s[",outPlot.Data())); c1->SaveAs(Form("%s",outPlot.Data())); c1->Write();
   //**** -- ***//
 
   /**** Canvas 2 (dx & dy) ****/
   TCanvas *c2 = util_pd::TC("c2",2,2);
+  c2->SetGridx();
   std::vector<double> hdxp_fitR; jmgr->GetVectorFromSubKey<double>(key,"h_dxHCAL_p_fitR", hdxp_fitR);
   std::vector<double> hdy_fitR; jmgr->GetVectorFromSubKey<double>(key,"h_dyHCAL_fitR", hdy_fitR);
   gStyle->SetOptFit(1);
   c2->cd(1); //
+  gPad->SetGridx();
   TF1 *fdxp = fit::fit_1gs_nbg(hdxp_fitR,h_dxHCAL);
   double dxpM = fdxp->GetParameter(1); double dxpS = fdxp->GetParameter(2);
   c2->cd(2); //
+  gPad->SetGridx();
   TF1 *fdy = fit::fit_1gs_nbg(hdy_fitR,h_dyHCAL);
   double dypM = fdy->GetParameter(1); double dypS = fdy->GetParameter(2);
   c2->cd(3); //
+  gPad->SetGridx();
   TF1 *fdxp_nfc = fit::fit_1gs_nbg(hdxp_fitR,h_dxHCAL_nfc);
   double dxpM_nfc = fdxp_nfc->GetParameter(1); double dxpS_nfc = fdxp_nfc->GetParameter(2);
   c2->cd(4); //
+  gPad->SetGridx();
   TF1 *fdy_nfc = fit::fit_1gs_nbg(hdy_fitR,h_dyHCAL_nfc);
   double dypM_nfc = fdy->GetParameter(1); double dypS_nfc = fdy->GetParameter(2);
   c2->SaveAs(Form("%s",outPlot.Data())); c2->Write();
+  //**** -- ***//
+
+  /**** Canvas 3 (ADC coin time & p Deflection) ****/
+  TCanvas *c3 = util_pd::TC("c3",2,2);
+  c3->SetGridx();
+  gStyle->SetOptFit(1);
+  //
+  c3->cd(1);
+  gPad->SetGridx();
+  std::vector<double> hct_fitR{-5,5,1.6,1.6};
+  TF1 *fct = fit::fit_1gs_nbg(hct_fitR,h_coinT_ADC);
+  double ctM = fct->GetParameter(1); double ctS = fct->GetParameter(2);
+  h_coinT_ADC_c->Draw("same");
+  h_coinT_ADC_c->SetLineColor(kBlack);
+  //
+  c3->cd(2);
+  gPad->SetGridx();
+  std::vector<double> hpdef_fitR{-0.5,0.5,1.2,1.2};
+  TF1 *fpdef = fit::fit_1gs_nbg(hpdef_fitR,h_dx_w_p_def);
+  double pdefM = fpdef->GetParameter(1); double pdefS = fpdef->GetParameter(2);
+  h_dx_w_p_def->Draw("same");
+  h_dx_w_p_def->SetLineColor(kBlack);
+  //
+  c3->cd(3);
+  gPad->SetGridx();
+  std::vector<double> hW2_fitR{0.6,1.2,1.2,1.2};
+  TF1 *fW2 = fit::fit_1gs_nbg(hW2_fitR,h_W2_cut);
+  double W2M = fW2->GetParameter(1); double W2S = fW2->GetParameter(2);
+  h_W2_cut->Draw("same");
+  h_W2_cut->SetLineColor(kBlack); 
+  c3->SaveAs(Form("%s",outPlot.Data())); c3->Write();
   //**** -- ***//
 
   /**** Summary Canvas ****/
@@ -936,6 +998,10 @@ int elas_ana_data (const char *configfilename,
   pt->AddText(Form(" %.5f,%.5f,%.5f,%.5f",dxpM,dxpS,dypM,dypS));
   pt->AddText(" p peak, w/o fiducial cut: dxpM_nfc,dxpS_nfc,dypM_nfc,dypS_nfc ");
   pt->AddText(Form(" %.5f,%.5f,%.5f,%.5f",dxpM_nfc,dxpS_nfc,dypM_nfc,dypS_nfc));
+  pt->AddText(" coinT ADC cut: ctM,ctS ");
+  pt->AddText(Form(" %.5f,%.5f",ctM,ctS));
+  pt->AddText(" W2 distribution: W2M,W2S ");
+  pt->AddText(Form(" %.5f,%.5f",W2M,W2S));    
   sw->Stop();
   pt->AddText(Form("Macro processing time: CPU %.1fs | Real %.1fs",sw->CpuTime(),sw->RealTime()));
   TText *t1 = pt->GetLineWith("Configfile"); t1->SetTextColor(kRed);
@@ -950,6 +1016,9 @@ int elas_ana_data (const char *configfilename,
   std::cout << "\n----Fit info----" << "\n";
   std::cout << "dxpM,dxpS,dypM,dypS,dxpM_nfc,dxpS_nfc,dypM_nfc,dypS_nfc" << "\n";
   std::cout << dxpM<<","<<dxpS<<","<<dypM<<","<<dypS<<","<<dxpM_nfc<<","<<dxpS_nfc<<","<<dypM_nfc<<","<<dypS_nfc<<"\n";
+  std::cout << "------------------" << "\n";
+  std::cout << "ctM,ctS\n";
+  std::cout << ctM<<","<<ctS<<"\n";
   std::cout << "----------------" << "\n\n";
 
   std::cout << "------" << std::endl;
@@ -967,7 +1036,10 @@ int elas_ana_data (const char *configfilename,
   h_dxHCAL->Write(); h_dyHCAL->Write();
   h2_rcHCAL->Write(); h2_dxdyHCAL->Write();
   h2_xyHCAL_p->Write();
+  h2_xyHCAL_p_nfc->Write();
   h_coinT_trig->Write();
+  h_coinT_ADC->Write();
+  h_dx_w_p_def->Write();
   if (hcal_acl_ON) {
     h_hcl_inTime_idcl->Write(); h_hcl_inTime_idcl_WCut->Write();
     h2_hclHE_eng_vs_idcl->Write(); h2_hclHE_atime_vs_idcl->Write(); h2_hclHE_tdc_vs_idcl->Write();

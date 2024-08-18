@@ -571,7 +571,7 @@ int qelas_ana_simu (const char *configfilename,
     // p 
     double BdL = sbsscalefield * expconst::sbsmaxfield_simu * expconst::sbsdipolegap;
     double proton_thetabend = 0.3 * BdL / PNprime.Vect().Mag();  // p*theta = 0.3*BdL
-    double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist()-(sbsconf.GetSBSdist()+expconst::sbsdipolegap/2.0));
+    double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist()+hcal_zoffset-(sbsconf.GetSBSdist()+expconst::sbsdipolegap/2.0));
     T_p_def = proton_deflection;
     TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);
     T_thpq_p = acos(p_dir.Unit().Dot(pNhat));
@@ -713,6 +713,7 @@ int qelas_ana_simu (const char *configfilename,
   pt->AddText(Form(" Analyzing %s generated QE events for SBS%d-SBS%dp settings",generator.c_str(),conf,sbsmag));
   pt->AddText(Form(" Analysis model: %d",model));
   pt->AddText(Form(" HCAL offsets: v = %.4f, h = %.4f, z = %.4f",hcal_voffset,hcal_hoffset,hcal_zoffset));
+  pt->AddText(Form(" W2 offset = %.4f, dy offset = %.4f",W2_offset,dy_offset));
   pt->AddText(Form(" Total # events analyzed: %ld",nevents));
   pt->AddText(Form(" Global cuts: "));
   std::string tmpstr = "";
