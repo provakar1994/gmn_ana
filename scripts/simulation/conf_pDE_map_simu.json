@@ -2,10 +2,10 @@
     "prod":
     {
 	"SBS_config"           : 8,
-	"SBS_magnet_percent"   : 50,
+	"SBS_magnet_percent"   : 70,
 	"model"                : 1,
-	"pass"                 : 2,
-	"data_file_prefix"     : "0p77zoff",
+	"generator"            : "simc",
+	"simu_file_prefix"     : "rcOT0_0p77zoff_0p63797sf",
 	"outfile_prefix"       : "",
 	"global_cut"           : "abs(vz)<0.065&&trchi2ndf<15&&nhitsGEM>3&&abs(fpX-0.9*fpTh)<0.25",
 	"w2_cut"               : "W2>0.65&&W2<0.95",
@@ -23,19 +23,19 @@
 	"h_yexp_lim"           : [59,-1.5,1.5],
 	"h_yexp_fitR"          : [-0.5,0.5],
 	"h_w2_lim"             : [200,-0.5,2.5],
-	"NOTE"                 : "&&xHCAL_exp_p>-2.57&&xHCAL_exp_p<1.07, pow(pdx_nS,2)+pow(dy_nS,2)<25",
-	"sbs0p"                : "rnum>=13459&&rnum<=13466",
-	"sbs50p"               : "rnum==13580",
-	"sbs100p"              : "rnum>=13537&&rnum<=13543",
-	"sbs70p"               : "!((rnum>=13537&&rnum<=13543)||rnum==13580||(rnum>=13459&&rnum<=13466))"
+	"NOTE"                 : "xHCAL_exp-p_def>-2.4&&xHCAL_exp-p_def<0.9",
+	"sbs0p"                : "rcOT0_0p77zoff",
+	"sbs50p"               : "rcOT0_0p77zoff_0p44981sf",
+	"sbs100p"              : "rcOT0_0p77zoff_0p91396sf",
+	"sbs70p"               : "rcOT0_0p77zoff_0p63797sf"
     },
     "prod_sbs4":
     {
 	"SBS_config"           : 4,
 	"SBS_magnet_percent"   : 50,
 	"model"                : 1,
-	"pass"                 : 2,
-	"data_file_prefix"     : "0p65zoff",
+	"generator"            : "heep",
+	"simu_file_prefix"     : "0p65zoff",
 	"outfile_prefix"       : "",
 	"global_cut"           : "abs(vz)<0.065&&trchi2ndf<15&&nhitsGEM>3&&abs(fpX-0.9*fpTh)<0.25",
 	"w2_cut"               : "W2>0.65&&W2<0.95",

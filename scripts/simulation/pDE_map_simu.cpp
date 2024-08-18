@@ -27,7 +27,7 @@ void custom_statbox_effi(TPaveStats *st) {
   st->SetX1NDC(0.25); st->SetY1NDC(0.25); st->SetX2NDC(0.85); st->SetY2NDC(0.45);
 }
 
-int pDE_map(const char *configfilename) {
+int pDE_map_simu(const char *configfilename) {
 
   gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
   TH1::SetDefaultSumw2();
@@ -43,15 +43,14 @@ int pDE_map(const char *configfilename) {
   int conf = jmgr->GetValueFromSubKey<int>(key,"SBS_config");
   int sbsmag = jmgr->GetValueFromSubKey<int>(key,"SBS_magnet_percent");
   int model = jmgr->GetValueFromSubKey<int>(key,"model");
-  int pass = jmgr->GetValueFromSubKey<int>(key,"pass");
-  std::string dfprefix = jmgr->GetValueFromSubKey_str(key,"data_file_prefix");
+  std::string gen = jmgr->GetValueFromSubKey_str(key,"generator");
+  std::string sfprefix = jmgr->GetValueFromSubKey_str(key,"simu_file_prefix");
 
   // reading ROOT files as df
   ROOT::EnableImplicitMT();
-  ROOT::RDataFrame data_rdf_raw("Tout",Form("pdout/%s_elas_ana_data_sbs%d_sbs%dp_model%d_pass%d.root",dfprefix.c_str(),conf,sbsmag,model,pass));
-  //ROOT::RDataFrame data_rdf_raw("Tout",Form("pdout/5runs_noHCALcl_0p77zoff_elas_ana_data_sbs8_sbs70p_model1_pass2.root"));
-  auto data_rdf = data_rdf_raw.Define("xExp_shifted","xHCAL_exp-p_def").Define("dx_def","dx+p_def");
-
+  ROOT::RDataFrame simu_rdf_raw("Tout",Form("siout/%s_elas_ana_%s_sbs%d_sbs%dp_model%d.root",sfprefix.c_str(),gen.c_str(),conf,sbsmag,model));
+  auto simu_rdf = simu_rdf_raw.Define("xExp_shifted","xHCAL_exp-p_def").Define("dx_def","dx+p_def");
+ 
   // Applying cuts
   std::string global_cut = jmgr->GetValueFromSubKey_str(key,"global_cut");
   std::string w2_cut = jmgr->GetValueFromSubKey_str(key,"w2_cut");
@@ -69,15 +68,15 @@ int pDE_map(const char *configfilename) {
   //
   std::string eNantiharm_cut = earm_cut + "&&!(" + harm_cut + ")";
   std::string eNantiharm_cut_wSM = earm_cut + SM_cut_x + SM_cut_y + "&&!(" + harm_cut + ")";
-  //auto earm_rdf = data_rdf.Filter(earm_cut.c_str());
-  //auto eNharm_rdf = data_rdf.Filter(eNharm_cut.c_str());
+  //auto earm_rdf = simu_rdf.Filter(earm_cut.c_str());
+  //auto eNharm_rdf = simu_rdf.Filter(eNharm_cut.c_str());
   
   // // fiducial cut
   // bool apply_fidu_cut = jmgr->GetValueFromSubKey<int>(key,"apply_fidu_cut");
   // std::vector<double> AR_w; jmgr->GetVectorFromSubKey<double>(key,"AR_width_x_y",AR_w);
   // double sbs_kick = jmgr->GetValueFromSubKey<double>(key,"sbs_kick");
   // std::vector<double> SM_w; jmgr->GetVectorFromSubKey<double>(key,"SM_width_xp_xn_y",SM_w);
-  // std::vector<double> hcal_AR = cut::hcal_active_area_data(AR_w[0],AR_w[1],pass); 
+  // std::vector<double> hcal_AR = cut::hcal_active_area_data(AR_w[0],AR_w[1],2); 
   // std::vector<double> hcal_SM = cut::hcal_safety_margin(SM_w[0],SM_w[1],SM_w[2],hcal_AR);
   // // forming the fiducial cut
   // auto fiduCut = [&](double x,double y,double xExp,double yExp) {
@@ -87,8 +86,7 @@ int pDE_map(const char *configfilename) {
   // output file
   std::string filebase = jmgr->GetValueFromSubKey_str(key,"outfile_prefix");
   filebase = filebase.empty() ? "" : filebase + "_";
-  std::string outfilebase = "pdout/pDE/" + dfprefix + "_pDE_data_" + Form("sbs%d_sbs%dp_model%d_pass%d",conf,sbsmag,model,pass);
-  //std::string outfilebase = "pdout/pDE/" + filebase + dfprefix + "_pDE_data_" + Form("sbs%d_sbsALL_model%d_pass%d",conf,model,pass);
+  std::string outfilebase = "siout/pDE/" + sfprefix + "_pDE_simu_" + Form("%s_sbs%d_sbs%dp_model%d",gen.c_str(),conf,sbsmag,model);
   TFile *fout = new TFile(Form("%s.root",outfilebase.c_str()), "RECREATE");
   
   // call the canvas customizer
@@ -104,21 +102,21 @@ int pDE_map(const char *configfilename) {
   cdxdy->cd(1);
   gPad->SetLogz();
   gStyle->SetPalette(kRainbow);
-  TH2F *h_dxdy_earm = (TH2F*)data_rdf.Filter(earm_cut.c_str()).Filter("eHCAL>0").Histo2D({"h_dxdy_earm","",200,-1.5,1.5,200,-3,2},"dy","dx")->Clone();
+  TH2F *h_dxdy_earm = (TH2F*)simu_rdf.Filter(earm_cut.c_str()).Filter("eHCAL>0").Histo2D({"h_dxdy_earm","",200,-1.5,1.5,200,-3,2},"dy","dx","weight")->Clone();
   util_pd::SetAxTitles(h_dxdy_earm,ytitledxdy,xtitledxdy);
   h_dxdy_earm->Draw("colz");
   //
   cdxdy->cd(2);
   gPad->SetLogz();
   gStyle->SetPalette(kRainbow);
-  TH2F *h_dxdy_eNharm = (TH2F*)data_rdf.Filter(eNharm_cut.c_str()).Filter("eHCAL>0").Histo2D({"h_dxdy_eNharm","",200,-1.5,1.5,200,-3,2},"dy","dx")->Clone();
+  TH2F *h_dxdy_eNharm = (TH2F*)simu_rdf.Filter(eNharm_cut.c_str()).Filter("eHCAL>0").Histo2D({"h_dxdy_eNharm","",200,-1.5,1.5,200,-3,2},"dy","dx","weight_effic")->Clone();
   util_pd::SetAxTitles(h_dxdy_eNharm,ytitledxdy,xtitledxdy);
   h_dxdy_eNharm->Draw("colz");
   //
   cdxdy->cd(3);
   std::vector<double> h_w2_lim; jmgr->GetVectorFromSubKey<double>(key,"h_w2_lim",h_w2_lim);
-  TH1F *h_w2_earm = (TH1F*)data_rdf.Filter(global_cut.c_str()).Histo1D({"h_w2_earm","",(int)h_w2_lim[0],h_w2_lim[1],h_w2_lim[2]},"W2")->Clone();
-  TH1F *h_w2_eNharm = (TH1F*)data_rdf.Filter(global_cut.c_str()).Filter(harm_cut.c_str()).Histo1D({"h_w2_eNharm","",(int)h_w2_lim[0],h_w2_lim[1],h_w2_lim[2]},"W2")->Clone();
+  TH1F *h_w2_earm = (TH1F*)simu_rdf.Filter(global_cut.c_str()).Histo1D({"h_w2_earm","",(int)h_w2_lim[0],h_w2_lim[1],h_w2_lim[2]},"W2","weight")->Clone();
+  TH1F *h_w2_eNharm = (TH1F*)simu_rdf.Filter(global_cut.c_str()).Filter(harm_cut.c_str()).Histo1D({"h_w2_eNharm","",(int)h_w2_lim[0],h_w2_lim[1],h_w2_lim[2]},"W2","weight_effic")->Clone();
   util_pd::SetAxTitles(h_w2_earm,"","#font[32]{W^{2}} (GeV^{2})");
   custom_denom(h_w2_earm);
   h_w2_earm->Draw("HIST");
@@ -132,7 +130,7 @@ int pDE_map(const char *configfilename) {
   //
   cdxdy->cd(4);
   std::string dx_w_def_cut = earm_cut + "&&eHCAL>0&&abs(dy)<0.3";
-  TH1F *h_dx_w_def = (TH1F*)data_rdf.Filter(dx_w_def_cut.c_str()).Histo1D({"h_dx_w_def","",200,-1,1},"dx_def")->Clone();
+  TH1F *h_dx_w_def = (TH1F*)simu_rdf.Filter(dx_w_def_cut.c_str()).Histo1D({"h_dx_w_def","",200,-1,1},"dx_def","weight_effic")->Clone();
   h_dx_w_def->Draw("HIST");
   h_dx_w_def->GetXaxis()->SetTitle("#font[32]{#Deltax} + proton_deflection (m)");
   std::vector<double> hdx_fitR{-0.5,0.5,1.2,1.2};
@@ -154,11 +152,13 @@ int pDE_map(const char *configfilename) {
   // **************
   // Envelopes
   // **************
-  std::vector<double> hcal_area = cut::hcal_active_area_data(0,0,pass);
-  TH2F *h2_xyexp_all_nodef = (TH2F*)data_rdf.Filter(earm_cut.c_str()).Histo2D({"h2_xyexp_all_nodef","All (No Deflection)",200,-1.25,1.25,200,-3.25,2.5},"yHCAL_exp","xHCAL_exp")->Clone();
-  TH2F *h2_xyexp_all = (TH2F*)data_rdf.Filter(earm_cut.c_str()).Histo2D({"h2_xyexp_all","All",200,-1.25,1.25,200,-3.25,2.5},"yHCAL_exp","xExp_shifted")->Clone();
-  TH2F *h2_xyexp_pass = (TH2F*)data_rdf.Filter(eNharm_cut.c_str()).Histo2D({"h2_xyexp_pass","Passed HCAL",200,-1.25,1.25,200,-3.25,2.5},"yHCAL_exp","xExp_shifted")->Clone();
-  TH2F *h2_xyexp_fail = (TH2F*)data_rdf.Filter(eNantiharm_cut.c_str()).Histo2D({"h2_xyexp_fail","Failed HCAL",200,-1.25,1.25,200,-3.25,2.5},"yHCAL_exp","xExp_shifted")->Clone();
+  std::vector<double> hcal_area = cut::hcal_active_area_data(0,0,2);
+  TH2F *h2_xyexp_all_nodef = (TH2F*)simu_rdf.Filter(earm_cut.c_str()).Histo2D({"h2_xyexp_all_nodef","All (No Deflection)",200,-1.25,1.25,200,-3.25,2.5},"yHCAL_exp","xHCAL_exp","weight")->Clone();
+  TH2F *h2_xyexp_all = (TH2F*)simu_rdf.Filter(earm_cut.c_str()).Histo2D({"h2_xyexp_all","All",200,-1.25,1.25,200,-3.25,2.5},"yHCAL_exp","xExp_shifted","weight")->Clone();
+  TH2F *h2_xyexp_pass = (TH2F*)simu_rdf.Filter(eNharm_cut.c_str()).Histo2D({"h2_xyexp_pass","Passed HCAL",200,-1.25,1.25,200,-3.25,2.5},"yHCAL_exp","xExp_shifted","weight_effic")->Clone();
+  TH2F *h2_xyexp_fail = (TH2F*)simu_rdf.Filter(eNantiharm_cut.c_str()).Histo2D({"h2_xyexp_fail","Failed HCAL",200,-1.25,1.25,200,-3.25,2.5},"yHCAL_exp","xExp_shifted","weight_effic")->Clone();
+  // TH2F *h2_xyexp_pass = (TH2F*)simu_rdf.Filter(eNharm_cut.c_str()).Histo2D({"h2_xyexp_pass","Passed HCAL",200,-1.25,1.25,200,-3.25,2.5},"yHCAL_exp","xExp_shifted","weight")->Clone();
+  // TH2F *h2_xyexp_fail = (TH2F*)simu_rdf.Filter(eNantiharm_cut.c_str()).Histo2D({"h2_xyexp_fail","Failed HCAL",200,-1.25,1.25,200,-3.25,2.5},"yHCAL_exp","xExp_shifted","weight")->Clone();  
   TCanvas *cenv = util_pd::TC("cenv",2,2);
   cenv->cd(1); //
   gPad->SetLogz();
@@ -207,10 +207,9 @@ int pDE_map(const char *configfilename) {
   TString xtitlexexp = "#font[32]{x^{exp}_{HCAL}} (m)";
   std::vector<double> h_xexp_lim; jmgr->GetVectorFromSubKey<double>(key,"h_xexp_lim",h_xexp_lim);
   std::vector<double> h_xexp_fitR; jmgr->GetVectorFromSubKey<double>(key,"h_xexp_fitR",h_xexp_fitR);
-  // TH1F *h_xexp_earm = (TH1F*)earm_rdf.Histo1D({"h_xexp_earm","",int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]},"xHCAL_exp_p")->Clone();
-  // TH1F *h_xexp_eNharm = (TH1F*)eNharm_rdf.Histo1D({"h_xexp_eNharm","",int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]},"xHCAL_exp_p")->Clone();
-  TH1F *h_xexp_earm = (TH1F*)data_rdf.Filter(earm_cut_wSMy.c_str()).Histo1D({"h_xexp_earm","",int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]},"xExp_shifted")->Clone();
-  TH1F *h_xexp_eNharm = (TH1F*)data_rdf.Filter(eNharm_cut_wSMy.c_str()).Histo1D({"h_xexp_eNharm","",int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]},"xExp_shifted")->Clone();
+  TH1F *h_xexp_earm = (TH1F*)simu_rdf.Filter(earm_cut_wSMy.c_str()).Histo1D({"h_xexp_earm","",int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]},"xExp_shifted","weight")->Clone();
+  TH1F *h_xexp_eNharm = (TH1F*)simu_rdf.Filter(eNharm_cut_wSMy.c_str()).Histo1D({"h_xexp_eNharm","",int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]},"xExp_shifted","weight_effic")->Clone();
+   // TH1F *h_xexp_eNharm = (TH1F*)simu_rdf.Filter(eNharm_cut_wSMy.c_str()).Histo1D({"h_xexp_eNharm","",int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]},"xExp_shifted","weight")->Clone();
   util_pd::SetAxTitles(h_xexp_earm,"",xtitlexexp);
   h_xexp_earm->SetStats(0);
   util_pd::SetAxTitles(h_xexp_eNharm,"",xtitlexexp);
@@ -231,8 +230,8 @@ int pDE_map(const char *configfilename) {
   TString xtitleyexp = "#font[32]{y^{exp}_{HCAL}} (m)";
   std::vector<double> h_yexp_lim; jmgr->GetVectorFromSubKey<double>(key,"h_yexp_lim",h_yexp_lim);
   std::vector<double> h_yexp_fitR; jmgr->GetVectorFromSubKey<double>(key,"h_yexp_fitR",h_yexp_fitR);
-  TH1F *h_yexp_earm = (TH1F*)data_rdf.Filter(earm_cut_wSMx.c_str()).Histo1D({"h_yexp_earm","",int(h_yexp_lim[0]),h_yexp_lim[1],h_yexp_lim[2]},"yHCAL_exp")->Clone();
-  TH1F *h_yexp_eNharm = (TH1F*)data_rdf.Filter(eNharm_cut_wSMx.c_str()).Histo1D({"h_yexp_eNharm","",int(h_yexp_lim[0]),h_yexp_lim[1],h_yexp_lim[2]},"yHCAL_exp")->Clone();
+  TH1F *h_yexp_earm = (TH1F*)simu_rdf.Filter(earm_cut_wSMx.c_str()).Histo1D({"h_yexp_earm","",int(h_yexp_lim[0]),h_yexp_lim[1],h_yexp_lim[2]},"yHCAL_exp","weight")->Clone();
+  TH1F *h_yexp_eNharm = (TH1F*)simu_rdf.Filter(eNharm_cut_wSMx.c_str()).Histo1D({"h_yexp_eNharm","",int(h_yexp_lim[0]),h_yexp_lim[1],h_yexp_lim[2]},"yHCAL_exp","weight_effic")->Clone();
   util_pd::SetAxTitles(h_yexp_earm,"",xtitleyexp);
   util_pd::SetAxTitles(h_yexp_eNharm,"",xtitleyexp);
   custom_denom(h_yexp_earm);
@@ -304,11 +303,11 @@ int pDE_map(const char *configfilename) {
 
 
   // Efficiency Map
-  // TH2F *h2_xyexp_earm = (TH2F*)data_rdf.Filter(earm_cut.c_str()).Histo2D({"h2_xyexp_earm","",int(h_yexp_lim[0]),h_yexp_lim[1],h_yexp_lim[2],int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]},"yHCAL_exp","xExp_shifted")->Clone();
-  // TH2F *h2_xyexp_eNharm = (TH2F*)data_rdf.Filter(eNharm_cut.c_str()).Histo2D({"h2_xyexp_eNharm","",int(h_yexp_lim[0]),h_yexp_lim[1],h_yexp_lim[2],int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]},"yHCAL_exp","xExp_shifted")->Clone();
+  // TH2F *h2_xyexp_earm = (TH2F*)simu_rdf.Filter(earm_cut.c_str()).Histo2D({"h2_xyexp_earm","",int(h_yexp_lim[0]),h_yexp_lim[1],h_yexp_lim[2],int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]},"yHCAL_exp","xExp_shifted")->Clone();
+  // TH2F *h2_xyexp_eNharm = (TH2F*)simu_rdf.Filter(eNharm_cut.c_str()).Histo2D({"h2_xyexp_eNharm","",int(h_yexp_lim[0]),h_yexp_lim[1],h_yexp_lim[2],int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]},"yHCAL_exp","xExp_shifted")->Clone();
   // TH2F *h2_effi_map = new TH2F("h2_effi_map","",int(h_yexp_lim[0]),h_yexp_lim[1],h_yexp_lim[2],int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]);
-  TH2F *h2_xyexp_earm = (TH2F*)data_rdf.Filter(earm_cut.c_str()).Histo2D({"h2_xyexp_earm","",65,-1.25,1.25,126,-3.25,1.75},"yHCAL_exp","xExp_shifted")->Clone();
-  TH2F *h2_xyexp_eNharm = (TH2F*)data_rdf.Filter(eNharm_cut.c_str()).Histo2D({"h2_xyexp_eNharm","",65,-1.25,1.25,126,-3.25,1.75},"yHCAL_exp","xExp_shifted")->Clone();
+  TH2F *h2_xyexp_earm = (TH2F*)simu_rdf.Filter(earm_cut.c_str()).Histo2D({"h2_xyexp_earm","",65,-1.25,1.25,126,-3.25,1.75},"yHCAL_exp","xExp_shifted","weight")->Clone();
+  TH2F *h2_xyexp_eNharm = (TH2F*)simu_rdf.Filter(eNharm_cut.c_str()).Histo2D({"h2_xyexp_eNharm","",65,-1.25,1.25,126,-3.25,1.75},"yHCAL_exp","xExp_shifted","weight_effic")->Clone();
   TH2F *h2_effi_map = new TH2F("h2_effi_map","",65,-1.25,1.25,126,-3.25,1.75);
   h2_effi_map->Divide(h2_xyexp_eNharm,h2_xyexp_earm);
   // Binomial error
