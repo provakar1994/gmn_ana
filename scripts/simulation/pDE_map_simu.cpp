@@ -220,12 +220,28 @@ int pDE_map_simu(const char *configfilename) {
   custom_ratio(h_xexp_pDE);
   h_xexp_pDE->Divide(h_xexp_eNharm,h_xexp_earm);
   // Binomial error
-  for( int i=1; i<=h_xexp_pDE->GetNbinsX(); i++ ){
+  // for( int i=1; i<=h_xexp_pDE->GetNbinsX(); i++ ){
+  //   double effi = h_xexp_pDE->GetBinContent(i);
+  //   //prevent divide-by-zero errors
+  //   double N = std::max(1.0,h_xexp_earm->GetBinContent(i));
+  //   h_xexp_pDE->SetBinError(i,sqrt(effi*(1.0-effi)/N));
+  // }
+  for(int i = 1; i <= h_xexp_pDE->GetNbinsX(); i++) {
     double effi = h_xexp_pDE->GetBinContent(i);
-    //prevent divide-by-zero errors
-    double N = std::max(1.0,h_xexp_earm->GetBinContent(i));
-    h_xexp_pDE->SetBinError(i,sqrt(effi*(1.0-effi)/N));
-  }
+
+    if (effi>0) {
+
+      // Sum of weights and sum of squared weights
+      double sum_w = h_xexp_earm->GetBinContent(i);  // This assumes h_xexp_earm holds the sum of weights
+      double sum_w2 = h_xexp_earm->GetBinError(i);   // Assuming the bin errors in h_xexp_earm store sum of squared weights
+
+      // Prevent divide-by-zero errors
+      double N = std::max(1.0, sum_w);
+      double weighted_error = sqrt(effi * (1.0 - effi) / N) * sqrt(sum_w2 / sum_w);
+
+      h_xexp_pDE->SetBinError(i, weighted_error);
+    }
+  }    
   // yHCAL_exp *** -- \\//
   TString xtitleyexp = "#font[32]{y^{exp}_{HCAL}} (m)";
   std::vector<double> h_yexp_lim; jmgr->GetVectorFromSubKey<double>(key,"h_yexp_lim",h_yexp_lim);
@@ -241,12 +257,29 @@ int pDE_map_simu(const char *configfilename) {
   custom_ratio(h_yexp_pDE);
   h_yexp_pDE->Divide(h_yexp_eNharm,h_yexp_earm);
   // Binomial error
-  for( int i=1; i<=h_yexp_pDE->GetNbinsX(); i++ ){
+  // for( int i=1; i<=h_yexp_pDE->GetNbinsX(); i++ ){
+  //   double effi = h_yexp_pDE->GetBinContent(i);
+  //   //prevent divide-by-zero errors
+  //   double N = std::max(1.0,h_yexp_earm->GetBinContent(i));
+  //   h_yexp_pDE->SetBinError(i,sqrt(effi*(1.0-effi)/N));
+  // }
+  for(int i = 1; i <= h_yexp_pDE->GetNbinsX(); i++) {
     double effi = h_yexp_pDE->GetBinContent(i);
-    //prevent divide-by-zero errors
-    double N = std::max(1.0,h_yexp_earm->GetBinContent(i));
-    h_yexp_pDE->SetBinError(i,sqrt(effi*(1.0-effi)/N));
+
+    if (effi>0) {
+
+      // Sum of weights and sum of squared weights
+      double sum_w = h_yexp_earm->GetBinContent(i);  // This assumes h_yexp_earm holds the sum of weights
+      double sum_w2 = h_yexp_earm->GetBinError(i);   // Assuming the bin errors in h_yexp_earm store sum of squared weights
+
+      // Prevent divide-by-zero errors
+      double N = std::max(1.0, sum_w);
+      double weighted_error = sqrt(effi * (1.0 - effi) / N) * sqrt(sum_w2 / sum_w);
+
+      h_yexp_pDE->SetBinError(i, weighted_error);
+    }
   }  
+  
   // 
   TCanvas *cxyexp = util_pd::TC("cxyexp",2,2);
   cxyexp->cd(1);
@@ -311,12 +344,32 @@ int pDE_map_simu(const char *configfilename) {
   TH2F *h2_effi_map = new TH2F("h2_effi_map","",65,-1.25,1.25,126,-3.25,1.75);
   h2_effi_map->Divide(h2_xyexp_eNharm,h2_xyexp_earm);
   // Binomial error
+  // for( int i=1; i<=h2_effi_map->GetNbinsX(); i++ ){
+  //   for( int j=1; j<=h2_effi_map->GetNbinsY(); j++ ){
+  //     int bin = h2_effi_map->GetBin(i,j);
+  //     double effi = h2_effi_map->GetBinContent(bin);
+  //     double N = std::max(1.0,h2_xyexp_earm->GetBinContent(bin));
+  //     h2_effi_map->SetBinError(bin,sqrt(effi*(1.0-effi)/N));
+  //   }
+  // }
   for( int i=1; i<=h2_effi_map->GetNbinsX(); i++ ){
     for( int j=1; j<=h2_effi_map->GetNbinsY(); j++ ){
       int bin = h2_effi_map->GetBin(i,j);
       double effi = h2_effi_map->GetBinContent(bin);
-      double N = std::max(1.0,h2_xyexp_earm->GetBinContent(bin));
-      h2_effi_map->SetBinError(bin,sqrt(effi*(1.0-effi)/N));
+
+      if (effi>0) {
+
+	// Sum of weights and sum of squared weights
+	double sum_w = h2_xyexp_earm->GetBinContent(i);  // This assumes h_yexp_earm holds the sum of weights
+	double sum_w2 = h2_xyexp_earm->GetBinError(i);   // Assuming the bin errors in h_yexp_earm store sum of squared weights
+
+	// Prevent divide-by-zero errors
+	double N = std::max(1.0, sum_w);
+	double weighted_error = sqrt(effi * (1.0 - effi) / N) * sqrt(sum_w2 / sum_w);
+
+	h2_effi_map->SetBinError(i, weighted_error);
+      }
+
     }
   }
   TCanvas *cefmap = util_pd::TC("cefmap",1,1);
