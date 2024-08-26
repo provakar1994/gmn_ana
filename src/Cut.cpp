@@ -1,7 +1,18 @@
 #include "../include/Cut.h"
 
 namespace cut {
-  
+
+  // std::string (std::string const & cuttype, int sbsconf) {
+  //   if (cuttype.compare("gcut")==0) { // global cuts per config
+  //     std::unordered_map<int,std::string> m = {{4, ""},
+  // 					       {7, ""},
+  // 					       {11, ""},
+  // 					       {14, ""}
+  // 					       {8, ""}
+  // 					       {9, "fEvtHdr.fTrigBits==1&&bb.tr.n>0&&abs(bb.tr.vz[0])<.08&&bb.gem.track.nhits>2&&bb.ps.e>0.2&&bb.tr.p[0]>1.2"}};
+  //   }
+  // }
+  //___________________________________________________________________
   bool SpotCut (double x, double x_M, double x_S, double x_nS, double y, double y_M, double y_S, double y_nS) {
     return pow((x-x_M)/(x_S*x_nS),2) + pow((y-y_M)/(y_S*y_nS),2) <= 1.;
   }

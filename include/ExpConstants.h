@@ -99,11 +99,16 @@ namespace expconst {
   static double sbsmaxfield_data (int sbsconf) { 
     // 05/22/24 - These no. are based on Andrew's analysis. He estimated these "by plotting deltax versus the 
     // expected proton momentum for LH2 elastic events". Needs fine tuning.
-    if (sbsconf==4) return 1.71; //T
-    else return 1.27; //T
+    if (sbsconf==4) {
+      return 1.78; //T Andrew=>1.71
+    } else if (sbsconf==8) {
+      return 1.23; 
+    } else {
+      return 1.275; //T Andrew=>1.27
+    }
   }
   // 05/22/24 - to match SBS11 100% we need 0.97 scale field. That implies, MC_field = sbsmaxfield_data/0.97. Needs fine tuning
-  static const double sbsmaxfield_simu = 1.31; //T 
+  static const double sbsmaxfield_simu = 1.31; //1.44; //T  (1.34/0.97)
   // Polyethylene (PE) shield near scattering chamber (Installed during SBS-11). See Utilities::GetElossInTgt for more info.
   static const double PE_Rho = 0.91;         //g/cc
   static const double PE_ShieldThick = 1.0;  //cm, 10 mm

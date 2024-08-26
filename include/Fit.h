@@ -23,6 +23,9 @@ namespace fit {
   // Returns a vector filled with fit pramater errors from f1
   std::vector<double> GetFitParamErrors(TF1 * const f1);
 
+  // Returns a vector filled with pair of fit pramater values and errors from f1
+  std::vector<std::pair<double,double>> GetFitParamANDError(TF1 * const f1);
+
   // Side band (SB) fit using 1 polynomial and 2 reject points (Opoly+1 pars
   // NOTE: This fit method just fits the bg
   TF1* fit_1pbg_SB (std::vector<double> const & fit_range,

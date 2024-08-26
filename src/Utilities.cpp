@@ -73,20 +73,44 @@ namespace util_pd {
   //_____________________________________
   std::vector<TPad*> GetPadsForPullPlot(TCanvas *c1) 
   /* splits a given canvas into two pads suitable for pull plots */
-  {
+  // {
+  //   c1->cd();
+  //   TPad *p1 = new TPad("p1","p1",0,0.25,1,1);    //for fit
+  //   TPad *p2 = new TPad("p2","p2",0,0.02,1,0.25); //for residual
+  //   p1->SetBottomMargin(0.00001); p1->SetBorderMode(0);
+  //   p1->SetTickx(); p1->SetTicky();
+  //   p1->SetGridx(); p1->Draw();
+  //   p2->SetTopMargin(0.00001); p2->SetBottomMargin(0.2);
+  //   p2->SetBorderMode(0);
+  //   p2->SetTickx(); p2->SetTicky(); 
+  //   p2->SetGridx(); p2->Draw();
+  //   std::vector<TPad*> pads{p1,p2};
+  //   return pads;
+  // }
+{
     c1->cd();
-    TPad *p1 = new TPad("p1","p1",0,0.25,1,1);    //for fit
-    TPad *p2 = new TPad("p2","p2",0,0.02,1,0.25); //for residual
-    p1->SetBottomMargin(0.00001); p1->SetBorderMode(0);
+    TPad *p1 = new TPad("p1", "p1", 0, 0.3, 1, 1);    // Top pad for the fit
+    TPad *p2 = new TPad("p2", "p2", 0, 0.05, 1, 0.3); // Bottom pad for the residual/pull plot
+
+    // Configure p1 (Top pad)
+    p1->SetBottomMargin(0.019);  // Adjust this margin to provide space for the lower pad
+    p1->SetRightMargin(0.05);
+    p1->SetBorderMode(0);
     p1->SetTickx(); p1->SetTicky();
     p1->SetGridx(); p1->Draw();
-    p2->SetTopMargin(0.00001); p2->SetBottomMargin(0.2);
+
+    // Configure p2 (Bottom pad)
+    p2->SetTopMargin(0.015);      // Keep this small to give space to p1
+    p2->SetBottomMargin(0.3);    // Increase to provide enough space for the x-axis title
+    p2->SetRightMargin(0.05);
     p2->SetBorderMode(0);
-    p2->SetTickx(); p2->SetTicky(); 
+    p2->SetTickx(); p2->SetTicky();
     p2->SetGridx(); p2->Draw();
-    std::vector<TPad*> pads{p1,p2};
+
+    // Return the pads
+    std::vector<TPad*> pads{p1, p2};
     return pads;
-  }
+}    
 
   //_____________________________________
   void DrawZeroLine(TPad *p1, double xmin, double xmax)
@@ -132,7 +156,15 @@ namespace util_pd {
     cutRegion->SetFillColorAlpha(kRed, 0.3);
     cutRegion->Draw();
   }
-
+  
+  //______________________________________________________________________________
+  void PlotFiduCut(int pass, std::vector<double> hcal_AR, std::vector<double> hcal_SM) {
+    std::vector<double> hcal_boundary = cut::hcal_active_area_data(0,0,pass); 
+    util_pd::DrawArea(hcal_boundary,kGreen+2,2,1);
+    util_pd::DrawArea(hcal_AR,2,4,9);
+    util_pd::DrawArea(hcal_SM,4,4,9);
+  }
+  
   //_____________________________________
   void TF1toTH1F(TF1* const func, // TF1 object to mimic
 		 TH1F* &hist)     // TH1F object to modify
@@ -192,8 +224,8 @@ namespace util_pd {
     // 		       expconst::hcalcol, y_min, y_max,
     // 		       expconst::hcalrow, x_min, x_max);
     TH2F *h = new TH2F(hname.c_str(),Form(";y_{HCAL}^{exp} (m);%s",ylabel.c_str()),
-		       200, y_min, y_max,
-		       200, x_min, x_max);
+		       200, -1.25, 1.25,
+		       200, -3.25, 2.25);
     return h;
   }
   //_____________________________________
@@ -208,8 +240,8 @@ namespace util_pd {
     // 		       expconst::hcalcol, y_min, y_max,
     // 		       expconst::hcalrow, x_min, x_max);
     TH2F *h = new TH2F(hname.c_str(),Form(";y_{HCAL}^{exp} (m);%s",ylabel.c_str()),
-		       200, y_min, y_max,
-		       200, x_min, x_max);
+		       200, -1.25, 1.25,
+		       200, -3.25, 2.25);
     return h;
   }
   //_____________________________________
@@ -831,7 +863,10 @@ namespace util_pd {
       simu_logfile.push_back(temp); processes.push_back("deep");
       temp = Form("simcout/%s_deen_summary.csv",filebase.Data());
       simu_logfile.push_back(temp); processes.push_back("deen");
-    }else {
+    } else if (generator.compare("simc")==0 && process.compare("heep")==0) {
+      TString temp = Form("simcout/%s_%s_summary.csv",filebase.Data(),process.c_str());
+      simu_logfile.push_back(temp); processes.push_back(process);
+    } else {
       TString temp = Form("%s_%s_summary.csv",filebase.Data(),process.c_str());
       simu_logfile.push_back(temp); processes.push_back(process);
     }
@@ -1235,6 +1270,8 @@ namespace util_pd {
     h->SetMarkerSize(0.8);
     h->SetMarkerColor(kBlack);
     h->SetLineColor(kBlack);
+    h->GetXaxis()->SetLabelOffset(1.5);
+    h->GetYaxis()->SetLabelSize(0.04);
   }
   //______________________________________________________________________________
   void customize_psig(TH1F* h, bool isTransp)
@@ -1283,6 +1320,10 @@ namespace util_pd {
   {
     h->GetXaxis()->SetLabelOffset(0.03);
     h->GetXaxis()->SetLabelSize(0.12);
+    h->GetXaxis()->SetTitle("#font[32]{#Deltax} (m)");
+    h->GetXaxis()->SetTitleOffset(1);
+    h->GetXaxis()->SetTitleSize(0.15);
+    h->GetXaxis()->CenterTitle();
     h->GetYaxis()->SetLabelOffset(0.005);
     h->GetYaxis()->SetLabelSize(0.11);
     h->SetMarkerStyle(22);

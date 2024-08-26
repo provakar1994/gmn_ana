@@ -21,6 +21,7 @@
 #include "TCanvas.h"
 #include "TString.h"
 
+#include "Cut.h"
 #include "CodaRun.h"
 #include "SimuJob.h"
 #include "Constants.h"
@@ -74,6 +75,9 @@ namespace util_pd {
 
   // Plots cut region for given x range
   void PlotCutRegion(double xmin, double xmax);
+
+  // Plots HCAL fiducial cut region
+  void PlotFiduCut(int pass, std::vector<double> hcal_AR, std::vector<double> hcal_SM);
 
   /* #################################################
      ##                HCAL Histograms              ##  

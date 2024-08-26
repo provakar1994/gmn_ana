@@ -1,6 +1,6 @@
 #include "PlotCustomizer.h"
 
-PlotCustomizer::PlotCustomizer(bool gridON) : fgridON(gridON) {}
+PlotCustomizer::PlotCustomizer(bool gridON, bool statON) : fgridON(gridON), fstatON(statON) {}
 //______________________________________________________________________________
 void PlotCustomizer::customize_pvtext(TPaveText *pt) const {
   pt->SetFillColor(0); // Transparent fill
@@ -58,9 +58,9 @@ void PlotCustomizer::GrabAllPads(TCanvas const *c, std::vector<TPad*> &pads) con
 void PlotCustomizer::customize_TH1(TH1 *h) const {
   /* Customizes 1D histos */
   h->SetTitle("");
-  h->SetStats(0);
+  if (!fstatON) h->SetStats(0);
   h->SetLineWidth(2);
-  h->SetLineColor(kBlack);
+  //h->SetLineColor(kBlack);
   customize_axes(h->GetXaxis());
   customize_axes(h->GetYaxis());
 }
@@ -68,7 +68,7 @@ void PlotCustomizer::customize_TH1(TH1 *h) const {
 void PlotCustomizer::customize_TH2(TH2 *h) const {
   /* Customizes 1D histos */
   h->SetTitle("");
-  h->SetStats(0);
+  if (!fstatON) h->SetStats(0);
   customize_axes(h->GetXaxis());
   customize_axes(h->GetYaxis());
 }
@@ -76,7 +76,7 @@ void PlotCustomizer::customize_TH2(TH2 *h) const {
 void PlotCustomizer::customize_TGraph(TGraph *g) const {
   /* Customizes 1D histos */
   g->SetTitle("");
-  g->SetStats(0);
+  if (!fstatON) g->SetStats(0);
   customize_axes(g->GetXaxis());
   customize_axes(g->GetYaxis());
 }
@@ -136,7 +136,7 @@ void PlotCustomizer::customize_margin(TPad *p) const {
   TList *primitives = p->GetListOfPrimitives();
   TIter next(primitives);
   TObject *obj;
-  std::cout << "Primitives in the pad:" << std::endl;
+  //std::cout << "Primitives in the pad:" << std::endl;
   while ((obj = next())) {
     if (obj->InheritsFrom("TH2")) {
       TH2 *hist = dynamic_cast<TH2*>(obj);
@@ -167,7 +167,8 @@ void PlotCustomizer::customize_pad(TPad *p) const {
      TFrame, TPaveText, TH1, TH2, TGraph
   */
   p->cd();
-  gStyle->SetOptStat(0);
+  p->Update();
+  //if (!fstatON) gStyle->SetOptStat(0);
 
   if (fgridON) {
     p->SetGridx();
@@ -186,30 +187,38 @@ void PlotCustomizer::customize_pad(TPad *p) const {
     if (obj->InheritsFrom("TFrame")) {
       TFrame *frame = dynamic_cast<TFrame*>(obj);
       if (frame) customize_frame(frame);
+      p->Update();
     } // else if (obj->InheritsFrom("TPaveText")) {
     //   TPaveText *title = dynamic_cast<TPaveText*>(obj);
     //   if (title) customize_title(title);
     // }
     else if (obj->InheritsFrom("TPaveStats")) {
       TPaveStats *stats = dynamic_cast<TPaveStats*>(obj);
-      if (stats) customize_stats(stats);
+      if (stats) {
+	customize_stats(stats);
+	p->Update();
+      }
     } else if (obj->InheritsFrom("TH1")) {
       TH1 *hist = dynamic_cast<TH1*>(obj);
       if (hist) {
 	customize_TH1(hist);
+	p->Update();
       }
     } else if (obj->InheritsFrom("TH2")) {
       TH2 *hist = dynamic_cast<TH2*>(obj);
       if (hist) {
 	customize_TH2(hist);
+	p->Update();
       }
     } else if (obj->InheritsFrom("TGraph") || obj->InheritsFrom("TGraphWithError")) {
       TGraph *graph = dynamic_cast<TGraph*>(obj);
       if (graph) {
 	customize_TGraph(graph);
+	p->Update();
       }
     }
   }
+  p->Update();
 }
 //______________________________________________________________________________
 void PlotCustomizer::customize_canvas(TCanvas *c) const {
@@ -224,6 +233,7 @@ void PlotCustomizer::customize_canvas(TCanvas *c) const {
     } else {
       TPad *pad = (TPad*)c->GetPad(0);
       if (pad) customize_pad(pad);
+      pad->Update();
     }
     if (fgridON) c->RedrawAxis("g");
 

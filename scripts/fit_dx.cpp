@@ -130,7 +130,7 @@ void customize_text(TText *tl) {
 //______________________________________________________________________________
 void FurtherCustoizeDataHisto(TH1F *h_dxHCAL_data, std::string const &cuts_for_signal_data) {
   h_dxHCAL_data->SetStats(0);
-  h_dxHCAL_data->SetTitle(Form("dx {%s}",cuts_for_signal_data.c_str()));
+  //h_dxHCAL_data->SetTitle(Form("dx {%s}",cuts_for_signal_data.c_str()));
   //h_dxHCAL_data->GetYaxis()->SetMaxDigits(3);
   h_dxHCAL_data->GetYaxis()->SetRangeUser(-5,h_dxHCAL_data->GetMaximum()*1.1);
 }
@@ -188,6 +188,8 @@ int fit_dx (const char *configfilename,
   sfprefix = sfprefix.empty() ? "" : sfprefix + "_";
   infprefix = infprefix.empty() ? "" : infprefix + "_";
 
+  char const * weightn = "weight_effic";
+  
   // reading ROOT files as df
   ROOT::EnableImplicitMT();
   ROOT::RDataFrame data_rdf("Tout",Form("pdout/%s%s_ana_data_sbs%d_sbs%dp_model%d_pass%d.root",dfprefix.c_str(),key,conf,sbsmag,model,pass));
@@ -197,7 +199,8 @@ int fit_dx (const char *configfilename,
   // Applying cuts
   std::string cuts_for_signal_data = jmgr->GetValueFromSubKey_str(key,"cuts_for_signal_data");
   std::string cuts_for_signal_simu = jmgr->GetValueFromSubKey_str(key,"cuts_for_signal_simu");
-  std::string cuts_for_bg_data = jmgr->GetValueFromSubKey_str(key,"cuts_for_bg_data");
+  std::string cuts_for_bg_data1 = jmgr->GetValueFromSubKey_str(key,"cuts_for_bg_data1");
+  std::string cuts_for_bg_data2 = jmgr->GetValueFromSubKey_str(key,"cuts_for_bg_data2");
   std::string cuts_for_bg_simu = jmgr->GetValueFromSubKey_str(key,"cuts_for_bg_simu");
   std::string coinT_cut = jmgr->GetValueFromSubKey_str(key,"coinT_cut");
   bool is_vary_cut = jmgr->GetValueFromSubKey<int>(key,"is_vary_cut");
@@ -205,7 +208,8 @@ int fit_dx (const char *configfilename,
   auto data_rdf_filtered = data_rdf.Filter(cuts_for_signal_data);
   auto simu_rdf_filtered = simu_rdf.Filter(cuts_for_signal_simu);
   auto inel_rdf_filtered = inel_rdf.Filter(cuts_for_bg_simu);
-  auto bg_data_rdf_filtered = data_rdf.Filter(cuts_for_bg_data);
+  auto bg_data_rdf_filtered1 = data_rdf.Filter(cuts_for_bg_data1);
+  auto bg_data_rdf_filtered2 = data_rdf.Filter(cuts_for_bg_data2);
 
   // Forming a custom Fiducial Cut
   bool use_custom_fiduCut = jmgr->GetValueFromSubKey<int>(key,"use_custom_fiduCut");
@@ -250,7 +254,7 @@ int fit_dx (const char *configfilename,
     Since we keep the data histogram untouched for fitting, I think we should 
     do the same for bg histogram from data. Hence, commenting out the following lines.
   */
-  // bg_data_rdf_filtered = bg_data_rdf_filtered
+  // bg_data_rdf_filtered1 = bg_data_rdf_filtered1
   //   .Define("dx_shifted",dx_shifted_p.c_str());
 
   // defining output files
@@ -258,6 +262,7 @@ int fit_dx (const char *configfilename,
   char const * confmag = Form("sbs%dsbs%dp",conf,sbsmag);
   char const * outdir = !is_vary_cut ? Form("pdout/fits/%s/",confmag) : Form("pdout/fits/%s/sysstdy/",confmag);
   TString outFile = Form("%s%s_fit_dx_%s_pass%d_%s_sbs%d_sbs%dp_model%d.root",outdir,filebase.c_str(),key,pass,gen.c_str(),conf,sbsmag,model);
+  TString outFileBase = outFile; outFileBase.ReplaceAll(".root","");
   TString outPlot = outFile; outPlot.ReplaceAll(".root",".pdf");
   TString outData = outFile; outData.ReplaceAll(".root",".csv"); ofstream outdata; outdata.open(outData);
   TFile *fout = new TFile(outFile.Data(), "RECREATE");
@@ -271,12 +276,14 @@ int fit_dx (const char *configfilename,
   TH1F *h_dxHCAL_simu_n = new TH1F("h_dxHCAL_simu_n","",int(h_dx[0]),h_dx[1],h_dx[2]); h_dxHCAL_simu_n->Sumw2();
   TH1F *h_dxHCAL_simu_p_norm = new TH1F("h_dxHCAL_simu_p_norm","",int(h_dx[0]),h_dx[1],h_dx[2]); // Charge normalized
   TH1F *h_dxHCAL_simu_n_norm = new TH1F("h_dxHCAL_simu_n_norm","",int(h_dx[0]),h_dx[1],h_dx[2]); // Charge normalized
-  TH1F *h_dxHCAL_bg_data = new TH1F("h_dxHCAL_bg_data","",int(h_dx[0]),h_dx[1],h_dx[2]); h_dxHCAL_bg_data->Sumw2();
+  TH1F *h_dxHCAL_bg_data1 = new TH1F("h_dxHCAL_bg_data1","",int(h_dx[0]),h_dx[1],h_dx[2]); h_dxHCAL_bg_data1->Sumw2();
+  TH1F *h_dxHCAL_bg_data2 = new TH1F("h_dxHCAL_bg_data2","",int(h_dx[0]),h_dx[1],h_dx[2]); h_dxHCAL_bg_data2->Sumw2();
   TH1F *h_dxHCAL_bg_inel_p = new TH1F("h_dxHCAL_bg_inel_p","",int(h_dx[0]),h_dx[1],h_dx[2]); h_dxHCAL_bg_inel_p->Sumw2();
   TH1F *h_dxHCAL_bg_inel_n = new TH1F("h_dxHCAL_bg_inel_n","",int(h_dx[0]),h_dx[1],h_dx[2]); h_dxHCAL_bg_inel_n->Sumw2();
   TH1F *h_dxHCAL_bg_inel = new TH1F("h_dxHCAL_bg_inel","",int(h_dx[0]),h_dx[1],h_dx[2]); h_dxHCAL_bg_inel->Sumw2();
   // kinematic histo "true"
   TH1F *h_vQ2 = new TH1F("h_vQ2","",300,0,16);
+  TH1F *h_vepsilon = new TH1F("h_vepsilon","",300,0,1.5);
   TH1F *h_vetheta= new TH1F("h_vetheta","",300,0.35,1.05);
   // vs Run number
   // ## Explicit x bins for Rnum histos -- Needed to avoid round off error introduced by ROOT's default way of calculating bin edges
@@ -422,14 +429,15 @@ int fit_dx (const char *configfilename,
       h_dxHCAL_data = (TH1F*)data_rdf_filtered.Filter(cuts[i]).Histo1D({"h_dxHCAL_data","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
       if (temp) h_dxHCAL_data_norm = (TH1F*)data_rdf_filtered.Filter(cuts[i]).Histo1D({"h_dxHCAL_data_norm","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx","weight_norm")->Clone();
       h_dxHCAL_data_CT = (TH1F*)data_rdf_filtered.Filter(coinT_cut.c_str()).Histo1D({"h_dxHCAL_data_CT","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
-      h_dxHCAL_simu_p = (TH1F*)simu_rdf_filtered.Filter(cuts_p[i]).Histo1D({"h_dxHCAL_simu_p","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_p","weight")->Clone();
+      h_dxHCAL_simu_p = (TH1F*)simu_rdf_filtered.Filter(cuts_p[i]).Histo1D({"h_dxHCAL_simu_p","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_p",weightn)->Clone();
       h_dxHCAL_simu_p_norm = (TH1F*)simu_rdf_filtered.Filter(cuts_p[i]).Histo1D({"h_dxHCAL_simu_p_norm","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_p","weight_norm")->Clone();
       if (!is_elastic) {
-	h_dxHCAL_simu_n = (TH1F*)simu_rdf_filtered.Filter(cuts_n[i]).Histo1D({"h_dxHCAL_simu_n","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_n","weight")->Clone();
+	h_dxHCAL_simu_n = (TH1F*)simu_rdf_filtered.Filter(cuts_n[i]).Histo1D({"h_dxHCAL_simu_n","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_n",weightn)->Clone();
 	h_dxHCAL_simu_n_norm = (TH1F*)simu_rdf_filtered.Filter(cuts_n[i]).Histo1D({"h_dxHCAL_simu_n_norm","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_n","weight_norm")->Clone();
       }
       // bg histos
-      h_dxHCAL_bg_data = (TH1F*)bg_data_rdf_filtered.Histo1D({"h_dxHCAL_bg_data","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
+      h_dxHCAL_bg_data1 = (TH1F*)bg_data_rdf_filtered1.Histo1D({"h_dxHCAL_bg_data1","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
+      h_dxHCAL_bg_data2 = (TH1F*)bg_data_rdf_filtered2.Histo1D({"h_dxHCAL_bg_data2","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
       h_dxHCAL_bg_inel_p = (TH1F*)inel_rdf_filtered.Filter("mc_fnucl==1").Histo1D({"h_dxHCAL_bg_inel_p","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_p","weight")->Clone();
       if (!is_elastic) h_dxHCAL_bg_inel_n = (TH1F*)inel_rdf_filtered.Filter("mc_fnucl==0").Histo1D({"h_dxHCAL_bg_inel_n","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_n","weight")->Clone();
       h_dxHCAL_bg_inel = (TH1F*)h_dxHCAL_bg_inel_p->Clone();
@@ -440,6 +448,7 @@ int fit_dx (const char *configfilename,
       // kinematic histos "true"
       if (!apply_to_data_only||!is_elastic) {
 	h_vQ2 =  (TH1F*)simu_rdf_filtered.Filter(cuts[i]).Histo1D({"h_vQ2","",300,0,16},"vQ2","weight")->Clone();
+	h_vepsilon =  (TH1F*)simu_rdf_filtered.Filter(cuts[i]).Histo1D({"h_vepsilon","",300,0,1.5},"vepsilon","weight")->Clone();
 	h_vetheta = (TH1F*)simu_rdf_filtered.Filter(cuts[i]).Histo1D({"h_vetheta","",300,0.35,1.05},"vetheta","weight")->Clone();
       }
       // ** vs Run number histos **
@@ -458,14 +467,14 @@ int fit_dx (const char *configfilename,
 	.Histo1D({"h_dxHCAL_data_CT","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
       h_dxHCAL_simu_p = (TH1F*)simu_rdf_filtered
 	.Filter(cuts_p[i]).Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"})
-	.Histo1D({"h_dxHCAL_simu_p","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_p","weight")->Clone();
+	.Histo1D({"h_dxHCAL_simu_p","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_p",weightn)->Clone();
       h_dxHCAL_simu_p_norm = (TH1F*)simu_rdf_filtered
 	.Filter(cuts_p[i]).Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"})
 	.Histo1D({"h_dxHCAL_simu_p_norm","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_p","weight_norm")->Clone();
       if (!is_elastic) {
 	h_dxHCAL_simu_n = (TH1F*)simu_rdf_filtered
 	  .Filter(cuts_n[i]).Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"})
-	  .Histo1D({"h_dxHCAL_simu_n","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_n","weight")->Clone();
+	  .Histo1D({"h_dxHCAL_simu_n","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_n",weightn)->Clone();
 	h_dxHCAL_simu_n_norm = (TH1F*)simu_rdf_filtered
 	  .Filter(cuts_n[i]).Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"})
 	  .Histo1D({"h_dxHCAL_simu_n_norm","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx_shifted_n","weight_norm")->Clone();
@@ -473,6 +482,7 @@ int fit_dx (const char *configfilename,
       // kinematic histos "true"
       if (!apply_to_data_only||!is_elastic) {
 	h_vQ2 =  (TH1F*)simu_rdf_filtered.Filter(cuts[i]).Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"}).Histo1D({"h_vQ2","",300,0,16},"vQ2","weight")->Clone();
+	h_vepsilon =  (TH1F*)simu_rdf_filtered.Filter(cuts[i]).Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"}).Histo1D({"h_vepsilon","",300,0,16},"vepsilon","weight")->Clone();
 	h_vetheta = (TH1F*)simu_rdf_filtered.Filter(cuts[i]).Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"}).Histo1D({"h_vetheta","",300,0.35,1.05},"vetheta","weight")->Clone();
       }
       // ** vs Run number histos **
@@ -485,12 +495,17 @@ int fit_dx (const char *configfilename,
       
       // bg histos ----- 
       // (data)
-      if (apply_to_bg_data) // applying custom fiduCut to data bg
-	h_dxHCAL_bg_data = (TH1F*)bg_data_rdf_filtered
+      if (apply_to_bg_data) {// applying custom fiduCut to data bg
+	h_dxHCAL_bg_data1 = (TH1F*)bg_data_rdf_filtered1
 	  .Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"})
-	  .Histo1D({"h_dxHCAL_bg_data","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
-      else
-	h_dxHCAL_bg_data = (TH1F*)bg_data_rdf_filtered.Histo1D({"h_dxHCAL_bg_data","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
+	  .Histo1D({"h_dxHCAL_bg_data1","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
+      	h_dxHCAL_bg_data2 = (TH1F*)bg_data_rdf_filtered2
+	  .Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"})
+	  .Histo1D({"h_dxHCAL_bg_data2","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
+      }	else {
+	  h_dxHCAL_bg_data1 = (TH1F*)bg_data_rdf_filtered1.Histo1D({"h_dxHCAL_bg_data1","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
+	  h_dxHCAL_bg_data2 = (TH1F*)bg_data_rdf_filtered2.Histo1D({"h_dxHCAL_bg_data2","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
+	}
       // (simu)
       if (!apply_to_bg_simu) { // applying custom fiduCut to simu bg
 	h_dxHCAL_bg_inel_p = (TH1F*)inel_rdf_filtered
@@ -525,7 +540,8 @@ int fit_dx (const char *configfilename,
       h_dxHCAL_data_CT->Write();
       h_dxHCAL_simu_p->Write();
       h_dxHCAL_simu_p_norm->Write();
-      h_dxHCAL_bg_data->Write();
+      h_dxHCAL_bg_data1->Write();
+      h_dxHCAL_bg_data2->Write();
       h_dxHCAL_bg_inel_p->Write();
       if (!is_elastic) {
 	h_dxHCAL_simu_n->Write();
@@ -536,6 +552,7 @@ int fit_dx (const char *configfilename,
       // kinematic histos "true"
       if (!apply_to_data_only||!is_elastic) {
 	h_vQ2->Write();
+	h_vepsilon->Write();
 	h_vetheta->Write();
       }
       // vs Runnum histos
@@ -647,7 +664,7 @@ int fit_dx (const char *configfilename,
       // c1->cd(); gStyle->SetOptFit(1);
       // vector<TH1F*> ho1;
       // TF1 *f1 = fit::fit_1hs_1hbg_THI(dx_fit_range,
-      // 				    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_bg_data,
+      // 				    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_bg_data1,
       // 				    ho1);
       // ho1[0]->Draw(); customize_ht(ho1[0]); customize_dx(ho1[0]);
       // ho1[1]->Draw("same"); customize_hs(ho1[1]); customize_dx(ho1[1]);
@@ -699,14 +716,48 @@ int fit_dx (const char *configfilename,
       l2->SetTextFont(42);
       l2->AddEntry(h_dxHCAL_data,"Data","p");
       l2->AddEntry(hf2,"Fit (MC + bg.)","lf");
-      l2->AddEntry(ho2[1],"Signal (from MC)","lf");
+      l2->AddEntry(ho2[1],"Signal (Inel-MC)","lf");
       l2->AddEntry(ho2[2],Form("Bg. (Poly. %d)",Opoly),"lf");
       l2->Draw();
       // preparing the pad for residual
       p2[1]->cd();
       ho2[3]->Draw(); util_pd::customize_residual(ho2[3]);
+      ho2[3]->GetXaxis()->SetTitle("ABC");
+      ho2[3]->GetXaxis()->SetTitleOffset(3);
+      ho2[3]->GetXaxis()->CenterTitle();
+// Access the primitives list of the pad
+    // TObject *obj = nullptr;
+    // TIter next(p2[1]->GetListOfPrimitives());
+    // TAxis *xAxis = nullptr;
+
+    // // Iterate through primitives to find the x-axis
+    // while ((obj = next())) {
+    //     if (obj->InheritsFrom("TH1")) {
+    //         // If it is a histogram, grab the x-axis
+    //         xAxis = static_cast<TH1*>(obj)->GetXaxis();
+    //         break;
+    //     }
+    //     // If other drawable objects are involved (like TF1), you can add similar checks here
+    // }
+
+    // if (xAxis) {
+    //     // Modify the x-axis as needed
+    //     xAxis->SetTitle("#font[32]{#Deltax} (m)");
+    //     xAxis->SetLabelSize(0.05);
+    //     xAxis->SetTitleOffset(3); // Adjusts spacing between title and labels
+    // 	xAxis->CenterTitle();
+
+    //     // Redraw the p2
+    //     p2[1]->Modified();
+    //     p2[1]->Update();
+    //     c2->cd();
+    //     c2->Modified();
+    //     c2->Update();
+    // } else {
+    //     std::cout << "Could not find the x-axis!" << std::endl;
+    // }      
       // drawing a horizontal line at y = 0
-      util_pd::DrawZeroLine(p2[1],dx_fit_range[0],dx_fit_range[1]);
+      //util_pd::DrawZeroLine(p2[1],dx_fit_range[0],dx_fit_range[1]);
       // --------
 
       // Canvas 3 : Sideband fit (distribution from data)
@@ -827,6 +878,7 @@ int fit_dx (const char *configfilename,
 		<< "chi23,NDF3,R3,R3err,B3,B3err,Yp3,Yp3err,Yn3,Yn3err,Ybg3,Ybg3err,"
 		<< "chi24,NDF4,R4,R4err,B4,B4err,Yp4,Yp4err,Yn4,Yn4err,Ybg4,Ybg4err,"
 		<< "chi25,NDF5,R5,R5err,B5,B5err,Yp5,Yp5err,Yn5,Yn5err,Ybg5,Ybg5err,"
+		<< "chi26,NDF6,R6,R6err,B6,B6err,Yp6,Yp6err,Yn6,Yn6err,Ybg6,Ybg6err,"
 		<< "\n";
       }
       
@@ -876,11 +928,11 @@ int fit_dx (const char *configfilename,
       TF1 *f1;
       if (is_vary_pnXOff) {
 	f1 = fit::fit_2hs_1hbg_THI_xOffVary(dx_fit_range,
-					    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_data,pnXOff_range,
+					    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_data1,pnXOff_range,
 					    ho1);
       } else {
 	f1 = fit::fit_2hs_1hbg_THI(dx_fit_range,
-				   h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_data,
+				   h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_data1,
 				   ho1);
       }
       // grabbing fit params for future use
@@ -912,21 +964,21 @@ int fit_dx (const char *configfilename,
       nCnt.push_back(yo1[2]); nCnt_err.push_back(yo1[3]);
       bgCnt.push_back(yo1[4]); bgCnt_err.push_back(yo1[5]);
       // redrawing the stat box
-      st1->SetX1NDC(0.6); st1->SetX2NDC(0.9); st1->SetY2NDC(0.9);
+      st1->SetX1NDC(0.65); st1->SetY1NDC(0.55); st1->SetX2NDC(0.95); st1->SetY2NDC(0.9);
       // Modifying it to add yield ratio
       double yRatio1 = f1->GetParameter(1)*R_MC_nofit;
       double yRatio1_err = f1->GetParError(1)*R_MC_nofit;
-      TText *t1 = st1->AddText(Form("R_{Yield} = %.4f #pm %.4f",yRatio1,yRatio1_err));
-      customize_text(t1);
+      //TText *t1 = st1->AddText(Form("R_{Yield} = %.4f #pm %.4f",yRatio1,yRatio1_err));
+      //customize_text(t1);
       st1->Draw("same");
       // drawing a legend
-      TLegend *l1=new TLegend(0.10,0.64,0.35,0.9);
+      TLegend *l1=new TLegend(0.10,0.55,0.33,0.9);
       l1->SetTextFont(42);
       l1->AddEntry(h_dxHCAL_data,"Data","p");
       l1->AddEntry(hf1,"Fit (QE MC + bg.)","lf");
       l1->AddEntry(ho1[4],"p signal (from MC)","lf");
       l1->AddEntry(ho1[5],"n signal (from MC)","lf");
-      l1->AddEntry(ho1[2],"Bg. (from Data)","lf");
+      l1->AddEntry(ho1[2],"Bg. (Anti-dy)","lf");
       l1->AddEntry(ho1[3],"Residual","p");
       if (is_vary_cut) AddCutToLegend(l1,cuts_2[i].c_str());
       l1->Draw();
@@ -990,21 +1042,21 @@ int fit_dx (const char *configfilename,
       nCnt.push_back(yo2[2]); nCnt_err.push_back(yo2[3]);
       bgCnt.push_back(yo2[4]); bgCnt_err.push_back(yo2[5]);
       // redrawing the stat box
-      st2->SetX1NDC(0.6); st2->SetX2NDC(0.9); st2->SetY2NDC(0.9);
+      st2->SetX1NDC(0.65); st2->SetY1NDC(0.55); st2->SetX2NDC(0.95); st2->SetY2NDC(0.9);
       // Modifying it to add yield ratio
       double yRatio2 = f2->GetParameter(1)*R_MC_nofit;
       double yRatio2_err = f2->GetParError(1)*R_MC_nofit;
-      TText *t2 = st2->AddText(Form("R_{Yield} = %.4f #pm %.4f",yRatio2,yRatio2_err));
-      customize_text(t2);
+      // TText *t2 = st2->AddText(Form("R_{Yield} = %.4f #pm %.4f",yRatio2,yRatio2_err));
+      // customize_text(t2);
       st2->Draw("same");    
       // drawing a legend
-      TLegend *l2=new TLegend(0.10,0.64,0.35,0.9);
+      TLegend *l2=new TLegend(0.10,0.55,0.33,0.9);
       l2->SetTextFont(42);
       l2->AddEntry(h_dxHCAL_data,"Data","p");
       l2->AddEntry(hf2,"Fit (QE MC + bg.)","lf");
       l2->AddEntry(ho2[4],"p signal (from MC)","lf");
       l2->AddEntry(ho2[5],"n signal (from MC)","lf");
-      l2->AddEntry(ho2[2],"Bg. (from MC)","lf");
+      l2->AddEntry(ho2[2],"Bg. (Inel-MC)","lf");
       l2->AddEntry(ho2[3],"Residual","p");
       if (is_vary_cut) AddCutToLegend(l2,cuts_2[i].c_str());
       l2->Draw();
@@ -1062,22 +1114,22 @@ int fit_dx (const char *configfilename,
       nCnt.push_back(yo3[2]); nCnt_err.push_back(yo3[3]);
       bgCnt.push_back(yo3[4]); bgCnt_err.push_back(yo3[5]);
       // redrawing the stat box
-      st3->SetX1NDC(0.62); st3->SetX2NDC(0.9); st3->SetY2NDC(0.9);
+      st3->SetX1NDC(0.67); st3->SetY1NDC(0.53); st3->SetX2NDC(0.95); st3->SetY2NDC(0.9);
       // Modifying it to add yield ratio
       double yRatio3 = f3->GetParameter(1)*R_MC_nofit;
       double yRatio3_err = f3->GetParError(1)*R_MC_nofit;
-      TText *t3 = st3->AddText(Form("R_{Yield} = %.4f #pm %.4f",yRatio3,yRatio3_err));
-      customize_text(t3);
+      // TText *t3 = st3->AddText(Form("R_{Yield} = %.4f #pm %.4f",yRatio3,yRatio3_err));
+      // customize_text(t3);
       st3->Draw("same");
       // drawing a legend
-      TLegend *l3=new TLegend(0.10,0.6,0.36,0.9);
+      TLegend *l3=new TLegend(0.10,0.53,0.33,0.9); //0.10,0.6,0.36,0.9);
       l3->SetTextFont(42);
       l3->AddEntry(h_dxHCAL_data,"Data","p");
       //l3->AddEntry(f3,"Fit (MC + poly. bg.)","l");
       l3->AddEntry(hf3,"Fit (QE MC + bg.)","lf");
       l3->AddEntry(ho3[4],"p signal (from MC)","lf");
       l3->AddEntry(ho3[5],"n signal (from MC)","lf");
-      l3->AddEntry(ho3[2],Form("Bg. (poly. of order %d)",2),"lf");
+      l3->AddEntry(ho3[2],Form("Bg. (Poly%d)",2),"lf");
       l3->AddEntry(ho3[3],"Residual","p");
       if (is_vary_cut) AddCutToLegend(l3,cuts_2[i].c_str());
       //l3->SetFillStyle(0); // makes legend box transparent
@@ -1137,15 +1189,15 @@ int fit_dx (const char *configfilename,
       nCnt.push_back(yo4[2]); nCnt_err.push_back(yo4[4]);
       bgCnt.push_back(yo4[4]); bgCnt_err.push_back(yo4[5]);
       // redrawing the stat box
-      st4->SetX1NDC(0.62); st4->SetX2NDC(0.9); st4->SetY2NDC(0.9);
+      st4->SetX1NDC(0.67); st4->SetY1NDC(0.53); st4->SetX2NDC(0.95); st4->SetY2NDC(0.9);
       // Modifying it to add yield ratio
       double yRatio4 = f4->GetParameter(1)*R_MC_nofit;
       double yRatio4_err = f4->GetParError(1)*R_MC_nofit;
-      TText *t4 = st4->AddText(Form("R_{Yield} = %.4f #pm %.4f",yRatio4,yRatio4_err));
-      customize_text(t4);
+      // TText *t4 = st4->AddText(Form("R_{Yield} = %.4f #pm %.4f",yRatio4,yRatio4_err));
+      // customize_text(t4);
       st4->Draw("same");
       // drawing a legend
-      TLegend *l4=new TLegend(0.10,0.6,0.36,0.9);
+      TLegend *l4=new TLegend(0.10,0.53,0.33,0.9); //0.10,0.6,0.36,0.9);
       l4->SetTextFont(42);
       l4->AddEntry(h_dxHCAL_data,"Data","p");
       //l4->AddEntry(f4,"Fit (MC + poly. bg.)","l");
@@ -1211,22 +1263,22 @@ int fit_dx (const char *configfilename,
       nCnt.push_back(yo5[2]); nCnt_err.push_back(yo5[3]);
       bgCnt.push_back(yo5[4]); bgCnt_err.push_back(yo5[5]);
       // redrawing the stat box
-      st5->SetX1NDC(0.62); st5->SetX2NDC(0.9); st5->SetY2NDC(0.9);
+      st5->SetX1NDC(0.67); st5->SetY1NDC(0.48); st5->SetX2NDC(0.95); st5->SetY2NDC(0.9);
       // Modifying it to add yield ratio
       double yRatio5 = f5->GetParameter(1)*R_MC_nofit;
       double yRatio5_err = f5->GetParError(1)*R_MC_nofit;
-      TText *t5 = st5->AddText(Form("R_{Yield} = %.4f #pm %.4f",yRatio5,yRatio5_err));
-      customize_text(t5);
+      // TText *t5 = st5->AddText(Form("R_{Yield} = %.4f #pm %.4f",yRatio5,yRatio5_err));
+      // customize_text(t5);
       st5->Draw("same");
       // drawing a legend
-      TLegend *l5=new TLegend(0.10,0.6,0.36,0.9);
+      TLegend *l5=new TLegend(0.10,0.55,0.33,0.9); //0.10,0.6,0.36,0.9);
       l5->SetTextFont(42);
       l5->AddEntry(h_dxHCAL_data,"Data","p");
       //l5->AddEntry(f5,"Fit (MC + poly. bg.)","l");
       l5->AddEntry(hf5,"Fit (QE MC + bg.)","lf");
       l5->AddEntry(ho5[4],"p signal (from MC)","lf");
       l5->AddEntry(ho5[5],"n signal (from MC)","lf");
-      l5->AddEntry(ho5[2],Form("Bg. (poly. of order %d)",Opoly),"lf");
+      l5->AddEntry(ho5[2],Form("Bg. (Poly%d)",Opoly),"lf");
       l5->AddEntry(ho5[3],"Residual","p");
       if (is_vary_cut) AddCutToLegend(l5,cuts_2[i].c_str());
       //l5->SetFillStyle(0); // makes legend box transparent
@@ -1241,6 +1293,77 @@ int fit_dx (const char *configfilename,
       // *******************
       //c5->SaveAs(Form("%s_c5_%d.png",outPNG.Data(),i)); 
 
+      // Canvas 6 : Fitting data/MC w/ background from data
+      TCanvas *c6 = util_pd::TC("c6",1,1); gStyleFitCanvas();
+      c6->cd();
+      // performing the fit
+      vector<TH1F*> ho6;
+      TF1 *f6;
+      if (is_vary_pnXOff) {
+	f6 = fit::fit_2hs_1hbg_THI_xOffVary(dx_fit_range,
+					    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_data2,pnXOff_range,
+					    ho6);
+      } else {
+	f6 = fit::fit_2hs_1hbg_THI(dx_fit_range,
+				   h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_data2,
+				   ho6);
+      }
+      // grabbing fit params for future use
+      chi2.push_back(f6->GetChisquare()); NDF.push_back(f6->GetNDF());
+      R_vals.push_back(f6->GetParameter(1)); Rerr_vals.push_back(f6->GetParError(1));
+      B_vals.push_back(f6->GetParameter(2)); Berr_vals.push_back(f6->GetParError(2));
+      // converting fit fn to a hostogram
+      TH1F *hf6 = (TH1F*)h_dxHCAL_data->Clone(); util_pd::TF1toTH1F(f6,hf6);
+      ho6[0]->Draw(); c6->Update(); 
+      // grabbing statbox of the fitted histo
+      TPaveStats *st6 = (TPaveStats*)ho6[0]->FindObject("stats");
+      ho6[0]->SetBit(TH1::kNoStats); // Sets up the stat box for later modification
+      // getting pads for pull plot
+      std::vector<TPad*> p6 = util_pd::GetPadsForPullPlot(c6);
+      //
+      // preparing the pad for data/MC fit
+      //
+      p6[0]->cd();
+      // drawing all the histograms
+      //ho6[0]->Draw(); customize_ht(ho6[0]); customize_dx(ho6[0]);
+      h_dxHCAL_data->Draw("E"); util_pd::customize_data(h_dxHCAL_data);
+      hf6->Draw("same HIST"); util_pd::customize_gfit(hf6,1);
+      ho6[4]->Draw("same HIST"); util_pd::customize_psig(ho6[4],1);
+      ho6[5]->Draw("same HIST"); util_pd::customize_nsig(ho6[5],1);
+      ho6[2]->Draw("same HIST"); util_pd::customize_hbg(ho6[2],1);
+      // calculating yields
+      std::vector<double> yo6; util_pd::GetYields(f6,ho6[4],ho6[5],ho6[2],yo6);
+      pCnt.push_back(yo6[0]); pCnt_err.push_back(yo6[1]);
+      nCnt.push_back(yo6[2]); nCnt_err.push_back(yo6[3]);
+      bgCnt.push_back(yo6[4]); bgCnt_err.push_back(yo6[5]);
+      // redrawing the stat box
+      st6->SetX1NDC(0.6); st6->SetY1NDC(0.55); st6->SetX2NDC(0.95); st6->SetY2NDC(0.9);
+      // Modifying it to add yield ratio
+      double yRatio6 = f6->GetParameter(1)*R_MC_nofit;
+      double yRatio6_err = f6->GetParError(1)*R_MC_nofit;
+      //TText *t6 = st6->AddText(Form("R_{Yield} = %.4f #pm %.4f",yRatio6,yRatio6_err));
+      //customize_text(t6);
+      st6->Draw("same");
+      // drawing a legend
+      TLegend *l6=new TLegend(0.10,0.55,0.33,0.9);
+      l6->SetTextFont(42);
+      l6->AddEntry(h_dxHCAL_data,"Data","p");
+      l6->AddEntry(hf6,"Fit (QE MC + bg.)","lf");
+      l6->AddEntry(ho6[4],"p signal (from MC)","lf");
+      l6->AddEntry(ho6[5],"n signal (from MC)","lf");
+      l6->AddEntry(ho6[2],"Bg. (Anti-dt)","lf");
+      l6->AddEntry(ho6[3],"Residual","p");
+      if (is_vary_cut) AddCutToLegend(l6,cuts_2[i].c_str());
+      l6->Draw();
+      //
+      // preparing the pad for residual
+      //  
+      p6[1]->cd();
+      ho6[3]->Draw(); util_pd::customize_residual(ho6[3]);
+      // drawing a horizontal line at y = 0
+      util_pd::DrawZeroLine(p6[1],dx_fit_range[0],dx_fit_range[1]);
+      // ** ----- ***
+      
       // ** --
       // // Canvas 5 : Fitting w/ polynomial background using side band method
       // // Steps: 1. Subrtact bg using sideband method, 2. Perform data/MC fit w/o bg
@@ -1347,12 +1470,13 @@ int fit_dx (const char *configfilename,
       // writing out the canvases
       c0->Update(); c0->Write(); if (!is_vary_cut&&i==0) c0->SaveAs(Form("%s[",outPlot.Data())); 
       c0->SaveAs(Form("%s",outPlot.Data())); 
-      c1->Update(); c1->Write(); c1->SaveAs(Form("%s",outPlot.Data())); 
-      c2->Update(); c2->Write(); c2->SaveAs(Form("%s",outPlot.Data())); 
-      c3->Update(); c3->Write(); c3->SaveAs(Form("%s",outPlot.Data())); 
-      c4->Update(); c4->Write(); c4->SaveAs(Form("%s",outPlot.Data())); 
-      c5->Update(); c5->Write(); c5->SaveAs(Form("%s",outPlot.Data())); 
-      if (i==iter-1) c5->SaveAs(Form("%s]",outPlot.Data())); 
+      c1->Update(); c1->Write(); c1->SaveAs(Form("%s",outPlot.Data())); c1->SaveAs(Form("%s_1.png",outFileBase.Data())); 
+      c2->Update(); c2->Write(); c2->SaveAs(Form("%s",outPlot.Data())); c2->SaveAs(Form("%s_2.png",outFileBase.Data())); 
+      c3->Update(); c3->Write(); c3->SaveAs(Form("%s",outPlot.Data())); c3->SaveAs(Form("%s_3.png",outFileBase.Data())); 
+      c4->Update(); c4->Write(); c4->SaveAs(Form("%s",outPlot.Data())); c4->SaveAs(Form("%s_4.png",outFileBase.Data())); 
+      c5->Update(); c5->Write(); c5->SaveAs(Form("%s",outPlot.Data())); c5->SaveAs(Form("%s_5.png",outFileBase.Data())); 
+      c6->Update(); c6->Write(); c6->SaveAs(Form("%s",outPlot.Data())); c6->SaveAs(Form("%s_6.png",outFileBase.Data())); 
+      if (i==iter-1) c6->SaveAs(Form("%s]",outPlot.Data())); 
     } // QE
   } // for, cut vairation
 

@@ -8,7 +8,7 @@ namespace fit {
   /* Sets the name of polynomial parameters */
   {
     for (int i=Spar; i<Opoly+Spar+1; i++) {
-      std::string s = "p" + std::to_string(i-Spar);
+      std::string s = Form("#font[12]{p_{%s}}",std::to_string(i-Spar).c_str()); //"p" + std::to_string(i-Spar);
       f1->SetParName(i,s.c_str());
     }
   }
@@ -39,6 +39,19 @@ namespace fit {
     for (int i=0;i<npars;i++) {parerrs.push_back(f1->GetParError(i));}
     return parerrs;
   }
+  //______________________________________________________________________________
+  std::vector<std::pair<double, double>> GetFitParamANDError(TF1 * const f1)
+  /* Returns a vector filled with pairs of fit parameter values and errors from f1 */
+  {
+    std::vector<double> values = GetFitParams(f1);
+    std::vector<double> errors = GetFitParamErrors(f1); 
+    int npars = f1->GetNpar(); 
+    std::vector<std::pair<double, double>> parsWerrs;
+    for (int i = 0; i < npars; ++i) {
+        parsWerrs.push_back(std::make_pair(values[i], errors[i]));
+    }
+    return parsWerrs;
+}
   //______________________________________________________________________________
   TF1* fit_1pbg_SB (std::vector<double> const & fit_range,
 		    std::vector<double> const & reject_points,
@@ -119,8 +132,8 @@ namespace fit {
     const int npars = 1+Opoly+1;
     std::vector<double> setpars{1}; for (int i=1;i<npars;i++) setpars.push_back(0);
 
-    TH1F *ht_cp = (TH1F*)ht->Clone(); 
-    TH1F *hs_cp1 = (TH1F*)hs->Clone(); 
+    TH1F *ht_cp = (TH1F*)ht->Clone("hdxd"); 
+    TH1F *hs_cp1 = (TH1F*)hs->Clone("hdxs"); 
  
     FitFn *ffn = new FitFn(hs_cp1,Opoly);
     TF1 *f1 = new TF1("f1",ffn,&FitFn::ffn_1hs_1pbg,fit_range[0],fit_range[1],npars);
@@ -144,7 +157,7 @@ namespace fit {
 
     TH1F *hs_cp2 = (TH1F*)hs_cp1->Clone(); hs_cp2->Scale(pars[0]); 
     TH1F *hsANDbg = (TH1F*)hs_cp2->Clone(); hsANDbg->Add(hs_cp2,hbg_sc);
-    TH1F *hres = (TH1F*)hs_cp1->Clone(); hres->Add(ht_cp,hsANDbg,1,-1); 
+    TH1F *hres = (TH1F*)hs_cp1->Clone("hres"); hres->Add(ht_cp,hsANDbg,1,-1); 
     ho = {ht_cp,hs_cp2,hbg_sc,hres};
     
     return f1;
@@ -372,9 +385,12 @@ namespace fit {
     TF1 *f1 = new TF1("f1",ffn,&FitFn::ffn_2hs_1hbg,fit_range[0],fit_range[1],npars);
     f1->SetNpx(2000);
     f1->SetParameters(&setpars[0]);
-    f1->SetParName(0,"Norm");
-    f1->SetParName(1,"R");
-    f1->SetParName(2,"B");
+    // f1->SetParName(0,"Norm");
+    // f1->SetParName(1,"R");
+    // f1->SetParName(2,"B");
+    f1->SetParName(0,"#font[12]{N}");
+    f1->SetParName(1,"#color[2]{#font[12]{R_{n/p}^{sf}}}");
+    f1->SetParName(2,"#font[12]{B}");    
 
     ht_cp->Fit(f1,"RWL");
     std::vector<double> pars = GetFitParams(f1);
@@ -383,9 +399,9 @@ namespace fit {
     TH1F *hs1_cp2 = (TH1F*)hs1_cp1->Clone(); hs1_cp2->Scale(pars[0]);
     TH1F *hs2_cp2 = (TH1F*)hs2_cp1->Clone(); hs2_cp2->Scale(pars[0]*pars[1]);
     TH1F *hst = (TH1F*)hs1_cp2->Clone(); hst->Add(hs1_cp2,hs2_cp2);
-    TH1F *hbg_sc = (TH1F*)hbg_cp1->Clone(); hbg_sc->Scale(pars[0]*pars[2]); 
+    TH1F *hbg_sc = (TH1F*)hbg_cp1->Clone(); hbg_sc->Scale(pars[2]); 
     TH1F *hsANDbg = (TH1F*)hs1_cp2->Clone(); hsANDbg->Add(hst,hbg_sc);
-    TH1F *hres = (TH1F*)hs2_cp1->Clone(); hres->Add(ht_cp,hsANDbg,1,-1); 
+    TH1F *hres = (TH1F*)hs2_cp1->Clone("hres"); hres->Add(ht_cp,hsANDbg,1,-1); 
     ho = {ht_cp,hst,hbg_sc,hres,hs1_cp2,hs2_cp2};
     
     return f1;
@@ -468,7 +484,7 @@ namespace fit {
     TH1F *hs1_cp2 = (TH1F*)hs1_cp1->Clone(); hs1_cp2->Scale(pars[0]); 
     TH1F *hs2_cp2 = (TH1F*)hs2_cp1->Clone(); hs2_cp2->Scale(pars[0]*pars[1]);
     TH1F *hst = (TH1F*)hs1_cp2->Clone(); hst->Add(hs1_cp2,hs2_cp2);
-    TH1F *hbg_sc = (TH1F*)hbg_cp1->Clone(); hbg_sc->Scale(pars[0]*pars[2]); 
+    TH1F *hbg_sc = (TH1F*)hbg_cp1->Clone(); hbg_sc->Scale(pars[2]); 
     TH1F *hsANDbg = (TH1F*)hs1_cp2->Clone(); hsANDbg->Add(hst,hbg_sc);
     TH1F *hres = (TH1F*)hs2_cp1->Clone(); hres->Add(ht_cp,hsANDbg,1,-1); 
     ho = {ht_cp,hst,hbg_sc,hres,hs1_cp2,hs2_cp2};
@@ -498,9 +514,12 @@ namespace fit {
     TF1 *f1 = new TF1("f1",ffn,&FitFn::ffn_2hs_2hbg,fit_range[0],fit_range[1],npars);
     f1->SetNpx(2000);
     f1->SetParameters(&setpars[0]);
-    f1->SetParName(0,"Norm");
-    f1->SetParName(1,"R");
-    f1->SetParName(2,"B");
+    // f1->SetParName(0,"Norm");
+    // f1->SetParName(1,"R");
+    // f1->SetParName(2,"B");
+    f1->SetParName(0,"#font[12]{N}");
+    f1->SetParName(1,"#color[2]{#font[12]{R_{n/p}^{sf}}}");
+    f1->SetParName(2,"#font[12]{B}");
 
     ht_cp->Fit(f1,"RWL");
     std::vector<double> pars = GetFitParams(f1);
@@ -509,8 +528,8 @@ namespace fit {
     TH1F *hs1_cp2 = (TH1F*)hs1_cp1->Clone(); hs1_cp2->Scale(pars[0]);
     TH1F *hs2_cp2 = (TH1F*)hs2_cp1->Clone(); hs2_cp2->Scale(pars[0]*pars[1]);
     TH1F *hst = (TH1F*)hs1_cp2->Clone(); hst->Add(hs1_cp2,hs2_cp2);
-    TH1F *hbg1_cp2 = (TH1F*)hbg1_cp1->Clone(); hbg1_cp2->Scale(pars[0]*pars[2]); 
-    TH1F *hbg2_cp2 = (TH1F*)hbg2_cp1->Clone(); hbg2_cp2->Scale(pars[0]*pars[2]); 
+    TH1F *hbg1_cp2 = (TH1F*)hbg1_cp1->Clone(); hbg1_cp2->Scale(pars[2]); 
+    TH1F *hbg2_cp2 = (TH1F*)hbg2_cp1->Clone(); hbg2_cp2->Scale(pars[2]); 
     TH1F *hbg_sc = (TH1F*)hbg1_cp2->Clone(); hbg_sc->Add(hbg1_cp2,hbg2_cp2); 
     TH1F *hsANDbg = (TH1F*)hs1_cp2->Clone(); hsANDbg->Add(hst,hbg_sc);
     TH1F *hres = (TH1F*)hs2_cp1->Clone(); hres->Add(ht_cp,hsANDbg,1,-1); 
@@ -561,8 +580,8 @@ namespace fit {
     TH1F *hs1_cp2 = (TH1F*)hs1_cp1->Clone(); hs1_cp2->Scale(pars[0]);
     TH1F *hs2_cp2 = (TH1F*)hs2_cp1->Clone(); hs2_cp2->Scale(pars[0]*pars[1]);
     TH1F *hst = (TH1F*)hs1_cp2->Clone(); hst->Add(hs1_cp2,hs2_cp2);
-    TH1F *hbg1_cp2 = (TH1F*)hbg1_cp1->Clone(); hbg1_cp2->Scale(pars[0]*pars[2]); 
-    TH1F *hbg2_cp2 = (TH1F*)hbg2_cp1->Clone(); hbg2_cp2->Scale(pars[0]*pars[2]); 
+    TH1F *hbg1_cp2 = (TH1F*)hbg1_cp1->Clone(); hbg1_cp2->Scale(pars[2]); 
+    TH1F *hbg2_cp2 = (TH1F*)hbg2_cp1->Clone(); hbg2_cp2->Scale(pars[2]); 
     TH1F *hbg_sc = (TH1F*)hbg1_cp2->Clone(); hbg_sc->Add(hbg1_cp2,hbg2_cp2); 
     TH1F *hsANDbg = (TH1F*)hs1_cp2->Clone(); hsANDbg->Add(hst,hbg_sc);
     TH1F *hres = (TH1F*)hs2_cp1->Clone(); hres->Add(ht_cp,hsANDbg,1,-1); 
@@ -591,8 +610,10 @@ namespace fit {
     TF1 *f1 = new TF1("f1",ffn,&FitFn::ffn_2hs_1pbg,fit_range[0],fit_range[1],npars);
     f1->SetNpx(2000);
     f1->SetParameters(&setpars[0]);
-    f1->SetParName(0,"Norm");
-    f1->SetParName(1,"R");
+    // f1->SetParName(0,"Norm");
+    // f1->SetParName(1,"R");
+    f1->SetParName(0,"#font[12]{N}");
+    f1->SetParName(1,"#color[2]{#font[12]{R_{n/p}^{sf}}}");    
     set_poly_par_names(f1,2,Opoly);
 
     ht_cp->Fit(f1,"R");
@@ -698,8 +719,8 @@ namespace fit {
     TF1 *f1 = new TF1("f1",ffn,&FitFn::ffn_2hs_1gbg,fit_range[0],fit_range[1],npars);
     f1->SetNpx(2000);
     f1->SetParameters(&setpars[0]);
-    f1->SetParName(0,"Norm");
-    f1->SetParName(1,"R");
+    f1->SetParName(0,"#font[12]{N}");
+    f1->SetParName(1,"#color[2]{#font[12]{R_{n/p}^{sf}}}");
     set_gaus_par_names(f1,2);
 
     ht_cp->Fit(f1,"R");
