@@ -218,6 +218,7 @@ void PlotCustomizer::customize_pad(TPad *p) const {
       }
     }
   }
+  
   p->Update();
 }
 //______________________________________________________________________________
@@ -229,14 +230,19 @@ void PlotCustomizer::customize_canvas(TCanvas *c) const {
     if (!pads.empty()) {
       for (auto &pad : pads) {
 	customize_pad(pad);
+	if (fgridON) pad->RedrawAxis("g");
       }
     } else {
       TPad *pad = (TPad*)c->GetPad(0);
       if (pad) customize_pad(pad);
       pad->Update();
+      if (fgridON) {
+	pad->SetGridx();
+	pad->SetGridy();
+      }      
     }
     if (fgridON) c->RedrawAxis("g");
-
+    
   } else {
     std::cout << "ERROR!! Canvas doesn't exist!!\n";
   }
