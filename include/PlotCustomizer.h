@@ -25,7 +25,7 @@
 
 class PlotCustomizer {
  public:
-  PlotCustomizer(bool gridON = true, bool statON = false);
+  PlotCustomizer(bool gridON = true, bool statON = false, bool titleON = false);
 
   Int_t GetNumberOfPads(TCanvas const *canvas) const;
   void GrabAllPads(TCanvas const *c, std::vector<TPad*> &pads) const;
@@ -51,6 +51,7 @@ class PlotCustomizer {
  private:
   bool fgridON; // Attribute to control grid lines
   bool fstatON; // Attribute to control statbox lines
+  bool ftitleON; // Attribute to control canvas title  
   //
   int kFont = 62;
   double kLabelSize = 0.04;

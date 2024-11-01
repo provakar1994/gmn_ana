@@ -1,6 +1,6 @@
 #include "PlotCustomizer.h"
 
-PlotCustomizer::PlotCustomizer(bool gridON, bool statON) : fgridON(gridON), fstatON(statON) {}
+PlotCustomizer::PlotCustomizer(bool gridON, bool statON, bool titleON) : fgridON(gridON), fstatON(statON), ftitleON(titleON) {}
 //______________________________________________________________________________
 void PlotCustomizer::customize_pvtext(TPaveText *pt) const {
   pt->SetFillColor(0); // Transparent fill
@@ -57,7 +57,7 @@ void PlotCustomizer::GrabAllPads(TCanvas const *c, std::vector<TPad*> &pads) con
 //______________________________________________________________________________
 void PlotCustomizer::customize_TH1(TH1 *h) const {
   /* Customizes 1D histos */
-  h->SetTitle("");
+  if (!ftitleON) h->SetTitle("");
   if (!fstatON) h->SetStats(0);
   h->SetLineWidth(2);
   //h->SetLineColor(kBlack);
@@ -67,7 +67,7 @@ void PlotCustomizer::customize_TH1(TH1 *h) const {
 //______________________________________________________________________________
 void PlotCustomizer::customize_TH2(TH2 *h) const {
   /* Customizes 1D histos */
-  h->SetTitle("");
+  if (!ftitleON) h->SetTitle("");
   if (!fstatON) h->SetStats(0);
   customize_axes(h->GetXaxis());
   customize_axes(h->GetYaxis());
@@ -75,7 +75,7 @@ void PlotCustomizer::customize_TH2(TH2 *h) const {
 //______________________________________________________________________________
 void PlotCustomizer::customize_TGraph(TGraph *g) const {
   /* Customizes 1D histos */
-  g->SetTitle("");
+  if (!ftitleON) g->SetTitle("");
   if (!fstatON) g->SetStats(0);
   customize_axes(g->GetXaxis());
   customize_axes(g->GetYaxis());
