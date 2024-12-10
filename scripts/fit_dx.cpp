@@ -30,36 +30,104 @@
 
 bool temp = 0;
 
+//______________________________________________________________________________
+bool isSubstringPresent(const std::string& mainString, const std::string& subString) {
+    return mainString.find(subString) != std::string::npos;
+}
+
+//______________________________________________________________________________
+std::vector<std::string> extractAndModifyCuts(const std::string& str) {
+  std::vector<std::string> modifiedCuts;
+  std::regex rgx(R"(([\w\*\-\/\+\.\(\)]+)([<>])([\d\.\-]+))");
+  std::smatch match;
+
+  std::string::const_iterator searchStart(str.cbegin());
+  while (std::regex_search(searchStart, str.cend(), match, rgx)) {
+    std::string lhs = match[1];
+    char comparisonOperator = match[2].str()[0];
+    double value = std::stod(match[3]);
+
+    double modifiedValue1 = value * 1.1;
+    double modifiedValue2 = value * 0.9;
+
+    std::ostringstream newCut1, newCut2;
+    newCut1 << lhs << comparisonOperator << modifiedValue1;
+    newCut2 << lhs << comparisonOperator << modifiedValue2;
+
+    modifiedCuts.push_back(newCut1.str());
+    modifiedCuts.push_back(newCut2.str());
+
+    searchStart = match.suffix().first;
+  }
+
+  return modifiedCuts;
+}
+
+//______________________________________________________________________________
+std::vector<std::string> replaceAndGenerateStrings(const std::string& mainStr, const std::vector<std::string>& cuts) {
+  std::vector<std::string> newStrings;
+
+  for (const std::string& cut : cuts) {
+    std::string newStr = mainStr;
+    std::regex rgx(R"(([\w\*\-\/\+\.\(\)]+)([<>])([\d\.\-]+))");
+    std::smatch match;
+
+    std::string::const_iterator searchStart(newStr.cbegin());
+    while (std::regex_search(searchStart, newStr.cend(), match, rgx)) {
+      std::string originalCut = match[0];
+      if (cut.find(match[1]) != std::string::npos && cut.find(match[2]) != std::string::npos) {
+	newStr.replace(newStr.find(originalCut), originalCut.length(), cut);
+	break;
+      }
+      searchStart = match.suffix().first;
+    }
+
+    // Clean up unnecessary '&&'
+    if (newStr.substr(0, 2) == "&&") newStr = newStr.substr(2);
+    if (newStr.substr(newStr.size() - 2) == "&&") newStr = newStr.substr(0, newStr.size() - 2);
+
+    std::string::size_type doubleAmpPos;
+    while ((doubleAmpPos = newStr.find("&&&&")) != std::string::npos) {
+      newStr.replace(doubleAmpPos, 4, "&&");
+    }
+
+    newStrings.push_back(newStr);
+  }
+
+  return newStrings;
+}
+
+//______________________________________________________________________________
 void GetMeanMinAndMaxX(TH1* h) {
-    if (!h) {
-        std::cerr << "Invalid histogram!" << std::endl;
-        return;
+  if (!h) {
+    std::cerr << "Invalid histogram!" << std::endl;
+    return;
+  }
+
+  // Initialize min and max x-values
+  double minX = 0;
+  double maxX = 0;
+
+  // Find the first bin with content (the lower bound)
+  for (int bin = 1; bin <= h->GetNbinsX(); ++bin) {
+    if (h->GetBinContent(bin) > 1) {
+      minX = h->GetBinLowEdge(bin);
+      break;
     }
+  }
 
-    // Initialize min and max x-values
-    double minX = 0;
-    double maxX = 0;
-
-    // Find the first bin with content (the lower bound)
-    for (int bin = 1; bin <= h->GetNbinsX(); ++bin) {
-        if (h->GetBinContent(bin) > 1) {
-            minX = h->GetBinLowEdge(bin);
-            break;
-        }
+  // Find the last bin with content (the upper bound)
+  for (int bin = h->GetNbinsX(); bin >= 1; --bin) {
+    if (h->GetBinContent(bin) > 1) {
+      maxX = h->GetBinLowEdge(bin) + h->GetBinWidth(bin);
+      break;
     }
+  }
 
-    // Find the last bin with content (the upper bound)
-    for (int bin = h->GetNbinsX(); bin >= 1; --bin) {
-        if (h->GetBinContent(bin) > 1) {
-            maxX = h->GetBinLowEdge(bin) + h->GetBinWidth(bin);
-            break;
-        }
-    }
-
-    // Print the results
-    std::cout << Form("Mean X: %.3f",h->GetMean()) << std::endl;
-    std::cout << Form("Min X: %.3f",minX) << std::endl;
-    std::cout << Form("Max X: %.3f",maxX) << std::endl;
+  // Print the results
+  std::cout << Form("Mean X: %.3f",h->GetMean()) << std::endl;
+  std::cout << Form("Min X: %.3f",minX) << std::endl;
+  std::cout << Form("Max X: %.3f",maxX) << std::endl;
 }
 //______________________________________________________________________________
 void CalcRnumBinEdges(int rmin, int rmax, bool debug, std::vector<double> &binEdges) {
@@ -164,7 +232,12 @@ void FurtherCustoizeDataHisto(TH1F *h_dxHCAL_data, std::string const &cuts_for_s
   h_dxHCAL_data->SetStats(0);
   //h_dxHCAL_data->SetTitle(Form("dx {%s}",cuts_for_signal_data.c_str()));
   //h_dxHCAL_data->GetYaxis()->SetMaxDigits(3);
-  h_dxHCAL_data->GetYaxis()->SetRangeUser(-5,h_dxHCAL_data->GetMaximum()*1.1);
+  h_dxHCAL_data->GetYaxis()->SetRangeUser(0,h_dxHCAL_data->GetMaximum()*1.1);
+//   for (int i = 1; i <= h_dxHCAL_data->GetNbinsX(); ++i) {
+//     if (h_dxHCAL_data->GetBinContent(i) <= 0) {
+//         h_dxHCAL_data->SetBinContent(i, 1e-6);  // Set small positive value
+//     }
+// }
 }
 
 // void AddFiduCutToLegend(TLegend *leg, std::vector<double> hcal_AR, std::vector<double> hcal_SM) {
@@ -377,7 +450,21 @@ int fit_dx (const char *configfilename,
   //      NOTE: cut_range[0] = # slices, [1] = low, [2] = threshold increment, in this case  
   // 4 -> vary fidu cut.
   //      NOTE: Only cut_range[0] matters, sets the range but fidu_vary_* dictates variation
-  //bool apply_to_data_only = jmgr->GetValueFromSubKey<int>(key,"apply_to_data_only");
+  // 5 -> vary all cut ranges +/- 10%. intended for systematic study on cut variation.
+  //      NOTE: cuts_for_signal for both data and MC needs to be modified. The cuts intended for variation should not
+  //      be there. The list of cut intended to be varied should be added to param_to_vary_for_cs5
+  // Get the intended set of cuts in case of cut_vary_style = 5;
+  std::string param_to_vary_for_cs5 = jmgr->GetValueFromSubKey_str(key,"param_to_vary_for_cs5");
+  std::vector<std::string> cutslices = extractAndModifyCuts(param_to_vary_for_cs5);
+  std::vector<std::string> finalcuts = replaceAndGenerateStrings(param_to_vary_for_cs5, cutslices);
+  // for (const auto& str : cutslices) {
+  //   std::cout << str << std::endl;
+  // }
+    
+  // for (const auto& str : finalcuts) {
+  //   std::cout << str << std::endl;
+  // }  
+  
   double low = cut_vary_style==1 ? min-width : min;
   double high = cut_vary_style==3 ? h_cut_param[2] : min+width; 
   // fidu cut variation (Cut style 4 -- Very different than the others)
@@ -397,6 +484,8 @@ int fit_dx (const char *configfilename,
       std::cout << "Varying cut w/ equi-stat slices..\n";
       util_pd::FindEqualStatBins(hcut,low,high,ndiv,1,xrangeEqStat);
       high = xrangeEqStat[1]; //initializing for the first slice
+    } else if (cut_vary_style==5) {
+      iter = finalcuts.size();
     }
     
     for (int i=0; i<iter; i++) {
@@ -422,6 +511,12 @@ int fit_dx (const char *configfilename,
 	std::vector<double> hcal_SM_i = cut::hcal_safety_margin(SM_xp,SM_xn,SM_y,hcal_AR);
 	hcal_SMs.push_back(hcal_SM_i);
       }
+      else if (cut_vary_style==5) {
+	// if (isSubstringPresent(cutslices[i],"coinT_ADC_c")) // Need to implement this when I have more time. 
+	cut = finalcuts[i]; cut_2 = cutslices[i]; 
+	hcal_SMs.push_back(hcal_SM);	
+      }
+	
       cuts.push_back(cut); cuts_2.push_back(cut_2);
       // defining cuts for MC
       if (apply_to_data_only) cut = "1";
@@ -557,9 +652,9 @@ int fit_dx (const char *configfilename,
 	  .Filter(fiduCut,{"xHCAL","yHCAL","xHCAL_exp","yHCAL_exp"})
 	  .Histo1D({"h_dxHCAL_bg_data2","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
       }	else {
-	  h_dxHCAL_bg_data1 = (TH1F*)bg_data_rdf_filtered1.Histo1D({"h_dxHCAL_bg_data1","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
-	  h_dxHCAL_bg_data2 = (TH1F*)bg_data_rdf_filtered2.Histo1D({"h_dxHCAL_bg_data2","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
-	}
+	h_dxHCAL_bg_data1 = (TH1F*)bg_data_rdf_filtered1.Histo1D({"h_dxHCAL_bg_data1","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
+	h_dxHCAL_bg_data2 = (TH1F*)bg_data_rdf_filtered2.Histo1D({"h_dxHCAL_bg_data2","",int(h_dx[0]),h_dx[1],h_dx[2]},"dx")->Clone();
+      }
       // (simu)
       if (!apply_to_bg_simu) { // applying custom fiduCut to simu bg
 	h_dxHCAL_bg_inel_p = (TH1F*)inel_rdf_filtered
@@ -586,7 +681,7 @@ int fit_dx (const char *configfilename,
     if (!is_elastic) h_dxHCAL_bg_inel->Add(h_dxHCAL_bg_inel_p,h_dxHCAL_bg_inel_n);
     // ------------
 
-            std::cout << "here**\n";
+    std::cout << "here**\n";
 
     
     // Now that we have all the important histograms formed, let's write them to the output
@@ -782,37 +877,37 @@ int fit_dx (const char *configfilename,
       ho2[3]->GetXaxis()->SetTitle("ABC");
       ho2[3]->GetXaxis()->SetTitleOffset(3);
       ho2[3]->GetXaxis()->CenterTitle();
-// Access the primitives list of the pad
-    // TObject *obj = nullptr;
-    // TIter next(p2[1]->GetListOfPrimitives());
-    // TAxis *xAxis = nullptr;
+      // Access the primitives list of the pad
+      // TObject *obj = nullptr;
+      // TIter next(p2[1]->GetListOfPrimitives());
+      // TAxis *xAxis = nullptr;
 
-    // // Iterate through primitives to find the x-axis
-    // while ((obj = next())) {
-    //     if (obj->InheritsFrom("TH1")) {
-    //         // If it is a histogram, grab the x-axis
-    //         xAxis = static_cast<TH1*>(obj)->GetXaxis();
-    //         break;
-    //     }
-    //     // If other drawable objects are involved (like TF1), you can add similar checks here
-    // }
+      // // Iterate through primitives to find the x-axis
+      // while ((obj = next())) {
+      //     if (obj->InheritsFrom("TH1")) {
+      //         // If it is a histogram, grab the x-axis
+      //         xAxis = static_cast<TH1*>(obj)->GetXaxis();
+      //         break;
+      //     }
+      //     // If other drawable objects are involved (like TF1), you can add similar checks here
+      // }
 
-    // if (xAxis) {
-    //     // Modify the x-axis as needed
-    //     xAxis->SetTitle("#font[32]{#Deltax} (m)");
-    //     xAxis->SetLabelSize(0.05);
-    //     xAxis->SetTitleOffset(3); // Adjusts spacing between title and labels
-    // 	xAxis->CenterTitle();
+      // if (xAxis) {
+      //     // Modify the x-axis as needed
+      //     xAxis->SetTitle("#font[32]{#Deltax} (m)");
+      //     xAxis->SetLabelSize(0.05);
+      //     xAxis->SetTitleOffset(3); // Adjusts spacing between title and labels
+      // 	xAxis->CenterTitle();
 
-    //     // Redraw the p2
-    //     p2[1]->Modified();
-    //     p2[1]->Update();
-    //     c2->cd();
-    //     c2->Modified();
-    //     c2->Update();
-    // } else {
-    //     std::cout << "Could not find the x-axis!" << std::endl;
-    // }      
+      //     // Redraw the p2
+      //     p2[1]->Modified();
+      //     p2[1]->Update();
+      //     c2->cd();
+      //     c2->Modified();
+      //     c2->Update();
+      // } else {
+      //     std::cout << "Could not find the x-axis!" << std::endl;
+      // }      
       // drawing a horizontal line at y = 0
       //util_pd::DrawZeroLine(p2[1],dx_fit_range[0],dx_fit_range[1]);
       // --------
@@ -1090,6 +1185,7 @@ int fit_dx (const char *configfilename,
       // preparing the pad for data/MC fit
       //
       p2[0]->cd();
+      //gPad->SetLogy();
       // drawing all the histograms
       //ho2[0]->Draw(); customize_ht(ho2[0]); customize_dx(ho2[0]);
       h_dxHCAL_data->Draw("E"); util_pd::customize_data(h_dxHCAL_data);
@@ -1549,7 +1645,7 @@ int fit_dx (const char *configfilename,
 
       // writing out the canvases
       c0->Update(); c0->Write(); if (!is_vary_cut&&i==0) c0->SaveAs(Form("%s[",outPlot.Data())); 
-      c0->SaveAs(Form("%s",outPlot.Data())); 
+      c0->SaveAs(Form("%s",outPlot.Data())); c0->SaveAs(Form("%s_0.png",outFileBase.Data()));
       c1->Update(); c1->Write(); c1->SaveAs(Form("%s",outPlot.Data())); c1->SaveAs(Form("%s_1.png",outFileBase.Data())); 
       c2->Update(); c2->Write(); c2->SaveAs(Form("%s",outPlot.Data())); c2->SaveAs(Form("%s_2.png",outFileBase.Data())); 
       c3->Update(); c3->Write(); c3->SaveAs(Form("%s",outPlot.Data())); c3->SaveAs(Form("%s_3.png",outFileBase.Data())); 
