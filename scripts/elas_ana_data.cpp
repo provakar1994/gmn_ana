@@ -29,8 +29,8 @@
 static const std::string target = "LH2";
 
 int elas_ana_data (const char *configfilename,
-		   int pass, //replay pass
-		   int model=2) //Analysis model
+		   int pass=2, //replay pass
+		   int model=1) //Analysis model
 {
   gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
 

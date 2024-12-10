@@ -18,7 +18,7 @@
 	"hcal_samp_frac_cutR": 0.01,
 	"hcal_voffset"       : 0.0,
 	"hcal_hoffset"       : 0.04,
-	"hcal_zoffset"       : 0.65,
+	"hcal_zoffset"       : 0.0,
 	"dx_p_cut"           : [-0.0372122,0.058502,2],
 	"dy_p_cut"           : [-0.000179902,0.0593605,2],
 	"h_dxHCAL_lims"      : [260,-3.2,2],
@@ -29,7 +29,7 @@
 	"NOTE"               : "verbose=0 & verbosefn=0 => Production; verbose<-1=>Debug, =-1=>Test; verbosefn>0=>Debug",
 	"verbose"            : -1,
 	"verbose_function"   : 0,
-	"outfile_prefix"     : "0p65zoff",
+	"outfile_prefix"     : "",
 	"README"             : "First look at official pass2 data: 06/19/24"
     },
     "pass2_model2":

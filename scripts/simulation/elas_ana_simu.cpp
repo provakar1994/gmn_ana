@@ -10,6 +10,10 @@
 // TO-DO
 // 1. Energy loss calculations
 
+// ***
+// NOTE: 08/18/24
+// T_W2 is W2recon + W2_offset but T_W has no offset correction
+
 #include <vector>
 #include <iostream>
 #include <unordered_map>
@@ -120,12 +124,15 @@ int elas_ana_simu (const char *configfilename,
   setrootvar::setbranch(C,"bb.gem.track",gemvar,gemvar_mem);
 
   //MC variables
-  double mc_sigma, mc_fnucl, mc_ebeam, mc_np, mc_veE, mc_vetheta;  // mc_sigma => Cross-section weight  std::vector<std::string> mc = {"mc_sigma","mc_fnucl"};  // Default: g4sbs gen.
+  double mc_sigma;  // mc_sigma => Cross-section weight
+  double mc_ebeam, mc_veE, mc_vetheta; // MC truth info for electrons
+  double mc_fnucl, mc_np, mc_npx, mc_npy, mc_npz; // MC truth info for outgoing nucleon
+  double mc_vx, mc_vy, mc_vz; // true vertex info
   std::vector<std::string> mc = {"mc_sigma","mc_fnucl","mc_np"};   // Default: g4sbs gen.
-  std::vector<void*> mc_mem = {&mc_sigma,&mc_fnucl}; 
+  std::vector<void*> mc_mem = {&mc_sigma,&mc_fnucl,&mc_np}; 
   if (generator.compare("simc")==0) {
-    mc = {"simc_Weight","simc_fnucl","simc_Ebeam","simc_veE","simc_vetheta"};  
-    mc_mem = {&mc_sigma,&mc_fnucl,&mc_ebeam,&mc_veE,&mc_vetheta}; 
+    mc = {"simc_Weight","simc_fnucl","simc_Ebeam","simc_veE","simc_vetheta","simc_p_n","simc_px_n","simc_py_n","simc_pz_n","simc_vx","simc_vy","simc_vz"};  
+    mc_mem = {&mc_sigma,&mc_fnucl,&mc_ebeam,&mc_veE,&mc_vetheta,&mc_np,&mc_npx,&mc_npy,&mc_npz,&mc_vx,&mc_vy,&mc_vz}; 
   }
   setrootvar::setbranch(C,"MC",mc,mc_mem);
 
@@ -133,6 +140,11 @@ int elas_ana_simu (const char *configfilename,
   C->SetBranchStatus("bb.gem.track.nhits", 1);
   C->SetBranchStatus("bb.etot_over_p", 1);
 
+  // Reading in HCAL efficiency map
+  double avg_effi = 0.9485; //error weighted average of x and y efficiency
+  TFile *fEffi = util_pd::ReadRootFile("~/gmn_ana/scripts/pdout/pDE/0p77zoff_pDE_data_sbs8_sbs-1p_model1_pass2.root");
+  TH1F *h2_effi_map = (TH1F*)fEffi->Get("h2_effi_map");
+  
   // defining the outputfile
   std::string filebase = jmgr->GetValueFromSubKey_str(key,"outfile_prefix");
   filebase = filebase.empty() ? "" : filebase + "_";
@@ -145,6 +157,7 @@ int elas_ana_simu (const char *configfilename,
   TH1F *h_W_cut = util_pd::TH1FhW("h_W_cut");
   TH1F *h_W_acut = util_pd::TH1FhW("h_W_acut");
   TH1F *h_W2_cut = new TH1F("h_W2_cut","",200,-1,4);
+  TH1F *h_W2_cut_noOff = new TH1F("h_W2_cut_noOff","",200,-1,4);
   TH1F *h_dpel = new TH1F("h_dpel",";p/p_{elastic}(#theta)-1;",100,-0.3,0.3);
   
   TH1F *h_Q2 = util_pd::TH1FhQ2("h_Q2", conf);
@@ -178,7 +191,9 @@ int elas_ana_simu (const char *configfilename,
   bool fiduCut;           Tout->Branch("fiduCut", &fiduCut, "fiduCut/B");
   //MC related
   double weight;          Tout->Branch("weight", &weight, "weight/D");
+  double weight_effic;    Tout->Branch("weight_effic", &weight_effic, "weight_effic/D");
   double weight_norm;     Tout->Branch("weight_norm", &weight_norm, "weight_norm/D");  
+  double weight_norm_effic; Tout->Branch("weight_norm_effic", &weight_norm_effic, "weight_norm_effic/D");  
   int T_mc_fnucl;         Tout->Branch("mc_fnucl", &T_mc_fnucl, "mc_fnucl/I");
   //
   double T_ebeam;         Tout->Branch("ebeam", &T_ebeam, "ebeam/D");
@@ -199,6 +214,7 @@ int elas_ana_simu (const char *configfilename,
   double T_ethbend;       Tout->Branch("ethbend", &T_ethbend, "ethbend/D");
   double T_pN_exp;        Tout->Branch("pN_exp", &T_pN_exp, "pN_exp/D"); //exp. nucleon momentum
   double T_thN_exp;       Tout->Branch("thN_exp", &T_thN_exp, "thN_exp/D"); //exp. nucelon theta
+  double T_phN_exp;       Tout->Branch("phN_exp", &T_phN_exp, "phN_exp/D"); //exp. nucelon phi
   double T_epsilon;       Tout->Branch("epsilon", &T_epsilon, "epsilon/D"); // calculated using general eqn.
   double T_epsilon_p;     Tout->Branch("epsilon_p", &T_epsilon_p, "epsilon_p/D");
   double T_thpq_p;        Tout->Branch("thpq_p", &T_thpq_p, "thpq_p/D");
@@ -251,6 +267,15 @@ int elas_ana_simu (const char *configfilename,
   double T_nhitsGEM;      Tout->Branch("nhitsGEM", &T_nhitsGEM, "nhitsGEM/D");
   double T_ngoodhitsGEM;  Tout->Branch("ngoodhitsGEM", &T_ngoodhitsGEM, "ngoodhitsGEM/D");
   double T_trchi2ndf;     Tout->Branch("trchi2ndf", &T_trchi2ndf, "trchi2ndf/D");
+  // Variables based on MC truth info
+  double T_pN_t;          Tout->Branch("pN_t", &T_pN_t, "pN_t/D"); //TRUE nucleon momentum
+  double T_thN_t;         Tout->Branch("thN_t", &T_thN_t, "thN_t/D"); //TRUE nucelon theta
+  double T_phN_t;         Tout->Branch("phN_t", &T_phN_t, "phN_t/D"); //TRUE nucelon theta
+  double T_xHCAL_exp_t;   Tout->Branch("xHCAL_exp_t", &T_xHCAL_exp_t, "xHCAL_exp_t/D"); 
+  double T_yHCAL_exp_t;   Tout->Branch("yHCAL_exp_t", &T_yHCAL_exp_t, "yHCAL_exp_t/D");
+  // // HCAL NDE correciton
+  // double T_effi_corr;     Tout->Branch("effi_corr", &T_effi_corr, "effi_corr/D"); //TRUE nucleon momentum
+
 
   // Do the energy loss calculation here (only for g4sbs generator)
   double ebeam = sbsconf.GetEbeam(); // gets overwritten in the event loop
@@ -423,6 +448,7 @@ int elas_ana_simu (const char *configfilename,
     T_pelas = pelas;
     T_pN_exp = pN_expect;
     T_thN_exp = thetaN_expect;
+    T_phN_exp = phiN_expect;
     T_epsilon = epsilon;
     T_epsilon_p = epsilon_p;
 
@@ -504,6 +530,27 @@ int elas_ana_simu (const char *configfilename,
     TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);
     T_thpq_p = acos(p_dir.Unit().Dot(pNhat));
 
+    /* Calculating Weight Factor for HCAL Efficiency (NDE) */
+    // constructing TRUE q-vector
+    TVector3 vertex_t(mc_vx, mc_vy, mc_vz);
+    T_pN_t = mc_np;
+    T_thN_t = acos(mc_npz / mc_np); // final state N's theta
+    T_phN_t = TMath::PiOver2() - atan2(mc_npy, mc_npx);  // final state N's phi
+    TVector3 pNhat_t = kine::qVect_unit(T_thN_t,T_phN_t);
+    // TRUE position of the q vector at HCAL
+    vector<double> xyHCAL_exp_t; // xyHCAL_exp[0] = xHCAL_exp & xyHCAL_exp[1] = yHCAL_exp
+    kine::GetxyHCALexpect(vertex_t, pNhat_t, HCAL_origin, HCAL_axes, xyHCAL_exp_t);
+    T_xHCAL_exp_t = -xyHCAL_exp_t[0];
+    T_yHCAL_exp_t = xyHCAL_exp_t[1];
+    // Get the efficiency correction value
+    int effibin = h2_effi_map->FindBin(T_yHCAL_exp_t, T_xHCAL_exp_t-T_p_def);
+    //T_effi_corr = h2_effi_map->GetBinContent(effibin)/avg_effi;
+    double effi_corr = h2_effi_map->GetBinContent(effibin)/avg_effi;
+    // updating weight factors accordingly
+    weight_effic = weight*effi_corr;
+    weight_norm_effic = weight_norm*effi_corr;
+    // --
+    
     // HCAL active area and safety margin cuts [Fiducial region]
     ARCut = cut::inHCAL_activeA(xHCAL,yHCAL,hcal_active_area);
     SMCut = cut::inHCAL_safety_margin(target,xyHCAL_exp[0],xyHCAL_exp[1],sbs_kick,hcal_safety_margin);
@@ -567,7 +614,8 @@ int elas_ana_simu (const char *configfilename,
 	h_W->Fill(Wrecon,weight);
 	if (pCut) { 
 	  h_W_cut->Fill(Wrecon,weight);
-	  h_W2_cut->Fill(W2recon,weight);
+	  h_W2_cut->Fill(T_W2,weight);
+	  h_W2_cut_noOff->Fill(W2recon,weight);
 	} else {
 	  h_W_acut->Fill(Wrecon,weight);
 	}
@@ -645,7 +693,9 @@ int elas_ana_simu (const char *configfilename,
   TF1 *fW2 = fit::fit_1gs_nbg(hW2_fitR,h_W2_cut);
   double W2M = fW2->GetParameter(1); double W2S = fW2->GetParameter(2);
   h_W2_cut->Draw("same");
-  h_W2_cut->SetLineColor(kBlack); 
+  h_W2_cut->SetLineColor(kBlack);
+  h_W2_cut_noOff->Draw("same");
+  h_W2_cut_noOff->SetLineColor(kRed);  
   c3->SaveAs(Form("%s",outPlot.Data())); c3->Write();
   //**** -- ***//  
 
@@ -711,13 +761,14 @@ int elas_ana_simu (const char *configfilename,
   h_Q2->Write();
   h_dpel->Write(); h_W->Write();
   h_W_cut->Write(); h_W_acut->Write();
-  h_W2_cut->Write();
+  h_W2_cut->Write(); h_W2_cut_noOff->Write();
   h_dxHCAL->Write(); h_dxHCAL_nfc->Write();
   h_dyHCAL->Write(); h_dyHCAL_nfc->Write();
   h_dxHCAL_p->Write(); h2_xyHCAL_p->Write();
   h2_xyHCAL_p_nfc->Write();
   h2_rcHCAL->Write(); h2_dxdyHCAL->Write();
   h_dx_w_p_def->Write();
+  h2_effi_map->Write();
   sw->Delete();
   delete jmgr;
   return 0;

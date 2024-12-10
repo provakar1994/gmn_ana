@@ -1,0 +1,36 @@
+.x r13674_sieve_recon_pass2.cpp
+TFile *_file0 = TFile::Open("r13674_sieve_recon_pass2.root")
+h_sieve->Draw()
+h_sieve->Draw("colz")
+.x r13674_sieve_recon_pass2.cpp
+.Q
+.x r13674_sieve_recon_pass2.cpp
+.1
+.x r13674_sieve_recon_pass2.cpp
+.1
+.x r13674_sieve_recon_pass2.cpp
+.x mom_recon.cpp
+.
+.x mom_recon.cpp
+hethbend_data->Draw()
+.x mom_recon.cpp
+.x mom_recon.cpp(1)
+.x mom_recon.cpp(2)
+.x mom_recon.cpp(1)
+util_pd::GetSigDigit(0.0009437,4)
+util_pd::GetSigDigit(0.0009437,5)
+util_pd::GetSigDigit(1.0009437,5)
+util_pd::GetSigDigit(10.0009437,5)
+util_pd::GetSigDigit(1534.0009437,5)
+util_pd::GetSigDigit(1534.0009437,6)
+util_pd::GetSigDigit(1.03456,4)
+.x mom_recon.cpp(1)
+.x r13674_sieve_recon_pass2.cpp
+TFile *_file0 = TFile::Open("r13674_sieve_recon_pass2.root")
+TBrowser b
+.x mom_recon.cpp
+.q
+.x mom_recon.cpp(1)
+.q
+.x mom_recon.cpp(2)
+.q

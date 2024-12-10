@@ -1,0 +1,24 @@
+{
+    "qelas":
+    {
+	"parent_config"     : "sbs9-sbs70p/conf_fit_dx.json",
+	"parent_config_key" : "qelas_prod",
+	"has_beamcurr_cut"  : 0,
+	"runs_to_exclude"   : [3,13660,13677,13710,13661,13666,13660,13711],
+	"h_yield_range_hi"  : 1.5E6,
+	"h_stats_range_hi"  : 70E3,
+	"outfile_prefix"    : "1p5uA",
+	"README"            : "06/25/24"
+    },
+    "elas":
+    {
+	"parent_config"     : "sbs9-sbs70p/conf_fit_dx.json",
+	"parent_config_key" : "elas_prod",
+	"has_beamcurr_cut"  : 0,
+	"runs_to_exclude"   : [3,13660,13680],
+	"h_yield_range_hi"  : 3E6,
+	"h_stats_range_hi"  : 70E3,
+	"outfile_prefix"    : "3uA",
+	"README"            : "06/25/24"
+    }    
+}

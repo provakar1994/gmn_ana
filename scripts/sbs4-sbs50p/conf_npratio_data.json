@@ -5,7 +5,7 @@
 	"SBS_magnet_percent"   : 50,
 	"model"                : 2,
 	"pass"                 : 2,
-	"data_file_prefix"     : "0p65zoff",
+	"data_file_prefix"     : "bsf_0p65zoff",
 	"global_cut"           : "W2>0.4&&W2<1.1&&bbfiduCut&&abs(vz)<0.065&&abs(EovP-1)<0.3&&trchi2ndf<15&&eHCAL>0.025&&abs(coinT_ADC_c)<1.38*5&&fiduCut",
 	"proton_cut"           : "thpq_p<0.035",
 	"neutron_cut"          : "thpq_n<0.035",

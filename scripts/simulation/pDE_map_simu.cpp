@@ -204,7 +204,8 @@ int pDE_map_simu(const char *configfilename) {
   */
   PlotCustomizer pcust_wStat{1,1};
   // xHCAL_exp *** -- \\//
-  TString xtitlexexp = "#font[32]{x^{exp}_{HCAL}} (m)";
+  //TString xtitlexexp = "#font[32]{x^{exp}_{HCAL}} (m)";
+  TString xtitlexexp = "#font[32]{x^{exp}_{HCAL} - #deltax_{SBS}} (m)";  
   std::vector<double> h_xexp_lim; jmgr->GetVectorFromSubKey<double>(key,"h_xexp_lim",h_xexp_lim);
   std::vector<double> h_xexp_fitR; jmgr->GetVectorFromSubKey<double>(key,"h_xexp_fitR",h_xexp_fitR);
   TH1F *h_xexp_earm = (TH1F*)simu_rdf.Filter(earm_cut_wSMy.c_str()).Histo1D({"h_xexp_earm","",int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]},"xExp_shifted","weight")->Clone();
@@ -383,6 +384,59 @@ int pDE_map_simu(const char *configfilename) {
   cefmap->SaveAs(Form("%s_4.png",outfilebase.c_str()));
 
   fout->Write();
+
+  // ############### ************ For Thesis *************** ##############
+  // ----
+  // ----
+
+  // ----
+  // 
+  TCanvas *c2 = util_pd::TC("c2",1,2);
+  c2->cd(1);
+  gStyle->SetOptStat(0);
+  gStyle->SetOptFit(1);
+  h_xexp_pDE->Draw("E");
+  h_xexp_pDE->GetYaxis()->SetRangeUser(0,1.2);
+  fxexp->Draw("same");
+  //
+  c2->cd(2);
+  gStyle->SetOptStat(0);
+  gStyle->SetOptFit(1);
+  h_yexp_pDE->Draw("E");
+  h_yexp_pDE->GetYaxis()->SetRangeUser(0,1.2);
+  fyexp->Draw("same");
+  //
+  pcust_wStat.customize_canvas(c2);
+  c2->Update();
+  //c2->SaveAs("hcalnde_effimap1_8.pdf"); // for sbs8 ALL
+  // c2->SaveAs("hcalnde_xyeffi_simu_4_no_efficorr.pdf");
+  c2->SaveAs("hcalnde_xyeffi_simu_4_with_efficorr.pdf");
+  //--  
+  
+  // TCanvas *c3 = util_pd::TC("c3",1,3);
+  // c3->cd(1);
+  // gPad->SetLogz();
+  // gStyle->SetPalette(kRainbow);
+  // gStyle->SetLineScalePS(2.5);
+  // h_dxdy_earm->Draw("colz");
+  // //
+  // c3->cd(2);
+  // gPad->SetLogz();
+  // gStyle->SetPalette(kRainbow);
+  // gStyle->SetLineScalePS(2.5);  
+  // h_dxdy_eNharm->Draw("colz");
+  // //
+  // c3->cd(3);
+  // gStyle->SetLineScalePS(2.5);  
+  // h_w2_earm->Draw("HIST");
+  // h_w2_eNharm->Draw("HIST same");
+  // lw2->Draw();
+  // //
+  // pcust.customize_canvas(c3);
+  // c3->Update();
+  // c3->SaveAs("hcalnde_datamc_cut_simu_4.pdf");
+  // //--    
   
   return 0;
+
 }

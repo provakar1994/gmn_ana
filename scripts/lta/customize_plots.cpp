@@ -24,17 +24,22 @@ TFile * ReadRootFile(char const * filename) {
 //______________________________________________________________________________
 Int_t GetNumberOfPads(TCanvas const *canvas) {
   /* Returns # pads in a canvas */
-  Int_t numPads = 0;
-  TList *primitives = canvas->GetListOfPrimitives();
-  TIter next(primitives);
-  TObject *obj;
-  while ((obj = next())) {
-    if (obj->InheritsFrom(TPad::Class())) {
-      numPads++;
+  if (canvas) {
+    Int_t numPads = 0;
+    TList *primitives = canvas->GetListOfPrimitives();
+    TIter next(primitives);
+    TObject *obj;
+    while ((obj = next())) {
+      if (obj->InheritsFrom(TPad::Class())) {
+	numPads++;
+      }
     }
+    std::cout << "# Pads found: " << numPads << "\n";
+    return numPads;
+  } else {
+    std::cout << "ERROR!! Canvas doesn't exist!!\n";
+    return -1;
   }
-  std::cout << "# Pads found: " << numPads << "\n";
-  return numPads;
 }
 
 //______________________________________________________________________________
@@ -52,6 +57,13 @@ void customize_title(TPaveText *title) {
   /* Customizes the canvas title */
   title->SetTextSize(0.05);
   title->SetTextFont(62);
+  title->Clear();
+}
+
+//______________________________________________________________________________
+void customize_stats(TPaveText *stats) {
+  /* Customizes the canvas stats */
+  stats->Clear();
 }
 
 //______________________________________________________________________________
@@ -61,9 +73,10 @@ void customize_axes(TAxis *ax) {
   ax->CenterTitle();
   ax->SetTitleFont(62);
   ax->SetTitleSize(0.05);
-  ax->SetTitleOffset(0.8); // gets overwritten in customize_yaxis
+  ax->SetTitleOffset(1.2); // gets overwritten in customize_yaxis
   // label
   ax->SetLabelFont(62);
+  ax->SetLabelSize(0.04);
   // ticks
   ax->SetTickLength(0.04);
 }
@@ -83,13 +96,42 @@ void customize_frame(TFrame *frame) {
 }
 
 //______________________________________________________________________________
+void customize_margin(TPad *p) {
+  p->SetLeftMargin(0.15);
+  p->SetRightMargin(0.05);
+  p->SetBottomMargin(0.15);
+  p->SetTopMargin(0.10);
+}
+
+// //______________________________________________________________________________
+// void draw_titlebox() {
+//   // Calculate title position
+//   double xPos = 0.5;  // NDC coordinate (0.5 is center of canvas)
+//   double yPos = 0.95; // NDC coordinate (0.95 is near the top)
+
+//   // Create TPaveText for the title box
+//   TPaveText *titleBox = new TPaveText(xPos-0.15, yPos-0.05, xPos+0.15, yPos+0.05, "NDC");
+//   titleBox->AddText("Hello world Hello World");
+//   titleBox->SetFillColor(0);    // Transparent fill
+//   titleBox->SetLineColor(1);    // Black border
+//   titleBox->SetTextAlign(22);   // Center alignment
+//   titleBox->SetTextSize(0.04);  // Text size
+//   titleBox->Draw();
+// }
+
+//______________________________________________________________________________
 void customize_pad(TPad *p) {
   /* Customizes the following primitives in a pad: 
      TFrame, TPaveText, TH1, TH2, TGraph
    */
+  //
+  p->cd();
+  gStyle->SetOptStat(0);
   // Add grid lines and xy ticks
   p->SetGridx(); p->SetGridy();
   p->SetTickx(); p->SetTicky();
+  //draw_titlebox();
+  customize_margin(p);
 
   // Grabbing list of primitives
   TList *primitives = p->GetListOfPrimitives();
@@ -107,23 +149,31 @@ void customize_pad(TPad *p) {
       if (title) {
 	customize_title(title);
       }
+    } else if (obj->InheritsFrom("TPaveStats")) {
+      TPaveStats *stats = dynamic_cast<TPaveStats*>(obj);
+      if (stats) {
+	customize_stats(stats);
+      }
     } else if (obj->InheritsFrom("TH1")) {
       TH1 *hist = dynamic_cast<TH1*>(obj);
       if (hist) {
+	hist->SetStats(0);
 	customize_axes(hist->GetXaxis());
-	customize_yaxis(hist->GetYaxis());
+	customize_axes(hist->GetYaxis());
       }
     } else if (obj->InheritsFrom("TH2")) {
       TH2 *hist = dynamic_cast<TH2*>(obj);
       if (hist) {
+	hist->SetStats(0);
 	customize_axes(hist->GetXaxis());
-	customize_yaxis(hist->GetYaxis());
+	customize_axes(hist->GetYaxis());
       }
     } else if (obj->InheritsFrom("TGraph") || obj->InheritsFrom("TGraphWithError")) {
       TGraph *graph = dynamic_cast<TGraph*>(obj);
       if (graph) {
+	graph->SetStats(0);
 	customize_axes(graph->GetXaxis());
-	customize_yaxis(graph->GetYaxis());
+	customize_axes(graph->GetYaxis());
       }
     }
   }
@@ -132,19 +182,23 @@ void customize_pad(TPad *p) {
 //______________________________________________________________________________
 void customize_canvas(TCanvas *c) {
   /* Customizes all pads within a given canvas */
-  // grab all the pads
-  std::vector<TPad*> pads;
-  GrabAllPads(c,pads);
-  if (pads.size()>0) {
-    // if multiple pads available then
-    // customize them one-by-one
-    for (auto & pad : pads) {
-      customize_pad(pad);
+  if (c) {
+    // grab all the pads
+    std::vector<TPad*> pads;
+    GrabAllPads(c,pads);
+    if (pads.size()>0) {
+      // if multiple pads available then
+      // customize them one-by-one
+      for (auto & pad : pads) {
+	customize_pad(pad);
+      }
+    } else {
+      // otherwise, grab the main canvas
+      TPad *pad = (TPad*)c->GetPad(0);
+      if (pad) customize_pad(pad);
     }
   } else {
-    // otherwise, grab the main canvas
-    TPad *pad = (TPad*)c->GetPad(0);
-    customize_pad(pad);
+    std::cout << "ERROR!! Canvas doesn't exist!!\n";
   }
 }
 
@@ -152,15 +206,16 @@ void customize_canvas(TCanvas *c) {
 int customize_plots() {
 
   //TString inFile = "../pdout/fits/sbs4sbs0p/0p65zoff_yield_per_run_qelas_pass2_simc_sbs4_sbs0p_model2.root";
+  //TString inFile = "../pdout/fits/sbs4sbs0p/0p65zoff_yield_per_run_elas_pass2_simc_sbs4_sbs0p_model2.root";
   TString inFile = "../pdout/fits/sbs4sbs0p/0p65zoff_fit_dx_qelas_pass2_simc_sbs4_sbs0p_model2.root";
   
   // reading input file
   TFile * file = ReadRootFile(inFile);
 
   // read a canvas
-  TCanvas *c = (TCanvas*)file->Get("c1");
+  TCanvas *c = (TCanvas*)file->Get("c0");
   customize_canvas(c);
-  c->Draw();
+  if (c) c->Draw();
 
   return 0;
 }

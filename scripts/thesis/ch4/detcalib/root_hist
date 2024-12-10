@@ -1,0 +1,536 @@
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q
+.x detcalib.cpp
+.q

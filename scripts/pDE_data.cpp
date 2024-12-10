@@ -22,6 +22,11 @@ void custom_ratio(TH1F *h) {
   h->SetMarkerStyle(8);
 }
 
+void custom_statbox_effi(TPaveStats *st) {
+  st->SetBit(TH1::kNoStats);
+  st->SetX1NDC(0.25); st->SetY1NDC(0.25); st->SetX2NDC(0.85); st->SetY2NDC(0.45);
+}
+
 int pDE_data(const char *configfilename) {
 
   gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
@@ -50,10 +55,6 @@ int pDE_data(const char *configfilename) {
   std::string w2_cut = jmgr->GetValueFromSubKey_str(key,"w2_cut");
   std::string earm_cut = global_cut + "&&" + w2_cut;
   std::string harm_cut = jmgr->GetValueFromSubKey_str(key,"harm_cut");
-  // std::string proton_cut = jmgr->GetValueFromSubKey_str(key,"proton_cut");
-  // std::string neutron_cut = jmgr->GetValueFromSubKey_str(key,"neutron_cut");
-  // std::string good_p_ev_cut = global_cut+"&&"+proton_cut;
-  // std::string good_n_ev_cut = global_cut+"&&"+neutron_cut;
   std::string eNharm_cut = earm_cut + "&&" + harm_cut;
   auto earm_rdf = data_rdf.Filter(earm_cut.c_str());
   auto eNharm_rdf = data_rdf.Filter(eNharm_cut.c_str());
@@ -70,77 +71,119 @@ int pDE_data(const char *configfilename) {
     return cut::inHCAL_activeA(x,y,hcal_AR) && cut::inHCAL_safety_margin("LH2",xExp,yExp,sbs_kick,hcal_SM);
   };
 
+  // output file
+  std::string outfilebase = "pdout/pDE/" + dfprefix + "_pDE_data_" + Form("sbs%d_sbs%dp_model%d_pass%d",conf,sbsmag,model,pass);
+  
+  // call the canvas customizer
+  PlotCustomizer pcust{0};
+  
   // xHCAL_exp
+  TString xtitlexexp = "#font[32]{x^{exp}_{HCAL}} (m)";
   std::vector<double> h_xexp_lim; jmgr->GetVectorFromSubKey<double>(key,"h_xexp_lim",h_xexp_lim);
   std::vector<double> h_xexp_fitR; jmgr->GetVectorFromSubKey<double>(key,"h_xexp_lim",h_xexp_fitR);
   TH1F *h_xexp_earm = (TH1F*)earm_rdf.Histo1D({"h_xexp_earm","",int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]},"xHCAL_exp")->Clone();
   TH1F *h_xexp_eNharm = (TH1F*)eNharm_rdf.Histo1D({"h_xexp_eNharm","",int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]},"xHCAL_exp")->Clone();
+  util_pd::SetAxTitles(h_xexp_earm,"",xtitlexexp);
+  util_pd::SetAxTitles(h_xexp_eNharm,"",xtitlexexp);
   custom_denom(h_xexp_earm);
   custom_num(h_xexp_eNharm);
   TH1F *h_xexp_pDE = new TH1F("h_xexp_pDE","",int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]);
+  util_pd::SetAxTitles(h_xexp_pDE,"Efficiency",xtitlexexp);
   custom_ratio(h_xexp_pDE);
   h_xexp_pDE->Divide(h_xexp_eNharm,h_xexp_earm);
-  //
-  TCanvas *cxexp = util_pd::TC("cxexp",1,2);
-  cxexp->cd(1);
-  h_xexp_earm->Draw();
-  h_xexp_eNharm->Draw("same");
-  cxexp->cd(2);
-  gStyle->SetOptFit(1);
-  gStyle->SetOptStat(0);
-  //h_xexp_pDE->SetStats(0);
-  h_xexp_pDE->Draw("E");
-  h_xexp_pDE->GetYaxis()->SetRangeUser(0,1.2);
-  //
-  TF1 *fxexp = new TF1("fxexp","pol0",h_xexp_fitR[0],h_xexp_fitR[1]);
-  fxexp->SetNpx(2000);
-  h_xexp_pDE->Fit("fxexp","R");
-  fxexp->Draw("same");
-  //--
-
   // yHCAL_exp
+  TString xtitleyexp = "#font[32]{y^{exp}_{HCAL}} (m)";
   std::vector<double> h_yexp_lim; jmgr->GetVectorFromSubKey<double>(key,"h_yexp_lim",h_yexp_lim);
   std::vector<double> h_yexp_fitR; jmgr->GetVectorFromSubKey<double>(key,"h_yexp_lim",h_yexp_fitR);
   TH1F *h_yexp_earm = (TH1F*)earm_rdf.Histo1D({"h_yexp_earm","",int(h_yexp_lim[0]),h_yexp_lim[1],h_yexp_lim[2]},"yHCAL_exp")->Clone();
   TH1F *h_yexp_eNharm = (TH1F*)eNharm_rdf.Histo1D({"h_yexp_eNharm","",int(h_yexp_lim[0]),h_yexp_lim[1],h_yexp_lim[2]},"yHCAL_exp")->Clone();
+  util_pd::SetAxTitles(h_yexp_earm,"",xtitleyexp);
+  util_pd::SetAxTitles(h_yexp_eNharm,"",xtitleyexp);
   custom_denom(h_yexp_earm);
   custom_num(h_yexp_eNharm);
   TH1F *h_yexp_pDE = new TH1F("h_yexp_pDE","",int(h_yexp_lim[0]),h_yexp_lim[1],h_yexp_lim[2]);
+  util_pd::SetAxTitles(h_yexp_pDE,"Efficiency",xtitleyexp);
   custom_ratio(h_yexp_pDE);
   h_yexp_pDE->Divide(h_yexp_eNharm,h_yexp_earm);
+  // 
+  TCanvas *cxyexp = util_pd::TC("cxyexp",2,2);
+  cxyexp->cd(1);
+  h_xexp_earm->Draw();
+  h_xexp_eNharm->Draw("same");
+  TLegend *lxexp = new TLegend(0.25,0.25,0.85,0.45);
+  lxexp->AddEntry(h_xexp_earm,"All","lp");
+  lxexp->AddEntry(h_xexp_eNharm,"With #font[32]{#Deltax-#Deltay} Cut","lp");
+  lxexp->SetFillStyle(0);
+  lxexp->Draw();
   //
-  TCanvas *cyexp = util_pd::TC("cyexp",1,2);
-  cyexp->cd(1);
+  cxyexp->cd(2);
+  gStyle->SetOptFit(1);
+  gStyle->SetOptStat(0);
+  h_xexp_pDE->Draw("E");
+  h_xexp_pDE->GetYaxis()->SetRangeUser(0,1.2);
+  TF1 *fxexp = new TF1("fxexp","pol0",h_xexp_fitR[0],h_xexp_fitR[1]);
+  fxexp->SetNpx(2000);
+  h_xexp_pDE->Fit("fxexp","R");
+  cxyexp->Update();
+  TPaveStats *stxexp = (TPaveStats*)h_xexp_pDE->FindObject("stats");
+  custom_statbox_effi(stxexp);
+  fxexp->Draw("same");
+  //
+  cxyexp->cd(3);
   h_yexp_earm->Draw();
   h_yexp_eNharm->Draw("same");
-  cyexp->cd(2);
+  TLegend *lyexp = new TLegend(0.25,0.25,0.85,0.45);
+  lyexp->AddEntry(h_yexp_earm,"All","lp");
+  lyexp->AddEntry(h_yexp_eNharm,"With #font[32]{#Deltax-#Deltay} Cut","lp");
+  lyexp->SetFillStyle(0);
+  lyexp->Draw();  
+  //
+  cxyexp->cd(4);
   gStyle->SetOptFit(1);
   gStyle->SetOptStat(0);
   h_yexp_pDE->Draw("E");
   h_yexp_pDE->GetYaxis()->SetRangeUser(0,1.2);
-  //
   TF1 *fyexp = new TF1("fyexp","[0]",h_yexp_fitR[0],h_yexp_fitR[1]);
   fyexp->SetNpx(2000);
   h_yexp_pDE->Fit("fyexp","R");
+  cxyexp->Update();
+  TPaveStats *styexp = (TPaveStats*)h_yexp_pDE->FindObject("stats");
+  custom_statbox_effi(styexp);  
   fyexp->Draw("same");
+  //
+  pcust.customize_canvas(cxyexp);
+  cxyexp->SaveAs(Form("%s_1.png",outfilebase.c_str()));
   //--
 
   // visualizing n and p spots
+  TString xtitledxdy = "#font[32]{#Deltay} (m)";
+  TString ytitledxdy = "#font[32]{#Deltax} (m)";
   TCanvas *cdxdy = util_pd::TC("cdxdy",2,2);
   cdxdy->cd(1);
-  TH2F *h_dxdy_earm = (TH2F*)earm_rdf.Histo2D({"h_dxdy_earm","",200,-1.5,1.5,200,-3,2},"dy","dx")->Clone();
+  TH2F *h_dxdy_earm = (TH2F*)earm_rdf.Filter("eHCAL>0").Histo2D({"h_dxdy_earm","",200,-1.5,1.5,200,-3,2},"dy","dx")->Clone();
+  util_pd::SetAxTitles(h_dxdy_earm,ytitledxdy,xtitledxdy);
   h_dxdy_earm->Draw("colz");
   cdxdy->cd(2);
-  TH2F *h_dxdy_eNharm = (TH2F*)eNharm_rdf.Histo2D({"h_dxdy_eNharm","",200,-1.5,1.5,200,-3,2},"dy","dx")->Clone();
+  TH2F *h_dxdy_eNharm = (TH2F*)eNharm_rdf.Filter("eHCAL>0").Histo2D({"h_dxdy_eNharm","",200,-1.5,1.5,200,-3,2},"dy","dx")->Clone();
+  util_pd::SetAxTitles(h_dxdy_eNharm,ytitledxdy,xtitledxdy);
   h_dxdy_eNharm->Draw("colz");
   cdxdy->cd(3);
   std::vector<double> h_w2_lim; jmgr->GetVectorFromSubKey<double>(key,"h_w2_lim",h_w2_lim);
   TH1F *h_w2_earm = (TH1F*)data_rdf.Filter(global_cut.c_str()).Histo1D({"h_w2_earm","",(int)h_w2_lim[0],h_w2_lim[1],h_w2_lim[2]},"W2")->Clone();
   TH1F *h_w2_eNharm = (TH1F*)data_rdf.Filter(global_cut.c_str()).Filter(harm_cut.c_str()).Histo1D({"h_w2_eNharm","",(int)h_w2_lim[0],h_w2_lim[1],h_w2_lim[2]},"W2")->Clone();
+  util_pd::SetAxTitles(h_w2_earm,"","#font[32]{W^{2}} (GeV^{2})");
   custom_denom(h_w2_earm);
   h_w2_earm->Draw("HIST");
   custom_num(h_w2_eNharm);
   h_w2_eNharm->Draw("HIST same");
+  TLegend *lw2 = new TLegend(0.15,0.75,0.55,0.9);
+  lw2->AddEntry(h_w2_earm,"All","lp");
+  lw2->AddEntry(h_w2_eNharm,"With #font[32]{#Deltax-#Deltay} Cut","lp");
+  lw2->SetFillStyle(0);
+  lw2->Draw();		       
+  //
+  pcust.customize_canvas(cdxdy);
+  cdxdy->SaveAs(Form("%s_2.png",outfilebase.c_str()));
   //--  
 
   

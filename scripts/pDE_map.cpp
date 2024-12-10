@@ -93,26 +93,31 @@ int pDE_map(const char *configfilename) {
   
   // call the canvas customizer
   PlotCustomizer pcust;
- 
+
+  // Axes titles
+  TString tdx = "#font[32]{#Deltay} (m)";
+  TString tdy = "#font[32]{#Deltax} (m)";  
+  TString txexp = "#font[32]{x^{exp}_{HCAL}} (m)";
+  TString txexp_p = "#font[32]{x^{exp}_{HCAL} - #deltax_{SBS}} (m)";
+  TString tyexp = "#font[32]{y^{exp}_{HCAL}} (m)";
+
   // **************
   // visualizing n and p spots
   // **************
-  TString xtitledxdy = "#font[32]{#Deltay} (m)";
-  TString ytitledxdy = "#font[32]{#Deltax} (m)";
-  TCanvas *cdxdy = util_pd::TC("cdxdy",2,2);
   //
+  TCanvas *cdxdy = util_pd::TC("cdxdy",2,2);
   cdxdy->cd(1);
   gPad->SetLogz();
   gStyle->SetPalette(kRainbow);
   TH2F *h_dxdy_earm = (TH2F*)data_rdf.Filter(earm_cut.c_str()).Filter("eHCAL>0").Histo2D({"h_dxdy_earm","",200,-1.5,1.5,200,-3,2},"dy","dx")->Clone();
-  util_pd::SetAxTitles(h_dxdy_earm,ytitledxdy,xtitledxdy);
+  util_pd::SetAxTitles(h_dxdy_earm,tdy,tdx);
   h_dxdy_earm->Draw("colz");
   //
   cdxdy->cd(2);
   gPad->SetLogz();
   gStyle->SetPalette(kRainbow);
   TH2F *h_dxdy_eNharm = (TH2F*)data_rdf.Filter(eNharm_cut.c_str()).Filter("eHCAL>0").Histo2D({"h_dxdy_eNharm","",200,-1.5,1.5,200,-3,2},"dy","dx")->Clone();
-  util_pd::SetAxTitles(h_dxdy_eNharm,ytitledxdy,xtitledxdy);
+  util_pd::SetAxTitles(h_dxdy_eNharm,tdy,tdx);
   h_dxdy_eNharm->Draw("colz");
   //
   cdxdy->cd(3);
@@ -156,9 +161,13 @@ int pDE_map(const char *configfilename) {
   // **************
   std::vector<double> hcal_area = cut::hcal_active_area_data(0,0,pass);
   TH2F *h2_xyexp_all_nodef = (TH2F*)data_rdf.Filter(earm_cut.c_str()).Histo2D({"h2_xyexp_all_nodef","All (No Deflection)",200,-1.25,1.25,200,-3.25,2.5},"yHCAL_exp","xHCAL_exp")->Clone();
+  util_pd::SetAxTitles(h2_xyexp_all_nodef,txexp,tyexp);
   TH2F *h2_xyexp_all = (TH2F*)data_rdf.Filter(earm_cut.c_str()).Histo2D({"h2_xyexp_all","All",200,-1.25,1.25,200,-3.25,2.5},"yHCAL_exp","xExp_shifted")->Clone();
+  util_pd::SetAxTitles(h2_xyexp_all,txexp_p,tyexp);
   TH2F *h2_xyexp_pass = (TH2F*)data_rdf.Filter(eNharm_cut.c_str()).Histo2D({"h2_xyexp_pass","Passed HCAL",200,-1.25,1.25,200,-3.25,2.5},"yHCAL_exp","xExp_shifted")->Clone();
+    util_pd::SetAxTitles(h2_xyexp_pass,txexp_p,tyexp);
   TH2F *h2_xyexp_fail = (TH2F*)data_rdf.Filter(eNantiharm_cut.c_str()).Histo2D({"h2_xyexp_fail","Failed HCAL",200,-1.25,1.25,200,-3.25,2.5},"yHCAL_exp","xExp_shifted")->Clone();
+  util_pd::SetAxTitles(h2_xyexp_fail,txexp_p,tyexp);
   TCanvas *cenv = util_pd::TC("cenv",2,2);
   cenv->cd(1); //
   gPad->SetLogz();
@@ -168,6 +177,7 @@ int pDE_map(const char *configfilename) {
   gStyle->SetNumberContours(50);
   h2_xyexp_all_nodef->Draw("colz");
   util_pd::DrawArea(hcal_area,kGreen+2,2,1);
+  pcust.AddTitleText("All (No Deflection)",0.60);
   cenv->cd(2); //
   gPad->SetLogz();
   gPad->SetGridx();
@@ -176,6 +186,7 @@ int pDE_map(const char *configfilename) {
   gStyle->SetNumberContours(50);
   h2_xyexp_all->Draw("colz");
   util_pd::DrawArea(hcal_area,kGreen+2,2,1);
+  pcust.AddTitleText("All",0.23);
   cenv->cd(3); //
   gPad->SetLogz();
   gPad->SetGridx();
@@ -184,6 +195,7 @@ int pDE_map(const char *configfilename) {
   gStyle->SetNumberContours(50);
   h2_xyexp_pass->Draw("colz");
   util_pd::DrawArea(hcal_area,kGreen+2,2,1);
+  pcust.AddTitleText("Passed HCAL",0.49);  
   cenv->cd(4); //
   gPad->SetLogz();
   gPad->SetGridx();
@@ -192,6 +204,9 @@ int pDE_map(const char *configfilename) {
   gStyle->SetNumberContours(50);
   h2_xyexp_fail->Draw("colz");
   util_pd::DrawArea(hcal_area,kGreen+2,2,1);
+  pcust.AddTitleText("Failed HCAL",0.48);
+  pcust.customize_canvas(cenv); //
+  cenv->Update();
   cenv->Write();
   cenv->SaveAs(Form("%s.pdf",outfilebase.c_str()));
   cenv->SaveAs(Form("%s_2.png",outfilebase.c_str()));
@@ -204,20 +219,20 @@ int pDE_map(const char *configfilename) {
   */
   PlotCustomizer pcust_wStat{1,1};
   // xHCAL_exp *** -- \\//
-  TString xtitlexexp = "#font[32]{x^{exp}_{HCAL}} (m)";
   std::vector<double> h_xexp_lim; jmgr->GetVectorFromSubKey<double>(key,"h_xexp_lim",h_xexp_lim);
   std::vector<double> h_xexp_fitR; jmgr->GetVectorFromSubKey<double>(key,"h_xexp_fitR",h_xexp_fitR);
   // TH1F *h_xexp_earm = (TH1F*)earm_rdf.Histo1D({"h_xexp_earm","",int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]},"xHCAL_exp_p")->Clone();
   // TH1F *h_xexp_eNharm = (TH1F*)eNharm_rdf.Histo1D({"h_xexp_eNharm","",int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]},"xHCAL_exp_p")->Clone();
   TH1F *h_xexp_earm = (TH1F*)data_rdf.Filter(earm_cut_wSMy.c_str()).Histo1D({"h_xexp_earm","",int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]},"xExp_shifted")->Clone();
   TH1F *h_xexp_eNharm = (TH1F*)data_rdf.Filter(eNharm_cut_wSMy.c_str()).Histo1D({"h_xexp_eNharm","",int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]},"xExp_shifted")->Clone();
-  util_pd::SetAxTitles(h_xexp_earm,"",xtitlexexp);
+  util_pd::SetAxTitles(h_xexp_earm,"",txexp);
   h_xexp_earm->SetStats(0);
-  util_pd::SetAxTitles(h_xexp_eNharm,"",xtitlexexp);
+  util_pd::SetAxTitles(h_xexp_eNharm,"",txexp);
   custom_denom(h_xexp_earm);
   custom_num(h_xexp_eNharm);
   TH1F *h_xexp_pDE = new TH1F("h_xexp_pDE","",int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]);
-  util_pd::SetAxTitles(h_xexp_pDE,"Efficiency",xtitlexexp);
+  //util_pd::SetAxTitles(h_xexp_pDE,"Efficiency",txexp);
+  util_pd::SetAxTitles(h_xexp_pDE,"Efficiency",txexp_p);  
   custom_ratio(h_xexp_pDE);
   h_xexp_pDE->Divide(h_xexp_eNharm,h_xexp_earm);
   // Binomial error
@@ -228,17 +243,16 @@ int pDE_map(const char *configfilename) {
     h_xexp_pDE->SetBinError(i,sqrt(effi*(1.0-effi)/N));
   }
   // yHCAL_exp *** -- \\//
-  TString xtitleyexp = "#font[32]{y^{exp}_{HCAL}} (m)";
   std::vector<double> h_yexp_lim; jmgr->GetVectorFromSubKey<double>(key,"h_yexp_lim",h_yexp_lim);
   std::vector<double> h_yexp_fitR; jmgr->GetVectorFromSubKey<double>(key,"h_yexp_fitR",h_yexp_fitR);
   TH1F *h_yexp_earm = (TH1F*)data_rdf.Filter(earm_cut_wSMx.c_str()).Histo1D({"h_yexp_earm","",int(h_yexp_lim[0]),h_yexp_lim[1],h_yexp_lim[2]},"yHCAL_exp")->Clone();
   TH1F *h_yexp_eNharm = (TH1F*)data_rdf.Filter(eNharm_cut_wSMx.c_str()).Histo1D({"h_yexp_eNharm","",int(h_yexp_lim[0]),h_yexp_lim[1],h_yexp_lim[2]},"yHCAL_exp")->Clone();
-  util_pd::SetAxTitles(h_yexp_earm,"",xtitleyexp);
-  util_pd::SetAxTitles(h_yexp_eNharm,"",xtitleyexp);
+  util_pd::SetAxTitles(h_yexp_earm,"",tyexp);
+  util_pd::SetAxTitles(h_yexp_eNharm,"",tyexp);
   custom_denom(h_yexp_earm);
   custom_num(h_yexp_eNharm);
   TH1F *h_yexp_pDE = new TH1F("h_yexp_pDE","",int(h_yexp_lim[0]),h_yexp_lim[1],h_yexp_lim[2]);
-  util_pd::SetAxTitles(h_yexp_pDE,"Efficiency",xtitleyexp);
+  util_pd::SetAxTitles(h_yexp_pDE,"Efficiency",tyexp);
   custom_ratio(h_yexp_pDE);
   h_yexp_pDE->Divide(h_yexp_eNharm,h_yexp_earm);
   // Binomial error
@@ -311,6 +325,8 @@ int pDE_map(const char *configfilename) {
   TH2F *h2_xyexp_eNharm = (TH2F*)data_rdf.Filter(eNharm_cut.c_str()).Histo2D({"h2_xyexp_eNharm","",65,-1.25,1.25,126,-3.25,1.75},"yHCAL_exp","xExp_shifted")->Clone();
   TH2F *h2_effi_map = new TH2F("h2_effi_map","",65,-1.25,1.25,126,-3.25,1.75);
   h2_effi_map->Divide(h2_xyexp_eNharm,h2_xyexp_earm);
+  //util_pd::SetAxTitles(h2_effi_map,txexp,tyexp);
+  util_pd::SetAxTitles(h2_effi_map,txexp_p,tyexp);
   // Binomial error
   for( int i=1; i<=h2_effi_map->GetNbinsX(); i++ ){
     for( int j=1; j<=h2_effi_map->GetNbinsY(); j++ ){
@@ -323,6 +339,17 @@ int pDE_map(const char *configfilename) {
   TCanvas *cefmap = util_pd::TC("cefmap",1,1);
   cefmap->cd(); gStyle->SetPalette(kRainbow); gStyle->SetNumberContours(50);
   h2_effi_map->Draw("colz");
+  //
+  // fiducial cut
+  std::vector<double> AR_w{1,1}; //jmgr->GetVectorFromSubKey<double>(key,"AR_width_x_y",AR_w);
+  std::vector<double> SM_w{0.22,0.22,0.27}; //jmgr->GetVectorFromSubKey<double>(key,"SM_width_xp_xn_y",SM_w);
+  //std::vector<double> hcal_area = cut::hcal_active_area_data(0,0,2); 
+  std::vector<double> hcal_AR = cut::hcal_active_area_data(AR_w[0],AR_w[1],2); 
+  std::vector<double> hcal_SM = cut::hcal_safety_margin(SM_w[0],SM_w[1],SM_w[2],hcal_AR);    
+  util_pd::DrawArea(hcal_area,kGreen+2,2,1);
+  //util_pd::DrawArea(hcal_AR,2,4,9);
+  util_pd::DrawArea(hcal_SM,kMagenta,2,1);
+  //
   pcust.customize_canvas(cefmap);
   cefmap->Update();
   cefmap->Write();
@@ -332,5 +359,89 @@ int pDE_map(const char *configfilename) {
 
   fout->Write();
   
-  return 0;
+
+  // ############### ************ For Thesis *************** ##############
+  // ----
+  // ----
+  // TCanvas *c1 = util_pd::TC("c1",2,2);
+  // c1->cd(1);
+  // gPad->SetLogz();
+  // gStyle->SetPalette(kRainbow);
+  // h_dxdy_earm->Draw("colz");
+  // //
+  // c1->cd(2);
+  // gPad->SetLogz();
+  // gStyle->SetPalette(kRainbow);
+  // h_dxdy_eNharm->Draw("colz");
+  // //
+  // c1->cd(3);
+  // h_w2_earm->Draw("HIST");
+  // h_w2_eNharm->Draw("HIST same");
+  // lw2->Draw();
+  // // //
+  // c1->cd(4);
+  // gPad->SetLogz();
+  // gPad->SetGridx();
+  // gPad->SetGridy();
+  // gStyle->SetPalette(kRainbow);
+  // gStyle->SetNumberContours(50);
+  // h2_xyexp_all->Draw("colz");
+  // util_pd::DrawArea(hcal_area,kGreen+2,2,1);
+  // //
+  // pcust.customize_canvas(c1);
+  // c1->Update();
+  // c1->SaveAs("hcalnde_combined_cut_8.pdf");
+  // //--
+
+  // // ----
+  // // 
+  // TCanvas *c2 = util_pd::TC("c2",1,2);
+  // c2->cd(1);
+  // gStyle->SetOptStat(0);
+  // gStyle->SetOptFit(1);
+  // h_xexp_pDE->Draw("E");
+  // h_xexp_pDE->GetYaxis()->SetRangeUser(0,1.2);
+  // fxexp->Draw("same");
+  // //
+  // c2->cd(2);
+  // gStyle->SetOptStat(0);
+  // gStyle->SetOptFit(1);
+  // h_yexp_pDE->Draw("E");
+  // h_yexp_pDE->GetYaxis()->SetRangeUser(0,1.2);
+  // fyexp->Draw("same");
+  // //
+  // pcust_wStat.customize_canvas(c2);
+  // c2->Update();
+  // c2->SaveAs("hcalnde_effimap1_8.pdf"); // for sbs8 ALL
+  // //c2->SaveAs("hcalnde_xyeffi_data_4.pdf");
+  // //--  
+  
+  cefmap->SaveAs("hcalnde_effimap2_8.pdf");
+
+  // TCanvas *c3 = util_pd::TC("c3",1,3);
+  // c3->cd(1);
+  // gPad->SetLogz();
+  // gStyle->SetPalette(kRainbow);
+  // gStyle->SetLineScalePS(2.5);
+  // h_dxdy_earm->Draw("colz");
+  // //
+  // c3->cd(2);
+  // gPad->SetLogz();
+  // gStyle->SetPalette(kRainbow);
+  // gStyle->SetLineScalePS(2.5);  
+  // h_dxdy_eNharm->Draw("colz");
+  // //
+  // c3->cd(3);
+  // gStyle->SetLineScalePS(2.5);  
+  // h_w2_earm->Draw("HIST");
+  // h_w2_eNharm->Draw("HIST same");
+  // lw2->Draw();
+  // //
+  // pcust.customize_canvas(c3);
+  // c3->Update();
+  // c3->SaveAs("hcalnde_datamc_cut_data_4.pdf");
+  // //--  
+
+ return 0;
+  
 }

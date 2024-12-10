@@ -1,5 +1,31 @@
 {
-    "prod":
+    "prod_sbs9":
+    {
+	"SBS_config"           : 9,
+	"SBS_magnet_percent"   : 70,
+	"model"                : 1,
+	"generator"            : "simc",
+	"simu_file_prefix"     : "rcOT0_0p7zoff_0p657sf",
+	"outfile_prefix"       : "",
+	"global_cut"           : "abs(vz)<0.065&&trchi2ndf<15&&nhitsGEM>3&&abs(fpX-0.9*fpTh)<0.25",
+	"w2_cut"               : "W2>0.65&&W2<0.95",
+	"SM_cut_x"             : "xHCAL_exp-p_def>-2.4&&xHCAL_exp-p_def<0.9",
+	"SM_cut_y"             : "yHCAL_exp>-0.6&&yHCAL_exp<0.6",
+	"harm_cut"             : "thpq_p<0.04&&eHCAL>0",
+	"-\/ FIDU CUT SECTION" : "--\/-- Forming Custom Fiducial Cut ------",
+	"apply_fidu_cut"       : 0,
+	"AR_width_x_y"         : [1,1],
+	"sbs_kick"             : 0.67,
+	"SM_width_xp_xn_y"     : [0.19,0.19,0.24],
+	"--"                   : "",
+	"h_xexp_lim"           : [104,-3.5,2],
+	"h_xexp_fitR"          : [-1.5,0],
+	"h_yexp_lim"           : [59,-1.5,1.5],
+	"h_yexp_fitR"          : [-0.5,0.5],
+	"h_w2_lim"             : [200,-0.5,2.5],
+	"NOTE"                 : ""
+    },
+    "prod_sbs8":
     {
 	"SBS_config"           : 8,
 	"SBS_magnet_percent"   : 70,
@@ -29,13 +55,13 @@
 	"sbs100p"              : "rcOT0_0p77zoff_0p91396sf",
 	"sbs70p"               : "rcOT0_0p77zoff_0p63797sf"
     },
-    "prod_sbs4":
+    "prod":
     {
 	"SBS_config"           : 4,
-	"SBS_magnet_percent"   : 50,
+	"SBS_magnet_percent"   : 30,
 	"model"                : 1,
-	"generator"            : "heep",
-	"simu_file_prefix"     : "0p65zoff",
+	"generator"            : "simc",
+	"simu_file_prefix"     : "rcOT0_0p65zoff_0p39sf",
 	"outfile_prefix"       : "",
 	"global_cut"           : "abs(vz)<0.065&&trchi2ndf<15&&nhitsGEM>3&&abs(fpX-0.9*fpTh)<0.25",
 	"w2_cut"               : "W2>0.65&&W2<0.95",
@@ -49,9 +75,9 @@
 	"SM_width_xp_xn_y"     : [0.19,0.19,0.24],
 	"--"                   : "",
 	"h_xexp_lim"           : [104,-3.5,2],
-	"h_xexp_fitR"          : [-2.5,1],
+	"h_xexp_fitR"          : [-2,0.6],
 	"h_yexp_lim"           : [59,-1.5,1.5],
-	"h_yexp_fitR"          : [-0.5,0.5],
+	"h_yexp_fitR"          : [-0.5,0.54],
 	"h_w2_lim"             : [200,-0.5,2.5],
 	"NOTE"                 : ""
     }    

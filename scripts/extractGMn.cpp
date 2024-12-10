@@ -54,7 +54,11 @@ int extractGMn(double const etheta, double const Q2, double const R_fit, double 
   // calculating error
   double GMn_err_christy_ye = kine::CalcGMnError(etheta,Q2,GEp_christy,GMp_christy,GEn_ye,sigmaBorn_Ratio_corr,sigmaBorn_Ratio_corr_error); 
   double GMn_ov_munGD_err_christy_ye = GMn_err_christy_ye/abs(EMFFFits::GetGDip(Q2)*constant::mun);
-
+  double GMn_err_christy_ye_sys = kine::CalcGMnError(etheta,Q2,GEp_christy,GMp_christy,GEn_ye,sigmaBorn_Ratio_corr,sigmaBorn_Ratio_corr_error_sys);
+  std::cout << " Error test: ** " << 0.0035/kine::CalcGMnError(etheta,Q2,GEp_christy,GMp_christy,GEn_ye,0.3974,0.0035) << "\n";
+  std::cout << "1/nuGD: " << 1/abs(EMFFFits::GetGDip(Q2)*constant::mun);
+  double GMn_ov_munGD_err_christy_ye_sys = GMn_err_christy_ye_sys/abs(EMFFFits::GetGDip(Q2)*constant::mun);
+  
   // Extract GMn from data using the corrected born CS ratio and the remaining EMFF
   // values got from some parametrization. Here we have used Z. Ye et al's parametrization (2017).
   // -- Primary
@@ -63,6 +67,9 @@ int extractGMn(double const etheta, double const Q2, double const R_fit, double 
   // calculating error
   double GMn_err_ye_ye = kine::CalcGMnError(etheta,Q2,GEp_ye,GMp_ye,GEn_ye,sigmaBorn_Ratio_corr,sigmaBorn_Ratio_corr_error); 
   double GMn_ov_munGD_err_ye_ye = GMn_err_ye_ye/abs(EMFFFits::GetGDip(Q2)*constant::mun);
+  double GMn_err_ye_ye_sys = kine::CalcGMnError(etheta,Q2,GEp_ye,GMp_ye,GEn_ye,sigmaBorn_Ratio_corr,sigmaBorn_Ratio_corr_error_sys); 
+  double GMn_ov_munGD_err_ye_ye_sys = GMn_err_ye_ye_sys/abs(EMFFFits::GetGDip(Q2)*constant::mun);
+
   // -- Vary GEn w.r.t. Primary --
   // 1
   double GMn_data_ye_kelly = kine::ExtractGMn(etheta,Q2,GEp_ye,GMp_ye,GEn_kelly,sigmaBorn_Ratio_corr); 
@@ -76,6 +83,7 @@ int extractGMn(double const etheta, double const Q2, double const R_fit, double 
   // calculating error
   double GMn_err_ye_gal = kine::CalcGMnError(etheta,Q2,GEp_ye,GMp_ye,GEn_gal,sigmaBorn_Ratio_corr,sigmaBorn_Ratio_corr_error); 
   double GMn_ov_munGD_err_ye_gal = GMn_err_ye_gal/abs(EMFFFits::GetGDip(Q2)*constant::mun); 
+
   // -- Vary sigma_p w.r.t. Primary --
   // 1
   double GMn_data_kelly_ye = kine::ExtractGMn(etheta,Q2,GEp_kelly,GMp_kelly,GEn_ye,sigmaBorn_Ratio_corr); 
@@ -92,23 +100,36 @@ int extractGMn(double const etheta, double const Q2, double const R_fit, double 
   // --
 
   std::cout << "\n----------\n";
+  std::cout << Form("R_fit: %.4f , R_MC: %.4f , R_elas: %.4f",R_fit,sigmaBorn_Ratio_MC,sigmaBorn_Ratio_corr);
+  std::cout << "\n\n";
+  
   std::cout << Form("Q2: %.1f, n/p ratio: %.4f +/- %.4f +/- %.4f, Tot err: %.4f\n\n",Q2,sigmaBorn_Ratio_corr,sigmaBorn_Ratio_corr_error,sigmaBorn_Ratio_corr_error_sys,sigmaBorn_Ratio_corr_error_tot);
+  std::cout << "\n\n";
+  
   std::cout << "No TPE Corr (Beta): Christy, Ye \n";
-  std::cout << Form("etheta: %.1f, Q2: %.1f, GMn: %.4f, GMn/(mun*GD): %.4f +/- %.4f\n",etheta,Q2,GMn_data_christy_ye,GMn_ov_munGD_data_christy_ye,GMn_ov_munGD_err_christy_ye);
+  std::cout << Form("etheta: %.1f, Q2: %.1f, GMn: %.4f, GMn/(mun*GD): %.4f +/- %.4f +/- %.4f\n",etheta,Q2,GMn_data_christy_ye,GMn_ov_munGD_data_christy_ye,GMn_ov_munGD_err_christy_ye,GMn_ov_munGD_err_christy_ye_sys);
   std::cout << "----- || ----- \n";
   std::cout << "Primary: Ye, Ye \n";
-  std::cout << Form("etheta: %.1f, Q2: %.1f, GMn: %.4f, GMn/(mun*GD): %.4f +/- %.4f\n",etheta,Q2,GMn_data_ye_ye,GMn_ov_munGD_data_ye_ye,GMn_ov_munGD_err_ye_ye);
-  std::cout << "Vary GEn w.r.t. Primary: \n";
-  std::cout << "1. Ye, Kelly \n";
-  std::cout << Form("etheta: %.1f, Q2: %.1f, GMn: %.4f, GMn/(mun*GD): %.4f +/- %.4f\n",etheta,Q2,GMn_data_ye_kelly,GMn_ov_munGD_data_ye_kelly,GMn_ov_munGD_err_ye_kelly);
-  std::cout << "2. Ye, Galster \n";
-  std::cout << Form("etheta: %.1f, Q2: %.1f, GMn: %.4f, GMn/(mun*GD): %.4f +/- %.4f\n",etheta,Q2,GMn_data_ye_gal,GMn_ov_munGD_data_ye_gal,GMn_ov_munGD_err_ye_gal);
+  std::cout << "-------\n";  
+  std::cout << Form("etheta: %.1f, Q2: %.1f, GMn: %.4f, GMn/(mun*GD): %.4f +/- %.4f +/- %.4f\n",etheta,Q2,GMn_data_ye_ye,GMn_ov_munGD_data_ye_ye,GMn_ov_munGD_err_ye_ye,GMn_ov_munGD_err_ye_ye_sys);
+  std::cout << "\n\n";
+
   std::cout << "Vary sigma_p w.r.t. Primary: \n";
+  std::cout << "-------\n";
   std::cout << "1. Kelly, Ye \n";
   std::cout << Form("etheta: %.1f, Q2: %.1f, GMn: %.4f, GMn/(mun*GD): %.4f +/- %.4f\n",etheta,Q2,GMn_data_kelly_ye,GMn_ov_munGD_data_kelly_ye,GMn_ov_munGD_err_kelly_ye);
   std::cout << "2. Arrington, Ye \n";
   std::cout << Form("etheta: %.1f, Q2: %.1f, GMn: %.4f, GMn/(mun*GD): %.4f +/- %.4f\n",etheta,Q2,GMn_data_ar_ye,GMn_ov_munGD_data_ar_ye,GMn_ov_munGD_err_ar_ye);
-  std::cout << "----------\n";
+  std::cout << "----------\n";  
+  std::cout << "\n\n";
+  
+  std::cout << "Vary GEn w.r.t. Primary: \n";
+  std::cout << "-------\n";
+  std::cout << "1. Ye, Kelly \n";
+  std::cout << Form("etheta: %.1f, Q2: %.1f, GMn: %.4f, GMn/(mun*GD): %.4f +/- %.4f\n",etheta,Q2,GMn_data_ye_kelly,GMn_ov_munGD_data_ye_kelly,GMn_ov_munGD_err_ye_kelly);
+  std::cout << "2. Ye, Galster \n";
+  std::cout << Form("etheta: %.1f, Q2: %.1f, GMn: %.4f, GMn/(mun*GD): %.4f +/- %.4f\n",etheta,Q2,GMn_data_ye_gal,GMn_ov_munGD_data_ye_gal,GMn_ov_munGD_err_ye_gal);
+  std::cout << "\n\n";
 
   return 0;
 }
