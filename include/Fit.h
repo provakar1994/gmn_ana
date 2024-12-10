@@ -137,6 +137,7 @@ namespace fit {
 			 TH1F* hs1,            // 1st signal histo for fit
 			 TH1F* hs2,            // 2nd signal histo for fit
 			 int Opoly,            // Order of poly to fit bg
+			 std::vector<double> &setpars,
 			 std::vector<TH1F*> &ho);   // Output: ht,hs,hbg,N*hs1,N*R*hs2 (N=par[0],R=par[1])
 
   // TH Interpolation fit using 2 signal histos & 1 poly bg (2+2+Opoly+1 pars)
@@ -147,6 +148,7 @@ namespace fit {
 				  TH1F* hs2,            // 2nd signal histo for fit
 				  int Opoly,            // Order of poly to fit bg
 				  std::vector<double> const & xOff_range,  // ranges to vary hs1 & hs2 offsets
+				  std::vector<double> &setpars,
 				  std::vector<TH1F*> &ho);   // Output: ht,hs,hbg,N*hs1,N*R*hs2 (N=par[0],R=par[1])
 
   // TH Interpolation fit using 2 signal histos & 1 Gaussian bg (2+3 pars)

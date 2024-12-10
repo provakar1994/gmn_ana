@@ -57,7 +57,7 @@ void PlotCustomizer::GrabAllPads(TCanvas const *c, std::vector<TPad*> &pads) con
 //______________________________________________________________________________
 void PlotCustomizer::customize_TH1(TH1 *h) const {
   /* Customizes 1D histos */
-  if (!ftitleON) h->SetTitle("");
+  if (!ftitleON) {h->SetTitle(""); h->SetTitleFont(kFont);}
   if (!fstatON) h->SetStats(0);
   h->SetLineWidth(2);
   //h->SetLineColor(kBlack);
@@ -67,7 +67,7 @@ void PlotCustomizer::customize_TH1(TH1 *h) const {
 //______________________________________________________________________________
 void PlotCustomizer::customize_TH2(TH2 *h) const {
   /* Customizes 1D histos */
-  if (!ftitleON) h->SetTitle("");
+  if (!ftitleON) {h->SetTitle(""); h->SetTitleFont(kFont);}
   if (!fstatON) h->SetStats(0);
   customize_axes(h->GetXaxis());
   customize_axes(h->GetYaxis());

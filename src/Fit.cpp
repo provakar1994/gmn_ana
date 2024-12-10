@@ -595,12 +595,18 @@ namespace fit {
 			 TH1F* hs1,            // 1st signal histo for fit
 			 TH1F* hs2,            // 2nd signal histo for fit
 			 int Opoly,            // Order of poly to fit bg
+			 std::vector<double> &setpars, // initial guesses
 			 std::vector<TH1F*> &ho)    // Output: ht,hs,hbg,N*hs1,N*R*hs2 (N=par[0],R=par[1])
   /* TH Interpolation fit using 2 signal histos & 1 poly bg (2+Opoly+1 pars) */
   {
     const int npars = 2+Opoly+1;
-    std::vector<double> setpars{1,1}; for (int i=2;i<npars;i++) setpars.push_back(0);
-    //std::vector<double> setpars{1,1,222,-102,-84}; 
+    //std::vector<double> setpars{1,1}; for (int i=2;i<npars;i++) setpars.push_back(0);
+    //std::vector<double> setpars{1,1,222,-102,-84};
+
+    if (setpars.empty()) {
+      setpars = {1,1}; for (int i=2;i<npars;i++) setpars.push_back(0);
+    }
+
 
     TH1F *ht_cp = (TH1F*)ht->Clone(); 
     TH1F *hs1_cp1 = (TH1F*)hs1->Clone(); 
@@ -647,15 +653,21 @@ namespace fit {
 				  TH1F* hs2,            // 2nd signal histo for fit
 				  int Opoly,            // Order of poly to fit bg
 				  std::vector<double> const & xOff_range,  // ranges to vary hs1 & hs2 offsets
+				  std::vector<double> &setpars, // initial guesses
 				  std::vector<TH1F*> &ho)    // Output: ht,hs,hbg,N*hs1,N*R*hs2 (N=par[0],R=par[1])
   /* TH Interpolation fit using 2 signal histos & 1 poly bg (2+2+Opoly+1 pars)
      This time x position of the signal histos are also free parameters
   */
   {
     const int npars = 4+Opoly+1;
-    std::vector<double> setpars{1,1,xOff_range[1],xOff_range[3]}; 
-    for (int i=4;i<npars;i++) setpars.push_back(0);
+    // std::vector<double> setpars{1,1,xOff_range[1],xOff_range[3]}; 
+    // for (int i=4;i<npars;i++) setpars.push_back(0);
 
+    if (setpars.empty()) {
+      setpars = {1,1,xOff_range[1],xOff_range[3]}; 
+      for (int i=4;i<npars;i++) setpars.push_back(0);
+    }
+    
     TH1F *ht_cp = (TH1F*)ht->Clone(); 
     TH1F *hs1_cp1 = (TH1F*)hs1->Clone(); 
     TH1F *hs2_cp1 = (TH1F*)hs2->Clone();
