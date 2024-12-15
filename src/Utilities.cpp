@@ -863,6 +863,12 @@ namespace util_pd {
       simu_logfile.push_back(temp); processes.push_back("deep");
       temp = Form("simcout/%s_deen_summary.csv",filebase.Data());
       simu_logfile.push_back(temp); processes.push_back("deen");
+    } else if (generator.compare("simc")==0 && process.compare("deep")==0) {
+      TString temp = Form("simcout/%s_deep_summary.csv",filebase.Data());
+      simu_logfile.push_back(temp); processes.push_back("deep");
+    } else if (generator.compare("simc")==0 && process.compare("deen")==0) {
+      TString temp = Form("simcout/%s_deen_summary.csv",filebase.Data());
+      simu_logfile.push_back(temp); processes.push_back("deen");
     } else if (generator.compare("simc")==0 && process.compare("heep")==0) {
       TString temp = Form("simcout/%s_%s_summary.csv",filebase.Data(),process.c_str());
       simu_logfile.push_back(temp); processes.push_back(process);
@@ -879,7 +885,9 @@ namespace util_pd {
       TString logfile_temp = Form("%s/%s",logfile_dir.c_str(),simu_logfile[ifile].Data());
       std::ifstream simu_log; simu_log.open(logfile_temp);
       std::string readline;
+      //bool is_simc = false; // true if at least one SIMC deeN process summary file is present.
       if(simu_log.is_open()){
+	//if (generator.compare("simc")==0 && process.compare("deeN")==0) is_simc = true;
 	std::cout << "Reading summary file: " << logfile_temp << std::endl;
 	std::string skip_header; getline(simu_log,skip_header); // skipping column header
 	while(getline(simu_log,readline)){                  // reading each line
