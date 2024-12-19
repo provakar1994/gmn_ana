@@ -5,6 +5,7 @@ typedef struct SimuJob {
 
   std::string sfname{0};    // g4sbs output filename with path
   std::string rfname{0};    // Replayed ROOT filename with path
+  bool is_rfile{0};         // does the replayed root file exist? (Needed for correct normalization)
   std::string generator{0}; // generator (simc,g4sbs,etc.)
   std::string process{0};   // (heep,deep,deen,deeN,inel,etc.)
   double ngenreq{0};        // # of simulated events requested
@@ -41,6 +42,7 @@ typedef struct SimuJob {
     if (generator.compare("g4sbs")==0) {
       ibeam   = stod(data[9])*1e-6;      
     }
+    is_rfile  = stoi(data[12]); 
   }
 
   // define an ostream operator to print to screen conveniently

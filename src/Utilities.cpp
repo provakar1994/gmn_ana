@@ -1,5 +1,7 @@
 #include "../include/Utilities.h"
 
+#include <filesystem>
+
 namespace util_pd {
 
   /* #########################################
@@ -925,7 +927,13 @@ namespace util_pd {
 	      data.push_back(temp[9]); //max_wt_RS
 	    }
 	  }
-
+	  // let's check if the replayed ROOT file exists or not
+	  std::string is_rfile = "0";
+	  if (std::filesystem::exists(rfname.Data())) is_rfile = "1";
+	  // TFile* file_temp = TFile::Open(rfname.Data(), "READ");
+	  // if (file_temp && !file_temp->IsZombie()) is_rfile = "1";
+	  data.push_back(is_rfile);
+	  
 	  temp_sj.SetDataSimuJob(data);
 	  sjobs.push_back(temp_sj);
 
@@ -956,7 +964,7 @@ namespace util_pd {
 	if (verbose > 1) std::cout << sjobs[ijob].rfname << std::endl;
 	C->Add(sjobs[ijob].rfname.c_str());
       }
-      if (C->GetEntries()==0) 
+      if (C->GetEntries()==0)
 	throw std::runtime_error("[util_pd::LoadSimuROOTTree] Empty ROOT files Or, they don't exist!");
     }else {
       throw std::runtime_error("[util_pd::LoadSimuROOTTree] Simu job list is empty!");
@@ -981,7 +989,7 @@ namespace util_pd {
   {
     double totcharge=0.;
     for (auto & job : sjobs)
-      totcharge += job.charge;
+      if (job.is_rfile) totcharge += job.charge;
     return totcharge;
   }
   //______________________________________________________________________________
@@ -990,7 +998,7 @@ namespace util_pd {
   {
     double totntries=0.;
     for (auto & job : sjobs)
-      totntries += job.ntried;
+      if (job.is_rfile) totntries += job.ntried;
     return totntries;
   }
   //______________________________________________________________________________
@@ -1000,8 +1008,10 @@ namespace util_pd {
   {
     long double totntries=0.,totcharge=0.;
     for (auto & job : sjobs) {
-      totntries += job.ntried;
-      totcharge += job.charge;
+      if (job.is_rfile) {
+	totntries += job.ntried;
+	totcharge += job.charge;
+      }
     }
     data = {totntries,totcharge};
   }
@@ -1014,8 +1024,10 @@ namespace util_pd {
     long double totntries=0.,totcharge=0.;
     for (auto & job : sjobs) {
       if (process.compare(job.process)==0) {
-	totntries += job.ntried;
-	totcharge += job.charge;
+	if (job.is_rfile) {
+	  totntries += job.ntried;
+	  totcharge += job.charge;
+	}
       }
     }
     data = {totntries,totcharge};
