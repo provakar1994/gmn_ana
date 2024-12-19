@@ -13,6 +13,7 @@ class FitFn {
   TH1F *fhbg{nullptr};   // Background histo
   TH1F *fhbg1{nullptr};  // Background histo 1
   TH1F *fhbg2{nullptr};  // Background histo 2
+  TH1F *fhbg3{nullptr};  // Background histo 3
 
  public:
   FitFn() {}
@@ -23,6 +24,7 @@ class FitFn {
   FitFn(TH1F *hs1, TH1F *hs2): fhs1(hs1),fhs2(hs2) {}
   FitFn(TH1F *hs1, TH1F *hs2, TH1F *hbg): fhs1(hs1),fhs2(hs2),fhbg(hbg) {}
   FitFn(TH1F *hs1, TH1F *hs2, TH1F *hbg1, TH1F *hbg2): fhs1(hs1),fhs2(hs2),fhbg1(hbg1),fhbg2(hbg2) {}
+  FitFn(TH1F *hs1, TH1F *hs2, TH1F *hbg1, TH1F *hbg2, TH1F *hbg3): fhs1(hs1),fhs2(hs2),fhbg1(hbg1),fhbg2(hbg2),fhbg3(hbg3) {}
   FitFn(TH1F *hs1, TH1F *hs2, int poly): fhs1(hs1),fhs2(hs2),fpoly(poly) {}
 
   // returns Gaussian fit function
@@ -137,6 +139,31 @@ class FitFn {
     double modx2 = x[0]-hs2xOff;
     return Norm*(fhs1->Interpolate(modx1)+R*fhs2->Interpolate(modx2))+B*(fhbg1->Interpolate(modx1)+fhbg2->Interpolate(modx2));
   }
+
+  // fits using 2 signal histos and 3 bg histos. B2 belongs to the third hbg (4 params)
+  double ffn_2hs_3hbg (double *x, double *par) const {
+    double Norm = par[0];
+    double R = par[1];
+    double B1 = par[2];
+    double B2 = par[3];    
+    return Norm*(fhs1->Interpolate(x[0])+R*fhs2->Interpolate(x[0]))+B1*(fhbg1->Interpolate(x[0])+fhbg2->Interpolate(x[0]))+B2*fhbg3->Interpolate(x[0]);
+  }
+
+  // fits using 2 signal histos and 3 bg histos (6 params)
+  // x offsets are varied for both signal histos and the first and second hbg
+  // B2 belongs to the third hbg
+  double ffn_2hs_3hbg_xOffVary (double *x, double *par) const {
+    double Norm = par[0];
+    double R = par[1];
+    double B1 = par[2];
+    double hs1xOff = par[3];
+    double hs2xOff = par[4];
+    double B2 = par[5];    
+    //
+    double modx1 = x[0]-hs1xOff;
+    double modx2 = x[0]-hs2xOff;
+    return Norm*(fhs1->Interpolate(modx1)+R*fhs2->Interpolate(modx2))+B1*(fhbg1->Interpolate(modx1)+fhbg2->Interpolate(modx2))+B2*fhbg3->Interpolate(x[0]);
+  }  
 
   // fits using 2 signal histos and 1 poly bg (2+fpoly+1 params)
   double ffn_2hs_1pbg (double *x, double *par) const {
