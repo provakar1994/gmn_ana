@@ -4,7 +4,8 @@
 void customize_nblk_h(TH1F* h) {
   h->SetLineWidth(2);
   h->SetLineColor(kBlack);
-  h->SetFillColor(kOrange);
+  // h->SetFillColor(kOrange); // used for thesis
+  h->SetFillColor(30); // used for NIM
   h->GetXaxis()->SetTitle("No. of Blocks in Cluster");
 }
 
@@ -12,7 +13,8 @@ void customize_nblk_h(TH1F* h) {
 void customize_mult_h(TH1F* h) {
   h->SetLineWidth(2);
   h->SetLineColor(kBlack);
-  h->SetFillColor(kOrange);
+  // h->SetFillColor(kOrange);
+  h->SetFillColor(30);  // used for NIM
   h->GetXaxis()->SetTitle("No. of Clusters in an Event");
 }
 
@@ -47,7 +49,7 @@ void bbcalclus() {
   customize_nblk_h(hPS_nblk); hPS_nblk->Draw();
 
   pcust.customize_canvas(cPS);
-  cPS->SaveAs("bbcalclus_PS.pdf");
+  cPS->SaveAs("NIM_bbcalclus_PS.pdf");
   // ----  
 
 
@@ -69,7 +71,7 @@ void bbcalclus() {
   customize_nblk_h(hSH_nblk); hSH_nblk->Draw();
 
   pcust.customize_canvas(cSH);
-  cSH->SaveAs("bbcalclus_SH.pdf");
+  cSH->SaveAs("NIM_bbcalclus_SH.pdf");
   // ----  
  
 
