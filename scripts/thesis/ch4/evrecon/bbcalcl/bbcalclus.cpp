@@ -5,7 +5,7 @@ void customize_nblk_h(TH1F* h) {
   h->SetLineWidth(2);
   h->SetLineColor(kBlack);
   // h->SetFillColor(kOrange); // used for thesis
-  h->SetFillColor(30); // used for NIM
+  h->SetFillColor(kGreen-8); // used for NIM
   h->GetXaxis()->SetTitle("No. of Blocks in Cluster");
 }
 
@@ -14,7 +14,7 @@ void customize_mult_h(TH1F* h) {
   h->SetLineWidth(2);
   h->SetLineColor(kBlack);
   // h->SetFillColor(kOrange);
-  h->SetFillColor(30);  // used for NIM
+  h->SetFillColor(kGreen-8);  // used for NIM
   h->GetXaxis()->SetTitle("No. of Clusters in an Event");
 }
 
