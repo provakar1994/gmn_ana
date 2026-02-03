@@ -1,4 +1,5 @@
 #include <iostream>
+#include "TSpline.h"
 
 #include "gmn_ana.h"
 
@@ -9,6 +10,11 @@ double const kd = -2.03;
 //_______________________________________
 double ErrPropAplusB(double const AErr, double const BErr) {
   return sqrt(AErr*AErr + BErr*BErr);
+}
+
+//_______________________________________
+double ErrPropAplusBplusC(double const AErr, double const BErr, double const CErr) {
+  return sqrt(AErr*AErr + BErr*BErr + CErr*CErr);
 }
 
 //_______________________________________
@@ -23,7 +29,7 @@ std::vector<double> CalcF1(double Q2, double const GE, double const GEErr, doubl
   double tau = ntype.compare("p")==0 ? kine::tau(Q2,"p") : kine::tau(Q2,"n");
 
   double numer = tau*GM + GE;
-  double numerErr = ErrPropAplusB(tau*GMErr,GEErr);
+  double numerErr = ErrPropAplusB(tau*abs(GMErr),abs(GEErr));
   double denom = 1. + tau;
   double denomErr = 0.; //ErrPropAplusB(1.,tau); 
   
@@ -36,7 +42,7 @@ std::vector<double> CalcF2(double Q2, double const GE, double const GEErr, doubl
   double tau = ntype.compare("p")==0 ? kine::tau(Q2,"p") : kine::tau(Q2,"n");
 
   double numer = GM - GE;
-  double numerErr = ErrPropAplusB(GMErr,GEErr);
+  double numerErr = ErrPropAplusB(abs(GMErr),abs(GEErr));
   double denom = 1. + tau;
   double denomErr = 0.; //ErrPropAplusB(1.,tau);
   
@@ -65,6 +71,7 @@ std::vector<double> CalcF2Quark(double const F2p, double const F2pErr, double co
   double F2uErr = ErrPropAplusB(2.*F2pErr,F2nErr);  
   double F2d = 2.*F2n + F2p;
   double F2dErr = ErrPropAplusB(2.*F2nErr,F2pErr);
+  //std::cout << Form("F2nErr,F2pErr,F2dErr = %f,%f,%f \n",F2nErr,F2pErr,F2dErr);
   
   std::vector<double> result;
   if (qtype.compare("u")==0) result = {F2u,F2uErr};
@@ -116,6 +123,7 @@ void GetFQuark(double Q2, double GMn, double GMnErr, int verbose, std::vector<do
   temp = CalcF2Quark(F2p,F2pErr,F2n,F2nErr,"u");
   double F2u = temp[0], F2uErr = temp[1];
   temp = CalcF2Quark(F2p,F2pErr,F2n,F2nErr,"d");
+  //std::cout << F2p << "," << F2pErr << "," << F2n << "," << F2nErr << "\n";
   double F2d = temp[0], F2dErr = temp[1];
 
   if (verbose==1) {
@@ -214,6 +222,26 @@ void GetGQuark(double Q2, double GMn, double GMnErr, int verbose, std::vector<do
 }
 
 //_______________________________________
+void GetGQFromFQ(double Q2, double F1u, double F1uErr, double F2u, double F2uErr, double F1d, double F1dErr, double F2d, double F2dErr, int verbose, std::vector<double> &GQ) {
+  double tau_p = kine::tau(Q2,"p");
+  double tau_n = kine::tau(Q2,"n");
+
+  double GEu = F1u - (1./3.)*(4.*tau_p-tau_n)*F2u + (2./3.)*(tau_p-tau_n)*F2d;
+  double GEuErr = ErrPropAplusBplusC(F1uErr,(1./3.)*(4.*tau_p-tau_n)*F2uErr,(2./3.)*(tau_p-tau_n)*F2dErr);
+
+  double GMu = F1u + F2u;
+  double GMuErr = ErrPropAplusB(F1uErr,F2uErr);
+
+  double GEd = F1d - (1./3.)*(4.*tau_n-tau_p)*F2d + (2./3.)*(tau_n-tau_p)*F2u;
+  double GEdErr = ErrPropAplusBplusC(F1dErr,(1./3.)*(4.*tau_n-tau_p)*F2dErr,(2./3.)*(tau_n-tau_p)*F2uErr);
+  
+  double GMd = F1d + F2d;
+  double GMdErr = ErrPropAplusB(F1dErr,F2dErr);
+
+  GQ = {GMu,GMuErr,GEu,GEuErr,GMd,GMdErr,GEd,GEdErr};
+}
+
+//_______________________________________
 double Get_Q4F1u_cont(double *x, double *par) {
   /* Return a continuous curve for Q4*F1u using Ye 2017 fit */
   double Q2 = x[0];
@@ -298,6 +326,70 @@ void customize_sbsgmn(TGraphErrors *g, std::string qtype) {
     g->SetMarkerColor(kRed);
     g->SetLineColor(kRed);
   }
+}
+
+//_______________________________________
+void customize_cates(TGraphErrors *g, std::string qtype) {
+  g->SetMarkerStyle(24);
+  if (qtype.compare("u")==0) {
+    g->SetMarkerColor(kBlack);
+    g->SetLineColor(kBlack);
+  } else {
+    g->SetMarkerColor(kRed);
+    g->SetLineColor(kRed);
+  }
+}
+
+//------------------------------------------------------------------------------
+// MakeSmoothedGraphErrors:
+//   • builds a cubic spline through (x,y) 
+//   • builds two splines through (x,y+ey) and (x,y–ey)
+//   • returns a new TGraphErrors with nSteps points whose
+//     y = spline(x)  and  ey = ½[spline_up(x)–spline_dn(x)]
+//------------------------------------------------------------------------------
+TGraphErrors* MakeSmoothedGraphErrors(const TGraphErrors* graw,
+                                      Int_t nSteps = 200)
+{
+  // 1) read raw points
+  const Int_t n0 = graw->GetN();
+  if (n0 < 2 || nSteps < 2) {
+    ::Error("MakeSmoothedGraphErrors","need at least 2 points and nSteps>=2");
+    return nullptr;
+  }
+  std::vector<Double_t> x0(n0), y0(n0), yup(n0), ydn(n0);
+  for (Int_t i = 0; i < n0; ++i) {
+    Double_t ex, ey;
+    graw->GetPoint(i, x0[i], y0[i]);
+    ey = graw->GetErrorY(i);
+    yup[i] = y0[i] + ey;
+    ydn[i] = y0[i] - ey;
+  }
+
+  // 2) build splines
+  TSpline3* splC = new TSpline3("splC", &x0[0], &y0[0],  n0);
+  TSpline3* splU = new TSpline3("splU", &x0[0], &yup[0], n0);
+  TSpline3* splD = new TSpline3("splD", &x0[0], &ydn[0], n0);
+
+  // 3) prepare arrays for the new graph
+  std::vector<Double_t> xs(nSteps), ys(nSteps), exs(nSteps, 0.0), eys(nSteps);
+  Double_t xmin = x0.front(), xmax = x0.back();
+  Double_t dx   = (xmax - xmin) / (nSteps - 1);
+
+  for (Int_t i = 0; i < nSteps; ++i) {
+    Double_t xx = xmin + i * dx;
+    xs[i]  = xx;
+    Double_t yc = splC->Eval(xx);
+    Double_t yu = splU->Eval(xx);
+    Double_t yd = splD->Eval(xx);
+    ys[i]  = yc;
+    eys[i] = 0.5*(yu - yd);              // half‐width of the band
+  }
+
+  // 4) build and return the smoothed TGraphErrors
+  TGraphErrors* gsm = new TGraphErrors(nSteps,
+                                       &xs[0], &ys[0],
+                                       &exs[0], &eys[0]);
+  return gsm;
 }
 
 //_______________________________________
@@ -402,7 +494,7 @@ int flavordecomp() {
     F1u[i] = Q2i*Q2i*FQ[0]; F1uErr[i] = Q2i*Q2i*FQ[1]; 
     F2u[i] = Q2i*Q2i*FQ[2]/ku; F2uErr[i] = Q2i*Q2i*FQ[3]/ku;
     F1d[i] = Q2i*Q2i*FQ[4]*2.5; F1dErr[i] = Q2i*Q2i*FQ[5]*2.5;     
-    F2d[i] = Q2i*Q2i*FQ[6]*0.75/kd; F2dErr[i] = Q2i*Q2i*FQ[7]*0.75/kd;
+    F2d[i] = Q2i*Q2i*FQ[6]*0.75/kd; F2dErr[i] = Q2i*Q2i*FQ[7]*0.75/abs(kd);
 
     std::vector<double> GQ;
     GetGQuark(Q2i,100,0,0,GQ);
@@ -426,7 +518,7 @@ int flavordecomp() {
     F1u_tyler[i] = Q2i*Q2i*FQ[0]; F1uErr_tyler[i] = Q2i*Q2i*FQ[1]; 
     F2u_tyler[i] = Q2i*Q2i*FQ[2]/ku; F2uErr_tyler[i] = Q2i*Q2i*FQ[3]/ku;
     F1d_tyler[i] = Q2i*Q2i*FQ[4]*2.5; F1dErr_tyler[i] = Q2i*Q2i*FQ[5]*2.5;     
-    F2d_tyler[i] = Q2i*Q2i*FQ[6]*0.75/kd; F2dErr_tyler[i] = Q2i*Q2i*FQ[7]*0.75/kd;     
+    F2d_tyler[i] = Q2i*Q2i*FQ[6]*0.75/kd; F2dErr_tyler[i] = Q2i*Q2i*FQ[7]*0.75/abs(kd);     
 
     GetGQuark(Q2i,GMn_tyler,GMn_tyler_err,0,GQ);        
     GMu_tyler[i] = GQ[0]; GMuErr_tyler[i] = GQ[1]; 
@@ -492,8 +584,10 @@ int flavordecomp() {
   
   // Using Hague GMn + Ye 2018
   TGraphErrors *F1uTG_tyler = new TGraphErrors( npoints_ye+1, Q2ye, F1u_tyler, Q2yeErr, F1uErr_tyler);
+  //TGraphErrors *F1uTG_tyler = MakeSmoothedGraphErrors(F1uTG_tyler_coarse, 5000);
   customize_gfit(F1uTG_tyler,"u");
   TGraphErrors *F1dTG_tyler = new TGraphErrors( npoints_ye+1, Q2ye, F1d_tyler, Q2yeErr, F1dErr_tyler);
+  //TGraphErrors *F1dTG_tyler = MakeSmoothedGraphErrors(F1dTG_tyler_coarse, 5000);
   customize_gfit(F1dTG_tyler,"d");
   TGraphErrors *F2uTG_tyler = new TGraphErrors( npoints_ye+1, Q2ye, F2u_tyler, Q2yeErr, F2uErr_tyler);
   customize_gfit(F2uTG_tyler,"u");
@@ -582,12 +676,12 @@ int flavordecomp() {
     Q2Err_sbsgmn[i] = 0.;
     
     std::vector<double> FQ;
-    GetFQuark(Q2v[i],SBSGMnovMuGD[i]*EMFFFits::GetGDip(Q2v[i])*constant::mun,fabs(SBSGMnErrovMuGD[i]*EMFFFits::GetGDip(Q2v[i])*constant::mun),1,FQ);
+    GetFQuark(Q2v[i],SBSGMnovMuGD[i]*EMFFFits::GetGDip(Q2v[i])*constant::mun,fabs(SBSGMnErrovMuGD[i]*EMFFFits::GetGDip(Q2v[i])*constant::mun),0,FQ);
 
     F1u_sbsgmn[i] = Q2v[i]*Q2v[i]*FQ[0]; F1uErr_sbsgmn[i] = Q2v[i]*Q2v[i]*FQ[1]; 
     F2u_sbsgmn[i] = Q2v[i]*Q2v[i]*FQ[2]/ku; F2uErr_sbsgmn[i] = Q2v[i]*Q2v[i]*FQ[3]/ku;
     F1d_sbsgmn[i] = Q2v[i]*Q2v[i]*FQ[4]*2.5; F1dErr_sbsgmn[i] = Q2v[i]*Q2v[i]*FQ[5]*2.5;     
-    F2d_sbsgmn[i] = Q2v[i]*Q2v[i]*FQ[6]*0.75/kd; F2dErr_sbsgmn[i] = Q2v[i]*Q2v[i]*FQ[7]*0.75/kd;
+    F2d_sbsgmn[i] = Q2v[i]*Q2v[i]*FQ[6]*0.75/kd; F2dErr_sbsgmn[i] = Q2v[i]*Q2v[i]*FQ[7]*0.75/abs(kd);
 
     std::vector<double> GQ;
     GetGQuark(Q2v[i],SBSGMnovMuGD[i]*EMFFFits::GetGDip(Q2v[i])*constant::mun,fabs(SBSGMnErrovMuGD[i]*EMFFFits::GetGDip(Q2v[i])*constant::mun),0,GQ);
@@ -603,7 +697,13 @@ int flavordecomp() {
     GMdOVmunGD_sbsgmn[i] = GQ[4]/(EMFFFits::GetGDip(Q2v[i])*constant::mun); GMdOVmunGDErr_sbsgmn[i] = GQ[5]/(EMFFFits::GetGDip(Q2v[i])*constant::mun);
     GEd_sbsgmn[i] = GQ[6]; GEdErr_sbsgmn[i] = GQ[7];
     GEdOVGMd_sbsgmn[i] = GQ[6]/GQ[4]; GEdOVGMdErr_sbsgmn[i] = ErrPropAovB(GQ[6],GQ[7],GQ[4],GQ[5]);    
-    munGEdOVGMd_sbsgmn[i] = constant::mun*GQ[6]/GQ[4]; munGEdOVGMdErr_sbsgmn[i] = ErrPropAovB(constant::mun*GQ[6],constant::mun*GQ[7],GQ[4],GQ[5]);        
+    munGEdOVGMd_sbsgmn[i] = constant::mun*GQ[6]/GQ[4]; munGEdOVGMdErr_sbsgmn[i] = ErrPropAovB(constant::mun*GQ[6],constant::mun*GQ[7],GQ[4],GQ[5]);
+
+    // std::cout << Q2_sbsgmn[i] << ",";
+    // std::cout << F1u_sbsgmn[i] << "," << F1uErr_sbsgmn[i] << ",";
+    // std::cout << F1d_sbsgmn[i] << "," << F1dErr_sbsgmn[i] << ",";
+    // std::cout << F2u_sbsgmn[i] << "," << F2uErr_sbsgmn[i] << ",";
+    // std::cout << F2d_sbsgmn[i] << "," << F2dErr_sbsgmn[i] << "\n";
   }
 
   TGraphErrors *F1uTG_sbsgmn = new TGraphErrors( npoints_sbsgmn, Q2_sbsgmn, F1u_sbsgmn, Q2Err_sbsgmn, F1uErr_sbsgmn);
@@ -638,9 +738,135 @@ int flavordecomp() {
   TGraphErrors *GEdOVGMdTG_sbsgmn = new TGraphErrors( npoints_sbsgmn,  Q2_sbsgmn, GEdOVGMd_sbsgmn, Q2Err_sbsgmn, GEdOVGMdErr_sbsgmn);
   customize_sbsgmn(GEdOVGMdTG_sbsgmn,"d");
   TGraphErrors *munGEdOVGMdTG_sbsgmn = new TGraphErrors( npoints_sbsgmn,  Q2_sbsgmn, munGEdOVGMd_sbsgmn, Q2Err_sbsgmn, munGEdOVGMdErr_sbsgmn);
-  customize_sbsgmn(munGEdOVGMdTG_sbsgmn,"d");  
+  customize_sbsgmn(munGEdOVGMdTG_sbsgmn,"d");
+
+
+  // ++++++++++++++++++++++++++++++++++++ ==============
+  // *************************************
+  // Cates et al
+  // ++++++++++++++++++++++++++++++++++++ ==============
+  // *************************************
+  LookUpTableReader reader_cates;
+  std::string filename_cates = "f1f2_cates.csv";
+  reader_cates.readCSV(filename_cates);  
+  int npoints_cates = reader_cates.getRowCount();
+
+  double Q2_cates[npoints_cates+1];
+  double Q2Err_cates[npoints_cates+1];  
+  double F1u_cates[npoints_cates+1];
+  double F1uErr_cates[npoints_cates+1];  
+  double F2u_cates[npoints_cates+1];
+  double F2uErr_cates[npoints_cates+1];  
+  double F1d_cates[npoints_cates+1];
+  double F1dErr_cates[npoints_cates+1];  
+  double F2d_cates[npoints_cates+1];
+  double F2dErr_cates[npoints_cates+1];
+  //
+  double GMu_cates[npoints_cates+1];
+  double GMuOVGD_cates[npoints_cates+1];
+  double GMuOVmupGD_cates[npoints_cates+1];  
+  double GMuErr_cates[npoints_cates+1];  
+  double GMuOVGDErr_cates[npoints_cates+1];
+  double GMuOVmupGDErr_cates[npoints_cates+1];  
+  double GEu_cates[npoints_cates+1];
+  double GEuOVGMu_cates[npoints_cates+1];
+  double mupGEuOVGMu_cates[npoints_cates+1];   
+  double GEuErr_cates[npoints_cates+1];  
+  double GEuOVGMuErr_cates[npoints_cates+1];
+  double mupGEuOVGMuErr_cates[npoints_cates+1];   
+  double GMd_cates[npoints_cates+1];
+  double GMdOVGD_cates[npoints_cates+1];
+  double GMdOVmunGD_cates[npoints_cates+1];  
+  double GMdErr_cates[npoints_cates+1];  
+  double GMdOVGDErr_cates[npoints_cates+1];
+  double GMdOVmunGDErr_cates[npoints_cates+1];  
+  double GEd_cates[npoints_cates+1];
+  double GEdOVGMd_cates[npoints_cates+1];
+  double munGEdOVGMd_cates[npoints_cates+1];  
+  double GEdErr_cates[npoints_cates+1];
+  double GEdOVGMdErr_cates[npoints_cates+1];
+  double munGEdOVGMdErr_cates[npoints_cates+1];  
+  
+  for (int i = 0; i < npoints_cates; ++i) {
+    double Q2 = reader_cates.GetValueByRowAndColumnName(i, "Q2");
+    Q2_cates[i] = Q2;
+    Q2Err_cates[i] = 0.;
+    double Q4 = Q2_cates[i]*Q2_cates[i];
+    //
+    double F1u = reader_cates.GetValueByRowAndColumnName(i, "F1u");
+    F1u_cates[i] = F1u*Q4;
+    double F1uErr = reader_cates.GetValueByRowAndColumnName(i, "F1u_err");
+    F1uErr_cates[i] = F1uErr*Q4;
+    double F1d = reader_cates.GetValueByRowAndColumnName(i, "F1d");
+    F1d_cates[i] = F1d*Q4*2.5;
+    double F1dErr = reader_cates.GetValueByRowAndColumnName(i, "F1d_err");
+    F1dErr_cates[i] = F1dErr*Q4*2.5;
+    double F2u = reader_cates.GetValueByRowAndColumnName(i, "F2u");
+    F2u_cates[i] = F2u*Q4/ku;
+    double F2uErr = reader_cates.GetValueByRowAndColumnName(i, "F2u_err");
+    F2uErr_cates[i] = F2uErr*Q4/ku;
+    double F2d = reader_cates.GetValueByRowAndColumnName(i, "F2d");
+    F2d_cates[i] = F2d*Q4*0.75/kd;
+    double F2dErr = reader_cates.GetValueByRowAndColumnName(i, "F2d_err");
+    F2dErr_cates[i] = F2dErr*Q4*0.75/abs(kd);        
+
+    std::vector<double> GQ;
+    GetGQFromFQ(Q2,F1u,F1uErr,F2u,F2uErr,F1d,F1dErr,F2d,F2dErr,0,GQ);
+
+
+    GMu_cates[i] = GQ[0]; GMuErr_cates[i] = GQ[1];
+    GMuOVGD_cates[i] = GQ[0]/EMFFFits::GetGDip(Q2); GMuOVGDErr_cates[i] = GQ[1]/EMFFFits::GetGDip(Q2);
+    GMuOVmupGD_cates[i] = GQ[0]/(EMFFFits::GetGDip(Q2)*constant::mup); GMuOVmupGDErr_cates[i] = GQ[1]/(EMFFFits::GetGDip(Q2)*constant::mup);        
+    GEu_cates[i] = GQ[2]; GEuErr_cates[i] = GQ[3];
+    GEuOVGMu_cates[i] = GQ[2]/GQ[0]; GEuOVGMuErr_cates[i] = ErrPropAovB(GQ[2],GQ[3],GQ[0],GQ[1]);    
+    mupGEuOVGMu_cates[i] = constant::mup*GQ[2]/GQ[0]; mupGEuOVGMuErr_cates[i] = ErrPropAovB(constant::mup*GQ[2],constant::mup*GQ[3],GQ[0],GQ[1]);        
+    GMd_cates[i] = GQ[4]; GMdErr_cates[i] = GQ[5];
+    GMdOVGD_cates[i] = GQ[4]/EMFFFits::GetGDip(Q2); GMdOVGDErr_cates[i] = GQ[5]/EMFFFits::GetGDip(Q2);
+    GMdOVmunGD_cates[i] = GQ[4]/(EMFFFits::GetGDip(Q2)*constant::mun); GMdOVmunGDErr_cates[i] = GQ[5]/(EMFFFits::GetGDip(Q2)*constant::mun);
+    GEd_cates[i] = GQ[6]; GEdErr_cates[i] = GQ[7];
+    GEdOVGMd_cates[i] = GQ[6]/GQ[4]; GEdOVGMdErr_cates[i] = ErrPropAovB(GQ[6],GQ[7],GQ[4],GQ[5]);    
+    munGEdOVGMd_cates[i] = constant::mun*GQ[6]/GQ[4]; munGEdOVGMdErr_cates[i] = ErrPropAovB(constant::mun*GQ[6],constant::mun*GQ[7],GQ[4],GQ[5]);    
+  }
+
+  TGraphErrors *F1uTG_cates = new TGraphErrors( npoints_cates, Q2_cates, F1u_cates, Q2Err_cates, F1uErr_cates);
+  customize_cates(F1uTG_cates,"u");
+  TGraphErrors *F1dTG_cates = new TGraphErrors( npoints_cates, Q2_cates, F1d_cates, Q2Err_cates, F1dErr_cates);
+  customize_cates(F1dTG_cates,"d");
+  TGraphErrors *F2uTG_cates = new TGraphErrors( npoints_cates, Q2_cates, F2u_cates, Q2Err_cates, F2uErr_cates);
+  customize_cates(F2uTG_cates,"u");
+  TGraphErrors *F2dTG_cates = new TGraphErrors( npoints_cates, Q2_cates, F2d_cates, Q2Err_cates, F2dErr_cates);  
+  customize_cates(F2dTG_cates,"d");
+  //
+  TGraphErrors *GMuTG_cates = new TGraphErrors( npoints_cates, Q2_cates, GMu_cates, Q2Err_cates, GMuErr_cates);
+  customize_cates(GMuTG_cates,"u");
+  TGraphErrors *GMuOVGDTG_cates = new TGraphErrors( npoints_cates, Q2_cates, GMuOVGD_cates, Q2Err_cates, GMuOVGDErr_cates);
+  customize_cates(GMuOVGDTG_cates,"u");
+  TGraphErrors *GMuOVmupGDTG_cates = new TGraphErrors( npoints_cates, Q2_cates, GMuOVmupGD_cates, Q2Err_cates, GMuOVmupGDErr_cates);
+  customize_cates(GMuOVmupGDTG_cates,"u");  
+  TGraphErrors *GMdTG_cates = new TGraphErrors( npoints_cates, Q2_cates, GMd_cates, Q2Err_cates, GMdErr_cates);
+  customize_cates(GMdTG_cates,"d");
+  TGraphErrors *GMdOVGDTG_cates = new TGraphErrors( npoints_cates, Q2_cates, GMdOVGD_cates, Q2Err_cates, GMdOVGDErr_cates);
+  customize_cates(GMdOVGDTG_cates,"d");
+  TGraphErrors *GMdOVmunGDTG_cates = new TGraphErrors( npoints_cates, Q2_cates, GMdOVmunGD_cates, Q2Err_cates, GMdOVmunGDErr_cates);
+  customize_cates(GMdOVmunGDTG_cates,"d");  
+  TGraphErrors *GEuTG_cates = new TGraphErrors( npoints_cates, Q2_cates, GEu_cates, Q2Err_cates, GEuErr_cates);
+  customize_cates(GEuTG_cates,"u");
+  TGraphErrors *GEuOVGMuTG_cates = new TGraphErrors( npoints_cates,  Q2_cates, GEuOVGMu_cates, Q2Err_cates, GEuOVGMuErr_cates);
+  customize_cates(GEuOVGMuTG_cates,"u");
+  TGraphErrors *mupGEuOVGMuTG_cates = new TGraphErrors( npoints_cates,  Q2_cates, mupGEuOVGMu_cates, Q2Err_cates, mupGEuOVGMuErr_cates);
+  customize_cates(mupGEuOVGMuTG_cates,"u");  
+  TGraphErrors *GEdTG_cates = new TGraphErrors( npoints_cates, Q2_cates, GEd_cates, Q2Err_cates, GEdErr_cates);  
+  customize_cates(GEdTG_cates,"d");
+  TGraphErrors *GEdOVGMdTG_cates = new TGraphErrors( npoints_cates,  Q2_cates, GEdOVGMd_cates, Q2Err_cates, GEdOVGMdErr_cates);
+  customize_cates(GEdOVGMdTG_cates,"d");
+  TGraphErrors *munGEdOVGMdTG_cates = new TGraphErrors( npoints_cates,  Q2_cates, munGEdOVGMd_cates, Q2Err_cates, munGEdOVGMdErr_cates);
+  customize_cates(munGEdOVGMdTG_cates,"d");  
   
   //**************
+
+  // call the canvas customizer
+  PlotCustomizer pcust{0};  
+  
   // Plot F1 with SBS-GMn + Ye 2018 and Ye 2018
   TCanvas *c1 = util_pd::TC("c1",1,1);
   c1->cd(); c1->SetGridy();
@@ -650,13 +876,17 @@ int flavordecomp() {
   
   F1uTG->Draw("C3 SAME");
   F1dTG->Draw("C3 SAME");
+  F1uTG_cates->Draw("P SAME");
+  F1dTG_cates->Draw("P SAME");  
   F1uTG_sbsgmn->Draw("P SAME");
   F1dTG_sbsgmn->Draw("P SAME");  
-
+  
   TLegend *l1 = new TLegend(0.1,0.1,0.49,0.3);
   l1->SetTextFont(42);
+  l1->AddEntry(F1uTG_cates,"u quark (Cates 2011)","ep");
   l1->AddEntry(F1uTG_sbsgmn,"u quark (SBSGMn+Ye2018)","ep");
   l1->AddEntry(F1uTG,"u quark (Ye2018)","lf");
+  l1->AddEntry(F1dTG_cates,"d quark x 2.5 (Cates 2011","ep");
   l1->AddEntry(F1dTG_sbsgmn,"d quark x 2.5 (SBSGMn+Ye2018)","ep");
   l1->AddEntry(F1dTG,"d quark x 2.5 (Ye2018)","lf");
   l1->Draw();
@@ -688,56 +918,118 @@ int flavordecomp() {
   
   //**************
   // Plot F1 with SBS-GMn + Ye 2018 and Hague + Ye 2018
-  TCanvas *c3 = util_pd::TC("c3",1,1);
-  c3->cd(); c3->SetGridy();
+  // TCanvas *c3 = util_pd::TC("c3",1,1);
+  // c3->cd(); c3->SetGridy();
 
+  TCanvas *c3 = new TCanvas("c3","c3",1500,600);
+  c3->Divide(2,1);
+  c3->cd(1); c3->SetGridy();
+
+  
   TH2D *hframe_f3 = new TH2D("hframe_f3",";Q^{2} (GeV/c)^{2};Q^{4}F_{1}^{q}",500,0,15,500,-0.6,1.6);
   customize_hframe(hframe_f3);
   
   F1uTG_tyler->Draw("C3 SAME");
   F1dTG_tyler->Draw("C3 SAME");
+  F1uTG_cates->Draw("P SAME");
+  F1dTG_cates->Draw("P SAME");      
   F1uTG_sbsgmn->Draw("P SAME");
   F1dTG_sbsgmn->Draw("P SAME");  
 
-  TLegend *l3 = new TLegend(0.1,0.1,0.49,0.3);
+  //TLegend *l3 = new TLegend(0.1,0.1,0.49,0.3);
+  TLegend *l3 = new TLegend(0.15,0.15,0.54,0.35);  
   l3->SetTextFont(42);
+  l3->AddEntry(F1uTG_sbsgmn,"u quark (Cates 2011)","ep");  
   l3->AddEntry(F1uTG_sbsgmn,"u quark (SBSGMn+Ye2018)","ep");
   l3->AddEntry(F1uTG_tyler,"u quark (Hague-GMn+Ye2018)","lf");
+  l3->AddEntry(F1dTG_sbsgmn,"d quark x 2.5 (Cates 2011)","ep");  
   l3->AddEntry(F1dTG_sbsgmn,"d quark x 2.5 (SBSGMn+Ye2018)","ep");
   l3->AddEntry(F1dTG_tyler,"d quark x 2.5 (Hague-GMn+Ye2018)","lf");
   l3->Draw();
 
+  c3->cd(2);
+  TH2D *hframe_f3_2 = new TH2D("hframe_f3_2",";Q^{2} (GeV/c)^{2};Q^{4}F_{1}^{q}",500,0,5,500,-0.6,1.6);
+  customize_hframe(hframe_f3_2);
+  
+  F1uTG_tyler->Draw("C3 SAME");
+  F1dTG_tyler->Draw("C3 SAME");
+  F1uTG_cates->Draw("P SAME");
+  F1dTG_cates->Draw("P SAME");      
+  F1uTG_sbsgmn->Draw("P SAME");
+  F1dTG_sbsgmn->Draw("P SAME");  
+
+  TLegend *l3_2 = new TLegend(0.15,0.15,0.54,0.35);
+  l3_2->SetTextFont(42);
+  l3_2->AddEntry(F1uTG_sbsgmn,"u quark (Cates 2011)","ep");  
+  l3_2->AddEntry(F1uTG_sbsgmn,"u quark (SBSGMn+Ye2018)","ep");
+  l3_2->AddEntry(F1uTG_tyler,"u quark (Hague-GMn+Ye2018)","lf");
+  l3_2->AddEntry(F1dTG_sbsgmn,"d quark x 2.5 (Cates 2011)","ep");  
+  l3_2->AddEntry(F1dTG_sbsgmn,"d quark x 2.5 (SBSGMn+Ye2018)","ep");
+  l3_2->AddEntry(F1dTG_tyler,"d quark x 2.5 (Hague-GMn+Ye2018)","lf");
+  l3_2->Draw();  
+
+  pcust.customize_canvas(c3);  
   c3->SaveAs("c3.pdf");
   
   //**************
   // Plot F2 with SBS-GMn + Ye 2018 and Hague + Ye 2018  
-  TCanvas *c4 = util_pd::TC("c4",1,1);
-  c4->cd(); c4->SetGridy();
+  // TCanvas *c4 = util_pd::TC("c4",1,1);
+  // c4->cd(); c4->SetGridy();
+
+  TCanvas *c4 = new TCanvas("c4","c4",1500,600);
+  c4->Divide(2,1);
+  c4->cd(1); c3->SetGridy();
+  
 
   TH2D *hframe_f4 = new TH2D("hframe_f4",";Q^{2} (GeV/c)^{2};#kappa_{q}^{-1}Q^{4}F_{2}^{q}",500,0,15,500,-0.02,0.3);
   customize_hframe(hframe_f4);
   
   F2uTG_tyler->Draw("C3 SAME");
-  F2dTG_tyler->Draw("C3 SAME");    
+  F2dTG_tyler->Draw("C3 SAME");
+  F2uTG_cates->Draw("P SAME");
+  F2dTG_cates->Draw("P SAME");    
   F2uTG_sbsgmn->Draw("P SAME");
   F2dTG_sbsgmn->Draw("P SAME");  
 
-  TLegend *l4 = new TLegend(0.14,0.1,0.54,0.3);
+  //TLegend *l4 = new TLegend(0.14,0.1,0.54,0.3);
+  TLegend *l4 = new TLegend(0.19,0.15,0.59,0.35);  
   l4->SetTextFont(42);
+  l4->AddEntry(F2uTG_sbsgmn,"u quark (Cates 2011)","ep");  
   l4->AddEntry(F2uTG_sbsgmn,"u quark (SBSGMn+Ye2018)","ep");
   l4->AddEntry(F2uTG_tyler,"u quark (Hague-GMn+Ye2018)","lf");
+  l4->AddEntry(F2dTG_sbsgmn,"d quark x 0.75 (Cates 2011)","ep");  
   l4->AddEntry(F2dTG_sbsgmn,"d quark x 0.75 (SBSGMn+Ye2018)","ep");
   l4->AddEntry(F2dTG_tyler,"d quark x 0.75 (Hague-GMn+Ye2018)","lf");
   l4->Draw();
 
+  c4->cd(2);
+  TH2D *hframe_f4_2 = new TH2D("hframe_f4_2",";Q^{2} (GeV/c)^{2};#kappa_{q}^{-1}Q^{4}F_{2}^{q}",500,0,5,500,-0.02,0.3);
+  customize_hframe(hframe_f4_2);
+  
+  F2uTG_tyler->Draw("C3 SAME");
+  F2dTG_tyler->Draw("C3 SAME");
+  F2uTG_cates->Draw("P SAME");
+  F2dTG_cates->Draw("P SAME");    
+  F2uTG_sbsgmn->Draw("P SAME");
+  F2dTG_sbsgmn->Draw("P SAME");  
+
+  TLegend *l4_2 = new TLegend(0.24,0.15,0.64,0.35);
+  l4_2->SetTextFont(42);
+  l4_2->AddEntry(F2uTG_sbsgmn,"u quark (Cates 2011)","ep");  
+  l4_2->AddEntry(F2uTG_sbsgmn,"u quark (SBSGMn+Ye2018)","ep");
+  l4_2->AddEntry(F2uTG_tyler,"u quark (Hague-GMn+Ye2018)","lf");
+  l4_2->AddEntry(F2dTG_sbsgmn,"d quark x 0.75 (Cates 2011)","ep");  
+  l4_2->AddEntry(F2dTG_sbsgmn,"d quark x 0.75 (SBSGMn+Ye2018)","ep");
+  l4_2->AddEntry(F2dTG_tyler,"d quark x 0.75 (Hague-GMn+Ye2018)","lf");
+  l4_2->Draw();  
+
+  pcust.customize_canvas(c4);    
   c4->SaveAs("c4.pdf");  
 
   // -------- ###############
   // Plotting GE and GM
   // --------
   TCanvas *c5 = util_pd::TC("c5",1,2);
-  // call the canvas customizer
-  PlotCustomizer pcust{0};  
   //**************
 
   // Plot GMu with SBS-GMn + Ye 2018 and Ye 2018
@@ -890,11 +1182,13 @@ int flavordecomp() {
   TH2D *hframe_f7 = new TH2D("hframe_f7",";Q^{2} (GeV/c)^{2};G_{M}^{u}/G_{D}",500,0,15,500,3,5);
   customize_hframe(hframe_f7);
   GMuOVGDTG_tyler->Draw("C3 SAME");
+  GMuOVGDTG_cates->Draw("P SAME");  
   GMuOVGDTG_sbsgmn->Draw("P SAME");
 
   //
   TLegend *l7 = new TLegend(0.3,0.75,0.95,0.9); //0.15,0.15,0.80,0.3);
   l7->SetTextFont(42);
+  l7->AddEntry(GMuOVmupGDTG_cates,"u quark (Cates 2011)","ep");  
   l7->AddEntry(GMuOVmupGDTG_sbsgmn,"u quark (SBSGMn+Ye2018)","ep");
   l7->AddEntry(GMuOVmupGDTG_tyler,"u quark (Hague-GMn+Ye2018)","lf");
   l7->Draw();
@@ -913,13 +1207,15 @@ int flavordecomp() {
   TH2D *hframe_f8 = new TH2D("hframe_f8",";Q^{2} (GeV/c)^{2};G_{M}^{d}/G_{D}",500,0,15,500,-1.5,1.5);
   customize_hframe(hframe_f8);
   GMdOVGDTG_tyler->Draw("C3 SAME");
+  GMdOVGDTG_cates->Draw("P SAME");  
   GMdOVGDTG_sbsgmn->Draw("P SAME");
 
   //
   TLegend *l8 = new TLegend(0.3,0.75,0.95,0.9); //0.15,0.15,0.80,0.3);
   l8->SetTextFont(42);
-  l8->AddEntry(GMdOVGDTG_sbsgmn,"u quark (SBSGMn+Ye2018)","ep");
-  l8->AddEntry(GMdOVGDTG_tyler,"u quark (Hague-GMn+Ye2018)","lf");
+  l8->AddEntry(GMdOVGDTG_cates,"d quark (Cates 2011)","ep");  
+  l8->AddEntry(GMdOVGDTG_sbsgmn,"d quark (SBSGMn+Ye2018)","ep");
+  l8->AddEntry(GMdOVGDTG_tyler,"d quark (Hague-GMn+Ye2018)","lf");
   l8->Draw();
 
   pcust.customize_canvas(c8);
@@ -936,11 +1232,13 @@ int flavordecomp() {
   TH2D *hframe_f9 = new TH2D("hframe_f9",";Q^{2} (GeV/c)^{2};G_{E}^{u}/G_{M}^{u}",500,0,15,500,-0.1,0.8);
   customize_hframe(hframe_f9);
   GEuOVGMuTG_tyler->Draw("C3 SAME");
+  GEuOVGMuTG_cates->Draw("P SAME");  
   GEuOVGMuTG_sbsgmn->Draw("P SAME");
 
   //
   TLegend *l9 = new TLegend(0.3,0.75,0.95,0.9); //0.15,0.15,0.80,0.3);
   l9->SetTextFont(42);
+  l9->AddEntry(GEuOVGMuTG_cates,"u quark (Cates 2011)","ep");  
   l9->AddEntry(GEuOVGMuTG_sbsgmn,"u quark (SBSGMn+Ye2018)","ep");
   l9->AddEntry(GEuOVGMuTG_tyler,"u quark (Hague-GMn+Ye2018)","lf");
   l9->Draw();
@@ -957,17 +1255,67 @@ int flavordecomp() {
   TH2D *hframe_f10 = new TH2D("hframe_f10",";Q^{2} (GeV/c)^{2};G_{E}^{d}/G_{M}^{d}",500,0,15,500,-10,3);
   customize_hframe(hframe_f10);
   GEdOVGMdTG_tyler->Draw("C3 SAME");
+  GEdOVGMdTG_cates->Draw("P SAME");  
   GEdOVGMdTG_sbsgmn->Draw("P SAME");
 
   //
   TLegend *l10 = new TLegend(0.3,0.75,0.95,0.9); //0.15,0.15,0.80,0.3);
   l10->SetTextFont(42);
-  l10->AddEntry(GEdOVGMdTG_sbsgmn,"u quark (SBSGMn+Ye2018)","ep");
-  l10->AddEntry(GEdOVGMdTG_tyler,"u quark (Hague-GMn+Ye2018)","lf");
+  l10->AddEntry(GEdOVGMdTG_cates,"d quark (Cates 2011)","ep");  
+  l10->AddEntry(GEdOVGMdTG_sbsgmn,"d quark (SBSGMn+Ye2018)","ep");
+  l10->AddEntry(GEdOVGMdTG_tyler,"d quark (Hague-GMn+Ye2018)","lf");
   l10->Draw();
 
   pcust.customize_canvas(c10);
   c10->SaveAs("c10.pdf");  
+
+  // // Cates F1, F2 + SBS F1, F2
+  // //**************
+  // // Plot F1 with SBS-GMn + Ye 2018 and Ye 2018
+  // TCanvas *ccatesf1 = util_pd::TC("ccatesf1",1,1);
+  // ccatesf1->cd(); ccatesf1->SetGridy();
+
+  // TH2D *hframe_fcatesf1 = new TH2D("hframe_fcatesf1",";Q^{2} (GeV/c)^{2};Q^{4}F_{1}^{q}",500,0,15,500,-0.6,1.6);
+  // customize_hframe(hframe_fcatesf1);
+  
+  // F1uTG_cates->Draw("P SAME");
+  // F1dTG_cates->Draw("P SAME");
+  // F1uTG_sbsgmn->Draw("P SAME");
+  // F1dTG_sbsgmn->Draw("P SAME");  
+
+  // TLegend *lcatesf1 = new TLegend(0.1,0.1,0.49,0.3);
+  // lcatesf1->SetTextFont(42);
+  // lcatesf1->AddEntry(F1uTG_sbsgmn,"u quark (SBSGMn)","ep");
+  // lcatesf1->AddEntry(F1uTG_cates,"u quark (Cates 2011)","ep");
+  // lcatesf1->AddEntry(F1dTG_sbsgmn,"d quark x 2.5 (SBSGMn)","ep");
+  // lcatesf1->AddEntry(F1dTG_cates,"d quark x 2.5 (Cates 2011)","ep");
+  // lcatesf1->Draw();
+
+  // ccatesf1->SaveAs("ccatesf1.pdf");
+  
+  // //**************
+  // // Plot F2 with SBS-GMn + Ye 2018 and Ye 2018  
+  // TCanvas *ccatesf2 = util_pd::TC("ccatesf2",1,1);
+  // ccatesf2->cd(); ccatesf2->SetGridy();
+
+  // TH2D *hframe_fcatesf2 = new TH2D("hframe_fcatesf2",";Q^{2} (GeV/c)^{2};#kappa_{q}^{-1}Q^{4}F_{2}^{q}",500,0,15,500,-0.02,0.3);
+  // customize_hframe(hframe_fcatesf2);
+  
+  // F2uTG_cates->Draw("P SAME");
+  // F2dTG_cates->Draw("P SAME");    
+  // F2uTG_sbsgmn->Draw("P SAME");
+  // F2dTG_sbsgmn->Draw("P SAME");  
+
+  // TLegend *lcatesf2 = new TLegend(0.14,0.1,0.54,0.3);
+  // lcatesf2->SetTextFont(42);
+  // lcatesf2->AddEntry(F2uTG_sbsgmn,"u quark (SBSGMn)","ep");
+  // lcatesf2->AddEntry(F2uTG_cates,"u quark (Cates 2011)","ep");
+  // lcatesf2->AddEntry(F2dTG_sbsgmn,"d quark x 0.75 (SBSGMn)","ep");
+  // lcatesf2->AddEntry(F2dTG_cates,"d quark x 0.75 (Cates 2011)","ep");
+  // lcatesf2->Draw();
+
+  // ccatesf2->SaveAs("ccatesf2.pdf");  
+
   
   return 0;
 }
