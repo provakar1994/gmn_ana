@@ -293,7 +293,7 @@ int fit_dx (const char *configfilename,
   sfprefix = sfprefix.empty() ? "" : sfprefix + "_";
   infprefix = infprefix.empty() ? "" : infprefix + "_";
 
-  char const * weightn = "weight_effic";
+  char const * weightn = "weight_effic"; //"weight_effic";
   
   // reading ROOT files as df
   ROOT::EnableImplicitMT();
@@ -386,6 +386,7 @@ int fit_dx (const char *configfilename,
   TH1F *h_dxHCAL_bg_inel_p = new TH1F("h_dxHCAL_bg_inel_p","",int(h_dx[0]),h_dx[1],h_dx[2]); h_dxHCAL_bg_inel_p->Sumw2();
   TH1F *h_dxHCAL_bg_inel_n = new TH1F("h_dxHCAL_bg_inel_n","",int(h_dx[0]),h_dx[1],h_dx[2]); h_dxHCAL_bg_inel_n->Sumw2();
   TH1F *h_dxHCAL_bg_inel = new TH1F("h_dxHCAL_bg_inel","",int(h_dx[0]),h_dx[1],h_dx[2]); h_dxHCAL_bg_inel->Sumw2();
+  TH1F *h_dxHCAL_bg_random = new TH1F("h_dxHCAL_bg_random","",int(h_dx[0]),h_dx[1],h_dx[2]); h_dxHCAL_bg_random->Sumw2();  
   // kinematic histo "true"
   TH1F *h_vQ2 = new TH1F("h_vQ2","",300,0,16);
   TH1F *h_vepsilon = new TH1F("h_vepsilon","",300,0,1.5);
@@ -549,6 +550,7 @@ int fit_dx (const char *configfilename,
   TH1F *hgist_cv_4 = new TH1F("hgist_cv_4","",iter,-0.5,iter-0.5);
   TH1F *hgist_cv_5 = new TH1F("hgist_cv_5","",iter,-0.5,iter-0.5);
   TH1F *hgist_cv_6 = new TH1F("hgist_cv_6","",iter,-0.5,iter-0.5);
+  TH1F *hgist_cv_7 = new TH1F("hgist_cv_7","",iter,-0.5,iter-0.5);  
   // Canvas to plot cut region
   TCanvas *cCut = new TCanvas("cCut","cCut",1400,800);
   if (cut_vary_style==4) cCut->Divide(2,2);
@@ -1031,6 +1033,7 @@ int fit_dx (const char *configfilename,
 		<< "chi24,NDF4,R4,R4err,B4,B4err,Yp4,Yp4err,Yn4,Yn4err,Ybg4,Ybg4err,"
 		<< "chi25,NDF5,R5,R5err,B5,B5err,Yp5,Yp5err,Yn5,Yn5err,Ybg5,Ybg5err,"
 		<< "chi26,NDF6,R6,R6err,B6,B6err,Yp6,Yp6err,Yn6,Yn6err,Ybg6,Ybg6err,"
+		<< "chi27,NDF7,R7,R7err,B7,B7err,Yp7,Yp7err,Yn7,Yn7err,Ybg7,Ybg7err,"	  
 		<< "\n";
       }
       
@@ -1621,6 +1624,89 @@ int fit_dx (const char *configfilename,
       // // util_pd::DrawZeroLine(p5[1],dx_fit_range[0],dx_fit_range[1]);
       // ----
 
+      //h_dxHCAL_bg_random = (TH1F*)->Clone(h_dxHCAL_bg_data2);
+      h_dxHCAL_bg_data2->Scale(1./3.);
+      
+      // Canvas 7 : Fitting data/MC w/ background from MC
+      TCanvas *c7 = util_pd::TC("c7",1,1); gStyleFitCanvas();
+      c7->cd();
+      // performing the fit
+      vector<TH1F*> ho7;
+      TF1 *f7;
+      if (is_vary_pnXOff) {
+	f7 = fit::fit_2hs_2hbg_THI_xOffVary(dx_fit_range,
+					    h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_inel_p,h_dxHCAL_bg_inel_n,pnXOff_range,
+					    ho7);
+      } else {
+	// f7 = fit::fit_2hs_1hbg_THI(dx_fit_range,
+	// 			   h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_inel,
+	// 			   ho7);
+	f7 = fit::fit_2hs_3hbg_THI(dx_fit_range,
+				   h_dxHCAL_data,h_dxHCAL_simu_p,h_dxHCAL_simu_n,h_dxHCAL_bg_inel_p,h_dxHCAL_bg_inel_n,h_dxHCAL_bg_data2,
+				   ho7);	
+      }
+      if (is_vary_cut) {
+	hgist_cv_7->SetBinContent(i+1,f7->GetParameter(1));
+	hgist_cv_7->SetBinError(i+1,f7->GetParError(1));
+      }
+      // grabbing fit params for future use
+      chi2.push_back(f7->GetChisquare()); NDF.push_back(f7->GetNDF());
+      R_vals.push_back(f7->GetParameter(1)); Rerr_vals.push_back(f7->GetParError(1));
+      B_vals.push_back(f7->GetParameter(2)); Berr_vals.push_back(f7->GetParError(2));
+      // converting fit fn to a hostogram
+      TH1F *hf7 = (TH1F*)h_dxHCAL_data->Clone(); util_pd::TF1toTH1F(f7,hf7);
+      ho7[0]->Draw(); c7->Update(); 
+      // grabbing statbox of the fitted histo
+      TPaveStats *st7 = (TPaveStats*)ho7[0]->FindObject("stats");
+      ho7[0]->SetBit(TH1::kNoStats); // Sets up the stat box for later modification
+      // getting pads for pull plot
+      std::vector<TPad*> p7 = util_pd::GetPadsForPullPlot(c7);
+      //
+      // preparing the pad for data/MC fit
+      //
+      p7[0]->cd();
+      //gPad->SetLogy();
+      // drawing all the histograms
+      //ho7[0]->Draw(); customize_ht(ho7[0]); customize_dx(ho7[0]);
+      h_dxHCAL_data->Draw("E"); util_pd::customize_data(h_dxHCAL_data);
+      hf7->Draw("same HIST"); util_pd::customize_gfit(hf7,1);
+      ho7[4]->Draw("same HIST"); util_pd::customize_psig(ho7[4],1);
+      ho7[5]->Draw("same HIST"); util_pd::customize_nsig(ho7[5],1);
+      ho7[2]->Draw("same HIST"); util_pd::customize_hbg(ho7[2],1);
+      // calculating yields
+      std::vector<double> yo7; util_pd::GetYields(f7,ho7[4],ho7[5],ho7[2],yo7);
+      pCnt.push_back(yo7[0]); pCnt_err.push_back(yo7[1]);
+      nCnt.push_back(yo7[2]); nCnt_err.push_back(yo7[3]);
+      bgCnt.push_back(yo7[4]); bgCnt_err.push_back(yo7[5]);
+      // redrawing the stat box
+      st7->SetX1NDC(0.65); st7->SetY1NDC(0.55); st7->SetX2NDC(0.95); st7->SetY2NDC(0.9);
+      // Modifying it to add yield ratio
+      double yRatio7 = f7->GetParameter(1)*R_MC_nofit;
+      double yRatio7_err = f7->GetParError(1)*R_MC_nofit;
+      // TText *t7 = st7->AddText(Form("R_{Yield} = %.4f #pm %.4f",yRatio7,yRatio7_err));
+      // customize_text(t7);
+      st7->Draw("same");    
+      // drawing a legend
+      TLegend *l7=new TLegend(0.10,0.55,0.35,0.9);
+      l7->SetTextFont(42);
+      l7->AddEntry(h_dxHCAL_data,"Data","p");
+      l7->AddEntry(hf7,"Fit (QE MC + bg.)","lf");
+      l7->AddEntry(ho7[4],"p signal (from MC)","lf");
+      l7->AddEntry(ho7[5],"n signal (from MC)","lf");
+      l7->AddEntry(ho7[2],"Bg. (Inel-MC+Randoms)","lf");
+      l7->AddEntry(ho7[3],"Residual","p");
+      if (is_vary_cut) AddCutToLegend(l7,cuts_2[i].c_str());
+      l7->Draw();
+      //
+      // preparing the pad for residual
+      //  
+      p7[1]->cd();
+      ho7[3]->Draw(); util_pd::customize_residual(ho7[3]);
+      // drawing a horizontal line at y = 0
+      util_pd::DrawZeroLine(p7[1],dx_fit_range[0],dx_fit_range[1]);
+      // ** ----- ***
+      //c7->SaveAs(Form("%s_c7_%d.png",outPNG.Data(),i)); 
+      
       // Writing out fit parameters
       std::cout << "\n--- Reporting fit params ---\n";
       std::cout << "cut,min,max,R0,R0err,R1,R1err,R2,R2err,R3,R3err,R4,R4err\n";
@@ -1651,8 +1737,9 @@ int fit_dx (const char *configfilename,
       c3->Update(); c3->Write(); c3->SaveAs(Form("%s",outPlot.Data())); c3->SaveAs(Form("%s_3.png",outFileBase.Data())); 
       c4->Update(); c4->Write(); c4->SaveAs(Form("%s",outPlot.Data())); c4->SaveAs(Form("%s_4.png",outFileBase.Data())); 
       c5->Update(); c5->Write(); c5->SaveAs(Form("%s",outPlot.Data())); c5->SaveAs(Form("%s_5.png",outFileBase.Data())); 
-      c6->Update(); c6->Write(); c6->SaveAs(Form("%s",outPlot.Data())); c6->SaveAs(Form("%s_6.png",outFileBase.Data())); 
-      if (i==iter-1) c6->SaveAs(Form("%s]",outPlot.Data())); 
+      c6->Update(); c6->Write(); c6->SaveAs(Form("%s",outPlot.Data())); c6->SaveAs(Form("%s_6.png",outFileBase.Data()));
+      c7->Update(); c7->Write(); c7->SaveAs(Form("%s",outPlot.Data())); c7->SaveAs(Form("%s_6.png",outFileBase.Data()));       
+      if (i==iter-1) c7->SaveAs(Form("%s]",outPlot.Data())); 
     } // QE
   } // for, cut vairation
 
