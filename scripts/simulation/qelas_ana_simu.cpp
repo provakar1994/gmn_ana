@@ -63,7 +63,7 @@ int qelas_ana_simu (const char *configfilename,
 
   // reading job summary and parsing ROOT trees
   std::string rfd = jmgr->GetValueFromSubKey_str(key,"rootfile_dir");
-  std::string prefix = jmgr->GetValueFromSubKey_str(key,"prefix_to_filebase");
+  std::vector<std::string> prefix; jmgr->GetVectorFromSubKey<std::string>(key,"prefix_to_filebase",prefix);
   int njobs = jmgr->GetValueFromSubKey<int>(key,"Njobs_to_ana"); // # MC jobs to analyze
   std::vector<SimuJob> sjobs; util_pd::ReadSimuJobSummary(rfd,prefix,conf,sbsmag,generator,process,njobs,verbosefn,sjobs);
   TChain *C = new TChain("T"); util_pd::LoadSimuROOTTree(sjobs,verbosefn,C);
@@ -177,6 +177,8 @@ int qelas_ana_simu (const char *configfilename,
   TH1F *h_dxHCAL_n = new TH1F("h_dxHCAL_n","mc_fnucl = n;x_{HCAL}^{obs} - x_{HCAL}^{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
   TH1F *h_dxHCAL_p = new TH1F("h_dxHCAL_p","mc_fnucl = p;x_{HCAL}^{obs} - x_{HCAL}^{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
 
+  TH2F *h2_dx_vs_xHCAL_p = new TH2F("h2_dx_vs_xHCAL_p","mc_fnucl = p;x_{HCAL}^{obs} (m); dx (m)",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2],200,-2.5,1.2);  
+  
   TH1F *h_dx_w_p_def = new TH1F("h_dx_w_p_def",";dx+p_def (m);",200,-1,1);
     
   TH2F *h2_rcHCAL = util_pd::TH2FHCALface_rc("h2_rcHCAL");
@@ -643,6 +645,7 @@ int qelas_ana_simu (const char *configfilename,
     if (WCut&&bbfiduCut&&T_eHCAL>0) {
       if (abs(dy)<0.4) h_dxHCAL_nfc->Fill(dx, weight);
       h_dyHCAL_nfc->Fill(dy, weight);
+      if (mc_fnucl==1) h2_dx_vs_xHCAL_p->Fill(xHCAL,dx,weight);
       // fiducial cut
       if (fiduCut) {
     	h_dxHCAL->Fill(dx, weight);
@@ -650,7 +653,7 @@ int qelas_ana_simu (const char *configfilename,
     	// dx dist. for p & n separately using MC info
     	if (int(mc_fnucl)==0) {
 	  if (abs(dy)<0.4) {
-	    h_dxHCAL->Fill(dx, weight);
+	    h_dxHCAL_n->Fill(dx, weight);
 	  }
 	  h2_xyHCAL_n->Fill(xyHCAL_exp[1], xyHCAL_exp[0], weight);
     	} else if (int(mc_fnucl)==1) {
@@ -763,7 +766,7 @@ int qelas_ana_simu (const char *configfilename,
   //**** -- ***//
 
   /**** Canvas 3 (Deflection and W2) ****/
-  TCanvas *c3 = util_pd::TC("c3",1,2);
+  TCanvas *c3 = util_pd::TC("c3",2,2);
   c3->SetGridx();
   gStyle->SetOptFit(1);
   //
@@ -784,6 +787,10 @@ int qelas_ana_simu (const char *configfilename,
   h_W2_cut->SetLineColor(kBlack);
   h_W2_cut_noOff->Draw("same");
   h_W2_cut_noOff->SetLineColor(kRed);
+  //
+  c3->cd(3);
+  gPad->SetGridy();
+  h2_dx_vs_xHCAL_p->Draw("colz");  
   c3->SaveAs(Form("%s",outPlot.Data())); c3->Write();
   //**** -- ***//    
 
@@ -862,6 +869,7 @@ int qelas_ana_simu (const char *configfilename,
   h_dxHCAL->Write(); h_dxHCAL_nfc->Write();
   h_dyHCAL->Write(); h_dyHCAL_nfc->Write();
   h_dxHCAL_p->Write(); h_dxHCAL_n->Write();
+  h2_dx_vs_xHCAL_p->Write();
   h2_rcHCAL->Write(); h2_dxdyHCAL->Write();
   h2_xyHCAL_p->Write(); h2_xyHCAL_n->Write();
   h_dx_w_p_def->Write();

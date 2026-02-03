@@ -22,10 +22,12 @@
 #include <cmath>
 
 class LookUpTableReader {
- private:
+private:
   std::unordered_map<double, std::vector<double>> dataMap;
+  std::vector<double> rowKeys; // Stores keys in order of appearance
+  std::vector<std::string> header;
 
- public:
+public:
   // Function to read CSV file and populate a map
   void readCSV(const std::string& filename)
   {
@@ -39,7 +41,14 @@ class LookUpTableReader {
     std::string line;
     double key;
 
-    std::getline(file, line);  // Skip header line
+    std::getline(file, line);  // Read header line
+
+    std::istringstream headerStream(line);
+    std::string colName;
+    header.clear();
+    while (std::getline(headerStream, colName, ',')) {
+      header.push_back(colName);
+    }
 
     while (std::getline(file, line))
       {
@@ -58,6 +67,7 @@ class LookUpTableReader {
 	  }
 
 	dataMap[key] = values;  // Store key-value pair in map
+	rowKeys.push_back(key); // Maintain row order
       }
 
     file.close();
@@ -147,6 +157,21 @@ class LookUpTableReader {
       }
   }
 
+  // Function to return values by key and column no
+  double GetValueByKey(double Key, int columnNo)
+  {
+    auto it = dataMap.find(Key);
+    if (it != dataMap.end())
+      {
+	return dataMap[Key][columnNo];
+      }
+    else
+      {
+	std::cerr << "Key not found: " << Key << std::endl;
+	return -99999;
+      }
+  }  
+
   // Function to return values by closest key and column no
   double GetClosestValueByKey(double targetKey, int columnNo)
   {
@@ -163,6 +188,59 @@ class LookUpTableReader {
 	return -99999;
       }
   }
+
+  // Function to return value by row index and column number
+  // NOTE: Column count starts from 0, where 0th column is the key (i.e. the Q2).
+  // For other methods, however, 0th column is the 2nd column (the one after the key)
+  double GetValueByRowAndColumn(int row, int columnNo)
+  {
+    if (row < 0 || row >= rowKeys.size())
+      {
+	std::cerr << "Row index out of bounds: " << row << std::endl;
+	return -99999;
+      }
+
+    double key = rowKeys[row];
+    if (columnNo == 0)
+      return key; // Return the key itself when columnNo is 0
+
+    auto it = dataMap.find(key);
+    if (it != dataMap.end() && columnNo > 0 && columnNo <= it->second.size())
+      {
+	return it->second[columnNo - 1]; // Adjust index to match data structure
+      }
+    else
+      {
+	std::cerr << "Invalid row or column: row " << row << " column " << columnNo << std::endl;
+	return -99999;
+      }
+  }
+
+  // get number of rows parsed
+  int getRowCount() const {
+    return rowKeys.size();
+  }
+
+  int getColumnIndex(const std::string& colName) const {
+    for (size_t i = 0; i < header.size(); ++i) { 
+      //std::cout << "header ** " << header[i] << "\n"; 
+      if (header[i] == colName)
+	return i; // dataMap uses index 0 for header[1]
+    }
+    return -1; // Not found
+  }
+
+  double GetValueByRowAndColumnName(int row, const std::string& colName) {
+    int colIdx = getColumnIndex(colName);
+    if (colIdx == -1) {
+      std::cerr << "Column not found: " << colName << std::endl;
+      return -99999;
+    }
+    return GetValueByRowAndColumn(row, colIdx);
+  }
+
+  const std::vector<std::string>& getHeader() const { return header; }
+  
 };
 
 #endif

@@ -31,18 +31,18 @@ typedef struct SimuJob {
     ntried    = stod(data[5]);
     genvol    = stod(data[6]);
     lumi      = stod(data[7]);
-    ebeam     = stod(data[8]);      
+    ebeam     = stod(data[8]);
+    is_rfile  = stoi(data[9]);
+    if (generator.compare("g4sbs")==0) {
+      ibeam   = stod(data[10])*1e-6;      
+    }    
     if (generator.compare("simc")==0) {
-      charge  = stod(data[9])/1000.;
-      if (data.size()>10) {
-	usingRS = stoi(data[10]);
-	maxwtRS = stod(data[11]);
+      charge  = stod(data[10])/1000.;
+      if (data.size()>11) {
+	usingRS = stoi(data[11]);
+	maxwtRS = stod(data[12]);
       }
     }
-    if (generator.compare("g4sbs")==0) {
-      ibeam   = stod(data[9])*1e-6;      
-    }
-    is_rfile  = stoi(data[12]); 
   }
 
   // define an ostream operator to print to screen conveniently
@@ -50,6 +50,7 @@ typedef struct SimuJob {
     out << " ------------" << std::endl;
     out << " Simu. file name    : " << sjob.sfname << std::endl;
     out << " Replayed file name : " << sjob.rfname << std::endl;
+    out << " Does rfile Exist?  : " << sjob.is_rfile << std::endl;    
     out << " Generator          : " << sjob.generator << std::endl;
     out << " Process            : " << sjob.process << std::endl;
     out << " # events requested : " << sjob.ngenreq << std::endl;
@@ -57,12 +58,13 @@ typedef struct SimuJob {
     out << " Generation vol.    : " << sjob.genvol << std::endl;
     out << " Luminosity         : " << sjob.lumi << std::endl;
     out << " Ebeam (GeV)        : " << sjob.ebeam << std::endl;
-    if (sjob.generator.compare("simc")==0)
+    if (sjob.generator.compare("g4sbs")==0) 
+      out << " Ibeam (A)          : " << sjob.ibeam << std::endl;
+    if (sjob.generator.compare("simc")==0) {
       out << " Charge (C)         : " << sjob.charge << std::endl;
       out << " Using RS           : " << sjob.usingRS << std::endl;
       out << " Max Weight RS      : " << sjob.maxwtRS << std::endl;
-    if (sjob.generator.compare("g4sbs")==0) 
-      out << " Ibeam (A)          : " << sjob.ibeam << std::endl;
+    }
     out << " ------------" << std::endl << std::endl;
     return out;
   }

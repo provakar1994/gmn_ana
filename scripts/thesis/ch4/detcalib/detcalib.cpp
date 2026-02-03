@@ -468,7 +468,7 @@ void PlotSHPosRes()
     }
   }
   util_pd::SetAxTitles(h1s[0],"","#font[32]{x_{SH} - x_{Tr}} (m)");
-  pcust.AddTitleText("Dispersive, #font[32]{#sigma =} 1.21 m",0.66);
+  pcust.AddTitleText("Dispersive, #font[32]{#sigma =} 1.21 cm",0.68);
   //
   cv->cd(2);  
   // Loop through all objects in subpad2
@@ -496,7 +496,7 @@ void PlotSHPosRes()
     }
   }
   util_pd::SetAxTitles(h1s2[0],"","#font[32]{y_{SH} - y_{Tr}} (m)");
-  pcust.AddTitleText("Transverse, #font[32]{#sigma =} 1.24 m",0.67);
+  pcust.AddTitleText("Transverse, #font[32]{#sigma =} 1.24 cm",0.69);
   //
   pcust.customize_canvas(cv);
   //
@@ -1065,8 +1065,8 @@ void detcalib()
   // // Draw PS atime alignment
   // PlotPSAtimeAlign();
 
-  // // Draw SH position resolutions
-  // PlotSHPosRes();
+  // Draw SH position resolutions
+  PlotSHPosRes();
 
   // // Plot RF time
   // PlotRFTime();
@@ -1091,5 +1091,5 @@ void detcalib()
 
   // Plot BBCAL energy calib resolution
   //PlotBBCALEngResSBS9();
-  PlotBBCALEngResSBS8();
+  // PlotBBCALEngResSBS8();
 }

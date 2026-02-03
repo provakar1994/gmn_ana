@@ -141,34 +141,69 @@ class JSONManager {
     return 0;
   }
 
+  // template <typename T>
+  //   int GetVectorFromSubKey(std::string key,std::string subKey,std::vector<T> &data){
+  //   T arg;
+  //   int N=0;
+  //   int outDataType = CheckType<T>(arg);
+  //   std::string DATA="";
+  //   // first check if the key exists
+  //   bool exist = DoesKeyExist(key);
+  //   if(exist){
+  //     // found the key, fill the vector
+  //     N= fObject[key][subKey].size();
+  //     for(int i=0;i<N;i++){
+  // 	if( fObject[key][subKey][i].is_string() ){
+  // 	  // data is a string type, convert to int or double 
+  // 	  DATA = fObject[key][subKey][i].get<std::string>();
+  // 	  if(outDataType==kINT) arg = std::atoi( DATA.c_str() );
+  // 	  if(outDataType==kDBL) arg = std::atof( DATA.c_str() );
+  // 	}else{
+  // 	  // data isn't a string, just typecast and store the value  
+  // 	  arg = (T)(fObject[key][subKey][i]);
+  // 	}
+  // 	data.push_back(arg);
+  //     }
+  //   }else{
+  //     return 1;
+  //   }
+  //   return 0;
+  // }
+
   template <typename T>
-    int GetVectorFromSubKey(std::string key,std::string subKey,std::vector<T> &data){
+  int GetVectorFromSubKey(std::string key, std::string subKey, std::vector<T> &data) {
+    // updated version to handle string datatype properly
     T arg;
-    int N=0;
+    int N = 0;
     int outDataType = CheckType<T>(arg);
-    std::string DATA="";
-    // first check if the key exists
+    std::string DATA = "";
+
+    // First check if the key exists
     bool exist = DoesKeyExist(key);
-    if(exist){
-      // found the key, fill the vector
-      N= fObject[key][subKey].size();
-      for(int i=0;i<N;i++){
-	if( fObject[key][subKey][i].is_string() ){
-	  // data is a string type, convert to int or double 
+    if (exist) {
+      // Found the key, fill the vector
+      N = fObject[key][subKey].size();
+      for (int i = 0; i < N; i++) {
+	if constexpr (std::is_same<T, std::string>::value) {
+	  // Directly assign the string value
+	  arg = fObject[key][subKey][i].get<std::string>();
+	} else if (fObject[key][subKey][i].is_string()) {
+	  // Data is a string type, convert to int or double
 	  DATA = fObject[key][subKey][i].get<std::string>();
-	  if(outDataType==kINT) arg = std::atoi( DATA.c_str() );
-	  if(outDataType==kDBL) arg = std::atof( DATA.c_str() );
-	}else{
-	  // data isn't a string, just typecast and store the value  
-	  arg = (T)(fObject[key][subKey][i]);
+	  if (outDataType == kINT) arg = static_cast<T>(std::atoi(DATA.c_str()));
+	  if (outDataType == kDBL) arg = static_cast<T>(std::atof(DATA.c_str()));
+	} else {
+	  // Data isn't a string, just typecast and store the value
+	  arg = static_cast<T>(fObject[key][subKey][i]);
 	}
 	data.push_back(arg);
       }
-    }else{
-      return 1;
+    } else {
+      return 1;  // Key does not exist
     }
     return 0;
   }
+  
 
 };
 

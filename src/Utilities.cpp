@@ -191,6 +191,32 @@ namespace util_pd {
     return mm + '/' + dd + '/' + yyyy;
   }
 
+  //_____________________________________  
+  double GetXSpreadOfTH1(const TH1* hist, double minCounts, int verbose) {
+    /* returns the spread of TH1 in X based on a threshold of counts */
+    if (!hist || hist->GetNbinsX() == 0)
+      return 0.0;
+
+    double xmin = -1, xmax = -1;
+    int nbins = hist->GetNbinsX();
+
+    for (int i = 1; i <= nbins; ++i) {
+      double content = hist->GetBinContent(i);
+      if (content >= minCounts) {
+	double xcenter = hist->GetBinCenter(i);
+	if (xmin < 0) xmin = xcenter;  // first qualifying bin
+	xmax = xcenter;               // always update to latest
+      }
+    }
+
+    if (verbose>0) {
+      std::cout << "xmin: " << xmin << ", xmax: " << xmax << "\n";
+    }
+    
+    if (xmin < 0 || xmax < 0) return 0.0; // no bins met the threshold
+    return xmax - xmin;
+  }  
+
   /* #################################################
      ##                HCAL Related                 ##  
      ################################################# */
@@ -832,7 +858,7 @@ namespace util_pd {
      ################################################## */
   //______________________________________________________________________________
   void ReadSimuJobSummary(std::string logfile_dir,   // Dir. path containing MC summary files
-			  std::string prefix,        // prefix to standard filebase (Special case handling)
+			  std::vector<std::string> const &prefixes, // prefix to standard filebase, Convention: [prefix_deep,prefix_deen] 
 			  int sbsconf,               // SBS configuration
 			  int sbsmag,                // SBS magnet current (in %)
 			  std::string generator,     // simc / g4sbs
@@ -855,21 +881,38 @@ namespace util_pd {
      4. Replayed digitized ROOT file: replayed_<filebase>_<process>_job_<jobid>.root
   */
   {
-    TString filebase = Form("sbs%d_sbs%dp_%s",sbsconf,sbsmag,generator.c_str());
-    if (!prefix.empty()) filebase = (TString)prefix + "_" + filebase;
-
+    std::string prefix, prefix_deen;
+    bool prefixesGTone = false; 
+    if (!prefixes.empty()) {
+      if (prefixes.size()>1 && generator.compare("simc")==0 && process.compare("heep")!=0) { //in case deep and deen has different prefixces
+	prefix = prefixes[0];
+	prefix_deen = prefixes[1];
+	prefixesGTone = true;
+      } else {
+	prefix = prefixes[0];
+      }
+    }
+    
+    TString filebase_std = Form("sbs%d_sbs%dp_%s",sbsconf,sbsmag,generator.c_str());
+    TString filebase, filebase_deen;
+    if (!prefix.empty()) filebase = (TString)prefix + "_" + filebase_std;
+    if (prefixesGTone && !prefix_deen.empty())
+      filebase_deen = (TString)prefix_deen + "_" + filebase_std;
+    
     // Define the name of the summary file
     std::vector<TString> simu_logfile, processes;
     if (generator.compare("simc")==0 && process.compare("deeN")==0) {
       TString temp = Form("simcout/%s_deep_summary.csv",filebase.Data());
       simu_logfile.push_back(temp); processes.push_back("deep");
-      temp = Form("simcout/%s_deen_summary.csv",filebase.Data());
+      temp = !prefixesGTone ? Form("simcout/%s_deen_summary.csv",filebase.Data())
+	: Form("simcout/%s_deen_summary.csv",filebase_deen.Data());
       simu_logfile.push_back(temp); processes.push_back("deen");
     } else if (generator.compare("simc")==0 && process.compare("deep")==0) {
       TString temp = Form("simcout/%s_deep_summary.csv",filebase.Data());
       simu_logfile.push_back(temp); processes.push_back("deep");
     } else if (generator.compare("simc")==0 && process.compare("deen")==0) {
-      TString temp = Form("simcout/%s_deen_summary.csv",filebase.Data());
+      TString temp = !prefixesGTone ? Form("simcout/%s_deen_summary.csv",filebase.Data())
+	: Form("simcout/%s_deen_summary.csv",filebase_deen.Data());
       simu_logfile.push_back(temp); processes.push_back("deen");
     } else if (generator.compare("simc")==0 && process.compare("heep")==0) {
       TString temp = Form("simcout/%s_%s_summary.csv",filebase.Data(),process.c_str());
@@ -887,11 +930,12 @@ namespace util_pd {
       TString logfile_temp = Form("%s/%s",logfile_dir.c_str(),simu_logfile[ifile].Data());
       std::ifstream simu_log; simu_log.open(logfile_temp);
       std::string readline;
-      //bool is_simc = false; // true if at least one SIMC deeN process summary file is present.
+      //bool is_simc = false; // true if at least one SIMC deeN process summary file is present.      
       if(simu_log.is_open()){
 	//if (generator.compare("simc")==0 && process.compare("deeN")==0) is_simc = true;
 	std::cout << "Reading summary file: " << logfile_temp << std::endl;
 	std::string skip_header; getline(simu_log,skip_header); // skipping column header
+
 	while(getline(simu_log,readline)){                  // reading each line
 	  std::istringstream tokenStream(readline);
 	  std::string token;
@@ -905,10 +949,12 @@ namespace util_pd {
 	  if (sjobs.size() >= njobs) {njobs += njobs; break;}
 	  SimuJob temp_sj;
 	  int jobid = stoi(temp[0]);
+	  TString fbase = prefixesGTone&&processes[ifile].CompareTo("deen")==0 ? filebase_deen : filebase;
 	  TString sfname = Form("%s/%s_%s_job_%d.root",logfile_dir.c_str(),
-				filebase.Data(),processes[ifile].Data(),jobid); 
+				fbase.Data(),processes[ifile].Data(),jobid); 
 	  TString rfname = Form("%s/replayed_%s_%s_job_%d.root",logfile_dir.c_str(),
-				filebase.Data(),processes[ifile].Data(),jobid); 
+				fbase.Data(),processes[ifile].Data(),jobid);
+	  
 	  // handling the sicrepancy in summary file by generator
 	  data.push_back(sfname.Data());
 	  data.push_back(rfname.Data());
@@ -919,6 +965,14 @@ namespace util_pd {
 	  data.push_back(temp[3]); //genvol
 	  data.push_back(temp[4]); //lumi
 	  data.push_back(temp[5]); //ebeam(GeV)
+
+	  // let's check if the replayed ROOT file exists or not
+	  std::string is_rfile = "0";
+	  if (std::filesystem::exists(rfname.Data())) is_rfile = "1";
+	  // TFile* file_temp = TFile::Open(rfname.Data(), "READ");
+	  // if (file_temp && !file_temp->IsZombie()) is_rfile = "1";
+	  data.push_back(is_rfile);
+
 	  if (generator.compare("g4sbs") == 0) data.push_back(temp[6]); //ibeam(muA)
 	  if (generator.compare("simc") == 0) {
 	    data.push_back(temp[6]);  //charge(mC)
@@ -927,12 +981,6 @@ namespace util_pd {
 	      data.push_back(temp[9]); //max_wt_RS
 	    }
 	  }
-	  // let's check if the replayed ROOT file exists or not
-	  std::string is_rfile = "0";
-	  if (std::filesystem::exists(rfname.Data())) is_rfile = "1";
-	  // TFile* file_temp = TFile::Open(rfname.Data(), "READ");
-	  // if (file_temp && !file_temp->IsZombie()) is_rfile = "1";
-	  data.push_back(is_rfile);
 	  
 	  temp_sj.SetDataSimuJob(data);
 	  sjobs.push_back(temp_sj);

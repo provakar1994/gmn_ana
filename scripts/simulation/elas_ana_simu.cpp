@@ -63,7 +63,7 @@ int elas_ana_simu (const char *configfilename,
 
   // reading job summary and parsing ROOT trees
   std::string rfd = jmgr->GetValueFromSubKey_str(key,"rootfile_dir");
-  std::string prefix = jmgr->GetValueFromSubKey_str(key,"prefix_to_filebase");
+  std::vector<std::string> prefix; jmgr->GetVectorFromSubKey<std::string>(key,"prefix_to_filebase",prefix);
   int njobs = jmgr->GetValueFromSubKey<int>(key,"Njobs_to_ana"); // # MC jobs to analyze
   //std::vector<SimuJob> sjobs; util_pd::ReadSimuJobSummary(rfd,prefix,conf,sbsmag,gen,target,njobs,verbosefn,sjobs);
   std::vector<SimuJob> sjobs; util_pd::ReadSimuJobSummary(rfd,prefix,conf,sbsmag,generator,process,njobs,verbosefn,sjobs);
@@ -168,6 +168,8 @@ int elas_ana_simu (const char *configfilename,
   TH1F *h_dyHCAL = new TH1F("h_dyHCAL","W & fiducial cuts;y_{HCAL}^{obs} - y_{HCAL}^{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
   TH1F *h_dyHCAL_nfc = new TH1F("h_dyHCAL_nfc","W cut;y_{HCAL}^{obs} - y_{HCAL}^{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
   TH1F *h_dxHCAL_p = new TH1F("h_dxHCAL_p","mc_fnucl = p;x_{HCAL}^{obs} - x_{HCAL}^{exp} (m);",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2]);
+
+  TH2F *h2_dx_vs_xHCAL_p = new TH2F("h2_dx_vs_xHCAL_p","mc_fnucl = p;x_{HCAL}^{obs} (m); dx (m)",int(hdx_lim[0]),hdx_lim[1],hdx_lim[2],200,-2.5,1.2);  
 
   TH1F *h_dx_w_p_def = new TH1F("h_dx_w_p_def",";dx+p_def (m);",200,-1,1);
 
@@ -605,7 +607,10 @@ int elas_ana_simu (const char *configfilename,
 	// hit map to show p & n in fiducial region
 	if (pCut) h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick, weight);
       }
-      if (pCut) h2_xyHCAL_p_nfc->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick, weight);
+      if (pCut) {
+	h2_xyHCAL_p_nfc->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick, weight);
+	h2_dx_vs_xHCAL_p->Fill(xHCAL,dx,weight);
+      }
     }
 
     // fiducial cut but no W cut
@@ -675,7 +680,7 @@ int elas_ana_simu (const char *configfilename,
   //**** -- ***//
 
   /**** Canvas 3 (Deflection and W2) ****/
-  TCanvas *c3 = util_pd::TC("c3",1,2);
+  TCanvas *c3 = util_pd::TC("c3",2,2);
   c3->SetGridx();
   gStyle->SetOptFit(1);
   //
@@ -696,6 +701,10 @@ int elas_ana_simu (const char *configfilename,
   h_W2_cut->SetLineColor(kBlack);
   h_W2_cut_noOff->Draw("same");
   h_W2_cut_noOff->SetLineColor(kRed);  
+  //
+  c3->cd(3);
+  gPad->SetGridy();
+  h2_dx_vs_xHCAL_p->Draw("colz");
   c3->SaveAs(Form("%s",outPlot.Data())); c3->Write();
   //**** -- ***//  
 
@@ -765,6 +774,7 @@ int elas_ana_simu (const char *configfilename,
   h_dxHCAL->Write(); h_dxHCAL_nfc->Write();
   h_dyHCAL->Write(); h_dyHCAL_nfc->Write();
   h_dxHCAL_p->Write(); h2_xyHCAL_p->Write();
+  h2_dx_vs_xHCAL_p->Write();
   h2_xyHCAL_p_nfc->Write();
   h2_rcHCAL->Write(); h2_dxdyHCAL->Write();
   h_dx_w_p_def->Write();

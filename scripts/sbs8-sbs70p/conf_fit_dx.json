@@ -21,7 +21,7 @@
 	"cuts_for_signal_data" : "W2>0.25&&W2<1.2&&abs(vz)<0.07&&eHCAL>0.1&&abs(EovP-1)<0.3&&trchi2ndf<15&&ngoodhitsGEM>3&&fpX-0.9*fpTh>-0.2&&fpX-0.9*fpTh<0.35&&fpY-0.9*fpPh>-0.09&&fpY-0.9*fpPh<0.1&&yHCAL_exp>-0.5&&yHCAL_exp<0.5&&xHCAL_exp-p_def>-2.28&&xHCAL_exp-p_def<0.78&&xHCAL_exp>-2.28&&xHCAL_exp<0.78&&ARCut&&abs(coinT_ADC_c)<1.38*3.5",
 	"cuts_for_signal_simu" : "W2>0.25&&W2<1.2&&abs(vz)<0.07&&eHCAL>0.1&&abs(EovP-1)<0.3&&trchi2ndf<15&&ngoodhitsGEM>3&&fpX-0.9*fpTh>-0.2&&fpX-0.9*fpTh<0.35&&fpY-0.9*fpPh>-0.09&&fpY-0.9*fpPh<0.1&&yHCAL_exp>-0.5&&yHCAL_exp<0.5&&xHCAL_exp-p_def>-2.28&&xHCAL_exp-p_def<0.78&&xHCAL_exp>-2.28&&xHCAL_exp<0.78&&ARCut",
 	"cuts_for_bg_data1"    : "W2>0.1&&W2<2&&dy>0.6",
-	"cuts_for_bg_data2"    : "W2>0.1&&W2<2&&abs(coinT_ADC_c)>6",	
+	"cuts_for_bg_data2"    : "W2>0.25&&W2<1.2&&abs(vz)<0.07&&eHCAL>0.1&&abs(EovP-1)<0.3&&trchi2ndf<15&&ngoodhitsGEM>3&&fpX-0.9*fpTh>-0.2&&fpX-0.9*fpTh<0.35&&fpY-0.9*fpPh>-0.09&&fpY-0.9*fpPh<0.1&&yHCAL_exp>-0.5&&yHCAL_exp<0.5&&xHCAL_exp-p_def>-2.28&&xHCAL_exp-p_def<0.78&&xHCAL_exp>-2.28&&xHCAL_exp<0.78&&ARCut&&(abs(coinT_ADC_c-17.5)<7.5||abs(coinT_ADC_c+17.5)<7.5)",	
 	"cuts_for_bg_simu"     : "W2>0.25&&W2<1.2&&abs(vz)<0.07&&eHCAL>0.1&&abs(EovP-1)<0.3&&trchi2ndf<15&&ngoodhitsGEM>3&&fpX-0.9*fpTh>-0.2&&fpX-0.9*fpTh<0.35&&fpY-0.9*fpPh>-0.09&&fpY-0.9*fpPh<0.1&&yHCAL_exp>-0.5&&yHCAL_exp<0.5&&xHCAL_exp-p_def>-2.28&&xHCAL_exp-p_def<0.78&&xHCAL_exp>-2.28&&xHCAL_exp<0.78&&ARCut",
 	"dx_offset_MC_for_p"   : -0.037,
 	"dx_offset_MC_for_n"   : 0.016,
@@ -45,7 +45,7 @@
 	"fidu_vary_y"          : [1,-20,-10,0,10,20],
 	"SCRIPT RUN SECTION"   : "------ See Below ------",
 	"output_filebase"      : "consinel_effic_bsf_0p77zoff_0p63797sf",
-	"COMMENT"              : "R0: 240,-1.8,0.8, R1: 240,-2,1, R2: 240,-1.6,0.6, R3: 240,-1.7,0.7, R4: 240,-1.9,0.9",
+	"COMMENT"              : "R0: 240,-1.8,0.8, R1: 240,-2,1, R2: 240,-1.6,0.6, R3: 240,-1.7,0.7, R4: 240,-1.9,0.9, 200,-3,2",
 	"COMMENT"              : "abs(dy+0.15)<0.35, [0,-20,-10,0,10,20], [0,-50,0,50,100,150,200,250,300,350,400]"
     },
     "qelas_prod":

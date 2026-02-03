@@ -79,6 +79,11 @@ namespace util_pd {
   // Plots HCAL fiducial cut region
   void PlotFiduCut(int pass, std::vector<double> hcal_AR, std::vector<double> hcal_SM);
 
+  // Returns the spread of TH1 in X based on a threshold of counts
+  double GetXSpreadOfTH1(const TH1* hist,   // input TH1 object
+			 double minCounts,  // Threshold (minimum count)
+			 int verbose);
+
   /* #################################################
      ##                HCAL Histograms              ##  
      ################################################# */
@@ -164,7 +169,7 @@ namespace util_pd {
      3. Digitized ROOT file: <filebase>_<process>_job_<jobid>.root
      4. Replayed digitized ROOT file: replayed_<filebase>_<process>_job_<jobid>.root */
   void ReadSimuJobSummary(std::string logfile_dir,   // Dir. path containing MC summary files
-			  std::string prefix,        // prefix to standard filebase (Special case)
+			  std::vector<std::string> const &prefixes, // prefix to standard filebase, Convention: [prefix_deep,prefix_deen] 
 			  int sbsconf,               // SBS configuration
 			  int sbsmag,                // SBS magnet current (in %)
 			  std::string generator,     // simc / g4sbs

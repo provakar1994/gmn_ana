@@ -1,5 +1,77 @@
 {
-    "simc_deeN_model2":
+   "simc_deeN_model2":
+    {
+	"Ntype"              : "np",
+	"SBS_config"         : 7,
+	"SBS_magnet_percent" : 85,
+	"prefix_to_filebase" : ["OT0_0p815sf","OTm3_0p815sf"],
+	"Njobs_to_ana"       : -1,
+	"rootfile_dir"       : "/lustre24/expphy/volatile/halla/sbs/sbs-gmn/MC/pass2/sbs7/sbs85p/ld2/deeN",
+	"global_cut"         : "bb.tr.n>0&&bb.gem.track.nhits>3&&abs(bb.tr.vz[0])<0.08&&bb.tr.p[0]>2.1&&bb.ps.e>0.2",
+	"dy_offset"          : 0,
+	"W2_offset"          : -0.0598,
+	"W_cutR"             : [0.7,1.2],
+	"bbfidu_cutR"        : [0.035,0.335],
+	"max_N_tracks"       : 250,
+	"SBS_scale_field"    : 0.815,
+	"hcal_voffset"       : 0,
+	"hcal_hoffset"       : 0.02,
+	"hcal_zoffset"       : 0.55,
+	"sbs_kick"           : 0.77,
+	"dx_p_cut"           : [-0.77156,0.10068,2],
+	"dy_p_cut"           : [-0.00036,0.12464,2],
+	"dx_n_cut"           : [-0.00045,0.09291,2],
+	"dy_n_cut"           : [-0.00036,0.12464,2],
+	"h_dxHCAL_lims"      : [290,-3.2,2.6],
+	"h_dyHCAL_lims"      : [200,-1.5,1.5],
+	"h_dxHCAL_p_fitR"    : [-2,-0.37,0.8,0.8],
+	"h_dxHCAL_n_fitR"    : [-0.37,0.5,0.8,0.8],
+	"h_dyHCAL_fitR"      : [-1,1,0.6,0.8],
+	"Other_parmas_block" : "-----FOLLOWING PARMAS ARE NEEDED TO RUN THE SCRIPT-----",
+	"NOTE"               : "verbose=0 & verbosefn=0 => Production; verbose<-1=>Debug, =-1=>Test; verbosefn>0=>Debug",
+	"gen_ML_data"        : 0,
+	"verbose"            : -1,
+	"verbose_function"   : 0,
+	"outfile_prefix"     : "mcp2_OT0nm3_0p815sf",
+	"COMMENTS"           : "02/24/25"
+    },
+    "g4sbs_inel_model2":
+    {
+	"Ntype"              : "np",
+	"SBS_config"         : 7,
+	"SBS_magnet_percent" : 85,
+	"prefix_to_filebase" : ["0p815sf_ld2"],
+	"Njobs_to_ana"       : -1,
+	"rootfile_dir"       : "/lustre24/expphy/volatile/halla/sbs/sbs-gmn/MC/pass2/sbs7/sbs85p/ld2/inel",
+	"global_cut"         : "bb.tr.n>0&&bb.gem.track.nhits>3&&abs(bb.tr.vz[0])<0.08&&bb.tr.p[0]>2.1&&bb.ps.e>0.2",
+	"dy_offset"          : 0,
+	"W2_offset"          : -0.0598,
+	"W_cutR"             : [0.7,1.2],
+	"bbfidu_cutR"        : [0.035,0.335],
+	"max_N_tracks"       : 250,
+	"SBS_scale_field"    : 0.815,
+	"hcal_voffset"       : 0,
+	"hcal_hoffset"       : 0.02,
+	"hcal_zoffset"       : 0.55,
+	"sbs_kick"           : 0.77,
+	"dx_p_cut"           : [-0.77156,0.10068,2],
+	"dy_p_cut"           : [-0.00036,0.12464,2],
+	"dx_n_cut"           : [-0.00045,0.09291,2],
+	"dy_n_cut"           : [-0.00036,0.12464,2],
+	"h_dxHCAL_lims"      : [290,-3.2,2.6],
+	"h_dyHCAL_lims"      : [200,-1.5,1.5],
+	"h_dxHCAL_p_fitR"    : [-2,-0.37,0.8,0.8],
+	"h_dxHCAL_n_fitR"    : [-0.37,0.5,0.8,0.8],
+	"h_dyHCAL_fitR"      : [-1,1,0.6,0.8],
+	"Other_parmas_block" : "-----FOLLOWING PARMAS ARE NEEDED TO RUN THE SCRIPT-----",
+	"NOTE"               : "verbose=0 & verbosefn=0 => Production; verbose<-1=>Debug, =-1=>Test; verbosefn>0=>Debug",
+	"gen_ML_data"        : 0,
+	"verbose"            : -1,
+	"verbose_function"   : 0,
+	"outfile_prefix"     : "mcp2_0p815sf",
+	"COMMENTS"           : "02/25/25"
+    },    
+    "simc_deeN_model2_thesis":
     {
 	"Ntype"              : "np",
 	"SBS_config"         : 7,
@@ -35,7 +107,7 @@
 	"outfile_prefix"     : "bsf_0p925zoff_0p815sf",
 	"COMMENTS"           : "02/16/24"
     },
-    "g4sbs_inel_model2":
+    "g4sbs_inel_model2_dm":
     {
 	"Ntype"              : "np",
 	"SBS_config"         : 7,
@@ -71,7 +143,7 @@
 	"outfile_prefix"     : "dm_0p925zoff_0p815sf",
 	"COMMENTS"           : "Inelastic MC ran on  11/18/24"
     },
-    "g4sbs_inel_model2_prod":
+    "g4sbs_inel_model2_thesis":
     {
 	"Ntype"              : "np",
 	"SBS_config"         : 7,

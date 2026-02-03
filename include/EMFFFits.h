@@ -153,7 +153,7 @@ class Ye2017 : public EMFFFits {
     int err = YeFit(kID, Q2, GNGD_Fit, GNGD_Err);
     StripGDandMu(kG,Q2,GNGD_Fit[0]);
     StripGDandMu(kG,Q2,GNGD_Err[0]); // *** Through check is needed!!
-    result = {GNGD_Fit[0],GNGD_Err[0]};
+    result = {GNGD_Fit[0],fabs(GNGD_Err[0])};
     return result;
   }
   // No TPE

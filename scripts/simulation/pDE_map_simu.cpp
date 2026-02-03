@@ -376,6 +376,16 @@ int pDE_map_simu(const char *configfilename) {
   TCanvas *cefmap = util_pd::TC("cefmap",1,1);
   cefmap->cd(); gStyle->SetPalette(kRainbow); gStyle->SetNumberContours(50);
   h2_effi_map->Draw("colz");
+  // fiducial cut
+  std::vector<double> AR_w{1,1}; //jmgr->GetVectorFromSubKey<double>(key,"AR_width_x_y",AR_w);
+  std::vector<double> SM_w{0.22,0.22,0.27}; //jmgr->GetVectorFromSubKey<double>(key,"SM_width_xp_xn_y",SM_w);
+  //std::vector<double> hcal_area = cut::hcal_active_area_data(0,0,2); 
+  std::vector<double> hcal_AR = cut::hcal_active_area_data(AR_w[0],AR_w[1],2); 
+  std::vector<double> hcal_SM = cut::hcal_safety_margin(SM_w[0],SM_w[1],SM_w[2],hcal_AR);    
+  util_pd::DrawArea(hcal_area,kGreen+2,2,1);
+  //util_pd::DrawArea(hcal_AR,2,4,9);
+  util_pd::DrawArea(hcal_SM,kMagenta,2,1);
+  //
   pcust.customize_canvas(cefmap);
   cefmap->Update();
   cefmap->Write();
@@ -389,29 +399,29 @@ int pDE_map_simu(const char *configfilename) {
   // ----
   // ----
 
-  // ----
-  // 
-  TCanvas *c2 = util_pd::TC("c2",1,2);
-  c2->cd(1);
-  gStyle->SetOptStat(0);
-  gStyle->SetOptFit(1);
-  h_xexp_pDE->Draw("E");
-  h_xexp_pDE->GetYaxis()->SetRangeUser(0,1.2);
-  fxexp->Draw("same");
-  //
-  c2->cd(2);
-  gStyle->SetOptStat(0);
-  gStyle->SetOptFit(1);
-  h_yexp_pDE->Draw("E");
-  h_yexp_pDE->GetYaxis()->SetRangeUser(0,1.2);
-  fyexp->Draw("same");
-  //
-  pcust_wStat.customize_canvas(c2);
-  c2->Update();
-  //c2->SaveAs("hcalnde_effimap1_8.pdf"); // for sbs8 ALL
-  // c2->SaveAs("hcalnde_xyeffi_simu_4_no_efficorr.pdf");
-  c2->SaveAs("hcalnde_xyeffi_simu_4_with_efficorr.pdf");
-  //--  
+  // // ----
+  // // 
+  // TCanvas *c2 = util_pd::TC("c2",1,2);
+  // c2->cd(1);
+  // gStyle->SetOptStat(0);
+  // gStyle->SetOptFit(1);
+  // h_xexp_pDE->Draw("E");
+  // h_xexp_pDE->GetYaxis()->SetRangeUser(0,1.2);
+  // fxexp->Draw("same");
+  // //
+  // c2->cd(2);
+  // gStyle->SetOptStat(0);
+  // gStyle->SetOptFit(1);
+  // h_yexp_pDE->Draw("E");
+  // h_yexp_pDE->GetYaxis()->SetRangeUser(0,1.2);
+  // fyexp->Draw("same");
+  // //
+  // pcust_wStat.customize_canvas(c2);
+  // c2->Update();
+  // //c2->SaveAs("hcalnde_effimap1_8.pdf"); // for sbs8 ALL
+  // // c2->SaveAs("hcalnde_xyeffi_simu_4_no_efficorr.pdf");
+  // c2->SaveAs("hcalnde_xyeffi_simu_4_with_efficorr.pdf");
+  // //--  
   
   // TCanvas *c3 = util_pd::TC("c3",1,3);
   // c3->cd(1);

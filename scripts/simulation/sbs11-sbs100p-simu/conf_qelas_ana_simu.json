@@ -1,10 +1,82 @@
 {
-    "simc_deep_model2":
+    "simc_deeN_model2":
     {
 	"Ntype"              : "np",
 	"SBS_config"         : 11,
 	"SBS_magnet_percent" : 100,
-	"prefix_to_filebase" : "OTm3_0p97sf",
+	"prefix_to_filebase" : ["OT0_0p97sf","OTm3_0p97sf"],
+	"Njobs_to_ana"       : -1,
+	"rootfile_dir"       : "/lustre24/expphy/volatile/halla/sbs/sbs-gmn/MC/pass2/sbs11/sbs100p/ld2/deeN",
+	"global_cut"         : "bb.tr.n>0&&bb.gem.track.nhits>3&&abs(bb.tr.vz[0])<0.08&&bb.tr.p[0]>1.8&&bb.ps.e>0.2",
+	"dy_offset"          : 0,
+	"W2_offset"          : -0.1088,
+	"W_cutR"             : [0.7,1.2],
+	"bbfidu_cutR"        : [0.0,0.32],
+	"max_N_tracks"       : 250,
+	"SBS_scale_field"    : 0.97,
+	"hcal_voffset"       : 0,
+	"hcal_hoffset"       : 0.03,
+	"hcal_zoffset"       : 0.59,
+	"sbs_kick"           : 0.72,
+	"dx_p_cut"           : [-0.72930,0.08381,2],
+	"dy_p_cut"           : [-0.00300,0.10318,2],
+	"dx_n_cut"           : [-0.00177,0.07892,2],
+	"dy_n_cut"           : [-0.00300,0.10318,2],
+	"h_dxHCAL_lims"      : [290,-3.2,2.6],
+	"h_dyHCAL_lims"      : [200,-1.5,1.5],
+	"h_dxHCAL_p_fitR"    : [-2,-0.37,0.8,0.8],
+	"h_dxHCAL_n_fitR"    : [-0.37,0.5,0.8,0.8],
+	"h_dyHCAL_fitR"      : [-1,1,0.6,0.8],
+	"Other_parmas_block" : "-----FOLLOWING PARMAS ARE NEEDED TO RUN THE SCRIPT-----",
+	"NOTE"               : "verbose=0 & verbosefn=0 => Production; verbose<-1=>Debug, =-1=>Test; verbosefn>0=>Debug",
+	"gen_ML_data"        : 0,
+	"verbose"            : -1,
+	"verbose_function"   : 0,
+	"outfile_prefix"     : "mcp2_OT0nm3_0p97sf",
+	"COMMENTS"           : "02/25/25"
+    },
+    "g4sbs_inel_model2":
+    {
+	"Ntype"              : "np",
+	"SBS_config"         : 11,
+	"SBS_magnet_percent" : 100,
+	"prefix_to_filebase" : ["0p97sf_ld2"],
+	"Njobs_to_ana"       : -1,
+	"rootfile_dir"       : "/lustre24/expphy/volatile/halla/sbs/sbs-gmn/MC/pass2/sbs11/sbs100p/ld2/inel",
+	"global_cut"         : "bb.tr.n>0&&bb.gem.track.nhits>3&&abs(bb.tr.vz[0])<0.08",
+	"dy_offset"          : 0,
+	"W2_offset"          : 0,
+	"W_cutR"             : [0.7,1.2],
+	"bbfidu_cutR"        : [0.0,0.32],
+	"max_N_tracks"       : 250,
+	"SBS_scale_field"    : 0.97,
+	"hcal_voffset"       : 0,
+	"hcal_hoffset"       : 0,
+	"hcal_zoffset"       : 0.59,
+	"sbs_kick"           : 0.72,
+	"dx_p_cut"           : [-0.72930,0.08381,2],
+	"dy_p_cut"           : [-0.00300,0.10318,2],
+	"dx_n_cut"           : [-0.00177,0.07892,2],
+	"dy_n_cut"           : [-0.00300,0.10318,2],
+	"h_dxHCAL_lims"      : [290,-3.2,2.6],
+	"h_dyHCAL_lims"      : [200,-1.5,1.5],
+	"h_dxHCAL_p_fitR"    : [-2,-0.37,0.8,0.8],
+	"h_dxHCAL_n_fitR"    : [-0.37,0.5,0.8,0.8],
+	"h_dyHCAL_fitR"      : [-1,1,0.6,0.8],
+	"Other_parmas_block" : "-----FOLLOWING PARMAS ARE NEEDED TO RUN THE SCRIPT-----",
+	"NOTE"               : "verbose=0 & verbosefn=0 => Production; verbose<-1=>Debug, =-1=>Test; verbosefn>0=>Debug",
+	"gen_ML_data"        : 0,
+	"verbose"            : -1,
+	"verbose_function"   : 0,
+	"outfile_prefix"     : "mcp2_0p97sf",
+	"COMMENTS"           : "02/25/25"
+    },        
+    "simc_deeN_model2_radc":
+    {
+	"Ntype"              : "np",
+	"SBS_config"         : 11,
+	"SBS_magnet_percent" : 100,
+	"prefix_to_filebase" : "OT0_0p97sf",
 	"Njobs_to_ana"       : -1,
 	"rootfile_dir"       : "/lustre24/expphy/volatile/halla/sbs/pdbforce/g4sbs_output/dMCcomp/sbs11_sbs100p/0p97sf/simc/rs/ld2/rc/new",
 	"global_cut"         : "bb.tr.n>0&&bb.gem.track.nhits>3&&abs(bb.tr.vz[0])<0.08&&bb.tr.p[0]>1.8&&bb.ps.e>0.2",
@@ -32,7 +104,7 @@
 	"gen_ML_data"        : 0,
 	"verbose"            : -1,
 	"verbose_function"   : 0,
-	"outfile_prefix"     : "new_rcOTm3_1p27zoff_0p97sf",
+	"outfile_prefix"     : "new_rcOT0_1p27zoff_0p97sf",
 	"COMMENTS"           : "12/15/24"
     },    
     "simc_deeN_model2_thesis":
@@ -107,7 +179,7 @@
 	"outfile_prefix"     : "1p27zoff_1p0sf",
 	"COMMENTS"           : "04/21/23"
     },
-    "g4sbs_inel_model2":
+    "g4sbs_inel_model2_thesis":
     {
 	"Ntype"              : "np",
 	"SBS_config"         : 11,
@@ -173,7 +245,7 @@
 	"outfile_prefix"     : "siout/1p0sf_qelas_ana",
 	"COMMENTS"           : "It takes 13 hrs to run 50K g4sbs LD2 events!!"
     },
-    "g4sbs_inel_model2":
+    "g4sbs_inel_model2_radc":
     {
 	"Ntype"              : "np",
 	"SBS_config"         : 11,

@@ -33,6 +33,8 @@ int extractGMn(double const etheta, double const Q2, double const R_fit, double 
   double GEn_kelly = kellyfit.GetFF(G_t::kGEn,Q2);
   double GEn_gal = galfit.GetFF(G_t::kGEn,Q2);
 
+  //std::cout << "GEp: " << arfit.GetFF(G_t::kGEp,Q2) << " " << yefit.GetFF(G_t::kGEp,Q2) << " " << arfit.GetFFNoTPE(G_t::kGEp,Q2) << " " << yefit.GetFFNoTPE(G_t::kGEp,Q2) << "\n";
+
   // Getting sigma Born ratio (n/p) for the given Q2 and etheta 
   // (basically, mimicing the calculation done in MC generator)
   double sigmaBorn_Ratio_MC = kine::sigmaBorn_ratio(etheta,Q2,GEp_kelly,GMp_kelly,GEn_seamus,GMn_kelly);
