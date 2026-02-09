@@ -4,7 +4,7 @@
 	"Ntype"              : "np",
 	"SBS_config"         : 4,
 	"SBS_magnet_percent" : 30,
-	"prefix_to_filebase" : ["OT0_0p39sf"],
+	"prefix_to_filebase" : ["OT0_0p39sf","OTm3_0p39sf"],
 	"Njobs_to_ana"       : -1,
 	"rootfile_dir"       : "/lustre24/expphy/volatile/halla/sbs/sbs-gmn/MC/pass3/sbs4/sbs30p/ld2/deeN",
 	"global_cut"         : "bb.tr.n>0&&bb.gem.track.nhits>2&&abs(bb.tr.vz[0])<0.08&&bb.tr.p[0]>1.6&&bb.ps.e>0.2",
@@ -32,7 +32,7 @@
 	"gen_ML_data"        : 0,
 	"verbose"            : -1,
 	"verbose_function"   : 0,
-	"outfile_prefix"     : "OT0_0p39sf",
+	"outfile_prefix"     : "mcp3_OT0nm3_0p39sf",
 	"COMMENT"            : "02/02/26"
     },
     "g4sbs_inel_model2":
@@ -68,7 +68,7 @@
 	"gen_ML_data"        : 0,
 	"verbose"            : -1,
 	"verbose_function"   : 0,
-	"outfile_prefix"     : "0p39sf",
+	"outfile_prefix"     : "mcp3_0p39sf",
 	"COMMENT"            : "02/02/26"
     },        
     "simc_deeN_model2_aps25":
