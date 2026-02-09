@@ -1070,9 +1070,20 @@ int fit_dx (const char *configfilename,
       //l0->AddEntry(f0,"Fit","l");
       l0->AddEntry(ho[1],"MC (Signal)","p");
       l0->AddEntry((TObject*)0,Form("MC p peak offset: %.3fm",dx_offset_p),"");
-      l0->AddEntry((TObject*)0,Form("MC n peak offset: %.3fm",dx_offset_n),"");
+      l0->AddEntry((TObject*)0,Form("MC n peak offset: %.3fm",dx_offset_n),"");      
       if (is_vary_cut) AddCutToLegend(l0,cuts_2[i].c_str());
       l0->Draw();
+      TLegend *l0_r = new TLegend(0.65,0.73,0.9,0.9);
+      l0_r->SetTextFont(42);
+      l0_r->SetBorderSize(0);
+      float dataev = h_dxHCAL_data->GetEntries();
+      float mcpev = h_dxHCAL_simu_p->GetEntries();
+      float mcnev = h_dxHCAL_simu_n->GetEntries();            
+      l0_r->AddEntry((TObject*)0,Form("# Data events: %.0f",dataev),"");
+      l0_r->AddEntry((TObject*)0,Form("# MC p events: %.0f",mcpev),"");
+      l0_r->AddEntry((TObject*)0,Form("# MC n events: %.0f",mcnev),"");
+      l0_r->AddEntry((TObject*)0,Form("MC/Data stats: %.0f",(mcnev+mcpev)/dataev),"");                  
+      l0_r->Draw();      
       // --- 
 
       // Canvas 1 : Fitting data/MC w/ background from data
