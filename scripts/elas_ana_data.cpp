@@ -367,7 +367,7 @@ int elas_ana_data (const char *configfilename,
   double T_bbT_trig;      Tout->Branch("bbT_trig", &T_bbT_trig, "bbT_trig/D");
   double T_coinT_trig;    Tout->Branch("coinT_trig", &T_coinT_trig, "coinT_trig/D");
   double T_coinT_ADC_c;   Tout->Branch("coinT_ADC_c", &T_coinT_ADC_c, "coinT_ADC_c/D"); // centered w.r.t the mean
-  double T_coinT_ADC_TOF_c;Tout->Branch("coinT_ADC_TOF_c", &T_coinT_ADC_c, "coinT_ADC_TOF_c/D"); // centered after applying TOF correction  
+  double T_coinT_ADC_TOF_c;Tout->Branch("coinT_ADC_TOF_c", &T_coinT_ADC_TOF_c, "coinT_ADC_TOF_c/D"); // centered after applying TOF correction  
   //GRINCH
   double T_clsizeGRINCH;    if (conf>7) Tout->Branch("clsizeGRINCH", &T_clsizeGRINCH, "clsizeGRINCH/D");
   double T_cltmeanGRINCH;   if (conf>7) Tout->Branch("cltmeanGRINCH", &T_cltmeanGRINCH, "cltmeanGRINCH/D");

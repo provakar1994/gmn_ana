@@ -34,9 +34,17 @@ void ReplaceString(std::string &instr, std::string const &strtorep, std::string 
   }
 }
 
+// ATTENTION: Adapted from TOFcal_consolidated.C script. Need to verify
+// the calculation.
+double pN_central_etheta(double Ebeam, double thHCAL, std::string Ntype)
+{
+  double M = kine::M_N(Ntype);
+  return 2.0*M*Ebeam*(M+Ebeam)*cos(thHCAL)/(pow(M,2)+2.0*M*Ebeam + pow(Ebeam*sin(thHCAL),2));
+}
+
 int qelas_ana_data (const char *configfilename,
 		    std::string target="LD2", // LD2/Dummy
-		    int pass=2, //replay pass
+		    int pass=3, //replay pass
                     int model=2) //Analysis model
 {
   gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
@@ -146,7 +154,7 @@ int qelas_ana_data (const char *configfilename,
   int idblkHCAL_aclN; double idblkHCAL_acl[maxNHCALcl], rblkHCAL_acl[maxNHCALcl], cblkHCAL_acl[maxNHCALcl];
   double nblkHCAL_acl[maxNHCALcl], eblkHCAL_acl[maxNHCALcl], atimeblkHCAL_acl[maxNHCALcl], tdcblkHCAL_acl[maxNHCALcl]; 
   double eHCAL_acl[maxNHCALcl], xHCAL_acl[maxNHCALcl], yHCAL_acl[maxNHCALcl];
-  std::vector<std::string> hcalclvar_acl = {"id","id","nblk","eblk","e","x","y","row","col","atime","tdctime"};
+  std::vector<std::string> hcalclvar_acl = {"id","id","nblk","eblk","e","x","y","row","col","atimeblk","tdctime"};
   std::vector<void*> hcalclvar_acl_mem = {&idblkHCAL_acl,&idblkHCAL_aclN,&nblkHCAL_acl,&eblkHCAL_acl,&eHCAL_acl,
 					  &xHCAL_acl,&yHCAL_acl,&rblkHCAL_acl,&cblkHCAL_acl,&atimeblkHCAL_acl,&tdcblkHCAL_acl};
   setrootvar::setbranch(C, "sbs.hcal.clus", hcalclvar_acl, hcalclvar_acl_mem, 1);
@@ -228,6 +236,14 @@ int qelas_ana_data (const char *configfilename,
   TH1F *h_dyHCAL = new TH1F("h_dyHCAL","W & fiducial cuts;y_{HCAL}^{obs} - y_{HCAL}^{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
   TH1F *h_dyHCAL_nfc = new TH1F("h_dyHCAL_nfc","W cut;y_{HCAL}^{obs} - y_{HCAL}^{exp} (m);",int(hdy_lim[0]),hdy_lim[1],hdy_lim[2]);
   TH1F *h_coinT_trig = new TH1F("h_coinT_trig","BBCAL-HCAL trigger coincidence time (ns)",200,380,660);
+  TH1F *h_coinT_ADC = new TH1F("h_coinT_ADC","HCAL-SH ADC time",200,-20,20);
+  TH1F *h_coinT_ADC_c = new TH1F("h_coinT_ADC_c","HCAL-SH ADC time (Centered)",200,-20,20);
+  TH1F *h_coinT_ADC_c_p = new TH1F("h_coinT_ADC_c_p","HCAL-SH ADC time p (Centered)",200,-20,20);
+  TH1F *h_coinT_ADC_c_n = new TH1F("h_coinT_ADC_c_n","HCAL-SH ADC time n (Centered)",200,-20,20);  
+  TH1F *h_coinT_ADC_TOF = new TH1F("h_coinT_ADC_TOF","HCAL-SH ADC time w/ TOF corr",200,-20,20);    
+  TH1F *h_coinT_ADC_TOF_c = new TH1F("h_coinT_ADC_TOF_c","HCAL-SH ADC time w/ TOF corr (Centered)",200,-20,20);
+  TH1F *h_coinT_ADC_TOF_c_p = new TH1F("h_coinT_ADC_TOF_c_p","HCAL-SH ADC time w/ TOF corr (Centered)",200,-20,20);
+  TH1F *h_coinT_ADC_TOF_c_n = new TH1F("h_coinT_ADC_TOF_c_n","HCAL-SH ADC time w/ TOF corr (Centered)",200,-20,20);        
 
   TH2F *h2_rcHCAL = util_pd::TH2FHCALface_rc("h2_rcHCAL");
   TH2F *h2_dxdyHCAL = util_pd::TH2FdxdyHCAL("h2_dxdyHCAL");
@@ -257,7 +273,7 @@ int qelas_ana_data (const char *configfilename,
   bool SMCut;             Tout->Branch("SMCut", &SMCut, "SMCut/B");
   bool ARCut;             Tout->Branch("ARCut", &ARCut, "ARCut/B");
   bool fiduCut;           Tout->Branch("fiduCut", &fiduCut, "fiduCut/O");
-  bool coinTADCCut;       Tout->Branch("coinTADCCut", &coinTADCCut, "coinTADCCut/O"); //HCAL/SH ADC coin time cut
+  //bool coinTADCCut;       Tout->Branch("coinTADCCut", &coinTADCCut, "coinTADCCut/O"); //HCAL/SH ADC coin time cut
   //run info
   UInt_t T_rnum;          Tout->Branch("rnum", &T_rnum, "rnum/i");
   UInt_t T_segnum;        Tout->Branch("segnum", &T_segnum, "segnum/i");
@@ -340,7 +356,11 @@ int qelas_ana_data (const char *configfilename,
   double T_dx;            Tout->Branch("dx", &T_dx, "dx/D"); 
   double T_dy;            Tout->Branch("dy", &T_dy, "dy/D");
   double T_p_def;         Tout->Branch("p_def", &T_p_def, "p_def/D"); // expected proton deflection
-  double T_ToF_n;         Tout->Branch("ToF_n", &T_ToF_n, "ToF_n/D");
+  double T_beta_p;        Tout->Branch("beta_p", &T_beta_p, "beta_p/D");
+  double T_beta_n;        Tout->Branch("beta_n", &T_beta_n, "beta_n/D");  
+  double T_pTOF;          Tout->Branch("pTOF", &T_pTOF, "pTOF/D");
+  double T_nTOF;          Tout->Branch("nTOF", &T_nTOF, "nTOF/D");  
+  double T_TOF_corr;      Tout->Branch("TOF_corr", &T_TOF_corr, "TOF_corr/D");    
   //HCAL (All clusters)
   int T_idblkHCAL_aclN;   if (hcal_acl_ON) Tout->Branch("idblkHCAL_aclN", &T_idblkHCAL_aclN, "idblkHCAL_aclN/I"); 
   int T_idclHCAL_htote;   if (hcal_acl_ON) Tout->Branch("idclHCAL_htote", &T_idclHCAL_htote, "idclHCAL_htote/I"); //stores HCAL cl. index with highest total energy
@@ -365,6 +385,7 @@ int qelas_ana_data (const char *configfilename,
   double T_bbT_trig;      Tout->Branch("bbT_trig", &T_bbT_trig, "bbT_trig/D");
   double T_coinT_trig;    Tout->Branch("coinT_trig", &T_coinT_trig, "coinT_trig/D");
   double T_coinT_ADC_c;   Tout->Branch("coinT_ADC_c", &T_coinT_ADC_c, "coinT_ADC_c/D"); // centered w.r.t the mean
+  double T_coinT_ADC_TOF_c;Tout->Branch("coinT_ADC_TOF_c", &T_coinT_ADC_TOF_c, "coinT_ADC_TOF_c/D"); // centered after applying TOF correction    
   //GRINCH
   double T_clsizeGRINCH;    if (conf>7) Tout->Branch("clsizeGRINCH", &T_clsizeGRINCH, "clsizeGRINCH/D");
   double T_cltmeanGRINCH;   if (conf>7) Tout->Branch("cltmeanGRINCH", &T_cltmeanGRINCH, "cltmeanGRINCH/D");
@@ -377,6 +398,7 @@ int qelas_ana_data (const char *configfilename,
   std::vector<double> bbfidu_cutR; jmgr->GetVectorFromSubKey<double>(key,"bbfidu_cutR",bbfidu_cutR);
   // reading HCAL/SH ADC coincidence time cut limits
   std::vector<double> coinTADC_cutR; jmgr->GetVectorFromSubKey<double>(key,"coinT_ADC_cutR",coinTADC_cutR);
+  double coinT_ADC_TOF_offset = jmgr->GetValueFromSubKey<double>(key,"coinT_ADC_TOF_offset");      
 
   // reading HCAL cut definitions
   std::vector<double> dx_p_cut; jmgr->GetVectorFromSubKey<double>(key,"dx_p_cut",dx_p_cut);
@@ -549,7 +571,8 @@ int qelas_ana_data (const char *configfilename,
       epsilon_n = kine::epsilon(etheta,Q2recon,"n");
       W2recon = PNprime.M2();
       //--
-      pN_expect = kine::pN_expect(nu, Ntype);
+      //pN_expect = kine::pN_expect(nu, Ntype);
+      pN_expect = q.Vect().Mag();
     }
     h_Q2->Fill(Q2recon); 
     double Wrecon = sqrt(max(0., W2recon));
@@ -652,8 +675,9 @@ int qelas_ana_data (const char *configfilename,
     T_cltrindexGRINCH = cltrindexGRINCH;
 
     // Expected position of the q vector at HCAL
+    TVector3 HCAL_intersect;       
     vector<double> xyHCAL_exp; // xyHCAL_exp[0] = xHCAL_exp & xyHCAL_exp[1] = yHCAL_exp
-    kine::GetxyHCALexpect(vertex, pNhat, HCAL_origin, HCAL_axes, xyHCAL_exp);
+    kine::GetxyHCALexpect(vertex, pNhat, HCAL_origin, HCAL_axes, HCAL_intersect, xyHCAL_exp);
     T_xHCAL_exp = xyHCAL_exp[0];
     T_yHCAL_exp = xyHCAL_exp[1];
 
@@ -663,6 +687,43 @@ int qelas_ana_data (const char *configfilename,
     double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist()+hcal_zoffset-(sbsconf.GetSBSdist()+expconst::sbsdipolegap/2.0));
     T_p_def = proton_deflection;
 
+    // Calculating nucleon path length
+    double fSBS = (sbsmag / 100.) * expconst::sbsmaxfield_data(conf);
+    double dSBS_in = sbsconf.GetSBSdist();
+    double dSBS_out = dSBS_in+expconst::sbsdipolegap;
+    double dHCAL_eff = sbsconf.GetHCALdist()+hcal_zoffset;
+    // calculating central value of nucleon TOF 
+    double pN_central_ptheta_p = pN_central_etheta(ebeam_corr,sbsconf.GetHCALtheta_rad(),"p");
+    double beta_central_p = pN_central_ptheta_p/sqrt(pow(pN_central_ptheta_p,2)+pow(constant::Mp,2));
+    double pTOF_central = dHCAL_eff/(beta_central_p*constant::c*1e-9);
+    double pN_central_ptheta_n = pN_central_etheta(ebeam_corr,sbsconf.GetHCALtheta_rad(),"n");
+    double beta_central_n = pN_central_ptheta_n/sqrt(pow(pN_central_ptheta_n,2)+pow(constant::Mn,2));
+    double nTOF_central = dHCAL_eff/(beta_central_n*constant::c*1e-9);
+    // calculating actual TOF for 0 field
+    double pathL_nobend = (HCAL_intersect - vertex).Mag();
+    double beta_p = pN_expect/sqrt( pow(pN_expect,2) + pow(constant::Mp,2) );
+    double beta_n = pN_expect/sqrt( pow(pN_expect,2) + pow(constant::Mn,2) );
+    double pTOF_exp = pathL_nobend/(beta_p*constant::c*1e-9);
+    double nTOF_exp = pathL_nobend/(beta_n*constant::c*1e-9);    
+    // calculating actual TOF
+    if (fSBS!=0) {
+      beta_p = pN_expect/sqrt( pow(pN_expect,2) + pow(constant::Mp,2) ); // beta = pc/E
+      double radius = pN_expect/(constant::c*1e-9*fSBS); // r=mv/(qB)
+      double thtg_expect = atan(pNhat.Dot( HCAL_axes[0] ) / pNhat.Dot( HCAL_axes[2] ));
+      double phtg_expect = atan(pNhat.Dot( HCAL_axes[1] ) / pNhat.Dot( HCAL_axes[2] ));    
+      double z_center = dSBS_in + radius*sin(thtg_expect);
+      double th_out = asin( (z_center-dSBS_out)/radius );
+      double pathL_p = (dSBS_in-vertex.Dot(HCAL_axes[2]))*sqrt( 1.0+pow(tan(thtg_expect),2)+pow(tan(phtg_expect),2) )
+	+ radius*(thtg_expect-th_out)
+	+ (dHCAL_eff-dSBS_out)*sqrt( 1.0+pow(tan(th_out),2)+pow(tan(phtg_expect),2) );
+      //std::cout << "pathL " << pN_expect << " radius " << radius << " th_exp " << thtg_expect << "\n";
+      pTOF_exp = pathL_p/(beta_p*constant::c*1e-9);
+    }
+    T_beta_p = beta_p;
+    T_beta_n = beta_n;    
+    T_pTOF = pTOF_exp;
+    T_nTOF = nTOF_exp;
+    
     /*
       Implementing HCAL offline clustering algorithm
     */
@@ -687,7 +748,8 @@ int qelas_ana_data (const char *configfilename,
 	  //std::cout << Form(" exp index %d, obs index %d, exp eng %f, obs eng %f\n------\n",(int)indexHCAL,HtotE_idcl,eHCAL,eHCAL_acl[HtotE_idcl]);
 	}
 	// if index_mismatch and the default cl is in time then accept it
-	if (index_mismatch && abs(atimeHCAL-atimeSH-coinTADC_cutR[0])<=coinTADC_cutR[2]*coinTADC_cutR[1]) {
+	//if (index_mismatch && abs(atimeHCAL-atimeSH-coinTADC_cutR[0])<=coinTADC_cutR[2]*coinTADC_cutR[1]) {
+	if (index_mismatch && ( (atimeHCAL-atimeSH-coinTADC_cutR[0])>=coinTADC_cutR[1] && (atimeHCAL-atimeSH-coinTADC_cutR[0])<=coinTADC_cutR[2] ) ) {	  	
 	  inTime_idcl = (int)indexHCAL; sthpq_p_idcl = (int)indexHCAL;	    
 	} else {
 	  // Looping through ALL HCAL clusters
@@ -696,7 +758,8 @@ int qelas_ana_data (const char *configfilename,
 	    int ihcl_sorted = sortedIndices[ihcl];
 
 	    // picking the HE cluster that is in time (i.e. HCAL/SH ADC coin time)
-	    bool coinT_cut = abs(atimeblkHCAL_acl[ihcl_sorted]-atimeSH-coinTADC_cutR[0])<=coinTADC_cutR[2]*coinTADC_cutR[1];
+	    //bool coinT_cut = abs(atimeblkHCAL_acl[ihcl_sorted]-atimeSH-coinTADC_cutR[0])<=coinTADC_cutR[2]*coinTADC_cutR[1];
+	    bool coinT_cut = (atimeblkHCAL_acl[ihcl_sorted]-atimeSH-coinTADC_cutR[0])>=coinTADC_cutR[1] && (atimeblkHCAL_acl[ihcl_sorted]-atimeSH-coinTADC_cutR[0])<=coinTADC_cutR[2];	    	    
 	    if (inTime_idcl==-1 && coinT_cut) {
 	      inTime_idcl = ihcl_sorted;
 	      if (inTime_idcl>highest_idcl) highest_idcl = inTime_idcl;
@@ -834,7 +897,7 @@ int qelas_ana_data (const char *configfilename,
     double dy = T_dy;
 
     // HCAL/SH SDC coincidence time cut
-    coinTADCCut = abs(T_atimeHCAL - atimeSH - coinTADC_cutR[0]) <= coinTADC_cutR[2]*coinTADC_cutR[1];
+    //coinTADCCut = abs(T_atimeHCAL - atimeSH - coinTADC_cutR[0]) <= coinTADC_cutR[2]*coinTADC_cutR[1];
     T_coinT_ADC_c = T_atimeHCAL - atimeSH - coinTADC_cutR[0];
 
     // Calculating thpq (both w & w/o deflection due to SBS dipole)
@@ -846,8 +909,8 @@ int qelas_ana_data (const char *configfilename,
     TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);
     T_thpq_p = acos(p_dir.Unit().Dot(pNhat));
     // calculate ToF for neutrons
-    double ToF_n = (n_dir.Mag() / constant::c) * sqrt(1. + pow((constant::Mn/PNprime.Vect().Mag()), 2));
-    T_ToF_n = ToF_n*1e9; //ns 
+    // double ToF_n = (n_dir.Mag() / constant::c) * sqrt(1. + pow((constant::Mn/PNprime.Vect().Mag()), 2));
+    // T_ToF_n = ToF_n*1e9; //ns 
 
     // /* Calculating thpq (both p & n hypothesis) */
     // // n (no deflection)
@@ -867,15 +930,23 @@ int qelas_ana_data (const char *configfilename,
 
     // HCAL active area and safety margin cuts [Fiducial region]
     ARCut = cut::inHCAL_activeA(xHCAL,yHCAL,hcal_active_area);
-    SMCut = cut::inHCAL_safety_margin(target,xyHCAL_exp[0],xyHCAL_exp[1],sbs_kick,hcal_safety_margin);
+    SMCut = cut::inHCAL_safety_margin(target,xyHCAL_exp[0],xyHCAL_exp[1],T_p_def,hcal_safety_margin);
     fiduCut = ARCut && SMCut; 
     // defining HCAL cuts
     pCut = cut::SpotCut(dx,dx_p_cut[0],dx_p_cut[1],dx_p_cut[2],dy,dy_p_cut[0],dy_p_cut[1],dy_p_cut[2]);
     nCut = cut::SpotCut(dx,dx_n_cut[0],dx_n_cut[1],dx_n_cut[2],dy,dy_n_cut[0],dy_n_cut[1],dy_n_cut[2]);
     // ***
+    // Adapted from Sebastian Seeds' idea of variable SMCut
+    // Example use cases of the following variables:
+    // 1. (pow(pdx_nS,2)+pow(dy_nS,2))<=4 => pCut w/ 2 sigma width
+    // 2. (pow(pdx_nS*0.5,2)+pow(dy_nS*0.2,2)*2)<=1 => pCut w/ 2 sigma dx with and 5 sigma dy width
     pdx_nS = fabs(dx-dx_p_cut[0])/dx_p_cut[1];
     ndx_nS = fabs(dx-dx_n_cut[0])/dx_n_cut[1];
     dy_nS = fabs(dy-dy_p_cut[0])/dy_p_cut[1];  // assuming dy is same for n and p   
+
+    // calculating TOF correction
+    T_TOF_corr = WCut&&pCut ? pTOF_exp-pTOF_central : nTOF_exp-nTOF_central;
+    T_coinT_ADC_TOF_c = T_atimeHCAL-atimeSH-T_TOF_corr-coinT_ADC_TOF_offset;    
 
     // W cut
     if (WCut) {
@@ -887,12 +958,26 @@ int qelas_ana_data (const char *configfilename,
         h_dyHCAL->Fill(dy);
         h2_rcHCAL->Fill(cblkHCAL, rblkHCAL);
         h2_dxdyHCAL->Fill(dy, dx);
+	
+        if (pCut) {
+	  h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - T_p_def);
+	  h_coinT_ADC_c_p->Fill(T_coinT_ADC_c);
+	  h_coinT_ADC_TOF_c_p->Fill(T_coinT_ADC_TOF_c);	  	  
+	}
+        if (nCut) {
+	  h2_xyHCAL_n->Fill(xyHCAL_exp[1], xyHCAL_exp[0]);
+	  h_coinT_ADC_c_n->Fill(T_coinT_ADC_c);
+	  h_coinT_ADC_TOF_c_n->Fill(T_coinT_ADC_TOF_c);	  	  	  
+	}
 
-        if (pCut) h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick);
-        if (nCut) h2_xyHCAL_n->Fill(xyHCAL_exp[1], xyHCAL_exp[0]);
+	if (pCut||nCut) {
+	  h_coinT_ADC->Fill(T_atimeHCAL - atimeSH);
+	  h_coinT_ADC_c->Fill(T_coinT_ADC_c);
+	  h_coinT_ADC_TOF->Fill(T_atimeHCAL-T_TOF_corr - atimeSH);
+	  h_coinT_ADC_TOF_c->Fill(T_coinT_ADC_TOF_c);	  
+	}
       }
     }
-
     // fiducial cut but no W cut
     if (T_W>0) { 
       if (fiduCut) {
@@ -927,6 +1012,7 @@ int qelas_ana_data (const char *configfilename,
   Ep_n.SetFillStyle(0); Ep_n.SetLineColor(3); Ep_n.SetLineWidth(2);
   Ep_n.DrawEllipse(dy_n_cut[0], dx_n_cut[0], dy_n_cut[2]*dy_n_cut[1], dx_n_cut[2]*dx_n_cut[1], 0,360,0);
   c1->cd(2); //
+  gPad->SetGridx();
   h_W->Draw(); h_W->SetLineColor(1);
   h_W_cut->Draw("same"); h_W_cut->SetLineColor(2);
   h_W_acut->Draw("same");
@@ -948,25 +1034,69 @@ int qelas_ana_data (const char *configfilename,
   std::vector<double> hdy_fitR; jmgr->GetVectorFromSubKey<double>(key,"h_dyHCAL_fitR", hdy_fitR);
   gStyle->SetOptFit(1);
   c2->cd(1); //
+  gPad->SetGridx();
   TF1 *fdxp = fit::fit_1gs_nbg(hdxp_fitR,h_dxHCAL);
   TF1 *fdxn = fit::fit_1gs_nbg(hdxn_fitR,h_dxHCAL);
   double dxpM = fdxp->GetParameter(1); double dxpS = fdxp->GetParameter(2);
   double dxnM = fdxn->GetParameter(1); double dxnS = fdxn->GetParameter(2);
   fdxp->Draw("same");
   c2->cd(2); //
+  gPad->SetGridx();
   TF1 *fdy = fit::fit_1gs_nbg(hdy_fitR,h_dyHCAL);
   double dyM = fdy->GetParameter(1); double dyS = fdy->GetParameter(2);
   c2->cd(3); //
+  gPad->SetGridx();
   TF1 *fdxp_nfc = fit::fit_1gs_nbg(hdxp_fitR,h_dxHCAL_nfc);
   TF1 *fdxn_nfc = fit::fit_1gs_nbg(hdxn_fitR,h_dxHCAL_nfc);
   double dxpM_nfc = fdxp_nfc->GetParameter(1); double dxpS_nfc = fdxp_nfc->GetParameter(2);
   double dxnM_nfc = fdxn_nfc->GetParameter(1); double dxnS_nfc = fdxn_nfc->GetParameter(2);
   fdxp_nfc->Draw("same");
   c2->cd(4); //
+  gPad->SetGridx();
   TF1 *fdy_nfc = fit::fit_1gs_nbg(hdy_fitR,h_dyHCAL_nfc);
   double dyM_nfc = fdy->GetParameter(1); double dyS_nfc = fdy->GetParameter(2);
   c2->SaveAs(Form("%s",outPlot.Data())); c2->Write();
   //**** -- ***//
+
+  /**** Canvas 3 (ADC coin time) ****/
+  TCanvas *c3 = util_pd::TC("c3",2,2);
+  c3->SetGridx();
+  gStyle->SetOptFit(1);
+  //
+  c3->cd(1);
+  gPad->SetGridx();
+  gPad->SetLogy();
+  std::vector<double> hct_fitR{-5,5,1,1.2};
+  TF1 *fct1 = fit::fit_1gs_nbg(hct_fitR,h_coinT_ADC);
+  double ctM = fct1->GetParameter(1); double ctS = fct1->GetParameter(2);
+  //
+  c3->cd(2);
+  gPad->SetGridx();
+  gPad->SetLogy();
+  TF1 *fct2 = fit::fit_1gs_nbg(hct_fitR,h_coinT_ADC_c);
+  double ctM2 = fct2->GetParameter(1); double ctS2 = fct2->GetParameter(2);
+  h_coinT_ADC_c_p->SetLineColor(kBlack);
+  h_coinT_ADC_c_p->Draw("same");
+  h_coinT_ADC_c_n->SetLineColor(kRed);  
+  h_coinT_ADC_c_n->Draw("same");  
+  //
+  c3->cd(3);
+  gPad->SetGridx();
+  gPad->SetLogy();
+  TF1 *fct3 = fit::fit_1gs_nbg(hct_fitR,h_coinT_ADC_TOF);
+  double ctM3 = fct3->GetParameter(1); double ctS3 = fct3->GetParameter(2);
+  //
+  c3->cd(4);
+  gPad->SetGridx();
+  gPad->SetLogy();
+  TF1 *fct4 = fit::fit_1gs_nbg(hct_fitR,h_coinT_ADC_TOF_c);
+  double ctM4 = fct4->GetParameter(1); double ctS4 = fct4->GetParameter(2);
+  h_coinT_ADC_TOF_c_p->SetLineColor(kBlack);  
+  h_coinT_ADC_TOF_c_p->Draw("same");
+  h_coinT_ADC_TOF_c_n->SetLineColor(kRed);    
+  h_coinT_ADC_TOF_c_n->Draw("same");  
+  c3->SaveAs(Form("%s",outPlot.Data())); c3->Write();
+  //**** -- ***//  
 
   /**** Summary Canvas ****/
   TCanvas *cSummary = new TCanvas("cSummary","Summary");
@@ -994,7 +1124,8 @@ int qelas_ana_data (const char *configfilename,
   pt->AddText(Form(" Inbuilt n cut (#Deltax): Mean = %.4f, %.1f#sigma = %.4f",dx_n_cut[0],dx_n_cut[2],dx_n_cut[1]));
   pt->AddText(Form(" Inbuilt n cut (#Deltay): Mean = %.4f, %.1f#sigma = %.4f",dy_n_cut[0],dy_n_cut[2],dy_n_cut[1]));
   pt->AddText(Form(" Inbuilt BB fiducial cut: |fpX-0.9*fpTh-%.2f| #leq %.2f",bbfidu_cutR[0],bbfidu_cutR[1]));
-  pt->AddText(Form(" Inbuilt coin. time cut: |atimeHCAL-atimeSH-%.1f| #leq %.1f*%.3f",coinTADC_cutR[0],coinTADC_cutR[2],coinTADC_cutR[1]));
+  pt->AddText(Form(" Coin. time cut for HCAL in-time clustering: %.1f #geq |atimeHCAL-atimeSH-%.3f| #leq %.1f",coinTADC_cutR[1],coinTADC_cutR[0],coinTADC_cutR[2]));
+  pt->AddText(Form(" TOF crrected coin time offset: %.3f",coinT_ADC_TOF_offset));  
   pt->AddText(" Fit info: ");
   pt->AddText(" p & n peaks, w/ fiducial cut: dxpM,dxpS,dxnM,dxnS,dyM,dyS ");
   pt->AddText(Form(" %.5f,%.5f,%.5f,%.5f,%.5f,%.5f",dxpM,dxpS,dxnM,dxnS,dyM,dyS));
