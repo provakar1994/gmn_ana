@@ -260,7 +260,7 @@ int qelas_ana_data (const char *configfilename,
 
   // defining interesting ROOT tree branches 
   TTree *Tout = new TTree("Tout", "");
-  Tout->SetMaxTreeSize(7000000000LL);
+  Tout->SetMaxTreeSize(30000000000LL);
   //cuts
   bool WCut;              Tout->Branch("WCut", &WCut, "WCut/O");
   bool bbfiduCut;         Tout->Branch("bbfiduCut", &bbfiduCut, "bbfiduCut/O");
@@ -1066,7 +1066,7 @@ int qelas_ana_data (const char *configfilename,
   c3->cd(1);
   gPad->SetGridx();
   gPad->SetLogy();
-  std::vector<double> hct_fitR{-5,5,1,1.2};
+  std::vector<double> hct_fitR; jmgr->GetVectorFromSubKey<double>(key,"h_coinT_ADC_fitR",hct_fitR);  
   TF1 *fct1 = fit::fit_1gs_nbg(hct_fitR,h_coinT_ADC);
   double ctM = fct1->GetParameter(1); double ctS = fct1->GetParameter(2);
   //
