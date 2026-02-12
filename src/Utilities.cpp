@@ -235,8 +235,9 @@ namespace util_pd {
     return h;
   }
   //_____________________________________
-  TH2F *TH2FHCALface_xy_data(std::string hname, double sbs_kick, int rpass) {
+  TH2F *TH2FHCALface_xy_data(std::string hname, double sbs_kick, int rpass) {    
     // returns TH2F for HCAL face (x,y) [Data]
+    // sbs_kick = -99 assumes p_deflection has been used
     // block positions from DB
     double xHCAL_t_DB = rpass<2 ? expconst::xHCAL_t_DB_p1 : expconst::xHCAL_t_DB;   //m, center of top row blocks (from DB)
     double xHCAL_b_DB = rpass<2 ? expconst::xHCAL_b_DB_p1 : expconst::xHCAL_b_DB;   //m, center of bottom row blocks (from DB)
@@ -248,6 +249,7 @@ namespace util_pd {
     double x_min = xHCAL_t_DB - expconst::hcalblk_h/2.;
     double x_max = xHCAL_b_DB + expconst::hcalblk_h/2.;
     std::string ylabel = sbs_kick==0 ? "x_{HCAL}^{exp} (m)" : "x_{HCAL}^{exp}-" + std::to_string(sbs_kick) + " (m)";
+    if (sbs_kick==-99) ylabel = "x_{HCAL}^{exp} - #deltax_{SBS} (m)"; 
     // TH2F *h = new TH2F(hname.c_str(),Form(";y_{HCAL}^{exp} (m);%s",ylabel.c_str()),
     // 		       expconst::hcalcol, y_min, y_max,
     // 		       expconst::hcalrow, x_min, x_max);
@@ -264,6 +266,7 @@ namespace util_pd {
     double x_min = expconst::xHCAL_t_DB_MC - expconst::hcalblk_h/2.;
     double x_max = expconst::xHCAL_b_DB_MC + expconst::hcalblk_h/2.;
     std::string ylabel = sbs_kick==0 ? "x_{HCAL}^{exp} (m)" : "x_{HCAL}^{exp}-" + std::to_string(sbs_kick) + " (m)";
+    if (sbs_kick==-99) ylabel = "x_{HCAL}^{exp} - #deltax_{SBS} (m)"; 
     // TH2F *h = new TH2F(hname.c_str(),Form(";y_{HCAL}^{exp} (m);%s",ylabel.c_str()),
     // 		       expconst::hcalcol, y_min, y_max,
     // 		       expconst::hcalrow, x_min, x_max);

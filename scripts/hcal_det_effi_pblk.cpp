@@ -216,8 +216,9 @@ int hcal_det_effi_pblk (const char *configfilename, std::string filebase="pdout/
     //if (abs(Wrecon - 0.876) > 0.2) continue;
 
     // Expected position of the q vector at HCAL
+    TVector3 HCAL_intersect;   
     vector<double> xyHCAL_exp; // xyHCAL_exp[0] = xHCAL_exp & xyHCAL_exp[1] = yHCAL_exp
-    kine::GetxyHCALexpect(vertex, pNhat, HCAL_origin, HCAL_axes, xyHCAL_exp);
+    kine::GetxyHCALexpect(vertex, pNhat, HCAL_origin, HCAL_axes, HCAL_intersect, xyHCAL_exp);
     double dx = xHCAL - xyHCAL_exp[0];  h_dxHCAL->Fill(dx);
     double dy = yHCAL - xyHCAL_exp[1];  h_dyHCAL->Fill(dy);
 

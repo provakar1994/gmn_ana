@@ -100,8 +100,8 @@ namespace kine {
     HCAL_axes.push_back(HCAL_zaxis);
   }
   //--------------------------------------------
-  void GetxyHCALexpect(TVector3 vertex, TVector3 pNhat, TVector3 HCAL_origin, 
-		       std::vector<TVector3> HCAL_axes, std::vector<double> &xyHCALexpect) {
+  void GetxyHCALexpect(TVector3 vertex, TVector3 pNhat, TVector3 HCAL_origin, std::vector<TVector3> HCAL_axes,
+		       TVector3 &HCAL_intersect, std::vector<double> &xyHCALexpect) {
     /* This function calculates the expected vertical (x) and horizontal (y) positions
      of the recoil nucleon at the face of HCAL. 
      input:
@@ -110,12 +110,13 @@ namespace kine {
      3. HCAL_origin  : HCAL origin vector [in Hall CoS], 
      4. HCAL_axes    : HCAL CoS axes [in Hall CoS]
      output:
-     1. xyHCALexpect : expected x and y positions
+     1. HCAL_intersect 
+     2. xyHCALexpect : expected x and y positions
     */
     // Intersection of a ray with a plane
     double sintersect = (HCAL_origin - vertex).Dot(HCAL_axes[2]) / (pNhat.Dot(HCAL_axes[2]));
     // ray from Hall origin onto the face of HCAL where the nucleon hit
-    TVector3 HCAL_intersect = vertex + sintersect*pNhat; 
+    HCAL_intersect = vertex + sintersect*pNhat; 
 
     double xexpect_HCAL = (HCAL_intersect - HCAL_origin).Dot(HCAL_axes[0]);
     double yexpect_HCAL = (HCAL_intersect - HCAL_origin).Dot(HCAL_axes[1]);

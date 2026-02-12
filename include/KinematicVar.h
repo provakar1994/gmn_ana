@@ -56,6 +56,7 @@ namespace kine{
 		       TVector3 pNhat,                  // projected q vector
 		       TVector3 HCAL_origin,            // HCAL origin vector [in Hall CoS]
 		       std::vector<TVector3> HCAL_axes,      // HCAL CoS axes [in Hall CoS]
+		       TVector3 &HCAL_intersect,            // HCAL origin vector [in Hall CoS]		       
 		       std::vector<double> &xyHCALexpect);   // expected x and y positions (Output)       
 
   double Q2(double ebeam, double eeprime, double etheta);                // GeV, GeV, rad (Use for per event calc.)
