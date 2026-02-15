@@ -321,9 +321,15 @@ int pDE_map(const char *configfilename) {
   // TH2F *h2_xyexp_earm = (TH2F*)data_rdf.Filter(earm_cut.c_str()).Histo2D({"h2_xyexp_earm","",int(h_yexp_lim[0]),h_yexp_lim[1],h_yexp_lim[2],int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]},"yHCAL_exp","xExp_shifted")->Clone();
   // TH2F *h2_xyexp_eNharm = (TH2F*)data_rdf.Filter(eNharm_cut.c_str()).Histo2D({"h2_xyexp_eNharm","",int(h_yexp_lim[0]),h_yexp_lim[1],h_yexp_lim[2],int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]},"yHCAL_exp","xExp_shifted")->Clone();
   // TH2F *h2_effi_map = new TH2F("h2_effi_map","",int(h_yexp_lim[0]),h_yexp_lim[1],h_yexp_lim[2],int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]);
-  TH2F *h2_xyexp_earm = (TH2F*)data_rdf.Filter(earm_cut.c_str()).Histo2D({"h2_xyexp_earm","",65,-1.25,1.25,126,-3.25,1.75},"yHCAL_exp","xExp_shifted")->Clone();
-  TH2F *h2_xyexp_eNharm = (TH2F*)data_rdf.Filter(eNharm_cut.c_str()).Histo2D({"h2_xyexp_eNharm","",65,-1.25,1.25,126,-3.25,1.75},"yHCAL_exp","xExp_shifted")->Clone();
-  TH2F *h2_effi_map = new TH2F("h2_effi_map","",65,-1.25,1.25,126,-3.25,1.75);
+  int nBinY = 32; //65; <- pass2
+  double hMinY = -1.25;
+  double hMaxY = 1.25;
+  int nBinX = 63; //126; <- pass2
+  double hMinX = -3.25;
+  double hMaxX = 1.75;    
+  TH2F *h2_xyexp_earm = (TH2F*)data_rdf.Filter(earm_cut.c_str()).Histo2D({"h2_xyexp_earm","",nBinY,hMinY,hMaxY,nBinX,hMinX,hMaxX},"yHCAL_exp","xExp_shifted")->Clone();
+  TH2F *h2_xyexp_eNharm = (TH2F*)data_rdf.Filter(eNharm_cut.c_str()).Histo2D({"h2_xyexp_eNharm","",nBinY,hMinY,hMaxY,nBinX,hMinX,hMaxX},"yHCAL_exp","xExp_shifted")->Clone();
+  TH2F *h2_effi_map = new TH2F("h2_effi_map","",nBinY,hMinY,hMaxY,nBinX,hMinX,hMaxX);
   h2_effi_map->Divide(h2_xyexp_eNharm,h2_xyexp_earm);
   //util_pd::SetAxTitles(h2_effi_map,txexp,tyexp);
   util_pd::SetAxTitles(h2_effi_map,txexp_p,tyexp);

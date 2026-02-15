@@ -27,7 +27,7 @@ module load analyzer/1.7.12
 cd $GMN_ANA/scripts
 
 if [[ "$process" == "qelas" ]]; then
-    analyzer -b -q ''$process'_ana_data.cpp("sbs'$conf'-sbs'$field'p/conf_'$process'_ana_data.json","'$target'")'
+    analyzer -b -q ''$process'_ana_data.cpp("sbs'$conf'-sbs'$field'p/conf_'$process'_ana_data.json","'$target'",'$pass','$model')'
 else
     analyzer -b -q ''$process'_ana_data.cpp("sbs'$conf'-sbs'$field'p/conf_'$process'_ana_data.json",'$pass','$model')'
 fi

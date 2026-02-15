@@ -249,7 +249,7 @@ int qelas_ana_data (const char *configfilename,
   TH2F *h2_dxdyHCAL = util_pd::TH2FdxdyHCAL("h2_dxdyHCAL");
 
   TH1F *h_hcl_inTime_idcl = new TH1F("h_hcl_inTime_idcl","Index of HCAL cl. in time (HCAL/SH ADC coin)",maxNHCALcl,0,maxNHCALcl);
-  TH1F *h_hcl_inTime_idcl_WCut = new TH1F("h_hcl_inTime_idcl_WCut","Index of HCAL cl. in time (HCAL/SH ADC coin) | WCut",maxNHCALcl,0,maxNHCALcl);
+  TH1F *h_hcl_inTime_idcl_W2Cut = new TH1F("h_hcl_inTime_idcl_W2Cut","Index of HCAL cl. in time (HCAL/SH ADC coin) | W2Cut",maxNHCALcl,0,maxNHCALcl);
 
   TH2F *h2_hclHE_eng_vs_idcl = new TH2F("h2_hclHE_eng_vs_idcl","Eng. of HE block vs cl. index | HCAL",maxNHCALcl,0,maxNHCALcl,200,0,1);
   TH2F *h2_hclHE_atime_vs_idcl = new TH2F("h2_hclHE_atime_vs_idcl","ADC time of HE block vs cl. index | HCAL",maxNHCALcl,0,maxNHCALcl,250,25,75);
@@ -262,7 +262,7 @@ int qelas_ana_data (const char *configfilename,
   TTree *Tout = new TTree("Tout", "");
   Tout->SetMaxTreeSize(30000000000LL);
   //cuts
-  bool WCut;              Tout->Branch("WCut", &WCut, "WCut/O");
+  bool W2Cut;              Tout->Branch("W2Cut", &W2Cut, "W2Cut/O");
   bool bbfiduCut;         Tout->Branch("bbfiduCut", &bbfiduCut, "bbfiduCut/O");
   bool pCut;              Tout->Branch("pCut", &pCut, "pCut/O");
   bool nCut;              Tout->Branch("nCut", &nCut, "nCut/O");
@@ -393,7 +393,7 @@ int qelas_ana_data (const char *configfilename,
   double T_cltrindexGRINCH; if (conf>7) Tout->Branch("cltrindexGRINCH", &T_cltrindexGRINCH, "cltrindexGRINCH/D");
 
   // reading W cut limits
-  std::vector<double> W_cutR; jmgr->GetVectorFromSubKey<double>(key,"W_cutR",W_cutR);
+  std::vector<double> W2_cutR; jmgr->GetVectorFromSubKey<double>(key,"W2_cutR",W2_cutR);
   // reading BB fiducial cut limits
   std::vector<double> bbfidu_cutR; jmgr->GetVectorFromSubKey<double>(key,"bbfidu_cutR",bbfidu_cutR);
   // reading HCAL/SH ADC coincidence time cut limits
@@ -593,7 +593,7 @@ int qelas_ana_data (const char *configfilename,
     T_epsilon_n = epsilon_n;
 
     // defining W cut
-    WCut = T_W >= W_cutR[0] && T_W <= W_cutR[1];
+    W2Cut = T_W >= W2_cutR[0] && T_W <= W2_cutR[1];
 
     T_rnum = rnum;
     T_segnum = nseg;
@@ -778,8 +778,8 @@ int qelas_ana_data (const char *configfilename,
 	    // T_yHCAL_acl[ihcl_sorted] = yHCAL_acl[ihcl_sorted];
 
 	    if (inTime_idcl!=-1) h_hcl_inTime_idcl->Fill(inTime_idcl);
-	    if (WCut) {
-	      if (inTime_idcl!=-1) h_hcl_inTime_idcl_WCut->Fill(inTime_idcl);
+	    if (W2Cut) {
+	      if (inTime_idcl!=-1) h_hcl_inTime_idcl_W2Cut->Fill(inTime_idcl);
       
 	      // HE block related variables
 	      h2_hclHE_eng_vs_idcl->Fill(ihcl_sorted,eblkHCAL_acl[ihcl_sorted]);
@@ -945,11 +945,11 @@ int qelas_ana_data (const char *configfilename,
     dy_nS = fabs(dy-dy_p_cut[0])/dy_p_cut[1];  // assuming dy is same for n and p   
 
     // calculating TOF correction
-    T_TOF_corr = WCut&&pCut ? pTOF_exp-pTOF_central : nTOF_exp-nTOF_central;
+    T_TOF_corr = W2Cut&&pCut ? pTOF_exp-pTOF_central : nTOF_exp-nTOF_central;
     T_coinT_ADC_TOF_c = T_atimeHCAL-atimeSH-T_TOF_corr-coinT_ADC_TOF_offset;    
 
     // W cut
-    if (WCut) {
+    if (W2Cut) {
       h_dxHCAL_nfc->Fill(dx);
       h_dyHCAL_nfc->Fill(dy);
       // fiducial cut
@@ -1118,13 +1118,13 @@ int qelas_ana_data (const char *configfilename,
   if (!tmpstr.empty()) pt->AddText(Form(" %s",tmpstr.c_str()));
   pt->AddText(Form(" # events passed global cuts: %ld",ngoodevs));
   pt->AddText(" Elastic cuts: ");
-  pt->AddText(Form(" Inbuilt W cut: %.2f #leq W #leq %.2f GeV/c",W_cutR[0],W_cutR[1]));
+  pt->AddText(Form(" Inbuilt W2 cut: %.2f #leq W2 #leq %.2f GeV/c",W2_cutR[0],W2_cutR[1]));
   pt->AddText(Form(" Inbuilt p cut (#Deltax): Mean = %.4f, %.1f#sigma = %.4f",dx_p_cut[0],dx_p_cut[2],dx_p_cut[1]));
   pt->AddText(Form(" Inbuilt p cut (#Deltay): Mean = %.4f, %.1f#sigma = %.4f",dy_p_cut[0],dy_p_cut[2],dy_p_cut[1]));
   pt->AddText(Form(" Inbuilt n cut (#Deltax): Mean = %.4f, %.1f#sigma = %.4f",dx_n_cut[0],dx_n_cut[2],dx_n_cut[1]));
   pt->AddText(Form(" Inbuilt n cut (#Deltay): Mean = %.4f, %.1f#sigma = %.4f",dy_n_cut[0],dy_n_cut[2],dy_n_cut[1]));
   pt->AddText(Form(" Inbuilt BB fiducial cut: |fpX-0.9*fpTh-%.2f| #leq %.2f",bbfidu_cutR[0],bbfidu_cutR[1]));
-  pt->AddText(Form(" Coin. time cut for HCAL in-time clustering: %.1f #geq |atimeHCAL-atimeSH-%.3f| #leq %.1f",coinTADC_cutR[1],coinTADC_cutR[0],coinTADC_cutR[2]));
+  pt->AddText(Form(" Coin. time cut for HCAL in-time clustering: %.1f #leq |atimeHCAL-atimeSH-%.3f| #leq %.1f",coinTADC_cutR[1],coinTADC_cutR[0],coinTADC_cutR[2]));
   pt->AddText(Form(" TOF crrected coin time offset: %.3f",coinT_ADC_TOF_offset));  
   pt->AddText(" Fit info: ");
   pt->AddText(" p & n peaks, w/ fiducial cut: dxpM,dxpS,dxnM,dxnS,dyM,dyS ");
@@ -1211,7 +1211,7 @@ Algorithm fits the distribution twice for optimization.
 - h_dyHCAL_fitR[1] : xmax for 1st fit (crude). Try to avoid any secondary peak.
 - h_dyHCAL_fitR[2] : # sigma below the peak for 2nd fit (fine)
 - h_dyHCAL_fitR[3] : # sigma above the peak for 2nd fit (fine)
-** W_cutR : W cut range.
-- W_cutR[0] : lower limit
-- W_cutR[1] : upper limit
+** W2_cutR : W cut range.
+- W2_cutR[0] : lower limit
+- W2_cutR[1] : upper limit
 */
