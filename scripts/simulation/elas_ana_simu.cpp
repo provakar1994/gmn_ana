@@ -123,6 +123,12 @@ int elas_ana_simu (const char *configfilename,
   std::vector<void*> gemvar_mem = {&nhitsGEM,&ngoodhitsGEM,&trchi2ndf};
   setrootvar::setbranch(C,"bb.gem.track",gemvar,gemvar_mem);
 
+  // GRINCH cluster variables
+  double clsizeGRINCH, cltmeanGRINCH, cltotmeanGRINCH, cltrindexGRINCH;
+  std::vector<std::string> grinchvar = {"size","t_mean","tot_mean","trackindex"};
+  std::vector<void*> grinchvar_mem = {&clsizeGRINCH,&cltmeanGRINCH,&cltotmeanGRINCH,&cltrindexGRINCH};
+  setrootvar::setbranch(C,"bb.grinch_tdc.clus",grinchvar,grinchvar_mem);  
+
   //MC variables
   double mc_sigma;  // mc_sigma => Cross-section weight
   double mc_ebeam, mc_veE, mc_vetheta; // MC truth info for electrons
@@ -142,7 +148,7 @@ int elas_ana_simu (const char *configfilename,
 
   // Reading in HCAL efficiency map
   double avg_effi = 0.9485; //error weighted average of x and y efficiency
-  TFile *fEffi = util_pd::ReadRootFile("~/gmn_ana/scripts/pdout/pDE/0p77zoff_pDE_data_sbs8_sbs-1p_model1_pass2.root");
+  TFile *fEffi = util_pd::ReadRootFile("~/gmn_ana/scripts/pdout/pDE/0p77zoff_pDE_data_sbs8_sbs-1p_model1_pass3.root");
   TH1F *h2_effi_map = (TH1F*)fEffi->Get("h2_effi_map");
   
   // defining the outputfile
@@ -178,9 +184,9 @@ int elas_ana_simu (const char *configfilename,
 
   // Defining interesting ROOT tree branches 
   TTree *Tout = new TTree("Tout", "");
-  Tout->SetMaxTreeSize(4000000000LL);
+  Tout->SetMaxTreeSize(30000000000LL);
   //cuts
-  bool WCut;              Tout->Branch("WCut", &WCut, "WCut/B");
+  bool W2Cut;             Tout->Branch("W2Cut", &W2Cut, "W2Cut/B");
   bool bbfiduCut;         Tout->Branch("bbfiduCut", &bbfiduCut, "bbfiduCut/O");
   bool pCut;              Tout->Branch("pCut", &pCut, "pCut/B");
   double pdx_nS;          Tout->Branch("pdx_nS", &pdx_nS, "pdx_nS/D"); //# sigma away from p dx peak
@@ -269,6 +275,12 @@ int elas_ana_simu (const char *configfilename,
   double T_nhitsGEM;      Tout->Branch("nhitsGEM", &T_nhitsGEM, "nhitsGEM/D");
   double T_ngoodhitsGEM;  Tout->Branch("ngoodhitsGEM", &T_ngoodhitsGEM, "ngoodhitsGEM/D");
   double T_trchi2ndf;     Tout->Branch("trchi2ndf", &T_trchi2ndf, "trchi2ndf/D");
+  //GRINCH
+  double T_clsizeGRINCH;    if (conf>7) Tout->Branch("clsizeGRINCH", &T_clsizeGRINCH, "clsizeGRINCH/D");
+  double T_cltmeanGRINCH;   if (conf>7) Tout->Branch("cltmeanGRINCH", &T_cltmeanGRINCH, "cltmeanGRINCH/D");
+  double T_cltotmeanGRINCH; if (conf>7) Tout->Branch("cltotmeanGRINCH", &T_cltotmeanGRINCH, "cltotmeanGRINCH/D");
+  double T_cltrindexGRINCH; if (conf>7) Tout->Branch("cltrindexGRINCH", &T_cltrindexGRINCH, "cltrindexGRINCH/D");
+
   // Variables based on MC truth info
   double T_pN_t;          Tout->Branch("pN_t", &T_pN_t, "pN_t/D"); //TRUE nucleon momentum
   double T_thN_t;         Tout->Branch("thN_t", &T_thN_t, "thN_t/D"); //TRUE nucelon theta
@@ -277,7 +289,6 @@ int elas_ana_simu (const char *configfilename,
   double T_yHCAL_exp_t;   Tout->Branch("yHCAL_exp_t", &T_yHCAL_exp_t, "yHCAL_exp_t/D");
   // // HCAL NDE correciton
   // double T_effi_corr;     Tout->Branch("effi_corr", &T_effi_corr, "effi_corr/D"); //TRUE nucleon momentum
-
 
   // Do the energy loss calculation here (only for g4sbs generator)
   double ebeam = sbsconf.GetEbeam(); // gets overwritten in the event loop
@@ -291,13 +302,13 @@ int elas_ana_simu (const char *configfilename,
   // varying safety margin width by +/- 10% in vertical direction
   vector<double> hcal_safety_margin_p10p = cut::hcal_safety_margin(dx_p_cut[1]*1.1,dx_p_cut[1]*1.1,dy_p_cut[1],hcal_active_area);
   vector<double> hcal_safety_margin_m10p = cut::hcal_safety_margin(dx_p_cut[1]*.9,dx_p_cut[1]*.9,dy_p_cut[1],hcal_active_area);
-  TH2F *h2_xyHCAL_p = util_pd::TH2FHCALface_xy_simu("h2_xyHCAL_p",sbs_kick);
-  TH2F *h2_xyHCAL_p_nfc = util_pd::TH2FHCALface_xy_simu("h2_xyHCAL_p_nfc",sbs_kick);
+  TH2F *h2_xyHCAL_p = util_pd::TH2FHCALface_xy_simu("h2_xyHCAL_p",-99);
+  TH2F *h2_xyHCAL_p_nfc = util_pd::TH2FHCALface_xy_simu("h2_xyHCAL_p_nfc",-99);
 
   // reading W2 offset and W cut limits
   double dy_offset = jmgr->GetValueFromSubKey<double>(key,"dy_offset");
   double W2_offset = jmgr->GetValueFromSubKey<double>(key,"W2_offset");
-  std::vector<double> W_cutR; jmgr->GetVectorFromSubKey<double>(key,"W_cutR",W_cutR);
+  std::vector<double> W2_cutR; jmgr->GetVectorFromSubKey<double>(key,"W2_cutR",W2_cutR);
   // reading BB fiducial cut limits
   std::vector<double> bbfidu_cutR; jmgr->GetVectorFromSubKey<double>(key,"bbfidu_cutR",bbfidu_cutR);
 
@@ -506,17 +517,23 @@ int elas_ana_simu (const char *configfilename,
     T_ngoodhitsGEM = ngoodhitsGEM[0];
     T_trchi2ndf = trchi2ndf[0];
 
+    T_clsizeGRINCH = clsizeGRINCH;
+    T_cltmeanGRINCH = cltmeanGRINCH;
+    T_cltotmeanGRINCH = cltotmeanGRINCH;
+    T_cltrindexGRINCH = cltrindexGRINCH;    
+
     T_mc_fnucl = int(mc_fnucl);
 
     // Expected position of the q vector at HCAL
+    TVector3 HCAL_intersect;       
     vector<double> xyHCAL_exp; // xyHCAL_exp[0] = xHCAL_exp & xyHCAL_exp[1] = yHCAL_exp
-    kine::GetxyHCALexpect(vertex, pNhat, HCAL_origin, HCAL_axes, xyHCAL_exp);
+    kine::GetxyHCALexpect(vertex, pNhat, HCAL_origin, HCAL_axes, HCAL_intersect, xyHCAL_exp);
     double dx = xHCAL - xyHCAL_exp[0];  
     double dy = yHCAL - xyHCAL_exp[1]; 
 
     T_xHCAL_exp = xyHCAL_exp[0];
     T_yHCAL_exp = xyHCAL_exp[1];
-    T_xHCAL_exp_p = xyHCAL_exp[0]-sbs_kick;
+    T_xHCAL_exp_p = xyHCAL_exp[0]-T_p_def;
     T_dx = dx;
     T_dy = dy+dy_offset;
 
@@ -540,8 +557,9 @@ int elas_ana_simu (const char *configfilename,
     T_phN_t = TMath::PiOver2() - atan2(mc_npy, mc_npx);  // final state N's phi
     TVector3 pNhat_t = kine::qVect_unit(T_thN_t,T_phN_t);
     // TRUE position of the q vector at HCAL
+    TVector3 HCAL_intersect_t;       
     vector<double> xyHCAL_exp_t; // xyHCAL_exp[0] = xHCAL_exp & xyHCAL_exp[1] = yHCAL_exp
-    kine::GetxyHCALexpect(vertex_t, pNhat_t, HCAL_origin, HCAL_axes, xyHCAL_exp_t);
+    kine::GetxyHCALexpect(vertex_t, pNhat_t, HCAL_origin, HCAL_axes, HCAL_intersect, xyHCAL_exp_t);
     T_xHCAL_exp_t = -xyHCAL_exp_t[0];
     T_yHCAL_exp_t = xyHCAL_exp_t[1];
     // Get the efficiency correction value
@@ -555,18 +573,18 @@ int elas_ana_simu (const char *configfilename,
     
     // HCAL active area and safety margin cuts [Fiducial region]
     ARCut = cut::inHCAL_activeA(xHCAL,yHCAL,hcal_active_area);
-    SMCut = cut::inHCAL_safety_margin(target,xyHCAL_exp[0],xyHCAL_exp[1],sbs_kick,hcal_safety_margin);
+    SMCut = cut::inHCAL_safety_margin(target,xyHCAL_exp[0],xyHCAL_exp[1],T_p_def,hcal_safety_margin);
     fiduCut = ARCut && SMCut; 
     // *** Implementing Sebastian Seed's idea for flexible SMCut
     // First step is to evalute current xyHCAL_exp values are how many sigmas away from the active area boundaries
     double SMy_nS_l = fabs(T_yHCAL_exp-hcal_active_area[3])/dy_p_cut[1];
     double SMy_nS_r = fabs(T_yHCAL_exp-hcal_active_area[2])/dy_p_cut[1]; 
-    double SMx_nS_t_p = fabs(T_xHCAL_exp-sbs_kick-hcal_active_area[0])/dx_p_cut[1];
-    double SMx_nS_b_p = fabs(T_xHCAL_exp-sbs_kick-hcal_active_area[1])/dx_p_cut[1];
+    double SMx_nS_t_p = fabs(T_xHCAL_exp-T_p_def-hcal_active_area[0])/dx_p_cut[1];
+    double SMx_nS_b_p = fabs(T_xHCAL_exp-T_p_def-hcal_active_area[1])/dx_p_cut[1];
     // The above calculation is symmetric for the events landing on either sides of AR boundaries. Hence, it is
     // necessary to identify the events landing outside of AR to be able to exclude them from Cut. The easiest I can
     // think of right now is to define a bool that turns 1 if xyHCAL_exp values are within AR
-    bool p_xyexp_in_AR = cut::inHCAL_activeA(T_xHCAL_exp-sbs_kick,T_yHCAL_exp,hcal_active_area);
+    bool p_xyexp_in_AR = cut::inHCAL_activeA(T_xHCAL_exp-T_p_def,T_yHCAL_exp,hcal_active_area);
     // Now, its time to define just one variable to be able to cut on both sides of boundaries for a given direction.
     // The way I can think of is to cut on the minimum # sigmas for a given direction to accomplish this. At the same
     // time be sure to assign garbage value for events with xyHCAL_exp values landing outside of AR
@@ -579,10 +597,10 @@ int elas_ana_simu (const char *configfilename,
     dy_nS = fabs(dy-dy_p_cut[0])/dy_p_cut[1];
 
     // defining W cut
-    WCut = Wrecon >= W_cutR[0] && Wrecon <= W_cutR[1];
+    W2Cut = T_W2 >= W2_cutR[0] && T_W2 <= W2_cutR[1];
 
     // W cut
-    if (WCut&&bbfiduCut&&T_eHCAL>0) {
+    if (W2Cut&&bbfiduCut&&T_eHCAL>0) {
       if (abs(dy)<0.4) h_dxHCAL_nfc->Fill(dx, weight);
       h_dyHCAL_nfc->Fill(dy, weight);
       if (fiduCut) {
@@ -594,7 +612,7 @@ int elas_ana_simu (const char *configfilename,
 	// dx dist. for p & n separately using MC info
 	if (int(mc_fnucl)==1) {
 	  h_dxHCAL_p->Fill(dx, weight);
-	  h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick, weight);
+	  h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - T_p_def, weight);
 	}else if (process.compare("heep")==0) {
 	  std::cerr << "*!* Invalid final state nuclei!" << std::endl; 
 	  std::exit(1);
@@ -605,10 +623,10 @@ int elas_ana_simu (const char *configfilename,
 	h2_dxdyHCAL->Fill(dy, dx, weight);
 
 	// hit map to show p & n in fiducial region
-	if (pCut) h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick, weight);
+	if (pCut) h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - T_p_def, weight);
       }
       if (pCut) {
-	h2_xyHCAL_p_nfc->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick, weight);
+	h2_xyHCAL_p_nfc->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - T_p_def, weight);
 	h2_dx_vs_xHCAL_p->Fill(xHCAL,dx,weight);
       }
     }
@@ -728,7 +746,7 @@ int elas_ana_simu (const char *configfilename,
   if (!tmpstr.empty()) pt->AddText(Form(" %s",tmpstr.c_str()));
   pt->AddText(Form(" # events passed global cuts: %ld", ngoodevs));
   pt->AddText(" Elastic cuts: ");
-  pt->AddText(Form(" Inbuilt W cut: %.2f #leq W #leq %.2f GeV/c",W_cutR[0],W_cutR[1]));
+  pt->AddText(Form(" Inbuilt W2 cut: %.2f #leq W2 #leq %.2f GeV/c",W2_cutR[0],W2_cutR[1]));
   pt->AddText(Form(" Inbuilt p cut (#Deltax): Mean = %.4f, %.1f#sigma = %.4f",dx_p_cut[0],dx_p_cut[2],dx_p_cut[1]));
   pt->AddText(Form(" Inbuilt p cut (#Deltay): Mean = %.4f, %.1f#sigma = %.4f",dy_p_cut[0],dy_p_cut[2],dy_p_cut[1]));
   pt->AddText(Form(" Inbuilt BB fiducial cut: |fpX-0.9*fpTh-%.2f| #leq %.2f",bbfidu_cutR[0],bbfidu_cutR[1]));
@@ -828,7 +846,7 @@ int elas_ana_simu (const char *configfilename,
      - h_dyHCAL_fitR[1] : xmax for 1st fit (crude). Try to avoid any secondary peak.
      - h_dyHCAL_fitR[2] : # sigma below the peak for 2nd fit (fine)
      - h_dyHCAL_fitR[3] : # sigma above the peak for 2nd fit (fine)
-  ** W_cutR : W cut range.
-     - W_cutR[0] : lower limit
-     - W_cutR[1] : upper limit
+  ** W2_cutR : W cut range.
+     - W2_cutR[0] : lower limit
+     - W2_cutR[1] : upper limit
 */

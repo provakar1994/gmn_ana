@@ -122,6 +122,12 @@ int qelas_ana_simu (const char *configfilename,
   std::vector<void*> gemvar_mem = {&nhitsGEM,&ngoodhitsGEM,&trchi2ndf};
   setrootvar::setbranch(C,"bb.gem.track",gemvar,gemvar_mem);
 
+  // GRINCH cluster variables
+  double clsizeGRINCH, cltmeanGRINCH, cltotmeanGRINCH, cltrindexGRINCH;
+  std::vector<std::string> grinchvar = {"size","t_mean","tot_mean","trackindex"};
+  std::vector<void*> grinchvar_mem = {&clsizeGRINCH,&cltmeanGRINCH,&cltotmeanGRINCH,&cltrindexGRINCH};
+  setrootvar::setbranch(C,"bb.grinch_tdc.clus",grinchvar,grinchvar_mem);  
+
   //hcal variables
   bool gen_ML_data = 0; //= jmgr->GetValueFromSubKey<int>(key,"gen_ML_data"); // Generate ML data?
   int aHCALndata;
@@ -149,7 +155,7 @@ int qelas_ana_simu (const char *configfilename,
 
   // Reading in HCAL efficiency map
   double avg_effi = 0.9485; //error weighted average of x and y efficiency
-  TFile *fEffi = util_pd::ReadRootFile("~/gmn_ana/scripts/pdout/pDE/0p77zoff_pDE_data_sbs8_sbs-1p_model1_pass2.root");
+  TFile *fEffi = util_pd::ReadRootFile("~/gmn_ana/scripts/pdout/pDE/0p77zoff_pDE_data_sbs8_sbs-1p_model1_pass3.root");
   TH1F *h2_effi_map = (TH1F*)fEffi->Get("h2_effi_map");  
 
   // defining the outputfile
@@ -186,9 +192,9 @@ int qelas_ana_simu (const char *configfilename,
 
   // Defining interesting ROOT tree branches 
   TTree *Tout = new TTree("Tout", "");
-  Tout->SetMaxTreeSize(4000000000LL);
+  Tout->SetMaxTreeSize(30000000000LL);
   //cuts
-  bool WCut;              Tout->Branch("WCut", &WCut, "WCut/O");
+  bool W2Cut;             Tout->Branch("W2Cut", &W2Cut, "W2Cut/O");
   bool bbfiduCut;         Tout->Branch("bbfiduCut", &bbfiduCut, "bbfiduCut/O");
   bool pCut;              Tout->Branch("pCut", &pCut, "pCut/O");
   bool nCut;              Tout->Branch("nCut", &nCut, "nCut/O");
@@ -286,6 +292,11 @@ int qelas_ana_simu (const char *configfilename,
   double T_nhitsGEM;      Tout->Branch("nhitsGEM", &T_nhitsGEM, "nhitsGEM/D");
   double T_ngoodhitsGEM;  Tout->Branch("ngoodhitsGEM", &T_ngoodhitsGEM, "ngoodhitsGEM/D");
   double T_trchi2ndf;     Tout->Branch("trchi2ndf", &T_trchi2ndf, "trchi2ndf/D");
+  //GRINCH
+  double T_clsizeGRINCH;    if (conf>7) Tout->Branch("clsizeGRINCH", &T_clsizeGRINCH, "clsizeGRINCH/D");
+  double T_cltmeanGRINCH;   if (conf>7) Tout->Branch("cltmeanGRINCH", &T_cltmeanGRINCH, "cltmeanGRINCH/D");
+  double T_cltotmeanGRINCH; if (conf>7) Tout->Branch("cltotmeanGRINCH", &T_cltotmeanGRINCH, "cltotmeanGRINCH/D");
+  double T_cltrindexGRINCH; if (conf>7) Tout->Branch("cltrindexGRINCH", &T_cltrindexGRINCH, "cltrindexGRINCH/D");  
   // Variables based on MC truth info
   double T_pN_t;          Tout->Branch("pN_t", &T_pN_t, "pN_t/D"); //TRUE nucleon momentum
   double T_thN_t;         Tout->Branch("thN_t", &T_thN_t, "thN_t/D"); //TRUE nucelon theta
@@ -299,7 +310,7 @@ int qelas_ana_simu (const char *configfilename,
   // reading W2 offset and W cut limits
   double dy_offset = jmgr->GetValueFromSubKey<double>(key,"dy_offset");
   double W2_offset = jmgr->GetValueFromSubKey<double>(key,"W2_offset");
-  std::vector<double> W_cutR; jmgr->GetVectorFromSubKey<double>(key,"W_cutR",W_cutR);
+  std::vector<double> W2_cutR; jmgr->GetVectorFromSubKey<double>(key,"W2_cutR",W2_cutR);
   // reading BB fiducial cut limits
   std::vector<double> bbfidu_cutR; jmgr->GetVectorFromSubKey<double>(key,"bbfidu_cutR",bbfidu_cutR);
 
@@ -308,7 +319,7 @@ int qelas_ana_simu (const char *configfilename,
   std::vector<double> dy_p_cut; jmgr->GetVectorFromSubKey<double>(key,"dy_p_cut", dy_p_cut);
   std::vector<double> dx_n_cut; jmgr->GetVectorFromSubKey<double>(key,"dx_n_cut", dx_n_cut);
   std::vector<double> dy_n_cut; jmgr->GetVectorFromSubKey<double>(key,"dy_n_cut", dy_n_cut);
-  double sbs_kick = jmgr->GetValueFromSubKey<double>(key,"sbs_kick"); // let's data guide the amount of sbs_kick (pPeak-nPeak) - 04/21/24
+  double sbs_kick;// not using anymore - 02/14/26  = jmgr->GetValueFromSubKey<double>(key,"sbs_kick"); // let's data guide the amount of sbs_kick (pPeak-nPeak) - 04/21/24
   double avg_dx_np_sig = (dx_n_cut[1]+dx_p_cut[1])/2.; 
   std::vector<double> hcal_active_area = cut::hcal_active_area_simu(1,1); // Exc. 1 blk from all 4 sides
   std::vector<double> hcal_safety_margin = cut::hcal_safety_margin(avg_dx_np_sig,avg_dx_np_sig,dy_p_cut[1],hcal_active_area);
@@ -317,7 +328,7 @@ int qelas_ana_simu (const char *configfilename,
   std::vector<double> hcal_safety_margin_m10p = cut::hcal_safety_margin(avg_dx_np_sig*.9,avg_dx_np_sig*.9,dy_p_cut[1],hcal_active_area);
   std::vector<double> hcal_safety_margin_p20p = cut::hcal_safety_margin(avg_dx_np_sig*1.2,avg_dx_np_sig*1.2,dy_p_cut[1],hcal_active_area);
   std::vector<double> hcal_safety_margin_m20p = cut::hcal_safety_margin(avg_dx_np_sig*.8,avg_dx_np_sig*.8,dy_p_cut[1],hcal_active_area);
-  TH2F *h2_xyHCAL_p = util_pd::TH2FHCALface_xy_simu("h2_xyHCAL_p",sbs_kick);
+  TH2F *h2_xyHCAL_p = util_pd::TH2FHCALface_xy_simu("h2_xyHCAL_p",-99);
   TH2F *h2_xyHCAL_n = util_pd::TH2FHCALface_xy_simu("h2_xyHCAL_n",0);
 
   // costruct axes of HCAL CoS in Hall CoS
@@ -513,7 +524,7 @@ int qelas_ana_simu (const char *configfilename,
     T_epsilon_n = epsilon_n;
 
     // defining W cut
-    WCut = T_W >= W_cutR[0] && T_W <= W_cutR[1];
+    W2Cut = T_W2 >= W2_cutR[0] && T_W2 <= W2_cutR[1];
 
     T_vz = vz[0];
     T_trP = p[0];
@@ -578,11 +589,17 @@ int qelas_ana_simu (const char *configfilename,
     T_ngoodhitsGEM = ngoodhitsGEM[0];
     T_trchi2ndf = trchi2ndf[0];
 
+    T_clsizeGRINCH = clsizeGRINCH;
+    T_cltmeanGRINCH = cltmeanGRINCH;
+    T_cltotmeanGRINCH = cltotmeanGRINCH;
+    T_cltrindexGRINCH = cltrindexGRINCH;    
+
     T_mc_fnucl = int(mc_fnucl);
 
     // Expected position of the q vector at HCAL
+    TVector3 HCAL_intersect;   
     std::vector<double> xyHCAL_exp; // xyHCAL_exp[0] = xHCAL_exp & xyHCAL_exp[1] = yHCAL_exp
-    kine::GetxyHCALexpect(vertex, pNhat, HCAL_origin, HCAL_axes, xyHCAL_exp);
+    kine::GetxyHCALexpect(vertex, pNhat, HCAL_origin, HCAL_axes, HCAL_intersect, xyHCAL_exp);
     double dx = xHCAL - xyHCAL_exp[0];  
     double dy = yHCAL - xyHCAL_exp[1]; 
 
@@ -616,8 +633,9 @@ int qelas_ana_simu (const char *configfilename,
     T_phN_t = TMath::PiOver2() - atan2(mc_npy, mc_npx);  // final state N's phi
     TVector3 pNhat_t = kine::qVect_unit(T_thN_t,T_phN_t);
     // TRUE position of the q vector at HCAL
+    TVector3 HCAL_intersect_t;
     vector<double> xyHCAL_exp_t; // xyHCAL_exp[0] = xHCAL_exp & xyHCAL_exp[1] = yHCAL_exp
-    kine::GetxyHCALexpect(vertex_t, pNhat_t, HCAL_origin, HCAL_axes, xyHCAL_exp_t);
+    kine::GetxyHCALexpect(vertex_t, pNhat_t, HCAL_origin, HCAL_axes, HCAL_intersect_t, xyHCAL_exp_t);
     T_xHCAL_exp_t = -xyHCAL_exp_t[0];
     T_yHCAL_exp_t = xyHCAL_exp_t[1];
     // Get the efficiency correction value
@@ -631,7 +649,7 @@ int qelas_ana_simu (const char *configfilename,
     
     // HCAL active area and safety margin cuts [Fiducial region]
     ARCut = cut::inHCAL_activeA(xHCAL,yHCAL,hcal_active_area);
-    SMCut = cut::inHCAL_safety_margin(target,xyHCAL_exp[0],xyHCAL_exp[1],sbs_kick,hcal_safety_margin);
+    SMCut = cut::inHCAL_safety_margin(target,xyHCAL_exp[0],xyHCAL_exp[1],T_p_def,hcal_safety_margin);
     fiduCut = ARCut && SMCut; 
     // defining HCAL cuts
     pCut = cut::SpotCut(dx,dx_p_cut[0],dx_p_cut[1],dx_p_cut[2],dy,dy_p_cut[0],dy_p_cut[1],dy_p_cut[2]);
@@ -642,7 +660,7 @@ int qelas_ana_simu (const char *configfilename,
     dy_nS = fabs(dy-dy_p_cut[0])/dy_p_cut[1];  // assuming dy is same for n and p 
 
     // W cut
-    if (WCut&&bbfiduCut&&T_eHCAL>0) {
+    if (W2Cut&&bbfiduCut&&T_eHCAL>0) {
       if (abs(dy)<0.4) h_dxHCAL_nfc->Fill(dx, weight);
       h_dyHCAL_nfc->Fill(dy, weight);
       if (mc_fnucl==1) h2_dx_vs_xHCAL_p->Fill(xHCAL,dx,weight);
@@ -661,7 +679,7 @@ int qelas_ana_simu (const char *configfilename,
 	    h_dxHCAL_p->Fill(dx, weight);
 	    h_dx_w_p_def->Fill(dx+T_p_def, weight);
 	  }	  
-	  h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick, weight);
+	  h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - T_p_def, weight);
     	} else {
     	  std::cerr << "*!* Invalid final state nuclei!" << std::endl; 
     	  std::exit(1);
@@ -672,7 +690,7 @@ int qelas_ana_simu (const char *configfilename,
     	h2_dxdyHCAL->Fill(dy, dx, weight);
 
     	// hit map to show p & n in fiducial region
-    	// if (pCut) h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - sbs_kick);
+    	// if (pCut) h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - T_p_def);
     	// if (nCut) h2_xyHCAL_n->Fill(xyHCAL_exp[1], xyHCAL_exp[0]);
       }
     }
@@ -814,7 +832,7 @@ int qelas_ana_simu (const char *configfilename,
   if (!tmpstr.empty()) pt->AddText(Form(" %s",tmpstr.c_str()));
   pt->AddText(Form(" # events passed global cuts: %ld", ngoodevs));
   pt->AddText(" Elastic cuts: ");
-  pt->AddText(Form(" Inbuilt W cut: %.2f #leq W #leq %.2f GeV/c",W_cutR[0],W_cutR[1]));
+  pt->AddText(Form(" Inbuilt W2 cut: %.2f #leq W2 #leq %.2f GeV/c",W2_cutR[0],W2_cutR[1]));
   pt->AddText(Form(" Inbuilt p cut (#Deltax): Mean = %.4f, %.1f#sigma = %.4f",dx_p_cut[0],dx_p_cut[2],dx_p_cut[1]));
   pt->AddText(Form(" Inbuilt p cut (#Deltay): Mean = %.4f, %.1f#sigma = %.4f",dy_p_cut[0],dy_p_cut[2],dy_p_cut[1]));
   pt->AddText(Form(" Inbuilt n cut (#Deltax): Mean = %.4f, %.1f#sigma = %.4f",dx_n_cut[0],dx_n_cut[2],dx_n_cut[1]));
@@ -924,7 +942,7 @@ int qelas_ana_simu (const char *configfilename,
      - h_dyHCAL_fitR[1] : xmax for 1st fit (crude). Try to avoid any secondary peak.
      - h_dyHCAL_fitR[2] : # sigma below the peak for 2nd fit (fine)
      - h_dyHCAL_fitR[3] : # sigma above the peak for 2nd fit (fine)
-  ** W_cutR : W cut range.
-     - W_cutR[0] : lower limit
-     - W_cutR[1] : upper limit
+  ** W2_cutR : W cut range.
+     - W2_cutR[0] : lower limit
+     - W2_cutR[1] : upper limit
 */

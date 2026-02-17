@@ -262,7 +262,7 @@ int qelas_ana_data (const char *configfilename,
   TTree *Tout = new TTree("Tout", "");
   Tout->SetMaxTreeSize(30000000000LL);
   //cuts
-  bool W2Cut;              Tout->Branch("W2Cut", &W2Cut, "W2Cut/O");
+  bool W2Cut;             Tout->Branch("W2Cut", &W2Cut, "W2Cut/O");
   bool bbfiduCut;         Tout->Branch("bbfiduCut", &bbfiduCut, "bbfiduCut/O");
   bool pCut;              Tout->Branch("pCut", &pCut, "pCut/O");
   bool nCut;              Tout->Branch("nCut", &nCut, "nCut/O");
@@ -593,7 +593,7 @@ int qelas_ana_data (const char *configfilename,
     T_epsilon_n = epsilon_n;
 
     // defining W cut
-    W2Cut = T_W >= W2_cutR[0] && T_W <= W2_cutR[1];
+    W2Cut = T_W2 >= W2_cutR[0] && T_W2 <= W2_cutR[1];
 
     T_rnum = rnum;
     T_segnum = nseg;
