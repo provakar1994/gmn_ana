@@ -138,7 +138,8 @@ int npratio_all(const char *configfilename) {
   std::string ybbcut = jmgr->GetValueFromSubKey_str(key,"ybbcut");
   std::string eHCALcut = jmgr->GetValueFromSubKey_str(key,"eHCALcut");
   std::string coinTcut = jmgr->GetValueFromSubKey_str(key,"coinTcut");
-  std::string coinTvar = coinTcut.find("TOF") != std::string::npos ? "coinT_ADC_TOF_c" : "coinT_ADC_c";
+  bool use_TOF_corr = coinTcut.find("TOF") != std::string::npos;
+  std::string coinTvar = use_TOF_corr ? "coinT_ADC_TOF_c" : "coinT_ADC_c";
   //
   std::string SMcut_xp = jmgr->GetValueFromSubKey_str(key,"SMcut_xp");
   std::string SMcut_xn = jmgr->GetValueFromSubKey_str(key,"SMcut_xn");
@@ -190,7 +191,8 @@ int npratio_all(const char *configfilename) {
   // output file
   std::string filebase = jmgr->GetValueFromSubKey_str(key,"outfile_prefix");
   filebase = filebase.empty() ? "" : filebase + "_";
-  std::string outfilebase = "pdout/npR/" + dfprefix + "_npR_data_" + Form("sbs%d_sbs%dp_model%d_pass%d",conf,sbsmag,model,pass);
+  std::string tofcorr = use_TOF_corr ? "" : "_noTOFcorr";
+  std::string outfilebase = "pdout/npR/" + dfprefix + "_npR_data_" + Form("sbs%d_sbs%dp_model%d_pass%d",conf,sbsmag,model,pass) + tofcorr;
   //std::string outfilebase = "pdout/pDE/" + filebase + dfprefix + "_pDE_data_" + Form("sbs%d_sbsALL_model%d_pass%d",conf,model,pass);
   TFile *fout = new TFile(Form("%s.root",outfilebase.c_str()), "RECREATE");
 
