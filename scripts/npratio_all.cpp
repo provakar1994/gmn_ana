@@ -5,6 +5,9 @@
 #include "gmn_ana.h"
 #include "../dflay/src/JSONManager.cxx"
 
+bool const print_canv_ppar = false; // if true, prints canvas per parameter
+bool const print_png = false; // if true, prints png version of all plots
+
 double xNDCoffset = 0.05;
 double y1NDCoffset = 0.05;
 
@@ -135,6 +138,7 @@ int npratio_all(const char *configfilename) {
   std::string ybbcut = jmgr->GetValueFromSubKey_str(key,"ybbcut");
   std::string eHCALcut = jmgr->GetValueFromSubKey_str(key,"eHCALcut");
   std::string coinTcut = jmgr->GetValueFromSubKey_str(key,"coinTcut");
+  std::string coinTvar = coinTcut.find("TOF") != std::string::npos ? "coinT_ADC_TOF_c" : "coinT_ADC_c";
   //
   std::string SMcut_xp = jmgr->GetValueFromSubKey_str(key,"SMcut_xp");
   std::string SMcut_xn = jmgr->GetValueFromSubKey_str(key,"SMcut_xn");
@@ -256,7 +260,7 @@ int npratio_all(const char *configfilename) {
   cdxdy->Write();
   cdxdy->SaveAs(Form("%s.pdf[",outfilebase.c_str()));
   cdxdy->SaveAs(Form("%s.pdf",outfilebase.c_str()));
-  cdxdy->SaveAs(Form("%s_dxdy.png",outfilebase.c_str()));
+  if(print_png) cdxdy->SaveAs(Form("%s_dxdy.png",outfilebase.c_str()));
   //--
   
   // W2
@@ -296,7 +300,7 @@ int npratio_all(const char *configfilename) {
   cW2->Update();
   cW2->Write();
   cW2->SaveAs(Form("%s.pdf",outfilebase.c_str()));
-  cW2->SaveAs(Form("%s_W2.png",outfilebase.c_str()));  
+  if(print_png) cW2->SaveAs(Form("%s_W2.png",outfilebase.c_str()));  
   // --
 
   // dy
@@ -335,7 +339,7 @@ int npratio_all(const char *configfilename) {
   cdy->Update();
   cdy->Write();
   cdy->SaveAs(Form("%s.pdf",outfilebase.c_str()));
-  cdy->SaveAs(Form("%s_dy.png",outfilebase.c_str()));  
+  if(print_png) cdy->SaveAs(Form("%s_dy.png",outfilebase.c_str()));  
   // --  
 
   // vz
@@ -374,8 +378,8 @@ int npratio_all(const char *configfilename) {
   pcust.customize_canvas(cvz);
   cvz->Update();
   cvz->Write();
-  cvz->SaveAs(Form("%s.pdf",outfilebase.c_str()));
-  cvz->SaveAs(Form("%s_vz.png",outfilebase.c_str()));  
+  if(print_canv_ppar) cvz->SaveAs(Form("%s.pdf",outfilebase.c_str()));
+  if(print_canv_ppar&&print_png) cvz->SaveAs(Form("%s_vz.png",outfilebase.c_str()));  
   // --
 
   // EovP
@@ -414,8 +418,8 @@ int npratio_all(const char *configfilename) {
   pcust.customize_canvas(cEovP);
   cEovP->Update();
   cEovP->Write();
-  cEovP->SaveAs(Form("%s.pdf",outfilebase.c_str()));
-  cEovP->SaveAs(Form("%s_EovP.png",outfilebase.c_str()));  
+  if(print_canv_ppar) cEovP->SaveAs(Form("%s.pdf",outfilebase.c_str()));
+  if(print_canv_ppar&&print_png) cEovP->SaveAs(Form("%s_EovP.png",outfilebase.c_str()));  
   // --
 
   // trchi2ndf
@@ -454,8 +458,8 @@ int npratio_all(const char *configfilename) {
   pcust.customize_canvas(ctrchi2ndf);
   ctrchi2ndf->Update();
   ctrchi2ndf->Write();
-  ctrchi2ndf->SaveAs(Form("%s.pdf",outfilebase.c_str()));
-  ctrchi2ndf->SaveAs(Form("%s_trchi2ndf.png",outfilebase.c_str()));  
+  if(print_canv_ppar) ctrchi2ndf->SaveAs(Form("%s.pdf",outfilebase.c_str()));
+  if(print_canv_ppar&&print_png) ctrchi2ndf->SaveAs(Form("%s_trchi2ndf.png",outfilebase.c_str()));  
   // --      
 
   // ePS
@@ -494,8 +498,8 @@ int npratio_all(const char *configfilename) {
   pcust.customize_canvas(cePS);
   cePS->Update();
   cePS->Write();
-  cePS->SaveAs(Form("%s.pdf",outfilebase.c_str()));
-  cePS->SaveAs(Form("%s_ePS.png",outfilebase.c_str()));  
+  if(print_canv_ppar) cePS->SaveAs(Form("%s.pdf",outfilebase.c_str()));
+  if(print_canv_ppar&&print_png) cePS->SaveAs(Form("%s_ePS.png",outfilebase.c_str()));  
   // --
 
   // xbb
@@ -534,8 +538,8 @@ int npratio_all(const char *configfilename) {
   pcust.customize_canvas(cxbb);
   cxbb->Update();
   cxbb->Write();
-  cxbb->SaveAs(Form("%s.pdf",outfilebase.c_str()));
-  cxbb->SaveAs(Form("%s_xbb.png",outfilebase.c_str()));  
+  if(print_canv_ppar) cxbb->SaveAs(Form("%s.pdf",outfilebase.c_str()));
+  if(print_canv_ppar&&print_png) cxbb->SaveAs(Form("%s_xbb.png",outfilebase.c_str()));  
   // --
 
   // ybb
@@ -574,8 +578,8 @@ int npratio_all(const char *configfilename) {
   pcust.customize_canvas(cybb);
   cybb->Update();
   cybb->Write();
-  cybb->SaveAs(Form("%s.pdf",outfilebase.c_str()));
-  cybb->SaveAs(Form("%s_ybb.png",outfilebase.c_str()));  
+  if(print_canv_ppar) cybb->SaveAs(Form("%s.pdf",outfilebase.c_str()));
+  if(print_canv_ppar&&print_png) cybb->SaveAs(Form("%s_ybb.png",outfilebase.c_str()));  
   // --
   
   // eHCAL
@@ -614,15 +618,15 @@ int npratio_all(const char *configfilename) {
   pcust.customize_canvas(ceHCAL);
   ceHCAL->Update();
   ceHCAL->Write();
-  ceHCAL->SaveAs(Form("%s.pdf",outfilebase.c_str()));
-  ceHCAL->SaveAs(Form("%s_eHCAL.png",outfilebase.c_str()));  
+  if(print_canv_ppar) ceHCAL->SaveAs(Form("%s.pdf",outfilebase.c_str()));
+  if(print_canv_ppar&&print_png) ceHCAL->SaveAs(Form("%s_eHCAL.png",outfilebase.c_str()));  
   // --
 
   // coinT
   std::vector<double> h_coinT_lim; jmgr->GetVectorFromSubKey<double>(key,"h_coinT_lim",h_coinT_lim);
   std::vector<double> h_coinT_fitR; jmgr->GetVectorFromSubKey<double>(key,"h_coinT_fitR",h_coinT_fitR);
-  TH1F *h_coinT_p = (TH1F*)prdf.Filter(nocoinT.c_str()).Histo1D({"h_coinT_p","",int(h_coinT_lim[0]),h_coinT_lim[1],h_coinT_lim[2]},"coinT_ADC_c")->Clone();
-  TH1F *h_coinT_n = (TH1F*)nrdf.Filter(nocoinT.c_str()).Histo1D({"h_coinT_n","",int(h_coinT_lim[0]),h_coinT_lim[1],h_coinT_lim[2]},"coinT_ADC_c")->Clone();
+  TH1F *h_coinT_p = (TH1F*)prdf.Filter(nocoinT.c_str()).Histo1D({"h_coinT_p","",int(h_coinT_lim[0]),h_coinT_lim[1],h_coinT_lim[2]},coinTvar)->Clone();
+  TH1F *h_coinT_n = (TH1F*)nrdf.Filter(nocoinT.c_str()).Histo1D({"h_coinT_n","",int(h_coinT_lim[0]),h_coinT_lim[1],h_coinT_lim[2]},coinTvar)->Clone();
   TH1F *h_coinT_npratio = new TH1F("h_coinT_npratio","",int(h_coinT_lim[0]),h_coinT_lim[1],h_coinT_lim[2]);
   h_coinT_npratio->Divide(h_coinT_n,h_coinT_p);
   //calc_binomial_error(h_coinT_p,h_coinT_npratio);
@@ -644,20 +648,20 @@ int npratio_all(const char *configfilename) {
   gStyle->SetOptFit(1);
   h_coinT_npratio->GetYaxis()->SetRangeUser(-0.2,5);
   h_coinT_npratio->Draw();
-  // TF1 *fcoinT = new TF1("fcoinT","pol0",h_coinT_fitR[0],h_coinT_fitR[1]);
-  // fcoinT->SetNpx(2000);
-  // h_coinT_npratio->Fit("fcoinT","QR");
-  // ccoinT->Update();
-  // TPaveStats *stcoinT = (TPaveStats*)h_coinT_npratio->FindObject("stats");
-  // custom_statbox_effi(stcoinT);
-  // fcoinT->SetLineWidth(4);
-  // fcoinT->Draw("same");
+  TF1 *fcoinT = new TF1("fcoinT","pol0",h_coinT_fitR[0],h_coinT_fitR[1]);
+  fcoinT->SetNpx(2000);
+  h_coinT_npratio->Fit("fcoinT","QR");
+  ccoinT->Update();
+  TPaveStats *stcoinT = (TPaveStats*)h_coinT_npratio->FindObject("stats");
+  custom_statbox_effi(stcoinT);
+  fcoinT->SetLineWidth(4);
+  fcoinT->Draw("same");
   //
   pcust.customize_canvas(ccoinT);
   ccoinT->Update();
   ccoinT->Write();
-  ccoinT->SaveAs(Form("%s.pdf",outfilebase.c_str()));
-  ccoinT->SaveAs(Form("%s_coinT.png",outfilebase.c_str()));  
+  if(print_canv_ppar) ccoinT->SaveAs(Form("%s.pdf",outfilebase.c_str()));
+  if(print_canv_ppar&&print_png) ccoinT->SaveAs(Form("%s_coinT.png",outfilebase.c_str()));  
   // --
   
   // **********
@@ -689,19 +693,19 @@ int npratio_all(const char *configfilename) {
   feHCAL->Draw("same");
   callcut->cd(9); //
   h_coinT_npratio->Draw();
-  //fcoinT->Draw("same");    
+  fcoinT->Draw("same");    
   //
   pcust.customize_canvas(callcut);
   callcut->Update();
   callcut->Write();
   callcut->SaveAs(Form("%s.pdf",outfilebase.c_str()));
-  callcut->SaveAs(Form("%s_allcut.png",outfilebase.c_str()));  
+  if(print_png) callcut->SaveAs(Form("%s_allcut.png",outfilebase.c_str()));  
   // --
   
   // **************
   // earm cuts for thesis
-  TCanvas *cearm = new TCanvas("cearm", "cearm", 1350, 1600);
-  cearm->Divide(2,4);
+  TCanvas *cearm = new TCanvas("cearm", "cearm", 1350, 1200);
+  cearm->Divide(2,3);
   // TCanvas *cearm = util_pd::TC("cearm",3,4);
   cearm->cd(1); //
   h_vz_p->Draw();
@@ -729,16 +733,7 @@ int npratio_all(const char *configfilename) {
   h_ybb_npratio->Draw();
   fybb->Draw("same");
   fybb->SetLineColor(kMagenta);
-  drawcutrange(h_ybb_fitR[0],h_ybb_fitR[1],1);
-  cearm->cd(7); //
-  h_EovP_p->Draw();
-  h_EovP_n->Draw("same");
-  drawcutrange(h_EovP_fitR[0],h_EovP_fitR[1]);
-  cearm->cd(8); //
-  h_EovP_npratio->Draw();
-  fEovP->Draw("same");
-  fEovP->SetLineColor(kMagenta);
-  drawcutrange(h_EovP_fitR[0],h_EovP_fitR[1],1);  
+  drawcutrange(h_ybb_fitR[0],h_ybb_fitR[1],1);  
   //
   pcust.customize_canvas(cearm);
   custom_extra(h_vz_p);
@@ -754,7 +749,7 @@ int npratio_all(const char *configfilename) {
   cearm->Update();
   cearm->Write();
   cearm->SaveAs(Form("%s.pdf",outfilebase.c_str()));
-  cearm->SaveAs(Form("%s_earm.pdf",outfilebase.c_str()));  
+  if(print_png) cearm->SaveAs(Form("%s_earm.pdf",outfilebase.c_str()));  
   // --
 
   // earm1 cuts for thesis
@@ -794,37 +789,46 @@ int npratio_all(const char *configfilename) {
   custom_extra(h_trchi2ndf_npratio);
   custom_extra(h_ePS_p);
   custom_extra(h_ePS_npratio);
-  custom_extra(h_eHCAL_p);
-  custom_extra(h_eHCAL_npratio); 
   
   cearm1->Update();
   cearm1->Write();
   cearm1->SaveAs(Form("%s.pdf",outfilebase.c_str()));
-  cearm1->SaveAs(Form("%s_earm1.pdf",outfilebase.c_str()));  
+  //cearm1->SaveAs(Form("%s_earm1.pdf",outfilebase.c_str()));  
   // --
 
   // cearm2 cuts for thesis
-  TCanvas *cearm2 = new TCanvas("cearm2", "cearm2", 1350, 400);
-  cearm2->Divide(2,1);
+  TCanvas *cearm2 = new TCanvas("cearm2", "cearm2", 1350, 800);
+  cearm2->Divide(2,2);
   // TCanvas *cearm2 = util_pd::TC("cearm2",3,4);
   cearm2->cd(1); //
   h_coinT_p->Draw();
   h_coinT_n->Draw("same");
-  drawcutrange(-5.1,5.1);
+  drawcutrange(h_coinT_fitR[0],h_coinT_fitR[1]);
   cearm2->cd(2); //
   h_coinT_npratio->Draw();
-  // fcoinT->Draw("same");
-  // fcoinT->SetLineColor(kMagenta);
-  drawcutrange(-5.1,5.1);
+  fcoinT->Draw("same");
+  fcoinT->SetLineColor(kMagenta);
+  drawcutrange(h_coinT_fitR[0],h_coinT_fitR[1]);
+  cearm2->cd(3); //
+  h_EovP_p->Draw();
+  h_EovP_n->Draw("same");
+  drawcutrange(h_EovP_fitR[0],h_EovP_fitR[1]);
+  cearm2->cd(4); //
+  h_EovP_npratio->Draw();
+  fEovP->Draw("same");
+  fEovP->SetLineColor(kMagenta);
+  drawcutrange(h_EovP_fitR[0],h_EovP_fitR[1],1);  
   //
   pcust.customize_canvas(cearm2);
   custom_extra(h_coinT_p);
   custom_extra(h_coinT_npratio);
+  custom_extra(h_eHCAL_p);
+  custom_extra(h_eHCAL_npratio);   
   
   cearm2->Update();
   cearm2->Write();
   cearm2->SaveAs(Form("%s.pdf",outfilebase.c_str()));
-  cearm2->SaveAs(Form("%s_earm2.pdf",outfilebase.c_str()));  
+  //cearm2->SaveAs(Form("%s_earm2.pdf",outfilebase.c_str()));  
   // --  
   
   // // cearm2 cuts for thesis
@@ -951,7 +955,7 @@ int npratio_all(const char *configfilename) {
   cxef->Update();
   cxef->Write();
   cxef->SaveAs(Form("%s.pdf",outfilebase.c_str()));
-  cxef->SaveAs(Form("%s_xefp.png",outfilebase.c_str()));  
+  if(print_png) cxef->SaveAs(Form("%s_xefp.png",outfilebase.c_str()));  
   // --
 
   // effi in yexp
@@ -1024,7 +1028,7 @@ int npratio_all(const char *configfilename) {
   cyef->Update();
   cyef->Write();
   cyef->SaveAs(Form("%s.pdf",outfilebase.c_str()));
-  cyef->SaveAs(Form("%s_yefp.png",outfilebase.c_str()));  
+  if(print_png) cyef->SaveAs(Form("%s_yefp.png",outfilebase.c_str()));  
   // --  
   
   // npratio vs. xexp and yexp 
@@ -1095,7 +1099,7 @@ int npratio_all(const char *configfilename) {
   cxyexp->Update();
   cxyexp->Write();
   cxyexp->SaveAs(Form("%s.pdf",outfilebase.c_str()));
-  cxyexp->SaveAs(Form("%s_xyexp.png",outfilebase.c_str()));  
+  if(print_png) cxyexp->SaveAs(Form("%s_xyexp.png",outfilebase.c_str()));  
   // --
 
   // **************
@@ -1160,20 +1164,26 @@ int npratio_all(const char *configfilename) {
   util_pd::DrawArea(hcal_area,kGreen+2,2,1);
   cenv->Write();
   cenv->SaveAs(Form("%s.pdf",outfilebase.c_str()));
-  cenv->SaveAs(Form("%s_env.png",outfilebase.c_str()));
+  if(print_png) cenv->SaveAs(Form("%s_env.png",outfilebase.c_str()));
   //--
   
   // Efficiency Map
-  TH2F *h2_xyexp_earm_n = (TH2F*)data_rdf.Filter(allearmNOsm.c_str()).Histo2D({"h2_xyexp_earm_n","",65,-1.25,1.25,126,-3.25,1.75},"yHCAL_exp","xHCAL_exp")->Clone();
-  TH2F *h2_xyexp_eNharm_n = (TH2F*)data_rdf.Filter(eNharm.c_str()).Histo2D({"h2_xyexp_eNharm_n","",65,-1.25,1.25,126,-3.25,1.75},"yHCAL_exp","xHCAL_exp")->Clone();
-  TH2F *h2_effi_map_n = new TH2F("h2_effi_map_n","",65,-1.25,1.25,126,-3.25,1.75);
+  int nBinY = 32; //65; <- pass2
+  double hMinY = -1.25;
+  double hMaxY = 1.25;
+  int nBinX = 63; //126; <- pass2
+  double hMinX = -3.25;
+  double hMaxX = 1.75;    
+  TH2F *h2_xyexp_earm_n = (TH2F*)data_rdf.Filter(allearmNOsm.c_str()).Histo2D({"h2_xyexp_earm_n","",nBinY,hMinY,hMaxY,nBinX,hMinX,hMaxX},"yHCAL_exp","xHCAL_exp")->Clone();
+  TH2F *h2_xyexp_eNharm_n = (TH2F*)data_rdf.Filter(eNharm.c_str()).Histo2D({"h2_xyexp_eNharm_n","",nBinY,hMinY,hMaxY,nBinX,hMinX,hMaxX},"yHCAL_exp","xHCAL_exp")->Clone();
+  TH2F *h2_effi_map_n = new TH2F("h2_effi_map_n","",nBinY,hMinY,hMaxY,nBinX,hMinX,hMaxX);
   h2_effi_map_n->Divide(h2_xyexp_eNharm_n,h2_xyexp_earm_n);
   h2_effi_map_n->GetXaxis()->SetTitle(tyexp.Data());
   h2_effi_map_n->GetYaxis()->SetTitle(txexp.Data());  
   //
-  TH2F *h2_xyexp_earm = (TH2F*)data_rdf.Filter(allearmNOsm.c_str()).Histo2D({"h2_xyexp_earm","",65,-1.25,1.25,126,-3.25,1.75},"yHCAL_exp","xHCAL_exp_def")->Clone();
-  TH2F *h2_xyexp_eNharm = (TH2F*)data_rdf.Filter(eNharm.c_str()).Histo2D({"h2_xyexp_eNharm","",65,-1.25,1.25,126,-3.25,1.75},"yHCAL_exp","xHCAL_exp_def")->Clone();
-  TH2F *h2_effi_map = new TH2F("h2_effi_map","",65,-1.25,1.25,126,-3.25,1.75);
+  TH2F *h2_xyexp_earm = (TH2F*)data_rdf.Filter(allearmNOsm.c_str()).Histo2D({"h2_xyexp_earm","",nBinY,hMinY,hMaxY,nBinX,hMinX,hMaxX},"yHCAL_exp","xHCAL_exp_def")->Clone();
+  TH2F *h2_xyexp_eNharm = (TH2F*)data_rdf.Filter(eNharm.c_str()).Histo2D({"h2_xyexp_eNharm","",nBinY,hMinY,hMaxY,nBinX,hMinX,hMaxX},"yHCAL_exp","xHCAL_exp_def")->Clone();
+  TH2F *h2_effi_map = new TH2F("h2_effi_map","",nBinY,hMinY,hMaxY,nBinX,hMinX,hMaxX);
   h2_effi_map->Divide(h2_xyexp_eNharm,h2_xyexp_earm);
   h2_effi_map->GetXaxis()->SetTitle(tyexp.Data());
   h2_effi_map->GetYaxis()->SetTitle(txexp_p.Data());
@@ -1209,8 +1219,7 @@ int npratio_all(const char *configfilename) {
   cefmap->Update();
   cefmap->Write();
   cefmap->SaveAs(Form("%s.pdf",outfilebase.c_str()));
-  cefmap->SaveAs(Form("%s.pdf",outfilebase.c_str()));
-  cefmap->SaveAs(Form("%s_efmap.png",outfilebase.c_str()));
+  if(print_png) cefmap->SaveAs(Form("%s_efmap.png",outfilebase.c_str()));
   //--
 
   TCanvas *cenvth = util_pd::TC("cenvth",1,2);
@@ -1242,11 +1251,15 @@ int npratio_all(const char *configfilename) {
   cenvth->Write();
   cenvth->SaveAs(Form("%s.pdf",outfilebase.c_str()));
   cenvth->SaveAs(Form("%s.pdf]",outfilebase.c_str()));
-  cenvth->SaveAs(Form("%s_envth.pdf",outfilebase.c_str()));
+  //cenvth->SaveAs(Form("%s_envth.pdf",outfilebase.c_str()));
   //--  
-
   
   fout->Write();
+
+  std::cout << "------" << std::endl;
+  std::cout << " Summary plots  : " << Form("%s.pdf",outfilebase.c_str()) << std::endl;
+  std::cout << " Output ROOT file  : " << Form("%s.root",outfilebase.c_str()) << std::endl;
+  std::cout << "------" << std::endl << std::endl;  
   
   return 0;
 }
