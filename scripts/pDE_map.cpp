@@ -87,7 +87,7 @@ int pDE_map(const char *configfilename) {
   // output file
   std::string filebase = jmgr->GetValueFromSubKey_str(key,"outfile_prefix");
   filebase = filebase.empty() ? "" : filebase + "_";
-  std::string outfilebase = "pdout/pDE/" + dfprefix + "_pDE_data_" + Form("sbs%d_sbs%dp_model%d_pass%d",conf,sbsmag,model,pass);
+  std::string outfilebase = "pdout/pDE/" + filebase + dfprefix + "_pDE_data_" + Form("sbs%d_sbs%dp_model%d_pass%d",conf,sbsmag,model,pass);
   //std::string outfilebase = "pdout/pDE/" + filebase + dfprefix + "_pDE_data_" + Form("sbs%d_sbsALL_model%d_pass%d",conf,model,pass);
   TFile *fout = new TFile(Form("%s.root",outfilebase.c_str()), "RECREATE");
   
@@ -448,6 +448,11 @@ int pDE_map(const char *configfilename) {
   // c3->SaveAs("hcalnde_datamc_cut_data_4.pdf");
   // //--  
 
- return 0;
+  std::cout << "\n------" << std::endl;
+  std::cout << " Summary plots  : " << Form("%s.pdf",outfilebase.c_str()) << std::endl;
+  std::cout << " Output ROOT file  : " << Form("%s.root",outfilebase.c_str()) << std::endl;
+  std::cout << "------" << std::endl << std::endl;  
+  
+  return 0;
   
 }
