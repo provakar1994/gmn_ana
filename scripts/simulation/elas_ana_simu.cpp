@@ -49,6 +49,7 @@ int elas_ana_simu (const char *configfilename,
   // reading input config file ---------------------------------------
   JSONManager *jmgr = new JSONManager(configfilename);
   std::string key = generator + "_" + process + "_model" + std::to_string(model);
+  bool const is_simc = generator.compare("simc")==0;
 
   // setting verbosity
   int verbose = jmgr->GetValueFromSubKey<int>(key,"verbose");
@@ -134,9 +135,9 @@ int elas_ana_simu (const char *configfilename,
   double mc_ebeam, mc_veE, mc_vetheta; // MC truth info for electrons
   double mc_fnucl, mc_np, mc_npx, mc_npy, mc_npz; // MC truth info for outgoing nucleon
   double mc_vx, mc_vy, mc_vz; // true vertex info
-  std::vector<std::string> mc = {"mc_sigma","mc_fnucl","mc_np"};   // Default: g4sbs gen.
-  std::vector<void*> mc_mem = {&mc_sigma,&mc_fnucl,&mc_np}; 
-  if (generator.compare("simc")==0) {
+  std::vector<std::string> mc = {"mc_sigma","mc_fnucl","mc_np","mc_npx","mc_npy","mc_npz","mc_vx","mc_vy","mc_vz"};   // Default: g4sbs gen.
+  std::vector<void*> mc_mem = {&mc_sigma,&mc_fnucl,&mc_np,&mc_npx,&mc_npy,&mc_npz,&mc_vx,&mc_vy,&mc_vz}; 
+  if (is_simc) {
     mc = {"simc_Weight","simc_fnucl","simc_Ebeam","simc_veE","simc_vetheta","simc_p_n","simc_px_n","simc_py_n","simc_pz_n","simc_vx","simc_vy","simc_vz"};  
     mc_mem = {&mc_sigma,&mc_fnucl,&mc_ebeam,&mc_veE,&mc_vetheta,&mc_np,&mc_npx,&mc_npy,&mc_npz,&mc_vx,&mc_vy,&mc_vz}; 
   }
@@ -207,10 +208,10 @@ int elas_ana_simu (const char *configfilename,
   double T_ebeam;         Tout->Branch("ebeam", &T_ebeam, "ebeam/D");
   //kine
   // -- vertex (only for SIMC) ---
-  double T_veE;           if (generator.compare("simc")==0) Tout->Branch("veE", &T_veE, "veE/D");
-  double T_vetheta;       if (generator.compare("simc")==0) Tout->Branch("vetheta", &T_vetheta, "vetheta/D");
-  double T_vQ2;           if (generator.compare("simc")==0) Tout->Branch("vQ2", &T_vQ2, "vQ2/D");
-  double T_vepsilon;      if (generator.compare("simc")==0) Tout->Branch("vepsilon", &T_vepsilon, "vepsilon/D"); // calculated using general eqn.
+  double T_veE;           if (is_simc) Tout->Branch("veE", &T_veE, "veE/D");
+  double T_vetheta;       if (is_simc) Tout->Branch("vetheta", &T_vetheta, "vetheta/D");
+  double T_vQ2;           if (is_simc) Tout->Branch("vQ2", &T_vQ2, "vQ2/D");
+  double T_vepsilon;      if (is_simc) Tout->Branch("vepsilon", &T_vepsilon, "vepsilon/D"); // calculated using general eqn.
   double T_nu;            Tout->Branch("nu", &T_nu, "nu/D");
   double T_Q2;            Tout->Branch("Q2", &T_Q2, "Q2/D");
   double T_W2;            Tout->Branch("W2", &T_W2, "W2/D");
@@ -374,7 +375,7 @@ int elas_ana_simu (const char *configfilename,
 
     // kinematic parameters
     double ebeam_corr = ebeam; //- MeanEloss;
-    if (generator.compare("simc")==0) ebeam_corr = mc_ebeam;
+    if (is_simc) ebeam_corr = mc_ebeam;
     double precon = p[0]; //+ MeanEloss_outgoing
 
     // constructing the 4 vectors
@@ -554,7 +555,7 @@ int elas_ana_simu (const char *configfilename,
     TVector3 vertex_t(mc_vx, mc_vy, mc_vz);
     T_pN_t = mc_np;
     T_thN_t = acos(mc_npz / mc_np); // final state N's theta
-    T_phN_t = TMath::PiOver2() - atan2(mc_npy, mc_npx);  // final state N's phi
+    T_phN_t = is_simc ? TMath::PiOver2()-atan2(mc_npy, mc_npx) : atan2(mc_npy, mc_npx);  // final state N's phi
     TVector3 pNhat_t = kine::qVect_unit(T_thN_t,T_phN_t);
     // TRUE position of the q vector at HCAL
     TVector3 HCAL_intersect_t;       
