@@ -128,7 +128,8 @@ int fit_W2 (const char *configfilename,
   //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/inel_gen_elas_ana_g4sbs_sbs4_sbs0p_model2.root"));
   //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/inel_ld2_g4sbs_sbs4_sbs50p_model2.root"));
   //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/1p27zoff_1p0sf_inel_qelas_ana_g4sbs_sbs11_sbs100p_model2.root"));
-  ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/1p27zoff_0p97sf_inel_qelas_ana_g4sbs_sbs11_sbs100p_model2.root"));
+  //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/1p27zoff_0p97sf_inel_qelas_ana_g4sbs_sbs11_sbs100p_model2.root")); // for aps25
+  ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/mcp3_0p97sf_inel_qelas_ana_g4sbs_sbs11_sbs100p_model2.root")); // for aps25  
   //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/0p815sf_inel_qelas_ana_g4sbs_sbs7_sbs85p_model2.root"));
   //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/1p13zoff_0p674sf_inel_qelas_ana_g4sbs_sbs14_sbs70p_model2.root"));
   //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/PD_0p7zoff_0p657sf_inel_qelas_ana_g4sbs_sbs9_sbs70p_model2.root"));

@@ -7,7 +7,7 @@
 	"prefix_to_filebase" : ["OT0_0p65sf"],
 	"Njobs_to_ana"       : -1,
 	"rootfile_dir"       : "/lustre24/expphy/volatile/halla/sbs/sbs-gmn/MC/pass3/sbs4/sbs50p/lh2/heep",
-	"global_cut"         : "bb.tr.n>0&&bb.gem.track.nhits>2&&abs(bb.tr.vz[0])<0.08&&bb.tr.p[0]>1.6&&bb.ps.e>0.2",
+	"global_cut"         : "abs(bb.tr.vz[0])<0.15&&bb.tr.p[0]>1.6&&bb.ps.e>0.2",
 	"dy_offset"          : 0,
 	"W2_offset"          : -0.013,
 	"W2_cutR"            : [0.5,1.2],

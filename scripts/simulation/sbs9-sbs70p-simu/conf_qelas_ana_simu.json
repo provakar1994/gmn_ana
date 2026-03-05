@@ -14,6 +14,7 @@
 	"bbfidu_cutR"        : [0.025,0.3],
 	"max_N_tracks"       : 250,
 	"SBS_scale_field"    : 0.67,
+	"eHCAL_offset"       : -0.048,
 	"hcal_voffset"       : 0,
 	"hcal_hoffset"       : 0.05,
 	"hcal_zoffset"       : 0.41,
@@ -31,7 +32,7 @@
 	"gen_ML_data"        : 0,
 	"verbose"            : -1,
 	"verbose_function"   : 0,
-	"outfile_prefix"     : "mcp3_OT0nm3_0p67sf",
+	"outfile_prefix"     : "finebin_effimap_mcp3_OT0nm3_0p67sf",
 	"COMMENTS"           : "none"
     },
     "g4sbs_inel_model2":
@@ -40,7 +41,7 @@
 	"SBS_config"         : 9,
 	"SBS_magnet_percent" : 70,
 	"prefix_to_filebase" : ["0p67sf_ld2"],
-	"Njobs_to_ana"       : -1,
+	"Njobs_to_ana"       : 5,
 	"rootfile_dir"       : "/lustre24/expphy/volatile/halla/sbs/sbs-gmn/MC/pass3/sbs9/sbs70p/ld2/inel",
 	"global_cut"         : "bb.tr.n>0&&abs(bb.tr.vz[0])<.08&&bb.gem.track.nhits>2&&bb.ps.e>0.2&&bb.tr.p[0]>1.2",
 	"dy_offset"          : 0,
@@ -49,6 +50,7 @@
 	"bbfidu_cutR"        : [0.025,0.3],
 	"max_N_tracks"       : 250,
 	"SBS_scale_field"    : 0.67,
+	"eHCAL_offset"       : -0.048,
 	"hcal_voffset"       : 0,
 	"hcal_hoffset"       : 0.05,
 	"hcal_zoffset"       : 0.41,
@@ -66,7 +68,7 @@
 	"gen_ML_data"        : 0,
 	"verbose"            : -1,
 	"verbose_function"   : 0,
-	"outfile_prefix"     : "mcp3_0p67sf",
+	"outfile_prefix"     : "temp_finebin_effimap_mcp3_0p67sf",
 	"COMMENTS"           : "02/15/26"
     },        
     "simc_deeN_model2_aps25":
