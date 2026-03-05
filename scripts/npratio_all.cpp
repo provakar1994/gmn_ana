@@ -40,12 +40,16 @@ void custom_extra(TH1F *h) {
 void custom_num(TH1F *h) {
   h->SetLineColor(kGreen+2);
   h->SetLineWidth(2);
+  h->SetMarkerStyle(20);
+  h->SetMarkerColor(kGreen+2);
   h->SetStats(0);
 }
 
 void custom_denom(TH1F *h) {
   h->SetLineColor(kBlue);
   h->SetLineWidth(2);
+  h->SetMarkerStyle(20);
+  h->SetMarkerColor(kBlue);
   h->SetStats(0);
 }
 
@@ -165,7 +169,7 @@ int npratio_all(const char *configfilename) {
   std::string noEovP = globalcut+"&&"+vzcut+"&&"+trchi2cut+"&&"+ePScut+"&&"+W2cut+"&&"+xbbcut+"&&"+ybbcut+"&&"+eHCALcut+"&&"+coinTcut+"&&"+SMcut_xp+"&&"+SMcut_xn+"&&"+SMcut_y;
   std::string notrchi2ndf = globalcut+"&&"+vzcut+"&&"+EovPcut+"&&"+ePScut+"&&"+W2cut+"&&"+xbbcut+"&&"+ybbcut+"&&"+eHCALcut+"&&"+coinTcut+"&&"+SMcut_xp+"&&"+SMcut_xn+"&&"+SMcut_y;
   std::string noePS = globalcut+"&&"+vzcut+"&&"+EovPcut+"&&"+trchi2cut+"&&"+W2cut+"&&"+xbbcut+"&&"+ybbcut+"&&"+eHCALcut+"&&"+coinTcut+"&&"+SMcut_xp+"&&"+SMcut_xn+"&&"+SMcut_y;
-  std::string noW2 = globalcut+"&&"+vzcut+"&&"+EovPcut+"&&"+trchi2cut+"&&"+ePScut+"&&"+xbbcut+"&&"+ybbcut+"&&"+eHCALcut+"&&"+coinTcut;
+  std::string noW2 = globalcut+"&&"+vzcut+"&&"+EovPcut+"&&"+trchi2cut+"&&"+ePScut+"&&"+xbbcut+"&&"+ybbcut+"&&"+eHCALcut+"&&"+coinTcut+"&&"+SMcut_xp+"&&"+SMcut_xn+"&&"+SMcut_y;
   std::string noxbb = globalcut+"&&"+vzcut+"&&"+EovPcut+"&&"+trchi2cut+"&&"+ePScut+"&&"+W2cut+"&&"+ybbcut+"&&"+eHCALcut+"&&"+coinTcut;
   std::string noybb = globalcut+"&&"+vzcut+"&&"+EovPcut+"&&"+trchi2cut+"&&"+ePScut+"&&"+W2cut+"&&"+eHCALcut+"&&"+coinTcut+"&&"+SMcut_xp+"&&"+SMcut_xn+"&&"+SMcut_y;
   std::string noeHCAL = globalcut+"&&"+vzcut+"&&"+EovPcut+"&&"+trchi2cut+"&&"+ePScut+"&&"+W2cut+"&&"+ybbcut+"&&"+coinTcut+"&&"+SMcut_xp+"&&"+SMcut_xn+"&&"+SMcut_y;
@@ -191,15 +195,14 @@ int npratio_all(const char *configfilename) {
   // output file
   std::string filebase = jmgr->GetValueFromSubKey_str(key,"outfile_prefix");
   filebase = filebase.empty() ? "" : filebase + "_";
-  std::string tofcorr = use_TOF_corr ? "" : "_noTOFcorr";
-  std::string outfilebase = "pdout/npR/" + dfprefix + "_npR_data_" + Form("sbs%d_sbs%dp_model%d_pass%d",conf,sbsmag,model,pass) + tofcorr;
-  //std::string outfilebase = "pdout/pDE/" + filebase + dfprefix + "_pDE_data_" + Form("sbs%d_sbsALL_model%d_pass%d",conf,model,pass);
+  filebase = use_TOF_corr ? filebase : filebase + "noTOFcorr_";
+  std::string outfilebase = "pdout/npR/" + filebase + dfprefix + "_npR_data_" + Form("sbs%d_sbs%dp_model%d_pass%d",conf,sbsmag,model,pass);
   TFile *fout = new TFile(Form("%s.root",outfilebase.c_str()), "RECREATE");
 
 
   // Axes titles
-  TString tdx = "#font[32]{#Deltay} (m)";
-  TString tdy = "#font[32]{#Deltax} (m)";  
+  TString tdx = "#font[32]{#Deltax} (m)";
+  TString tdy = "#font[32]{#Deltay} (m)";  
   TString txexp = "#font[32]{x^{exp}_{HCAL}} (m)";
   TString txexp_p = "#font[32]{x^{exp}_{HCAL} - #deltax_{SBS}} (m)";
   TString tyexp = "#font[32]{y^{exp}_{HCAL}} (m)";
@@ -1203,6 +1206,8 @@ int npratio_all(const char *configfilename) {
   cefmap->cd(1); //
   gStyle->SetPalette(kRainbow);
   gStyle->SetNumberContours(50);
+  h2_effi_map_n->SetMinimum(0);
+  h2_effi_map_n->SetMaximum(1);
   h2_effi_map_n->Draw("colz");
   util_pd::DrawArea(hcal_area,kGreen+2,2,1);
   util_pd::DrawArea(hcal_AR,2,4,9);
@@ -1211,6 +1216,8 @@ int npratio_all(const char *configfilename) {
   cefmap->cd(2); //
   gStyle->SetPalette(kRainbow);
   gStyle->SetNumberContours(50);
+  h2_effi_map->SetMinimum(0);
+  h2_effi_map->SetMaximum(1);  
   h2_effi_map->Draw("colz");
   util_pd::DrawArea(hcal_area,kGreen+2,2,1);
   util_pd::DrawArea(hcal_AR,2,4,9);
@@ -1258,7 +1265,7 @@ int npratio_all(const char *configfilename) {
   
   fout->Write();
 
-  std::cout << "------" << std::endl;
+  std::cout << "\n------" << std::endl;
   std::cout << " Summary plots  : " << Form("%s.pdf",outfilebase.c_str()) << std::endl;
   std::cout << " Output ROOT file  : " << Form("%s.root",outfilebase.c_str()) << std::endl;
   std::cout << "------" << std::endl << std::endl;  
