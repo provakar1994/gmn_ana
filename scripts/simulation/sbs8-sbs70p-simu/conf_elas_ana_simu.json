@@ -27,7 +27,7 @@
 	"NOTE"               : "verbose=0 & verbosefn=0 => Production; verbose<-1=>Debug, =-1=>Test; verbosefn>0=>Debug",
 	"verbose"            : -1,
 	"verbose_function"   : 0,
-	"outfile_prefix"     : "mcp3_OT0_0p63797sf",
+	"outfile_prefix"     : "bsf_mcp3_OT0_0p63797sf",
 	"COMMENTS"           : "none"
     },           
     "simc_heep_model1_aps25":
