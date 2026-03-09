@@ -7,7 +7,7 @@
 	"prefix_to_filebase" : ["OT0_0p63797sf","OTm3_0p63797sf"],
 	"Njobs_to_ana"       : -1,
 	"rootfile_dir"       : "/lustre24/expphy/volatile/halla/sbs/sbs-gmn/MC/pass3/sbs8/sbs70p/ld2/deeN",
-	"global_cut"         : "bb.tr.n>0&&abs(bb.tr.vz[0])<.08&&bb.gem.track.nhits>2&&bb.ps.e>0.2&&bb.tr.p[0]>2.9",
+	"global_cut"         : "abs(bb.tr.vz[0])<.08&&bb.ps.e>0.2&&bb.tr.p[0]>2.9",
 	"dy_offset"          : 0,
 	"W2_offset"          : -0.0504,
 	"W2_cutR"            : [0.25,1.2],
@@ -31,7 +31,7 @@
 	"gen_ML_data"        : 0,
 	"verbose"            : -1,
 	"verbose_function"   : 0,
-	"outfile_prefix"     : "mcp3_OT0nm3_0p63797sf",
+	"outfile_prefix"     : "bsf_mcp3_OT0nm3_0p63797sf",
 	"COMMENTS"           : "none"
     },
     "g4sbs_inel_model2":
@@ -42,7 +42,7 @@
 	"prefix_to_filebase" : ["0p63797sf_ld2"],
 	"Njobs_to_ana"       : -1,
 	"rootfile_dir"       : "/lustre24/expphy/volatile/halla/sbs/sbs-gmn/MC/pass3/sbs8/sbs70p/ld2/inel",
-	"global_cut"         : "bb.tr.n>0&&abs(bb.tr.vz[0])<.08&&bb.gem.track.nhits>2&&bb.ps.e>0.2&&bb.tr.p[0]>2.9",
+	"global_cut"         : "abs(bb.tr.vz[0])<.08&&bb.ps.e>0.2&&bb.tr.p[0]>2.9",
 	"dy_offset"          : 0,
 	"W2_offset"          : -0.0504,
 	"W2_cutR"            : [0.25,1.2],
@@ -66,7 +66,7 @@
 	"gen_ML_data"        : 0,
 	"verbose"            : -1,
 	"verbose_function"   : 0,
-	"outfile_prefix"     : "mcp3_0p63797sf",
+	"outfile_prefix"     : "bsf_mcp3_0p63797sf",
 	"COMMENTS"           : "02/15/26"
     },    
     "simc_deeN_model2_thesis":

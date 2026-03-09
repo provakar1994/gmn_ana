@@ -7,7 +7,7 @@
 	"prefix_to_filebase" : ["OT0_0p67sf"],
 	"Njobs_to_ana"       : 200,
 	"rootfile_dir"       : "/lustre24/expphy/volatile/halla/sbs/sbs-gmn/MC/pass3/sbs9/sbs70p/lh2/heep",
-	"global_cut"         : "bb.tr.n>0&&bb.gem.track.nhits>2&&abs(bb.tr.vz[0])<0.08&&bb.ps.e>0.2",
+	"global_cut"         : "abs(bb.tr.vz[0])<0.15&&bb.ps.e>0.2",
 	"dy_offset"          : 0,
 	"W2_offset"          : -0.0684,
 	"W2_cutR"            : [0.25,1.2],
@@ -27,7 +27,7 @@
 	"NOTE"               : "verbose=0 & verbosefn=0 => Production; verbose<-1=>Debug, =-1=>Test; verbosefn>0=>Debug",
 	"verbose"            : -1,
 	"verbose_function"   : 0,
-	"outfile_prefix"     : "mcp3_OT0_0p67sf",
+	"outfile_prefix"     : "bsf_mcp3_OT0_0p67sf",
 	"README"             : ""
     },            
     "simc_heep_model1_aps25":

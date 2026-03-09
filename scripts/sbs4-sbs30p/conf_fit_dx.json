@@ -6,7 +6,7 @@
 	"model"                : 2,
 	"pass"                 : 3,
 	"generator"            : "simc",
-	"data_file_prefix"     : "0p65zoff",
+	"data_file_prefix"     : "bsf_0p65zoff",
 	"simu_file_prefix"     : "mcp3_OT0nm3_0p39sf",
 	"inel_file_prefix"     : "mcp3_0p39sf",
 	"-\/ FIDU CUT SECTION" : "--\/-- Forming Custom Fiducial Cut ------",
@@ -44,7 +44,7 @@
 	"fidu_vary_xn"         : [1,-20,-10,0,10,20],
 	"fidu_vary_y"          : [1,-20,-10,0,10,20],
 	"SCRIPT RUN SECTION"   : "------ See Below ------",
-	"output_filebase"      : "mcp3_OT0nm3_0p39sf",
+	"output_filebase"      : "bsf_mcp3_OT0nm3_0p39sf",
 	"COMMENT"              : "R0: 240,-1.8,0.8, R1: 240,-2,1, R2: 240,-1.6,0.6, R3: 240,-1.7,0.7, R4: 240,-1.9,0.9",
 	"COMMENT"              : "W2>0.4&&W2<1.15&&abs(dy)<0.3"
     },    
