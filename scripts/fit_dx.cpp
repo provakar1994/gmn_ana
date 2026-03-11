@@ -298,9 +298,18 @@ int fit_dx (const char *configfilename,
   
   // reading ROOT files as df
   ROOT::EnableImplicitMT();
-  ROOT::RDataFrame data_rdf("Tout",Form("pdout/%s%s_ana_data_sbs%d_sbs%dp_model%d_pass%d.root",dfprefix.c_str(),key,conf,sbsmag,model,pass));
-  ROOT::RDataFrame simu_rdf("Tout",Form("simulation/siout/%s%s_ana_%s_sbs%d_sbs%dp_model%d.root",sfprefix.c_str(),key,gen.c_str(),conf,sbsmag,model));
-  ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/%sinel_%s_ana_g4sbs_sbs%d_sbs%dp_model%d.root",infprefix.c_str(),key,conf,sbsmag,model));
+  char const * infiledata = Form("pdout/%s%s_ana_data_sbs%d_sbs%dp_model%d_pass%d.root",dfprefix.c_str(),key,conf,sbsmag,model,pass);
+  ROOT::RDataFrame data_rdf("Tout",infiledata);
+  char const * infilesimu = Form("simulation/siout/%s%s_ana_%s_sbs%d_sbs%dp_model%d.root",sfprefix.c_str(),key,gen.c_str(),conf,sbsmag,model);
+  ROOT::RDataFrame simu_rdf("Tout",infilesimu);
+  char const * infilesimu_inel = Form("simulation/siout/%sinel_%s_ana_g4sbs_sbs%d_sbs%dp_model%d.root",infprefix.c_str(),key,conf,sbsmag,model);
+  ROOT::RDataFrame inel_rdf("Tout",infilesimu_inel);
+
+  std::cout << "\n-----\n";
+  std::cout << "Data file: " << infiledata << "\n";
+  std::cout << "MC sig. file: " << infilesimu << "\n";
+  std::cout << "MC bg. file: " << infilesimu_inel << "\n";
+  std::cout << "-----\n";  
 
   // Applying cuts
   std::string cuts_for_signal_data = jmgr->GetValueFromSubKey_str(key,"cuts_for_signal_data");
@@ -1804,6 +1813,8 @@ int fit_dx (const char *configfilename,
     cGist->Write();
   }
 
+  std::cout << "vetheta stats: \n";
+  GetMeanMinAndMaxX(h_vetheta);  
   std::cout << "vQ2 stats: \n";
   GetMeanMinAndMaxX(h_vQ2);
   std::cout << "vEpsilon stats: \n";
