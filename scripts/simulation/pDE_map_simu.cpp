@@ -86,7 +86,7 @@ int pDE_map_simu(const char *configfilename) {
   // output file
   std::string filebase = jmgr->GetValueFromSubKey_str(key,"outfile_prefix");
   filebase = filebase.empty() ? "" : filebase + "_";
-  std::string outfilebase = "siout/pDE/" + sfprefix + "_pDE_simu_" + Form("%s_sbs%d_sbs%dp_model%d",gen.c_str(),conf,sbsmag,model);
+  std::string outfilebase = "siout/pDE/" + filebase + sfprefix + "_pDE_simu_" + Form("%s_sbs%d_sbs%dp_model%d",gen.c_str(),conf,sbsmag,model);
   TFile *fout = new TFile(Form("%s.root",outfilebase.c_str()), "RECREATE");
   
   // call the canvas customizer
@@ -446,6 +446,11 @@ int pDE_map_simu(const char *configfilename) {
   // c3->Update();
   // c3->SaveAs("hcalnde_datamc_cut_simu_4.pdf");
   // //--    
+
+  std::cout << "\n------" << std::endl;
+  std::cout << " Summary plots  : " << Form("%s.pdf",outfilebase.c_str()) << std::endl;
+  std::cout << " Output ROOT file  : " << Form("%s.root",outfilebase.c_str()) << std::endl;
+  std::cout << "------" << std::endl << std::endl;
   
   return 0;
 
