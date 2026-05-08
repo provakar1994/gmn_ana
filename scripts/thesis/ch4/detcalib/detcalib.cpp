@@ -351,13 +351,14 @@ void PlotOutofTimeSHHits()
   //
   cv->cd();
   TH2F *h1 = new TH2F("h1","",200,0,1,200,-40,40);
-  ch->Draw("bb.sh.clus_blk.atime-bb.sh.atimeblk:bb.sh.clus_blk.e/bb.sh.eblk>>h1","bb.sh.clus_blk.id!=bb.sh.idblk","colz");
+  //ch->Draw("bb.sh.clus_blk.atime-bb.sh.atimeblk:bb.sh.clus_blk.e/bb.sh.eblk>>h1","bb.sh.clus_blk.id!=bb.sh.idblk","colz");
+  ch->Draw("bb.ps.clus_blk.atime-bb.ps.atimeblk:bb.ps.clus_blk.e/bb.ps.eblk>>h1","bb.ps.clus_blk.id!=bb.ps.idblk","colz");
   util_pd::SetAxTitles(h1,"Time Difference (ns)","Energy Fraction");
   //
   pcust.customize_canvas(cv);  
   //
   cv->Update();
-  cv->SaveAs(Form("detcalib_shatime_issue3_ev1_%d.pdf",sbsconf));       
+  //cv->SaveAs(Form("detcalib_shatime_issue3_ev1_%d.pdf",sbsconf));       
   //
   TCanvas *cv2 = util_pd::TC("cv2",1,1);
   gStyle->SetPalette(kRainbow);
@@ -373,7 +374,39 @@ void PlotOutofTimeSHHits()
   pcust.customize_canvas(cv2);  
   //
   cv2->Update();
-  cv2->SaveAs(Form("detcalib_shatime_issue3_ev2_%d.pdf",sbsconf));     
+  //cv2->SaveAs(Form("detcalib_shatime_issue3_ev2_%d.pdf",sbsconf));     
+
+}
+
+//____________________________________________________
+void PlotOutofTimeSHHits_NIM()
+{
+  int sbsconf = 4;
+
+  // call the canvas customizer
+  PlotCustomizer pcust;
+
+  TChain *ch = new TChain("T");
+  ch->Add("/cache/halla/sbs/prod/gmn/pass0/SBS4/LH2/rootfiles/*11436*");
+  ch->Add("/cache/halla/sbs/prod/gmn/pass0/SBS4/LH2/rootfiles/*11500*");
+  //
+  TCanvas *cv = util_pd::TC("cv",1,2);
+  gStyle->SetPalette(kRainbow);
+  gStyle->SetLineScalePS(2.5);
+  //
+  cv->cd(1);
+  TH2F *h1 = new TH2F("h1","",200,0,1,200,-40,40);
+  ch->Draw("bb.sh.clus_blk.atime-bb.sh.atimeblk:bb.sh.clus_blk.e/bb.sh.eblk>>h1","bb.sh.clus_blk.id!=bb.sh.idblk","colz");
+  cv->cd(2);
+  TH2F *h2 = new TH2F("h2","",200,0,1,200,-40,40);
+  ch->Draw("bb.ps.clus_blk.atime-bb.ps.atimeblk:bb.ps.clus_blk.e/bb.ps.eblk>>h2","bb.ps.clus_blk.id!=bb.ps.idblk","colz");
+  util_pd::SetAxTitles(h1,"Time Difference (ns)","Energy Fraction");
+  util_pd::SetAxTitles(h2,"Time Difference (ns)","Energy Fraction");
+  //
+  pcust.customize_canvas(cv);  
+  //
+  cv->Update();
+  cv->SaveAs("Figure_18.pdf");     
 
 }
 
@@ -1065,14 +1098,17 @@ void detcalib()
   // // Draw PS atime alignment
   // PlotPSAtimeAlign();
 
-  // Draw SH position resolutions
-  PlotSHPosRes();
+  // // Draw SH position resolutions
+  // PlotSHPosRes();
 
   // // Plot RF time
   // PlotRFTime();
 
-  // // Plot out of time sh events in a cluster
+  // Plot out of time sh events in a cluster
   // PlotOutofTimeSHHits();
+
+  // Plot out of time sh events in a cluster (for the NIM paper)
+  PlotOutofTimeSHHits_NIM();  
 
   // // Plot HCAL ADC time alignmnt
   // PlotHCALAtimeAlign();

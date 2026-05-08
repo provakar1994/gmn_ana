@@ -145,7 +145,7 @@ void PlotCustomizer::customize_margin(TPad *p) const {
 	if (palette) {
 	  std::cout << "TPaletteAxis found, adjusting right margin\n";
 	  double paletteWidth = palette->GetX2NDC() - palette->GetX1NDC();
-	  p->SetRightMargin(0.062 + paletteWidth);
+	  p->SetRightMargin(0.08 + paletteWidth);
 	  // Adjust the X1NDC of palette accordingly
 	  palette->SetX1NDC(1.0-p->GetRightMargin()+0.003);
 	  palette->SetX2NDC(palette->GetX1NDC()+paletteWidth);
