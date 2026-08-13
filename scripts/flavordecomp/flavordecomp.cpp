@@ -628,11 +628,13 @@ int flavordecomp() {
   
   // Using GMn data
   //std::vector<double> Q2v{3.0,4.5,7.4,9.9,13.5};
-  std::vector<double> Q2v{2.9890,4.4880,7.4640,9.8340,13.4650};
-  // std::vector<double> SBSGMnovMuGD{0.9774,0.9763,0.9071,0.8473,0.7582};
-  // std::vector<double> SBSGMnErrovMuGD{0.0145,0.0164,0.0174,0.0245,0.0226};
-  std::vector<double> SBSGMnovMuGD{0.9696,0.9533,0.8870,0.8185,0.7314};
-  std::vector<double> SBSGMnErrovMuGD{0.0180,0.0217,0.0240,0.0278,0.0277};
+  std::vector<double> Q2v{2.9890,4.4880,7.4640,9.8340,13.4650}; 
+  // std::vector<double> SBSGMnovMuGD{0.9774,0.9763,0.9071,0.8473,0.7582}; // thesis
+  // std::vector<double> SBSGMnErrovMuGD{0.0145,0.0164,0.0174,0.0245,0.0226}; // thesis
+  // std::vector<double> SBSGMnovMuGD{0.9696,0.9533,0.8870,0.8185,0.7314}; // MCp2
+  // std::vector<double> SBSGMnErrovMuGD{0.0180,0.0217,0.0240,0.0278,0.0277}; // MCp2
+  std::vector<double> SBSGMnovMuGD{0.9674,0.9563,0.8829,0.8257,0.7347}; // pass3
+  std::vector<double> SBSGMnErrovMuGD{0.0173,0.0210,0.0227,0.0286,0.0282}; // pass3
 
   size_t npoints_sbsgmn = Q2v.size();
   double Q2_sbsgmn[npoints_sbsgmn];
@@ -891,7 +893,7 @@ int flavordecomp() {
   l1->AddEntry(F1dTG,"d quark x 2.5 (Ye2018)","lf");
   l1->Draw();
 
-  c1->SaveAs("c1.pdf");
+  c1->SaveAs("c1_pass3.pdf");
   
   //**************
   // Plot F2 with SBS-GMn + Ye 2018 and Ye 2018  
@@ -914,7 +916,7 @@ int flavordecomp() {
   l2->AddEntry(F2dTG,"d quark x 0.75 (Ye2018)","lf");
   l2->Draw();
 
-  c2->SaveAs("c2.pdf");
+  c2->SaveAs("c2_pass3.pdf");
   
   //**************
   // Plot F1 with SBS-GMn + Ye 2018 and Hague + Ye 2018
@@ -969,7 +971,7 @@ int flavordecomp() {
   l3_2->Draw();  
 
   pcust.customize_canvas(c3);  
-  c3->SaveAs("c3.pdf");
+  c3->SaveAs("c3_pass3.pdf");
   
   //**************
   // Plot F2 with SBS-GMn + Ye 2018 and Hague + Ye 2018  
@@ -1024,7 +1026,7 @@ int flavordecomp() {
   l4_2->Draw();  
 
   pcust.customize_canvas(c4);    
-  c4->SaveAs("c4.pdf");  
+  c4->SaveAs("c4_pass3.pdf");  
 
   // -------- ###############
   // Plotting GE and GM
@@ -1087,7 +1089,7 @@ int flavordecomp() {
   // l5_4->Draw();  
 
   pcust.customize_canvas(c5);
-  c5->SaveAs("c5.pdf");
+  c5->SaveAs("c5_pass3.pdf");
 
   
   TCanvas *c6 = util_pd::TC("c6",2,2);
@@ -1148,7 +1150,7 @@ int flavordecomp() {
   l6_4->Draw();  
 
   pcust.customize_canvas(c6);
-  c6->SaveAs("c6.pdf");
+  c6->SaveAs("c6_pass3.pdf");
 
 
   // sanity checks
@@ -1194,7 +1196,7 @@ int flavordecomp() {
   l7->Draw();
 
   pcust.customize_canvas(c7);
-  c7->SaveAs("c7.pdf");
+  c7->SaveAs("c7_pass3.pdf");
   
   // -------- ###############
   // Plotting GE - Hague+Ye
@@ -1219,7 +1221,7 @@ int flavordecomp() {
   l8->Draw();
 
   pcust.customize_canvas(c8);
-  c8->SaveAs("c8.pdf");
+  c8->SaveAs("c8_pass3.pdf");
   
   // -------- ###############
   // Plotting GE and GM - Hague+Ye
@@ -1244,7 +1246,7 @@ int flavordecomp() {
   l9->Draw();
 
   pcust.customize_canvas(c9);
-  c9->SaveAs("c9.pdf");
+  c9->SaveAs("c9_pass3.pdf");
 
   // --------
   TCanvas *c10 = util_pd::TC("c10",1,1);
@@ -1267,7 +1269,7 @@ int flavordecomp() {
   l10->Draw();
 
   pcust.customize_canvas(c10);
-  c10->SaveAs("c10.pdf");  
+  c10->SaveAs("c10_pass3.pdf");  
 
   // // Cates F1, F2 + SBS F1, F2
   // //**************
@@ -1291,7 +1293,7 @@ int flavordecomp() {
   // lcatesf1->AddEntry(F1dTG_cates,"d quark x 2.5 (Cates 2011)","ep");
   // lcatesf1->Draw();
 
-  // ccatesf1->SaveAs("ccatesf1.pdf");
+  // ccatesf1->SaveAs("ccatesf1_pass3_pass3.pdf");
   
   // //**************
   // // Plot F2 with SBS-GMn + Ye 2018 and Ye 2018  
@@ -1314,7 +1316,7 @@ int flavordecomp() {
   // lcatesf2->AddEntry(F2dTG_cates,"d quark x 0.75 (Cates 2011)","ep");
   // lcatesf2->Draw();
 
-  // ccatesf2->SaveAs("ccatesf2.pdf");  
+  // ccatesf2->SaveAs("ccatesf2_pass3.pdf");  
 
   
   return 0;
