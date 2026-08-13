@@ -39,7 +39,7 @@ static const std::string target = "LH2";
 int elas_ana_simu (const char *configfilename, 
 		    int model=1, //Analysis model
 		    std::string generator="simc",
-		    std::string process="heep")
+		    std::string process="neen")
 {
   gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
 
