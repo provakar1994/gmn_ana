@@ -4,7 +4,7 @@
 	"Ntype"              : "np",
 	"SBS_config"         : 8,
 	"SBS_magnet_percent" : 70,
-	"prefix_to_filebase" : ["OT0_0p63797sf","OTm3_0p63797sf"],
+	"prefix_to_filebase" : ["OTm3_0p63797sf","OTm3_0p63797sf"],
 	"Njobs_to_ana"       : -1,
 	"rootfile_dir"       : "/lustre24/expphy/volatile/halla/sbs/sbs-gmn/MC/pass3/sbs8/sbs70p/ld2/deeN",
 	"global_cut"         : "abs(bb.tr.vz[0])<.08&&bb.ps.e>0.2&&bb.tr.p[0]>2.9",
@@ -31,7 +31,7 @@
 	"gen_ML_data"        : 0,
 	"verbose"            : -1,
 	"verbose_function"   : 0,
-	"outfile_prefix"     : "bsf_mcp3_OT0nm3_0p63797sf",
+	"outfile_prefix"     : "bsf_mcp3_OTm3_0p63797sf",
 	"COMMENTS"           : "none"
     },
     "g4sbs_inel_model2":
