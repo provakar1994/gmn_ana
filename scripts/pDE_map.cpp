@@ -131,7 +131,7 @@ int pDE_map(const char *configfilename) {
   h_w2_eNharm->Draw("HIST same");
   TLegend *lw2 = new TLegend(0.15,0.75,0.55,0.9);
   lw2->AddEntry(h_w2_earm,"All","lp");
-  lw2->AddEntry(h_w2_eNharm,"With #font[32]{#Deltax-#Deltay} Cut","lp");
+  lw2->AddEntry(h_w2_eNharm,"With #font[32]{#theta_{pq}} Cut","lp");
   lw2->SetFillStyle(0);
   lw2->Draw();
   //
@@ -225,9 +225,9 @@ int pDE_map(const char *configfilename) {
   // TH1F *h_xexp_eNharm = (TH1F*)eNharm_rdf.Histo1D({"h_xexp_eNharm","",int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]},"xHCAL_exp_p")->Clone();
   TH1F *h_xexp_earm = (TH1F*)data_rdf.Filter(earm_cut_wSMy.c_str()).Histo1D({"h_xexp_earm","",int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]},"xExp_shifted")->Clone();
   TH1F *h_xexp_eNharm = (TH1F*)data_rdf.Filter(eNharm_cut_wSMy.c_str()).Histo1D({"h_xexp_eNharm","",int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]},"xExp_shifted")->Clone();
-  util_pd::SetAxTitles(h_xexp_earm,"",txexp);
+  util_pd::SetAxTitles(h_xexp_earm,"",txexp_p);
   h_xexp_earm->SetStats(0);
-  util_pd::SetAxTitles(h_xexp_eNharm,"",txexp);
+  util_pd::SetAxTitles(h_xexp_eNharm,"",txexp_p);
   custom_denom(h_xexp_earm);
   custom_num(h_xexp_eNharm);
   TH1F *h_xexp_pDE = new TH1F("h_xexp_pDE","",int(h_xexp_lim[0]),h_xexp_lim[1],h_xexp_lim[2]);
@@ -269,7 +269,7 @@ int pDE_map(const char *configfilename) {
   h_xexp_eNharm->Draw("same");
   TLegend *lxexp = new TLegend(0.25,0.25,0.85,0.45);
   lxexp->AddEntry(h_xexp_earm,"All","lp");
-  lxexp->AddEntry(h_xexp_eNharm,"With #font[32]{#Deltax-#Deltay} Cut","lp");
+  lxexp->AddEntry(h_xexp_eNharm,"With #font[32]{#theta_{pq}} Cut","lp");
   lxexp->SetFillStyle(0);
   lxexp->Draw();
   //
@@ -291,7 +291,7 @@ int pDE_map(const char *configfilename) {
   h_yexp_eNharm->Draw("same");
   TLegend *lyexp = new TLegend(0.25,0.25,0.85,0.45);
   lyexp->AddEntry(h_yexp_earm,"All","lp");
-  lyexp->AddEntry(h_yexp_eNharm,"With #font[32]{#Deltax-#Deltay} Cut","lp");
+  lyexp->AddEntry(h_yexp_eNharm,"With #font[32]{#theta_{pq}} Cut","lp");
   lyexp->SetFillStyle(0);
   lyexp->Draw();  
   //

@@ -124,7 +124,7 @@ int pDE_map_simu(const char *configfilename) {
   h_w2_eNharm->Draw("HIST same");
   TLegend *lw2 = new TLegend(0.15,0.75,0.55,0.9);
   lw2->AddEntry(h_w2_earm,"All","lp");
-  lw2->AddEntry(h_w2_eNharm,"With #font[32]{#Deltax-#Deltay} Cut","lp");
+  lw2->AddEntry(h_w2_eNharm,"With #font[32]{#theta_{pq}} Cut","lp");
   lw2->SetFillStyle(0);
   lw2->Draw();
   //
@@ -288,7 +288,7 @@ int pDE_map_simu(const char *configfilename) {
   h_xexp_eNharm->Draw("same");
   TLegend *lxexp = new TLegend(0.25,0.25,0.85,0.45);
   lxexp->AddEntry(h_xexp_earm,"All","lp");
-  lxexp->AddEntry(h_xexp_eNharm,"With #font[32]{#Deltax-#Deltay} Cut","lp");
+  lxexp->AddEntry(h_xexp_eNharm,"With #font[32]{#theta_{pq}} Cut","lp");
   lxexp->SetFillStyle(0);
   lxexp->Draw();
   //
@@ -310,7 +310,7 @@ int pDE_map_simu(const char *configfilename) {
   h_yexp_eNharm->Draw("same");
   TLegend *lyexp = new TLegend(0.25,0.25,0.85,0.45);
   lyexp->AddEntry(h_yexp_earm,"All","lp");
-  lyexp->AddEntry(h_yexp_eNharm,"With #font[32]{#Deltax-#Deltay} Cut","lp");
+  lyexp->AddEntry(h_yexp_eNharm,"With #font[32]{#theta_{pq}} Cut","lp");
   lyexp->SetFillStyle(0);
   lyexp->Draw();  
   //
