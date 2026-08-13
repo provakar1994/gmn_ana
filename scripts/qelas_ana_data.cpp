@@ -101,7 +101,7 @@ int qelas_ana_data (const char *configfilename,
     How-to access in Tout:
     1. Use HCAL_acl variables with index = 0.
     2. Use any default HCAL variable.
-    3. Use HCAL_acl variables with index = idclHCAL_sthpq_p.
+    3. Use HCAL_acl variables with index = idclHCAL_sthpq.
     -----
     Flag(s):
     > hcal_acl_ON: False=>Don't loop through all the HCAL cls. Keep using the default HE clusters.
@@ -132,21 +132,21 @@ int qelas_ana_data (const char *configfilename,
   // double HALLA_p; setrootvar::setbranch(C, "HALLA_p", "", &HALLA_p);
 
   // bbsh clus var
-  double eSH, xSH, ySH, rblkSH, cblkSH, idblkSH, atimeSH;
-  std::vector<std::string> bbshclvar = {"e","x","y","rowblk","colblk","idblk","atimeblk"};
-  std::vector<void*> bbshclvar_mem = {&eSH,&xSH,&ySH,&rblkSH,&cblkSH,&idblkSH,&atimeSH};
+  double nclusSH, eSH, xSH, ySH, nblkSH, eblkSH, rblkSH, cblkSH, idblkSH, atimeSH;
+  std::vector<std::string> bbshclvar = {"nclus","e","x","y","nblk","eblk","rowblk","colblk","idblk","atimeblk"};
+  std::vector<void*> bbshclvar_mem = {&nclusSH,&eSH,&xSH,&ySH,&nblkSH,&eblkSH,&rblkSH,&cblkSH,&idblkSH,&atimeSH};
   setrootvar::setbranch(C, "bb.sh", bbshclvar, bbshclvar_mem);
 
   // bbps clus var
-  double ePS, rblkPS, cblkPS, idblkPS, atimePS;
-  std::vector<std::string> bbpsclvar = {"e","rowblk","colblk","idblk","atimeblk"};
-  std::vector<void*> bbpsclvar_mem = {&ePS,&rblkPS,&cblkPS,&idblkPS,&atimePS};
+  double nclusPS, ePS, nblkPS, eblkPS, rblkPS, cblkPS, idblkPS, atimePS;
+  std::vector<std::string> bbpsclvar = {"nclus","e","nblk","eblk","rowblk","colblk","idblk","atimeblk"};
+  std::vector<void*> bbpsclvar_mem = {&nclusPS,&ePS,&nblkPS,&eblkPS,&rblkPS,&cblkPS,&idblkPS,&atimePS};
   setrootvar::setbranch(C, "bb.ps", bbpsclvar, bbpsclvar_mem);
- 
+   
   // hcal clus var
-  double eHCAL, xHCAL, yHCAL, indexHCAL, rblkHCAL, cblkHCAL, idblkHCAL, atimeHCAL, tdcHCAL[maxNtr];
-  std::vector<std::string> hcalclvar = {"e","x","y","index","rowblk","colblk","idblk","atimeblk","clus_blk.tdctime"};
-  std::vector<void*> hcalclvar_mem = {&eHCAL,&xHCAL,&yHCAL,&indexHCAL,&rblkHCAL,&cblkHCAL,&idblkHCAL,&atimeHCAL,&tdcHCAL};
+  double nclusHCAL, eHCAL, xHCAL, yHCAL, indexHCAL, nblkHCAL, eblkHCAL, rblkHCAL, cblkHCAL, idblkHCAL, atimeHCAL, tdcHCAL[maxNtr];
+  std::vector<std::string> hcalclvar = {"nclus","e","x","y","index","nblk","eblk","rowblk","colblk","idblk","atimeblk","clus_blk.tdctime"};
+  std::vector<void*> hcalclvar_mem = {&nclusHCAL,&eHCAL,&xHCAL,&yHCAL,&indexHCAL,&nblkHCAL,&eblkHCAL,&rblkHCAL,&cblkHCAL,&idblkHCAL,&atimeHCAL,&tdcHCAL};
   setrootvar::setbranch(C, "sbs.hcal", hcalclvar, hcalclvar_mem);
 
   // hcal all clus vars
@@ -328,24 +328,33 @@ int qelas_ana_data (const char *configfilename,
   double T_sigRed_n;      Tout->Branch("sigRed_n", &T_sigRed_n, "sigRed_n/D");
   double T_sigBorn_ratio; Tout->Branch("sigBorn_ratio", &T_sigBorn_ratio, "sigBorn_ratio/D");
   //BBCAL
+  double T_nclusPS;       Tout->Branch("nclusPS", &T_nclusPS, "nclusPS/D");   
   double T_ePS;           Tout->Branch("ePS", &T_ePS, "ePS/D"); 
+  double T_nblkPS;        Tout->Branch("nblkPS", &T_nblkPS, "nblkPS/D"); 
+  double T_eblkPS;        Tout->Branch("eblkPS", &T_eblkPS, "eblkPS/D"); 
   double T_rblkPS;        Tout->Branch("rblkPS", &T_rblkPS, "rblkPS/D"); 
   double T_cblkPS;        Tout->Branch("cblkPS", &T_cblkPS, "cblkPS/D"); 
   double T_idblkPS;       Tout->Branch("idblkPS", &T_idblkPS, "idblkPS/D"); 
   double T_atimePS;       Tout->Branch("atimePS", &T_atimePS, "atimePS/D"); 
+  double T_nclusSH;       Tout->Branch("nclusSH", &T_nclusSH, "nclusSH/D"); 
   double T_eSH;           Tout->Branch("eSH", &T_eSH, "eSH/D"); 
   double T_xSH;           Tout->Branch("xSH", &T_xSH, "xSH/D"); 
   double T_ySH;           Tout->Branch("ySH", &T_ySH, "ySH/D"); 
+  double T_nblkSH;        Tout->Branch("nblkSH", &T_nblkSH, "nblkSH/D"); 
+  double T_eblkSH;        Tout->Branch("eblkSH", &T_eblkSH, "eblkSH/D"); 
   double T_rblkSH;        Tout->Branch("rblkSH", &T_rblkSH, "rblkSH/D"); 
   double T_cblkSH;        Tout->Branch("cblkSH", &T_cblkSH, "cblkSH/D"); 
   double T_idblkSH;       Tout->Branch("idblkSH", &T_idblkSH, "idblkSH/D"); 
   double T_atimeSH;       Tout->Branch("atimeSH", &T_atimeSH, "atimeSH/D"); 
   double T_EovP;          Tout->Branch("EovP", &T_EovP, "EovP/D"); 
   //HCAL
+  double T_nclusHCAL;     Tout->Branch("nclusHCAL", &T_nclusHCAL, "nclusHCAL/D"); 
   double T_eHCAL;         Tout->Branch("eHCAL", &T_eHCAL, "eHCAL/D"); 
   double T_xHCAL;         Tout->Branch("xHCAL", &T_xHCAL, "xHCAL/D"); 
   double T_yHCAL;         Tout->Branch("yHCAL", &T_yHCAL, "yHCAL/D"); 
   double T_indexHCAL;     Tout->Branch("indexHCAL", &T_indexHCAL, "indexHCAL/D"); 
+  double T_nblkHCAL;      Tout->Branch("nblkHCAL", &T_nblkHCAL, "nblkHCAL/D"); 
+  double T_eblkHCAL;      Tout->Branch("eblkHCAL", &T_eblkHCAL, "eblkHCAL/D"); 
   double T_idblkHCAL;     Tout->Branch("idblkHCAL", &T_idblkHCAL, "idblkHCAL/D"); 
   double T_rblkHCAL;      Tout->Branch("rblkHCAL", &T_rblkHCAL, "rblkHCAL/D"); 
   double T_cblkHCAL ;     Tout->Branch("cblkHCAL", &T_cblkHCAL, "cblkHCAL/D"); 
@@ -646,15 +655,21 @@ int qelas_ana_data (const char *configfilename,
     T_sigRed_n = kine::sigmaReduced(kine::tau(Q2recon,"n"),epsilon_n,GEn_seamus,GMn_kelly);
     T_sigBorn_ratio = kine::sigmaBorn_ratio(etheta,Q2recon,GEp_kelly,GMp_kelly,GEn_seamus,GMn_kelly);
 
+    T_nclusPS = nclusPS;
     T_ePS = ePS;
+    T_nblkPS = nblkPS;
+    T_eblkPS = eblkPS;
     T_rblkPS = rblkPS;
     T_cblkPS = cblkPS;
     T_idblkPS = idblkPS;
     T_atimePS = atimePS;
 
+    T_nclusSH = nclusSH;
     T_eSH = eSH;
     T_xSH = xSH;
     T_ySH = ySH;
+    T_nblkSH = nblkSH;
+    T_eblkSH = eblkSH;
     T_rblkSH = rblkSH;
     T_cblkSH = cblkSH;
     T_idblkSH = idblkSH;
@@ -831,10 +846,13 @@ int qelas_ana_data (const char *configfilename,
 	  // if there is index mismatch and the default cl is in time
 	  T_dx = xHCAL - xyHCAL_exp[0];
 	  T_dy = yHCAL - xyHCAL_exp[1];
+	  T_nclusHCAL = nclusHCAL;
 	  T_eHCAL = eHCAL;
 	  T_xHCAL = xHCAL;
 	  T_yHCAL = yHCAL;
 	  T_indexHCAL = indexHCAL;
+	  T_nblkHCAL = nblkHCAL;
+	  T_eblkHCAL = eblkHCAL;
 	  T_rblkHCAL = rblkHCAL;
 	  T_cblkHCAL = cblkHCAL;
 	  T_idblkHCAL = idblkHCAL;
@@ -848,10 +866,13 @@ int qelas_ana_data (const char *configfilename,
 	  // fill basic HCAL variables using inTime clusters
 	  T_dx = xHCAL_acl[inTime_idcl] - xyHCAL_exp[0];
 	  T_dy = yHCAL_acl[inTime_idcl] - xyHCAL_exp[1];
+	  T_nclusHCAL = nclusHCAL;
 	  T_eHCAL = eHCAL_acl[inTime_idcl];
 	  T_xHCAL = xHCAL_acl[inTime_idcl];
 	  T_yHCAL = yHCAL_acl[inTime_idcl];
 	  T_indexHCAL = indexHCAL;
+	  T_nblkHCAL = nblkHCAL_acl[inTime_idcl];
+	  T_eblkHCAL = eblkHCAL_acl[inTime_idcl];
 	  T_rblkHCAL = rblkHCAL_acl[inTime_idcl];
 	  T_cblkHCAL = cblkHCAL_acl[inTime_idcl];
 	  T_idblkHCAL = idblkHCAL_acl[inTime_idcl];
@@ -865,10 +886,13 @@ int qelas_ana_data (const char *configfilename,
       } else { //if HCAL has a cl but secondary clustering is off!
 	T_dx = xHCAL - xyHCAL_exp[0];
 	T_dy = yHCAL - xyHCAL_exp[1];
+	T_nclusHCAL = nclusHCAL;
 	T_eHCAL = eHCAL;
 	T_xHCAL = xHCAL;
 	T_yHCAL = yHCAL;
 	T_indexHCAL = indexHCAL;
+	T_nblkHCAL = nblkHCAL;
+	T_eblkHCAL = eblkHCAL;
 	T_rblkHCAL = rblkHCAL;
 	T_cblkHCAL = cblkHCAL;
 	T_idblkHCAL = idblkHCAL;
@@ -878,10 +902,13 @@ int qelas_ana_data (const char *configfilename,
     } else { //if HCAL doesn't have a cl
       T_dx = -99;
       T_dy = -99;
+      T_nclusHCAL = -99;
       T_eHCAL = -99;
       T_xHCAL = -99;
       T_yHCAL = -99;
       T_indexHCAL = -99;
+      T_nblkHCAL = -99;
+      T_eblkHCAL = -99;
       T_rblkHCAL = -99;
       T_cblkHCAL = -99;
       T_idblkHCAL = -99;

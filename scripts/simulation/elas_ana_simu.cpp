@@ -91,21 +91,21 @@ int elas_ana_simu (const char *configfilename,
   int maxNtr = jmgr->GetValueFromSubKey<int>(key,"max_N_tracks");
   C->SetBranchStatus("*",0);
   // bbsh clus var
-  double eSH, xSH, ySH, rblkSH, cblkSH, idblkSH, atimeSH;
-  std::vector<std::string> bbshclvar = {"e","x","y","rowblk","colblk","idblk","atimeblk"};
-  std::vector<void*> bbshclvar_mem = {&eSH,&xSH,&ySH,&rblkSH,&cblkSH,&idblkSH,&atimeSH};
+  double nclusSH, eSH, xSH, ySH, nblkSH, eblkSH, rblkSH, cblkSH, idblkSH, atimeSH;
+  std::vector<std::string> bbshclvar = {"nclus","e","x","y","nblk","eblk","rowblk","colblk","idblk","atimeblk"};
+  std::vector<void*> bbshclvar_mem = {&nclusSH,&eSH,&xSH,&ySH,&nblkSH,&eblkSH,&rblkSH,&cblkSH,&idblkSH,&atimeSH};
   setrootvar::setbranch(C, "bb.sh", bbshclvar, bbshclvar_mem);
 
   // bbps clus var
-  double ePS, rblkPS, cblkPS, idblkPS, atimePS;
-  std::vector<std::string> bbpsclvar = {"e","rowblk","colblk","idblk","atimeblk"};
-  std::vector<void*> bbpsclvar_mem = {&ePS,&rblkPS,&cblkPS,&idblkPS,&atimePS};
+  double nclusPS, ePS, nblkPS, eblkPS, rblkPS, cblkPS, idblkPS, atimePS;
+  std::vector<std::string> bbpsclvar = {"nclus","e","nblk","eblk","rowblk","colblk","idblk","atimeblk"};
+  std::vector<void*> bbpsclvar_mem = {&nclusPS,&ePS,&nblkPS,&eblkPS,&rblkPS,&cblkPS,&idblkPS,&atimePS};
   setrootvar::setbranch(C, "bb.ps", bbpsclvar, bbpsclvar_mem);
- 
+   
   // hcal clus var
-  double eHCAL, xHCAL, yHCAL, rblkHCAL, cblkHCAL, idblkHCAL, atimeHCAL, tdcHCAL[maxNtr];
-  std::vector<std::string> hcalclvar = {"e","x","y","rowblk","colblk","idblk","atimeblk","tdctimeblk"};
-  std::vector<void*> hcalclvar_mem = {&eHCAL,&xHCAL,&yHCAL,&rblkHCAL,&cblkHCAL,&idblkHCAL,&atimeHCAL,&tdcHCAL};
+  double nclusHCAL, eHCAL, xHCAL, yHCAL, indexHCAL, nblkHCAL, eblkHCAL, rblkHCAL, cblkHCAL, idblkHCAL, atimeHCAL, tdcHCAL[maxNtr];
+  std::vector<std::string> hcalclvar = {"nclus","e","x","y","index","nblk","eblk","rowblk","colblk","idblk","atimeblk","clus_blk.tdctime"};
+  std::vector<void*> hcalclvar_mem = {&nclusHCAL,&eHCAL,&xHCAL,&yHCAL,&indexHCAL,&nblkHCAL,&eblkHCAL,&rblkHCAL,&cblkHCAL,&idblkHCAL,&atimeHCAL,&tdcHCAL};
   setrootvar::setbranch(C, "sbs.hcal", hcalclvar, hcalclvar_mem);
 
   // track var
@@ -244,23 +244,33 @@ int elas_ana_simu (const char *configfilename,
   double T_fpTh;          Tout->Branch("fpTh", &T_fpTh, "fpTh/D");
   double T_fpPh;          Tout->Branch("fpPh", &T_fpPh, "fpPh/D");
   //BBCAL
+  double T_nclusPS;       Tout->Branch("nclusPS", &T_nclusPS, "nclusPS/D");   
   double T_ePS;           Tout->Branch("ePS", &T_ePS, "ePS/D"); 
+  double T_nblkPS;        Tout->Branch("nblkPS", &T_nblkPS, "nblkPS/D"); 
+  double T_eblkPS;        Tout->Branch("eblkPS", &T_eblkPS, "eblkPS/D"); 
   double T_rblkPS;        Tout->Branch("rblkPS", &T_rblkPS, "rblkPS/D"); 
   double T_cblkPS;        Tout->Branch("cblkPS", &T_cblkPS, "cblkPS/D"); 
   double T_idblkPS;       Tout->Branch("idblkPS", &T_idblkPS, "idblkPS/D"); 
   double T_atimePS;       Tout->Branch("atimePS", &T_atimePS, "atimePS/D"); 
+  double T_nclusSH;       Tout->Branch("nclusSH", &T_nclusSH, "nclusSH/D"); 
   double T_eSH;           Tout->Branch("eSH", &T_eSH, "eSH/D"); 
   double T_xSH;           Tout->Branch("xSH", &T_xSH, "xSH/D"); 
   double T_ySH;           Tout->Branch("ySH", &T_ySH, "ySH/D"); 
+  double T_nblkSH;        Tout->Branch("nblkSH", &T_nblkSH, "nblkSH/D"); 
+  double T_eblkSH;        Tout->Branch("eblkSH", &T_eblkSH, "eblkSH/D"); 
   double T_rblkSH;        Tout->Branch("rblkSH", &T_rblkSH, "rblkSH/D"); 
   double T_cblkSH;        Tout->Branch("cblkSH", &T_cblkSH, "cblkSH/D"); 
   double T_idblkSH;       Tout->Branch("idblkSH", &T_idblkSH, "idblkSH/D"); 
-  double T_atimeSH;       Tout->Branch("atimeSH", &T_atimeSH, "atimeSH/D");  
+  double T_atimeSH;       Tout->Branch("atimeSH", &T_atimeSH, "atimeSH/D"); 
   double T_EovP;          Tout->Branch("EovP", &T_EovP, "EovP/D"); 
   //HCAL
+  double T_nclusHCAL;     Tout->Branch("nclusHCAL", &T_nclusHCAL, "nclusHCAL/D"); 
   double T_eHCAL;         Tout->Branch("eHCAL", &T_eHCAL, "eHCAL/D"); 
   double T_xHCAL;         Tout->Branch("xHCAL", &T_xHCAL, "xHCAL/D"); 
   double T_yHCAL;         Tout->Branch("yHCAL", &T_yHCAL, "yHCAL/D"); 
+  double T_indexHCAL;     Tout->Branch("indexHCAL", &T_indexHCAL, "indexHCAL/D"); 
+  double T_nblkHCAL;      Tout->Branch("nblkHCAL", &T_nblkHCAL, "nblkHCAL/D"); 
+  double T_eblkHCAL;      Tout->Branch("eblkHCAL", &T_eblkHCAL, "eblkHCAL/D"); 
   double T_idblkHCAL;     Tout->Branch("idblkHCAL", &T_idblkHCAL, "idblkHCAL/D"); 
   double T_rblkHCAL;      Tout->Branch("rblkHCAL", &T_rblkHCAL, "rblkHCAL/D"); 
   double T_cblkHCAL ;     Tout->Branch("cblkHCAL", &T_cblkHCAL, "cblkHCAL/D"); 
@@ -268,7 +278,7 @@ int elas_ana_simu (const char *configfilename,
   double T_tdcHCAL;       Tout->Branch("tdcHCAL", &T_tdcHCAL, "tdcHCAL/D"); 
   double T_xHCAL_exp;     Tout->Branch("xHCAL_exp", &T_xHCAL_exp, "xHCAL_exp/D"); 
   double T_yHCAL_exp;     Tout->Branch("yHCAL_exp", &T_yHCAL_exp, "yHCAL_exp/D");
-  double T_xHCAL_exp_p;   Tout->Branch("xHCAL_exp_p", &T_xHCAL_exp_p, "xHCAL_exp_p/D"); // average sbs_kick included   
+  double T_xHCAL_exp_p;   Tout->Branch("xHCAL_exp_p", &T_xHCAL_exp_p, "xHCAL_exp_p/D"); // average sbs_kick included 
   double T_dx;            Tout->Branch("dx", &T_dx, "dx/D"); 
   double T_dy;            Tout->Branch("dy", &T_dy, "dy/D");
   double T_p_def;         Tout->Branch("p_def", &T_p_def, "p_def/D"); // expected proton deflection
@@ -489,15 +499,21 @@ int elas_ana_simu (const char *configfilename,
     // defining BB fiducial cut
     bbfiduCut = abs(T_fpX - 0.9*T_fpTh - bbfidu_cutR[0]) <= bbfidu_cutR[1];
 
+    T_nclusPS = nclusPS;
     T_ePS = ePS;
+    T_nblkPS = nblkPS;
+    T_eblkPS = eblkPS;
     T_rblkPS = rblkPS;
     T_cblkPS = cblkPS;
     T_idblkPS = idblkPS;
     T_atimePS = atimePS;
 
+    T_nclusSH = nclusSH;
     T_eSH = eSH;
     T_xSH = xSH;
     T_ySH = ySH;
+    T_nblkSH = nblkSH;
+    T_eblkSH = eblkSH;
     T_rblkSH = rblkSH;
     T_cblkSH = cblkSH;
     T_idblkSH = idblkSH;
@@ -505,9 +521,12 @@ int elas_ana_simu (const char *configfilename,
 
     T_EovP = (eSH+ePS)/p[0];
 
+    T_nclusHCAL = nclusHCAL;
     T_eHCAL = eHCAL;
     T_xHCAL = xHCAL;
     T_yHCAL = yHCAL;
+    T_nblkHCAL = nblkHCAL;
+    T_eblkHCAL = eblkHCAL;
     T_rblkHCAL = rblkHCAL;
     T_cblkHCAL = cblkHCAL;
     T_idblkHCAL = idblkHCAL;
