@@ -128,7 +128,7 @@ void GetMeanMinAndMaxX(TH1 *h)
     }
   }
 
-  // Find the last bin with content (the upper bound)
+  // Find the last bin with content (the upper bund)
   for (int bin = h->GetNbinsX(); bin >= 1; --bin)
   {
     if (h->GetBinContent(bin) > 1)
@@ -313,6 +313,8 @@ int fit_dx(const char *configfilename,
   std::string gen = jmgr->GetValueFromSubKey_str(key, "generator");
   std::string dfprefix = jmgr->GetValueFromSubKey_str(key, "data_file_prefix");
   std::string sfprefix = jmgr->GetValueFromSubKey_str(key, "simu_file_prefix");
+  std::string RCtype = jmgr->GetValueFromSubKey_str(key, "RC_prescription");
+  sfprefix = Form(sfprefix.c_str(), RCtype.c_str());
   std::string infprefix = jmgr->GetValueFromSubKey_str(key, "inel_file_prefix");
   dfprefix = dfprefix.empty() ? "" : dfprefix + "_";
   sfprefix = sfprefix.empty() ? "" : sfprefix + "_";
@@ -363,6 +365,13 @@ int fit_dx(const char *configfilename,
   std::string cuts_for_signal_simu = jmgr->GetValueFromSubKey_str(key, "cuts_for_signal_simu");
   std::string cuts_for_bg_data1 = jmgr->GetValueFromSubKey_str(key, "cuts_for_bg_data1");
   std::string cuts_for_bg_data2 = jmgr->GetValueFromSubKey_str(key, "cuts_for_bg_data2");
+  bool apply_nblkHCALgt1_cut = jmgr->GetValueFromSubKey<int>(key, "apply_nblkHCAL>1_cut");
+  if (apply_nblkHCALgt1_cut) {
+    cuts_for_signal_data = cuts_for_signal_data + "&&nblkHCAL>1";
+    cuts_for_signal_simu = cuts_for_signal_simu + "&&nblkHCAL>1";
+    cuts_for_bg_data1 = cuts_for_bg_data1 + "&&nblkHCAL>1";
+    cuts_for_bg_data2 = cuts_for_bg_data2 + "&&nblkHCAL>1";        
+  }
   // std::string cuts_for_bg_simu = jmgr->GetValueFromSubKey_str(key,"cuts_for_bg_simu");
   std::string cuts_for_bg_simu = cuts_for_signal_simu;
   std::string coinT_cut = jmgr->GetValueFromSubKey_str(key, "coinT_cut");
@@ -425,6 +434,7 @@ int fit_dx(const char *configfilename,
 
   // defining output files
   std::string filebase = jmgr->GetValueFromSubKey_str(key, "output_filebase");
+  filebase = Form(filebase.c_str(), RCtype.c_str());
   char const *confmag = Form("sbs%dsbs%dp", conf, sbsmag);
   TString outdir = !is_vary_cut ? Form("pdout/fits/%s/", confmag) : Form("pdout/fits/%s/sysstdy/", confmag);
   // Create output directory if it doesn't exist
@@ -432,6 +442,7 @@ int fit_dx(const char *configfilename,
   TString outFile = Form("%s_fit_dx_%s_pass%d_%s_sbs%d_sbs%dp_model%d", filebase.c_str(), key, pass, gen.c_str(), conf, sbsmag, model);
   outFile = use_norm_weight ? outFile + "_normweight" : outFile;
   outFile = !use_effi_corr ? outFile + "_noefficorr" : outFile;
+  outFile = !apply_nblkHCALgt1_cut ? outFile + "_nonblkHCALcut" : outFile;  
   outFile = outFile + ".root";
   outFile = outdir + outFile;
   TString outFileBase = outFile;
