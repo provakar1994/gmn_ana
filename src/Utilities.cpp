@@ -1004,23 +1004,41 @@ namespace util_pd {
     njobs = sjobs.size();
   }
   //______________________________________________________________________________
-  void LoadSimuROOTTree(std::vector<SimuJob> sjobs,  // SimuJob objects with run info
-			int verbose,                 // verbosity
-			TChain* &C)                  // Output: TChain with data
+  void LoadSimuROOTTree(std::vector<SimuJob>& sjobs,  // SimuJob objects with run info
+			int verbose,                  // verbosity
+			TChain* &C)
   {
-    if (!sjobs.empty()) {
-      const int njobs = sjobs.size();
-      std::cout << "Parsing ROOT files from " << njobs << " jobs.." << std::endl;
-      for (int ijob=0; ijob<sjobs.size(); ijob++) {
-	if (verbose > 1) std::cout << sjobs[ijob].rfname << std::endl;
-	C->Add(sjobs[ijob].rfname.c_str());
+    if (sjobs.empty())
+      throw std::runtime_error(
+			       "[util_pd::LoadSimuROOTTree] Simu job list is empty!"
+			       );
+
+    std::cout << "Parsing ROOT files from "
+	      << sjobs.size() << " jobs.." << std::endl;
+
+    std::vector<SimuJob> goodjobs;
+    goodjobs.reserve(sjobs.size());
+
+    for (auto &job : sjobs) {
+
+      if (verbose > 1)
+	std::cout << job.rfname << std::endl;
+
+      if (C->Add(job.rfname.c_str(), 0)) {
+	goodjobs.push_back(job);
+      } else {
+	std::cerr << "Skipping invalid ROOT file: "
+		  << job.rfname << std::endl;
       }
-      if (C->GetEntries()==0)
-	throw std::runtime_error("[util_pd::LoadSimuROOTTree] Empty ROOT files Or, they don't exist!");
-    }else {
-      throw std::runtime_error("[util_pd::LoadSimuROOTTree] Simu job list is empty!");
     }
-  }
+
+    sjobs = std::move(goodjobs);
+
+    if (sjobs.empty())
+      throw std::runtime_error(
+			       "[util_pd::LoadSimuROOTTree] No valid ROOT files!"
+			       );
+  }  
 
   /* ###############################
      ## General Purpose Functions ##  

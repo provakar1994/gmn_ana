@@ -178,7 +178,7 @@ namespace util_pd {
 			  int verbose,               // verbosity
 			  std::vector<SimuJob> &sjobs);   // Output: Vector of SimuJob objects
 
-  void LoadSimuROOTTree(std::vector<SimuJob> sjobs,  // SimuJob objects with run info
+  void LoadSimuROOTTree(std::vector<SimuJob>& sjobs,  // SimuJob objects with run info
 			int verbose,                 // verbosity
 			TChain* &C);                 // Output: TChain with data
 
