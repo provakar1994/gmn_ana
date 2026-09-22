@@ -917,7 +917,7 @@ namespace util_pd {
       TString temp = !prefixesGTone ? Form("simcout/%s_deen_summary.csv",filebase.Data())
 	: Form("simcout/%s_deen_summary.csv",filebase_deen.Data());
       simu_logfile.push_back(temp); processes.push_back("deen");
-    } else if (generator.compare("simc")==0 && process.compare("heep")==0) {
+    } else if (generator.compare("simc")==0 && (process.compare("heep")==0 || process.compare("neen")==0)) {
       TString temp = Form("simcout/%s_%s_summary.csv",filebase.Data(),process.c_str());
       simu_logfile.push_back(temp); processes.push_back(process);
     } else {
