@@ -100,7 +100,7 @@ namespace expconst {
     // 05/22/24 - These no. are based on Andrew's analysis. He estimated these "by plotting deltax versus the 
     // expected proton momentum for LH2 elastic events". Needs fine tuning.
     if (sbsconf==4) {
-      return 1.78; //T Andrew=>1.71
+      return 1.715; //1.78 (w/o HCAL_voffset); //T Andrew=>1.71
     } else if (sbsconf==8) {
       return 1.23; 
     } else {
