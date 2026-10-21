@@ -633,10 +633,10 @@ int elas_ana_simu (const char *configfilename,
 	if (int(mc_fnucl)==1) {
 	  h_dxHCAL_p->Fill(dx, weight);
 	  h2_xyHCAL_p->Fill(xyHCAL_exp[1], xyHCAL_exp[0] - T_p_def, weight);
-	}else if (process.compare("heep")==0) {
-	  std::cerr << "*!* Invalid final state nuclei!" << std::endl; 
-	  std::exit(1);
-	}
+	}// else if (process.compare("heep")==0) {
+	//   std::cerr << "*!* Invalid final state nuclei!" << std::endl; 
+	//   std::exit(1);
+	// }
 
 	h2_rcHCAL->Fill(cblkHCAL, rblkHCAL, weight);
 	// p & n spots
