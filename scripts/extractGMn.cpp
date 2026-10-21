@@ -2,7 +2,7 @@
 
 #include "EMFFFits.h"
 
-int extractGMn(double const etheta, double const Q2, double const R_fit, double const R_fit_err, double const R_fit_err_sys) {
+int extractGMn(double const etheta, double const Q2, double const R_fit, double const R_fit_err, std::vector<double> const R_fit_err_sys) {
 
   // EMFF fits
   Ye2017 yefit;
@@ -46,8 +46,15 @@ int extractGMn(double const etheta, double const Q2, double const R_fit, double 
   // ratio with the data/MC fit parameter "R".
   double sigmaBorn_Ratio_corr = sigmaBorn_Ratio_MC * R_fit;
   double sigmaBorn_Ratio_corr_error = abs(sigmaBorn_Ratio_MC) * R_fit_err;
-  double sigmaBorn_Ratio_corr_error_sys = abs(sigmaBorn_Ratio_MC) * R_fit_err_sys;
-  double sigmaBorn_Ratio_corr_error_tot = sqrt(pow(sigmaBorn_Ratio_corr_error,2) + pow(sigmaBorn_Ratio_corr_error_sys,2));
+  std::vector<double> sigmaBorn_Ratio_corr_error_sys(R_fit_err_sys.size());
+  for (size_t i = 0; i < R_fit_err_sys.size(); ++i) {
+    sigmaBorn_Ratio_corr_error_sys[i] = abs(sigmaBorn_Ratio_MC) * R_fit_err_sys[i];
+  }
+  double sigmaBorn_Ratio_corr_error_sys_sum = 0;
+  for (size_t i = 0; i < sigmaBorn_Ratio_corr_error_sys.size(); ++i) {
+    sigmaBorn_Ratio_corr_error_sys_sum += pow(sigmaBorn_Ratio_corr_error_sys[i], 2);
+  }
+  double sigmaBorn_Ratio_corr_error_tot = sqrt(pow(sigmaBorn_Ratio_corr_error,2) + sigmaBorn_Ratio_corr_error_sys_sum);
   
 
   // -- No TPE Check - beta phase [04/26/2024]
@@ -56,10 +63,16 @@ int extractGMn(double const etheta, double const Q2, double const R_fit, double 
   // calculating error
   double GMn_err_christy_ye = kine::CalcGMnError(etheta,Q2,GEp_christy,GMp_christy,GEn_ye,sigmaBorn_Ratio_corr,sigmaBorn_Ratio_corr_error); 
   double GMn_ov_munGD_err_christy_ye = GMn_err_christy_ye/abs(EMFFFits::GetGDip(Q2)*constant::mun);
-  double GMn_err_christy_ye_sys = kine::CalcGMnError(etheta,Q2,GEp_christy,GMp_christy,GEn_ye,sigmaBorn_Ratio_corr,sigmaBorn_Ratio_corr_error_sys);
-  std::cout << " Error test: ** " << 0.0035/kine::CalcGMnError(etheta,Q2,GEp_christy,GMp_christy,GEn_ye,0.3974,0.0035) << "\n";
-  std::cout << "1/nuGD: " << 1/abs(EMFFFits::GetGDip(Q2)*constant::mun);
-  double GMn_ov_munGD_err_christy_ye_sys = GMn_err_christy_ye_sys/abs(EMFFFits::GetGDip(Q2)*constant::mun);
+  //double GMn_err_christy_ye_sys = kine::CalcGMnError(etheta,Q2,GEp_christy,GMp_christy,GEn_ye,sigmaBorn_Ratio_corr,sigmaBorn_Ratio_corr_error_sys);
+  //double GMn_ov_munGD_err_christy_ye_sys = GMn_err_christy_ye_sys/abs(EMFFFits::GetGDip(Q2)*constant::mun);
+  std::vector<double> GMn_err_christy_ye_sys(R_fit_err_sys.size());
+  std::vector<double> GMn_ov_munGD_err_christy_ye_sys(R_fit_err_sys.size());
+  for (size_t i = 0; i < R_fit_err_sys.size(); ++i) {
+    GMn_err_christy_ye_sys[i] = kine::CalcGMnError(etheta,Q2,GEp_christy,GMp_christy,GEn_ye,sigmaBorn_Ratio_corr,sigmaBorn_Ratio_corr_error_sys[i]);
+    GMn_ov_munGD_err_christy_ye_sys[i] = GMn_err_christy_ye_sys[i]/abs(EMFFFits::GetGDip(Q2)*constant::mun);
+  }
+  // std::cout << " Error test: ** " << 0.0035/kine::CalcGMnError(etheta,Q2,GEp_christy,GMp_christy,GEn_ye,0.3974,0.0035) << "\n";
+  // std::cout << "1/nuGD: " << 1/abs(EMFFFits::GetGDip(Q2)*constant::mun);
   
   // Extract GMn from data using the corrected born CS ratio and the remaining EMFF
   // values got from some parametrization. Here we have used Z. Ye et al's parametrization (2017).
@@ -69,8 +82,14 @@ int extractGMn(double const etheta, double const Q2, double const R_fit, double 
   // calculating error
   double GMn_err_ye_ye = kine::CalcGMnError(etheta,Q2,GEp_ye,GMp_ye,GEn_ye,sigmaBorn_Ratio_corr,sigmaBorn_Ratio_corr_error); 
   double GMn_ov_munGD_err_ye_ye = GMn_err_ye_ye/abs(EMFFFits::GetGDip(Q2)*constant::mun);
-  double GMn_err_ye_ye_sys = kine::CalcGMnError(etheta,Q2,GEp_ye,GMp_ye,GEn_ye,sigmaBorn_Ratio_corr,sigmaBorn_Ratio_corr_error_sys); 
-  double GMn_ov_munGD_err_ye_ye_sys = GMn_err_ye_ye_sys/abs(EMFFFits::GetGDip(Q2)*constant::mun);
+  // double GMn_err_ye_ye_sys = kine::CalcGMnError(etheta,Q2,GEp_ye,GMp_ye,GEn_ye,sigmaBorn_Ratio_corr,sigmaBorn_Ratio_corr_error_sys); 
+  // double GMn_ov_munGD_err_ye_ye_sys = GMn_err_ye_ye_sys/abs(EMFFFits::GetGDip(Q2)*constant::mun);
+  std::vector<double> GMn_err_ye_ye_sys(R_fit_err_sys.size());
+  std::vector<double> GMn_ov_munGD_err_ye_ye_sys(R_fit_err_sys.size());
+  for (size_t i = 0; i < R_fit_err_sys.size(); ++i) {
+    GMn_err_ye_ye_sys[i] = kine::CalcGMnError(etheta,Q2,GEp_ye,GMp_ye,GEn_ye,sigmaBorn_Ratio_corr,sigmaBorn_Ratio_corr_error_sys[i]);
+    GMn_ov_munGD_err_ye_ye_sys[i] = GMn_err_ye_ye_sys[i]/abs(EMFFFits::GetGDip(Q2)*constant::mun);
+  }
 
   // -- Vary GEn w.r.t. Primary --
   // 1
@@ -105,15 +124,15 @@ int extractGMn(double const etheta, double const Q2, double const R_fit, double 
   std::cout << Form("R_fit: %.4f , R_MC: %.4f , R_elas: %.4f",R_fit,sigmaBorn_Ratio_MC,sigmaBorn_Ratio_corr);
   std::cout << "\n\n";
   
-  std::cout << Form("Q2: %.1f, n/p ratio: %.4f +/- %.4f +/- %.4f, Tot err: %.4f\n\n",Q2,sigmaBorn_Ratio_corr,sigmaBorn_Ratio_corr_error,sigmaBorn_Ratio_corr_error_sys,sigmaBorn_Ratio_corr_error_tot);
+  std::cout << Form("Q2: %.1f, n/p ratio: %.4f +/- %.4f +/- %.4f, Tot err: %.4f\n\n",Q2,sigmaBorn_Ratio_corr,sigmaBorn_Ratio_corr_error,sigmaBorn_Ratio_corr_error_sys[0],sigmaBorn_Ratio_corr_error_tot);
   std::cout << "\n\n";
   
   std::cout << "No TPE Corr (Beta): Christy, Ye \n";
-  std::cout << Form("etheta: %.1f, Q2: %.1f, GMn: %.4f, GMn/(mun*GD): %.4f +/- %.4f +/- %.4f\n",etheta,Q2,GMn_data_christy_ye,GMn_ov_munGD_data_christy_ye,GMn_ov_munGD_err_christy_ye,GMn_ov_munGD_err_christy_ye_sys);
+  std::cout << Form("etheta: %.1f, Q2: %.1f, GMn: %.4f, GMn/(mun*GD): %.4f +/- %.4f +/- %.4f\n",etheta,Q2,GMn_data_christy_ye,GMn_ov_munGD_data_christy_ye,GMn_ov_munGD_err_christy_ye,GMn_ov_munGD_err_christy_ye_sys[0]);
   std::cout << "----- || ----- \n";
   std::cout << "Primary: Ye, Ye \n";
   std::cout << "-------\n";  
-  std::cout << Form("etheta: %.1f, Q2: %.1f, GMn: %.4f, GMn/(mun*GD): %.4f +/- %.4f +/- %.4f\n",etheta,Q2,GMn_data_ye_ye,GMn_ov_munGD_data_ye_ye,GMn_ov_munGD_err_ye_ye,GMn_ov_munGD_err_ye_ye_sys);
+  std::cout << Form("etheta: %.1f, Q2: %.1f, GMn: %.4f, GMn/(mun*GD): %.4f +/- %.4f +/- %.4f\n",etheta,Q2,GMn_data_ye_ye,GMn_ov_munGD_data_ye_ye,GMn_ov_munGD_err_ye_ye,GMn_ov_munGD_err_ye_ye_sys[0]);
   std::cout << "\n\n";
 
   std::cout << "Vary sigma_p w.r.t. Primary: \n";
@@ -133,5 +152,13 @@ int extractGMn(double const etheta, double const Q2, double const R_fit, double 
   std::cout << Form("etheta: %.1f, Q2: %.1f, GMn: %.4f, GMn/(mun*GD): %.4f +/- %.4f\n",etheta,Q2,GMn_data_ye_gal,GMn_ov_munGD_data_ye_gal,GMn_ov_munGD_err_ye_gal);
   std::cout << "\n\n";
 
+  std::cout << "Summary: \n";
+  std::cout << "ch-yentpe,dch-yentpe,ye-ye,dye-ye,ke-ye,ar-ye,ye-ke,ye-ga,inel,nde1,nde2,rc,cutv,fsi\n";
+  std::cout << Form("%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,",GMn_ov_munGD_data_christy_ye,GMn_ov_munGD_err_christy_ye,GMn_ov_munGD_data_ye_ye,GMn_ov_munGD_err_ye_ye,GMn_ov_munGD_data_kelly_ye,GMn_ov_munGD_data_ar_ye,GMn_ov_munGD_data_ye_kelly,GMn_ov_munGD_data_ye_gal);
+  for (size_t i = 0; i < R_fit_err_sys.size(); ++i) {
+    std::cout << Form("%.4f,",GMn_ov_munGD_err_ye_ye_sys[i]);
+  }
+  std::cout << "\n\n";
+  // GMn_ov_munGD_data_christy_ye GMn_ov_munGD_err_christy_ye GMn_ov_munGD_data_ye_ye GMn_ov_munGD_err_ye_ye GMn_ov_munGD_data_kelly_ye GMn_ov_munGD_data_ar_ye GMn_ov_munGD_data_ye_kelly GMn_ov_munGD_data_ye_gal  
   return 0;
 }
