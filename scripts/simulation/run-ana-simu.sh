@@ -3,6 +3,7 @@
 #SBATCH --mem-per-cpu=1000
 
 export GMN_ANA=/u/home/pdbforce/gmn_ana
+ROOTLOGON_ENV='/home/pdbforce/install_el9/runenv/rootlogon.C'
 
 process=$1  # elas/qelas
 conf=$2
@@ -28,9 +29,9 @@ module load analyzer/1.7.12
 cd $GMN_ANA/scripts/simulation
 
 if [[ "$process" == "qelas" ]]; then
-    analyzer -b -q ''$process'_ana_simu.cpp("sbs'$conf'-sbs'$field'p-simu/conf_'$process'_ana_simu.json",2,"'$gen'","'$reaction'")'
+    analyzer -b -q $ROOTLOGON_ENV ''$process'_ana_simu.cpp("sbs'$conf'-sbs'$field'p-simu/conf_'$process'_ana_simu.json",2,"'$gen'","'$reaction'")'
 else
-    analyzer -b -q ''$process'_ana_simu.cpp("sbs'$conf'-sbs'$field'p-simu/conf_'$process'_ana_simu.json",1,"'$gen'","'$reaction'")'
+    analyzer -b -q $ROOTLOGON_ENV ''$process'_ana_simu.cpp("sbs'$conf'-sbs'$field'p-simu/conf_'$process'_ana_simu.json",1,"'$gen'","'$reaction'")'
 fi
 
 #sbatch --mem-per-cpu=2000 run-ana-simu.sh elas 4 30 simc heep

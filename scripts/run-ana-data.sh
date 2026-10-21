@@ -1,6 +1,7 @@
 #!/bin/bash
 
 export GMN_ANA=/u/home/pdbforce/gmn_ana
+ROOTLOGON_ENV='/home/pdbforce/install_el9/runenv/rootlogon.C'
 
 process=$1
 conf=$2
@@ -20,16 +21,16 @@ module use /apps/modulefiles
 fi 
 
 module use /group/halla/modulefiles
-module load geant4/11.1.2
+#module load geant4/11.1.2
 module load analyzer/1.7.12
 #module load cmake/3.23.2
 
 cd $GMN_ANA/scripts
 
 if [[ "$process" == "qelas" ]]; then
-    analyzer -b -q ''$process'_ana_data.cpp("sbs'$conf'-sbs'$field'p/conf_'$process'_ana_data.json","'$target'",'$pass','$model')'
+    analyzer -b -q $ROOTLOGON_ENV ''$process'_ana_data.cpp("sbs'$conf'-sbs'$field'p/conf_'$process'_ana_data.json","'$target'",'$pass','$model')'
 else
-    analyzer -b -q ''$process'_ana_data.cpp("sbs'$conf'-sbs'$field'p/conf_'$process'_ana_data.json",'$pass','$model')'
+    analyzer -b -q $ROOTLOGON_ENV ''$process'_ana_data.cpp("sbs'$conf'-sbs'$field'p/conf_'$process'_ana_data.json",'$pass','$model')'
 fi
 
 #sbatch --mem-per-cpu=2000 run-ana-data.sh elas 11 100 pass model
