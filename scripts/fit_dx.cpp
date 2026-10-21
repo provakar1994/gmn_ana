@@ -361,8 +361,10 @@ int fit_dx(const char *configfilename,
   std::cout << "-----\n";
 
   // Applying cuts
-  std::string cuts_for_signal_data = jmgr->GetValueFromSubKey_str(key, "cuts_for_signal_data");
   std::string cuts_for_signal_simu = jmgr->GetValueFromSubKey_str(key, "cuts_for_signal_simu");
+  std::string cuts_for_signal_data = cuts_for_signal_simu;
+  std::string extra_data_signal_cut = jmgr->GetValueFromSubKey_str(key, "extra_data_signal_cut");
+  cuts_for_signal_data = cuts_for_signal_data + "&&" + extra_data_signal_cut;
   std::string cuts_for_bg_data1 = jmgr->GetValueFromSubKey_str(key, "cuts_for_bg_data1");
   std::string cuts_for_bg_data2 = jmgr->GetValueFromSubKey_str(key, "cuts_for_bg_data2");
   bool apply_nblkHCALgt1_cut = jmgr->GetValueFromSubKey<int>(key, "apply_nblkHCAL>1_cut");
