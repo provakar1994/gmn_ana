@@ -271,11 +271,17 @@ int Ye2017::YeFitNoTPE(const int kID, const double kQ2, double &FF, double &FF_e
   std::string filename = "data.csv";
   reader.readCSV(filename);
 
+  // // Reading the FFs and the errors
+  // double GEp = reader.GetClosestValueByKey(kQ2,1);
+  // double GEpErr = reader.GetClosestValueByKey(kQ2,2);
+  // double GMp = reader.GetClosestValueByKey(kQ2,3); 
+  // double GMpErr = reader.GetClosestValueByKey(kQ2,4);;
+
   // Reading the FFs and the errors
-  double GEp = reader.GetClosestValueByKey(kQ2,1);
-  double GEpErr = reader.GetClosestValueByKey(kQ2,2);
+  double GEp = reader.GetClosestValueByKey(kQ2,9);
+  double GEpErr = reader.GetClosestValueByKey(kQ2,10);
   double GMp = reader.GetClosestValueByKey(kQ2,3); 
-  double GMpErr = reader.GetClosestValueByKey(kQ2,4);;
+  double GMpErr = reader.GetClosestValueByKey(kQ2,4);;  
 
   // Returning EMFF values
   if (kID==1) {
