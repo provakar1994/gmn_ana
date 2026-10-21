@@ -106,7 +106,7 @@ std::vector<std::string> replaceAndGenerateStrings(const std::string &mainStr, c
 }
 
 //______________________________________________________________________________
-void GetMeanMinAndMaxX(TH1 *h)
+void GetMeanMinAndMaxX(TH1 *h, std::vector<double> &outstats, int verbose)
 {
   if (!h)
   {
@@ -115,6 +115,7 @@ void GetMeanMinAndMaxX(TH1 *h)
   }
 
   // Initialize min and max x-values
+  double meanX = h->GetMean();
   double minX = 0;
   double maxX = 0;
 
@@ -139,9 +140,13 @@ void GetMeanMinAndMaxX(TH1 *h)
   }
 
   // Print the results
-  std::cout << Form("Mean X: %.3f", h->GetMean()) << std::endl;
-  std::cout << Form("Min X: %.3f", minX) << std::endl;
-  std::cout << Form("Max X: %.3f", maxX) << std::endl;
+  if (verbose>0) {
+    std::cout << Form("Mean X: %.3f", meanX) << std::endl;
+    std::cout << Form("Min X: %.3f", minX) << std::endl;
+    std::cout << Form("Max X: %.3f", maxX) << std::endl;
+  }
+
+  outstats = {meanX, minX, maxX};
 }
 //______________________________________________________________________________
 void CalcRnumBinEdges(int rmin, int rmax, bool debug, std::vector<double> &binEdges)
@@ -724,6 +729,7 @@ int fit_dx(const char *configfilename,
   jmgr->GetVectorFromSubKey<double>(key, "Par_guess_of_gaus_bg", gfit_params);
 
   // ----
+  std::vector<double> vethstats, vQ2stats, vepsstats;
   for (int i = 0; i < iter; i++)
   {
 
@@ -925,6 +931,13 @@ int fit_dx(const char *configfilename,
     }
     // ------------
 
+    std::cout << "vetheta stats: \n";
+    GetMeanMinAndMaxX(h_vetheta, vethstats, 1);
+    std::cout << "vQ2 stats: \n";
+    GetMeanMinAndMaxX(h_vQ2, vQ2stats, 1);
+    std::cout << "vEpsilon stats: \n";
+    GetMeanMinAndMaxX(h_vepsilon, vepsstats, 1);
+    
     if (is_vary_cut)
     {
       // drawing cut histos
@@ -1303,7 +1316,11 @@ int fit_dx(const char *configfilename,
       // various outputs
       if (i == 0)
       {
-        outdata << "cut,min,max,RMCnf,RMCnferr,RpMC,"
+        outdata << "cut,min,max,"
+		<< "vethMean,vethMin,vethMax,"
+		<< "vQ2Mean,vQ2Min,vQ2Max,"
+		<< "vepsMean,vepsMin,vepsMax,"
+		<< "RMCnf,RMCnferr,RpMC,"
                 << "chi20,NDF0,R0,R0err,"
                 << "chi21,NDF1,R1,R1err,B1,B1err,Yp1,Yp1err,Yn1,Yn1err,Ybg1,Ybg1err,"
                 << "chi22,NDF2,R2,R2err,B2,B2err,Yp2,Yp2err,Yn2,Yn2err,Ybg2,Ybg2err,"
@@ -2181,7 +2198,11 @@ int fit_dx(const char *configfilename,
       std::cout << "\n--- Reporting fit params ---\n";
       std::cout << "cut,min,max,R0,R0err,R1,R1err,R2,R2err,R3,R3err,R4,R4err\n";
       std::cout << cuts_2[i] << "," << minval[i] << "," << maxval[i] << ",";
-      outdata << cuts_2[i] << "," << minval[i] << "," << maxval[i] << "," << R_MC_nofit << "," << R_MC_nofit_err << "," << Rp_MC << ",";
+      outdata << cuts_2[i] << "," << minval[i] << "," << maxval[i] << ",";
+      outdata << Form("%.4f,%.4f,%.4f,",vethstats[0],vethstats[1],vethstats[2]);
+      outdata << Form("%.4f,%.4f,%.4f,",vQ2stats[0],vQ2stats[1],vQ2stats[2]);
+      outdata << Form("%.4f,%.4f,%.4f,",vepsstats[0],vepsstats[1],vepsstats[2]);            
+      outdata << Form("%.4f,%.4f,%.4f,",R_MC_nofit,R_MC_nofit_err,Rp_MC);
       for (size_t i = 0; i < R_vals.size(); i++)
       {
         std::cout << R_vals[i] << "," << Rerr_vals[i] << ",";
@@ -2239,6 +2260,10 @@ int fit_dx(const char *configfilename,
       if (i == iter - 1)
         c7->SaveAs(Form("%s]", outPlot.Data()));
     } // QE
+
+    vethstats.clear();
+    vQ2stats.clear();
+    vepsstats.clear();    
   } // for, cut vairation
 
   if (is_vary_cut)
@@ -2293,13 +2318,6 @@ int fit_dx(const char *configfilename,
     //
     cGist->Write();
   }
-
-  std::cout << "vetheta stats: \n";
-  GetMeanMinAndMaxX(h_vetheta);
-  std::cout << "vQ2 stats: \n";
-  GetMeanMinAndMaxX(h_vQ2);
-  std::cout << "vEpsilon stats: \n";
-  GetMeanMinAndMaxX(h_vepsilon);
 
   // reporting output files
   std::cout << "------" << std::endl;
