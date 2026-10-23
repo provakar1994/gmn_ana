@@ -2223,7 +2223,7 @@ int fit_dx(const char *configfilename,
       outdata << "\n";
       std::cout << "\n------\n";
 
-      std::cout << "\nR_MC_nofit = " << R_MC_nofit << " +/- " << R_MC_nofit_err << ", Rp_MC = " << Rp_MC << "\n";              
+      std::cout << Form("\nveth: %.4f, vQ2: %.4f, veps: %.4f | Rp_MC = %.4f\n\n", vethstats[0], vQ2stats[0], vepsstats[0], Rp_MC);              
 
       // further customization of the data histo
       FurtherCustoizeDataHisto(h_dxHCAL_data, cuts_for_signal_data);
