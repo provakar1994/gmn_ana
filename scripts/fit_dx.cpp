@@ -404,10 +404,12 @@ int fit_dx(const char *configfilename,
   std::vector<double> hcal_AR = cut::hcal_active_area_data(AR_w[0], AR_w[1], pass);
   std::vector<double> hcal_SM = cut::hcal_safety_margin(SM_w[0], SM_w[1], SM_w[2], hcal_AR);
 
-  // Calculating R_MC
-  SBSconfig sbsconf(conf, sbsmag);
-  double Rp_MC = kine::sigmaBorn_ratio_MC(sbsconf, "np");
-  std::cout << "\nRp_MC = " << Rp_MC << "\n\n";
+  // // Calculating R_MC
+  // SBSconfig sbsconf(conf, sbsmag);
+  // double Rp_MC = kine::sigmaBorn_ratio_MC(sbsconf, "np");
+  // std::cout << "\nRp_MC = " << Rp_MC << "\n\n";
+  Kelly2004 kellyfit;
+  Seamus20XX seamusfit;  
 
   // Now its time to define new columns
   // 1. to account for dx_p and dx_n shifts
@@ -2201,7 +2203,8 @@ int fit_dx(const char *configfilename,
       outdata << cuts_2[i] << "," << minval[i] << "," << maxval[i] << ",";
       outdata << Form("%.4f,%.4f,%.4f,",vethstats[0],vethstats[1],vethstats[2]);
       outdata << Form("%.4f,%.4f,%.4f,",vQ2stats[0],vQ2stats[1],vQ2stats[2]);
-      outdata << Form("%.4f,%.4f,%.4f,",vepsstats[0],vepsstats[1],vepsstats[2]);            
+      outdata << Form("%.4f,%.4f,%.4f,",vepsstats[0],vepsstats[1],vepsstats[2]);   
+      double const Rp_MC = kine::sigmaBorn_ratio(vethstats[0],vQ2stats[0],kellyfit.GetFF(G_t::kGEp,vQ2stats[0]),kellyfit.GetFF(G_t::kGMp,vQ2stats[0]));
       outdata << Form("%.4f,%.4f,%.4f,",R_MC_nofit,R_MC_nofit_err,Rp_MC);
       for (size_t i = 0; i < R_vals.size(); i++)
       {
