@@ -2204,7 +2204,9 @@ int fit_dx(const char *configfilename,
       outdata << Form("%.4f,%.4f,%.4f,",vethstats[0],vethstats[1],vethstats[2]);
       outdata << Form("%.4f,%.4f,%.4f,",vQ2stats[0],vQ2stats[1],vQ2stats[2]);
       outdata << Form("%.4f,%.4f,%.4f,",vepsstats[0],vepsstats[1],vepsstats[2]);   
-      double const Rp_MC = kine::sigmaBorn_ratio(vethstats[0],vQ2stats[0],kellyfit.GetFF(G_t::kGEp,vQ2stats[0]),kellyfit.GetFF(G_t::kGMp,vQ2stats[0]));
+      double const Rp_MC = kine::sigmaBorn_ratio(vethstats[0],vQ2stats[0],kellyfit.GetFF(G_t::kGEp,vQ2stats[0]),kellyfit.GetFF(G_t::kGMp,vQ2stats[0]),
+					    seamusfit.GetFF(G_t::kGEn,vQ2stats[0]),kellyfit.GetFF(G_t::kGMn,vQ2stats[0]));
+      std::cout << "R_MC_nofit = " << R_MC_nofit << " +/- " << R_MC_nofit_err << ", Rp_MC = " << Rp_MC << "\n";              
       outdata << Form("%.4f,%.4f,%.4f,",R_MC_nofit,R_MC_nofit_err,Rp_MC);
       for (size_t i = 0; i < R_vals.size(); i++)
       {
