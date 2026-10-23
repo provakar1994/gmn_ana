@@ -2206,7 +2206,6 @@ int fit_dx(const char *configfilename,
       outdata << Form("%.4f,%.4f,%.4f,",vepsstats[0],vepsstats[1],vepsstats[2]);   
       double const Rp_MC = kine::sigmaBorn_ratio(vethstats[0],vQ2stats[0],kellyfit.GetFF(G_t::kGEp,vQ2stats[0]),kellyfit.GetFF(G_t::kGMp,vQ2stats[0]),
 					    seamusfit.GetFF(G_t::kGEn,vQ2stats[0]),kellyfit.GetFF(G_t::kGMn,vQ2stats[0]));
-      std::cout << "R_MC_nofit = " << R_MC_nofit << " +/- " << R_MC_nofit_err << ", Rp_MC = " << Rp_MC << "\n";              
       outdata << Form("%.4f,%.4f,%.4f,",R_MC_nofit,R_MC_nofit_err,Rp_MC);
       for (size_t i = 0; i < R_vals.size(); i++)
       {
@@ -2223,6 +2222,8 @@ int fit_dx(const char *configfilename,
       // outdata << Form("%.0f,%.0f,%.0f,%.0f,%.0f,%.0f",yo2[0],yo2[1],yo2[2],yo2[3],yo2[4],yo2[5]);
       outdata << "\n";
       std::cout << "\n------\n";
+
+      std::cout << "\nR_MC_nofit = " << R_MC_nofit << " +/- " << R_MC_nofit_err << ", Rp_MC = " << Rp_MC << "\n";              
 
       // further customization of the data histo
       FurtherCustoizeDataHisto(h_dxHCAL_data, cuts_for_signal_data);
