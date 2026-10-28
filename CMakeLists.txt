@@ -128,7 +128,16 @@ root_generate_dictionary(
 )
 
 
-#MESSAGE(${CMAKE_CURRENT_BINARY_DIR})	
+#----------------------------------------------------------------------------
+# Unit tests (tests/). Built by default; run with `ctest --output-on-failure`
+# from the build directory. Disable with -DGMNANA_BUILD_TESTS=OFF.
+option(GMNANA_BUILD_TESTS "Build the gmnana unit tests" ON)
+if(GMNANA_BUILD_TESTS)
+  enable_testing()
+  add_subdirectory(tests)
+endif()
+
+#MESSAGE(${CMAKE_CURRENT_BINARY_DIR})
 #MESSAGE(${CMAKE_INSTALL_BINDIR})	
 #MESSAGE(${CMAKE_INSTALL_INCLUDEDIR})	
 #MESSAGE(${PROJECT_BINARY_DIR})	
