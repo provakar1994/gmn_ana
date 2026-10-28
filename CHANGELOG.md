@@ -7,3 +7,7 @@
 ## 2026-10-28 11:54
 - **Files:** `src/KinematicVar.cpp`
 - **Change:** `CalcGMnError` now uses the exact error propagation, dGMn = term1·σ_R,p·dR / (2τ_n|GMn|), instead of the approximation |GMn|·dR/(2R), which ignored the GEn term, and no longer prints debug lines on every call. `ExtractGMnWithError` called the 7-argument `ExtractGMn` (the `ebeam, eeprime, etheta` overload) instead of `CalcGMnError`, so it returned a wrong error; fixed.
+
+## 2026-10-28 11:54
+- **Files:** `scripts/extractGMn.cpp`
+- **Change:** Rewrite the macro around one helper (`calcGMn`) that gives GMn/(μ_n G_D) with propagated stat errors and per-source exp. systematic errors for each EMFF model. It takes named systematic sources (all uncorrelated), checks that the number of names matches the number of errors, and reports the theory systematic as two sources: σ_p (Kelly/Arrington spread + Ye GEp/GMp fit errors) and GEn (Kelly/Galster spread + Ye GEn fit error). The CSV headers are built from the source names. It also fixes printing only `sys[0]`, and removes the hard-coded CSV header.
