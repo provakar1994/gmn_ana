@@ -330,37 +330,24 @@ namespace kine {
   }
   //--------------------------------------------
   double CalcGMnError(double etheta, double Q2, double GEp, double GMp, double GEn, double ratio, double ratioErr) {
-    /* Performs GMn error propagation from a given ratio & error */
-    // double tau_p = kine::tau(Q2,"p");
-    // double tau_n = kine::tau(Q2,"n");
-    // double epsilon_p = kine::epsilon(etheta,Q2,"p");
-    // double epsilon_n = kine::epsilon(etheta,Q2,"n");
-    // double sigmaReduced_p = kine::sigmaReduced(tau_p,epsilon_p,GEp,GMp);
-    // // defining some terms for convenience
-    // double term1 = epsilon_n*(1.+tau_n) / (epsilon_p*(1.+tau_p));
+    /* Performs GMn error propagation from a given ratio & error (exact, incl. GEn term)
+       GMn^2 = (term1*sigmaR_p*R - eps_n*GEn^2)/tau_n  =>  dGMn = term1*sigmaR_p*dR / (2*tau_n*|GMn|) */
+    double tau_p = kine::tau(Q2,"p");
+    double tau_n = kine::tau(Q2,"n");
+    double epsilon_p = kine::epsilon(etheta,Q2,"p");
+    double epsilon_n = kine::epsilon(etheta,Q2,"n");
+    double sigmaReduced_p = kine::sigmaReduced(tau_p,epsilon_p,GEp,GMp);
+    // defining some terms for convenience
+    double term1 = epsilon_n*(1.+tau_n) / (epsilon_p*(1.+tau_p));
 
-    // double numer = (term1*sigmaReduced_p/tau_n) * ratioErr;
-    // double denom = 2.0*pow((term1*sigmaReduced_p*ratio - epsilon_n*GEn*GEn)/tau_n , 0.5);
-    // return numer/denom;
-
-   
-    double gmn = ExtractGMn(etheta, Q2, GEp, GMp, GEn, ratio);
-    double numer = abs(gmn)*ratioErr;
-    double denom = 2*abs(ratio);
-    double error = numer/denom;
-
-    std::cout << "** GMn = " << gmn << "\n";
-    std::cout << "** R = " << ratio << "\n";
-    std::cout << "** R error = " << ratioErr << "\n";
-    std::cout << "** Error = " << error << "\n";
-    
-    return error;
-  }  
+    double gmn = kine::ExtractGMn(etheta,Q2,GEp,GMp,GEn,ratio);
+    return term1*sigmaReduced_p*std::abs(ratioErr) / (2.0*tau_n*std::abs(gmn));
+  }
   //--------------------------------------------
   void ExtractGMnWithError(double etheta,double Q2,double GEp,double GMp,double GEn,double ratio,double ratioErr,std::vector<double> &output) {
     /* Calulates GMn and the associated error from a given ratio and error */
     double GMn = kine::ExtractGMn(etheta,Q2,GEp,GMp,GEn,ratio);
-    double GMnErr = kine::ExtractGMn(etheta,Q2,GEp,GMp,GEn,ratio,ratioErr);
+    double GMnErr = kine::CalcGMnError(etheta,Q2,GEp,GMp,GEn,ratio,ratioErr);
 
     output = {GMn,GMnErr};
   }
