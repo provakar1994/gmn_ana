@@ -15,3 +15,7 @@
 ## 2026-10-28 12:10
 - **Files:** `DB/FF_fits/Ye2018/*`
 - **Change:** Track the Ye 2018 form-factor material with git: the paper and its supplementary material, the official lookup tables with TPE (`ye2018_wTPE_*`), and the proton lookup table without external TPE (`ye2018_NoTPE_proton_lookup.csv`, from private communication). The library will read these tables from here, not from a CSV in the working directory.
+
+## 2026-10-28 12:40
+- **Files:** `CMakeLists.txt`, `include/EMFFFits.h`, `src/EMFFFits.cpp`, `include/LookUpTableReader.h`
+- **Change:** Fix the Ye no-TPE proton FFs (`Ye2017::GetFFNoTPE`, `GetFFwErrNoTPE`). They read "GEp" from the `muGE/GM` column (the FF ratio, ~50x too large at Q2 = 4.5), took the nearest table row instead of interpolating (biasing GMp by up to ~1% and GEp by up to ~11%), and re-read a `data.csv` from the current working directory on every call. Now the table is read once from `DB/FF_fits/Ye2018/ye2018_NoTPE_proton_lookup.csv`, columns are found by name (`GEp`, `dGEp`, `GMp`, `dGMp`), and values are interpolated linearly in log(Q2); Q2 outside the table gives an error. CMake now sets `GMNANA_DB_DIR` (overridable by the env. variable of the same name), read via the new `EMFFFits::GetDBPath()`. `LookUpTableReader` gains `GetLogInterpValueByColumnName()` and strips a UTF-8 BOM from the header.

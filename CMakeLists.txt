@@ -99,6 +99,10 @@ target_include_directories(${PACKAGE}
   )
 target_link_libraries(${PACKAGE} PUBLIC ${ROOT_LIBRARIES})
 
+# Location of the DB directory (lookup tables etc.) used by the library at run time.
+# It can be overridden at run time with the environment variable GMNANA_DB_DIR.
+target_compile_definitions(${PACKAGE} PRIVATE GMNANA_DB_DIR="${CMAKE_CURRENT_SOURCE_DIR}/DB")
+
 include(GNUInstallDirs)
 
 install(TARGETS ${PACKAGE}

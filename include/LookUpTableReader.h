@@ -20,6 +20,7 @@
 #include <unordered_map>
 #include <string>
 #include <cmath>
+#include <algorithm>
 
 class LookUpTableReader {
 private:
@@ -42,6 +43,9 @@ public:
     double key;
 
     std::getline(file, line);  // Read header line
+    // Strip the UTF-8 byte order mark, if present, so the 1st column name is clean
+    const std::string bom = "\xEF\xBB\xBF";
+    if (line.compare(0, bom.size(), bom) == 0) line.erase(0, bom.size());
 
     std::istringstream headerStream(line);
     std::string colName;
@@ -240,7 +244,34 @@ public:
   }
 
   const std::vector<std::string>& getHeader() const { return header; }
-  
+
+  // Function to return the value of column colName at targetKey, linearly interpolated
+  // in log(key) between the two neighbouring rows. Suited for tables on a log grid in
+  // the key (e.g. EMFF lookup tables vs Q2). Needs positive keys sorted in increasing
+  // order. Returns -99999 if targetKey is outside the table or the column is not found.
+  double GetLogInterpValueByColumnName(double targetKey, const std::string& colName)
+  {
+    int colIdx = getColumnIndex(colName);
+    if (colIdx == -1) {
+      std::cerr << "Column not found: " << colName << std::endl;
+      return -99999;
+    }
+    if (rowKeys.size() < 2 || targetKey < rowKeys.front() || targetKey > rowKeys.back()) {
+      std::cerr << "Key " << targetKey << " is outside the table range ["
+		<< (rowKeys.empty() ? 0 : rowKeys.front()) << ", "
+		<< (rowKeys.empty() ? 0 : rowKeys.back()) << "]" << std::endl;
+      return -99999;
+    }
+    // index of the 1st row with key > targetKey (the upper neighbour)
+    size_t up = std::upper_bound(rowKeys.begin(), rowKeys.end(), targetKey) - rowKeys.begin();
+    if (up == rowKeys.size()) up = rowKeys.size() - 1; // targetKey == last key
+    size_t lo = up - 1;
+    double const frac = std::log(targetKey/rowKeys[lo]) / std::log(rowKeys[up]/rowKeys[lo]);
+    double const vLo = GetValueByRowAndColumn(lo, colIdx);
+    double const vUp = GetValueByRowAndColumn(up, colIdx);
+    return vLo + frac*(vUp - vLo);
+  }
+
 };
 
 #endif

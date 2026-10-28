@@ -1,4 +1,11 @@
+#include <cstdlib>
+
 #include "../include/EMFFFits.h"
+
+// GMNANA_DB_DIR (path of the DB directory) is defined by CMake, see CMakeLists.txt
+#ifndef GMNANA_DB_DIR
+#error "GMNANA_DB_DIR is not defined. Build the library with CMake (or pass -DGMNANA_DB_DIR=\"<path>/DB\")."
+#endif
 
 void EMFFFits::StripGDandMu(G_t const kG, double const Q2, double & value) {
   /* All the fits implemented here returns a ratio of Sachs FF (G) to 
@@ -14,6 +21,14 @@ void EMFFFits::StripGDandMu(G_t const kG, double const Q2, double & value) {
   case G_t::kGMn:
     value *= constant::mun;
   }
+}
+
+std::string EMFFFits::GetDBPath(std::string const& relPath) {
+  /* Returns the full path of relPath under the DB directory. GMNANA_DB_DIR is set by
+     CMake to <source dir>/DB; the env. variable of the same name overrides it. */
+  const char* envDir = std::getenv("GMNANA_DB_DIR");
+  std::string dbDir = envDir ? envDir : GMNANA_DB_DIR;
+  return dbDir + "/" + relPath;
 }
 
 G_t EMFFFits::StrToG_t(const std::string& str) {
@@ -254,41 +269,36 @@ int Ye2017::YeFitNoTPE(const int kID, const double kQ2, double &FF, double &FF_e
 
   /////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////
-  // The proton FFs w/o TPE correction are not included
-  // in the official supplymentary materials. The associated 
-  // lookup table have been collected from the authors via
-  // private communications. 
+  // The proton FFs w/o (external) TPE correction are not included in the official
+  // supplementary materials. The lookup table was obtained from the authors via
+  // private communication (Round6_..._noExtraTPE.dat in proton_lookup_table.zip)
+  // and converted to CSV: DB/FF_fits/Ye2018/ye2018_NoTPE_proton_lookup.csv
+  // Columns used: GEp, dGEp, GMp, dGMp (pure FF values, not divided by GD or mu).
+  // The table is on a log grid in Q2 (~1.2% steps), so values are interpolated
+  // linearly in log(Q2): taking the nearest row instead biases GMp by up to ~1%.
 
   // GEp->kID=1, GMp->kID=2, GEn->kID=3, GMn->kID=4
-  if (kID>2) {
+  if (kID<1 || kID>2) {
     std::cerr<<"*** ERROR***, Ye fit w/o TPE only supports kID=1 & 2 ie GEp & GMp"<<std::endl;
     FF = -1000;  FF_err= -1000;
     return -1;
   }
 
-  // Reading the lookup table
-  LookUpTableReader reader;
-  std::string filename = "data.csv";
-  reader.readCSV(filename);
+  // Read the lookup table only once (on first call) and keep it for later calls
+  static LookUpTableReader table = [] {
+    LookUpTableReader reader;
+    reader.readCSV(EMFFFits::GetDBPath("FF_fits/Ye2018/ye2018_NoTPE_proton_lookup.csv"));
+    return reader;
+  }();
 
-  // // Reading the FFs and the errors
-  // double GEp = reader.GetClosestValueByKey(kQ2,1);
-  // double GEpErr = reader.GetClosestValueByKey(kQ2,2);
-  // double GMp = reader.GetClosestValueByKey(kQ2,3); 
-  // double GMpErr = reader.GetClosestValueByKey(kQ2,4);;
-
-  // Reading the FFs and the errors
-  double GEp = reader.GetClosestValueByKey(kQ2,9);
-  double GEpErr = reader.GetClosestValueByKey(kQ2,10);
-  double GMp = reader.GetClosestValueByKey(kQ2,3); 
-  double GMpErr = reader.GetClosestValueByKey(kQ2,4);;  
-
-  // Returning EMFF values
-  if (kID==1) {
-    FF = GEp; FF_err = GEpErr;
-  }
-  else {
-    FF = GMp; FF_err = GMpErr;
+  // Interpolate the FF and its error at the given Q2
+  const std::string ffName = (kID==1) ? "GEp" : "GMp";
+  FF = table.GetLogInterpValueByColumnName(kQ2, ffName);
+  FF_err = table.GetLogInterpValueByColumnName(kQ2, "d" + ffName);
+  if (FF == -99999 || FF_err == -99999) {
+    std::cerr<<"*** ERROR***, Ye fit w/o TPE lookup failed at Q2 = "<<kQ2<<" GeV2"<<std::endl;
+    FF = -1000;  FF_err= -1000;
+    return -1;
   }
 
   return 0;

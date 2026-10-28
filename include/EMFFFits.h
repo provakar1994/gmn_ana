@@ -38,6 +38,9 @@ class EMFFFits {
   static double GetGDip(double const Q2) {return pow(1./(1. + Q2/0.71), 2);}
   static void StripGDandMu(G_t const kG, double const Q2, double & value);
   static G_t StrToG_t(const std::string& str);
+  // Full path of a file under the DB directory (e.g. "FF_fits/Ye2018/x.csv"). The DB
+  // directory is set at build time and can be overridden w/ env. variable GMNANA_DB_DIR.
+  static std::string GetDBPath(std::string const& relPath);
 };
 
 //##############################
@@ -152,7 +155,9 @@ class Ye2017 : public EMFFFits {
     const int kID = static_cast<int>(kG);
     int err = YeFit(kID, Q2, GNGD_Fit, GNGD_Err);
     StripGDandMu(kG,Q2,GNGD_Fit[0]);
-    StripGDandMu(kG,Q2,GNGD_Err[0]); // *** Through check is needed!!
+    // Ye's error parametrization returns dG/(G(0)*GD) w/ G(0) = 1 (GEp, GEn), mu_p (GMp), mu_n (GMn),
+    // so StripGDandMu() converts it to dG. Verified against dG_Par in Ye's lookup tables.
+    StripGDandMu(kG,Q2,GNGD_Err[0]);
     result = {GNGD_Fit[0],fabs(GNGD_Err[0])};
     return result;
   }
