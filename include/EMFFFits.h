@@ -192,7 +192,8 @@ class Ye2017 : public EMFFFits {
     result = {GNGD_Fit[0],fabs(GNGD_Err[0])};
     return result;
   }
-  // No TPE
+  // No TPE. !! PLACEHOLDER: currently the "noExtraTPE" fit, which is still
+  // SIFF-Blunden TPE corrected (see DB/FF_fits/Ye2018/README.md)
   double GetFFNoTPE(G_t const kG, double const Q2) override {
     double FF, FF_err;
     const int kID = static_cast<int>(kG);		

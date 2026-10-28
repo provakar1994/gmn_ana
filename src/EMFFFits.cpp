@@ -295,7 +295,11 @@ int Ye2017::YeFitNoTPE(const int kID, const double kQ2, double &FF, double &FF_e
   // The proton FFs w/o (external) TPE correction are not included in the official
   // supplementary materials. The lookup table was obtained from the authors via
   // private communication (Round6_..._noExtraTPE.dat in proton_lookup_table.zip)
-  // and converted to CSV: DB/FF_fits/Ye2018/ye2018_NoTPE_proton_lookup.csv
+  // and converted to CSV: DB/FF_fits/Ye2018/ye2018_noExtraTPE_proton_lookup.csv
+  // !! PLACEHOLDER: "noExtraTPE" only drops the phenomenological extra TPE term
+  // (PLB 777, Eq. 4); the SIFF-Blunden TPE correction is still applied. So these
+  // FFs are TPE corrected. To be replaced by a truly TPE-uncorrected Ye fit.
+  // See DB/FF_fits/Ye2018/README.md.
   // Columns used: GEp, dGEp, GMp, dGMp (pure FF values, not divided by GD or mu).
   // The table is on a log grid in Q2 (~1.2% steps), so values are interpolated
   // linearly in log(Q2): taking the nearest row instead biases GMp by up to ~1%.
@@ -307,10 +311,13 @@ int Ye2017::YeFitNoTPE(const int kID, const double kQ2, double &FF, double &FF_e
     return -1;
   }
 
-  // Read the lookup table only once (on first call) and keep it for later calls
+  // Read the lookup table only once (on first call) and keep it for later calls.
+  // The placeholder warning is printed at the same time, i.e. once per session.
   static LookUpTableReader table = [] {
+    std::cout << "WARNING: Ye2017 no-TPE proton FFs are a placeholder (noExtraTPE fit, "
+              << "still SIFF-Blunden TPE corrected). See DB/FF_fits/Ye2018/README.md\n";
     LookUpTableReader reader;
-    reader.readCSV(EMFFFits::GetDBPath("FF_fits/Ye2018/ye2018_NoTPE_proton_lookup.csv"));
+    reader.readCSV(EMFFFits::GetDBPath("FF_fits/Ye2018/ye2018_noExtraTPE_proton_lookup.csv"));
     return reader;
   }();
 
