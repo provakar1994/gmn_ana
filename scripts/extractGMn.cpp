@@ -61,15 +61,13 @@ int extractGMn(double const etheta, double const Q2, double const R_fit, double 
   // EMFF fits
   Ye2017 yefit;
   Kelly2004 kellyfit;
-  Seamus20XX seamusfit;
   Christy2022 christyfit;
   Arrington2007 arfit;
   Galster1971 galfit;
 
   // -- Born CS ratio (n/p) --
-  // MC ratio, using the same parametrizations as the MC generator (Kelly + Seamus)
-  double const R_MC = kine::sigmaBorn_ratio(etheta,Q2,kellyfit.GetFF(G_t::kGEp,Q2),kellyfit.GetFF(G_t::kGMp,Q2),
-					    seamusfit.GetFF(G_t::kGEn,Q2),kellyfit.GetFF(G_t::kGMn,Q2));
+  // MC ratio, using exactly the EMFFs of the MC generator (SIMC, bigbite branch)
+  double const R_MC = kine::sigmaBorn_ratio_MC(etheta,Q2);
   // Assuming that the data/MC discrepancy in n/p ratio is entirely attributable to the
   // Born CS ratio, the corrected ratio is R_MC*R_fit. Errors scale the same way.
   double const R = R_MC * R_fit;

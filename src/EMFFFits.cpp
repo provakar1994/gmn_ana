@@ -163,6 +163,22 @@ int Seamus20XX::SeamusFit(const int kID, const double kQ2, double *GNGD_Fit, dou
   
 }
 
+// ##########################
+// ## SIMC EMFFs (bigbite) ##
+// ##########################
+double SIMCbigbite::GetFF(G_t const kG, double const Q2) {
+  /* Returns pure EMFF values exactly as SIMC computes them. Kelly2004 & Seamus20XX already
+     use the same coefficients and tau = Q2/(4*m_p^2), so only the magnetic FFs need to be
+     rescaled from the exact magnetic moments (constant::mup, mun) to SIMC's rounded ones. */
+  switch (kG) {
+  case G_t::kGEp: return kellyfit.GetFF(G_t::kGEp,Q2);
+  case G_t::kGMp: return kellyfit.GetFF(G_t::kGMp,Q2) * kGMp0/constant::mup;
+  case G_t::kGEn: return seamusfit.GetFF(G_t::kGEn,Q2);
+  case G_t::kGMn: return kellyfit.GetFF(G_t::kGMn,Q2) * kGMn0/constant::mun;
+  }
+  return -1000;
+}
+
 // ###################
 // ## Ye Fit (2017) ##
 // ###################

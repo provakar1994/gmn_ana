@@ -136,6 +136,38 @@ class Seamus20XX : public EMFFFits {
 };
 
 //##############################
+class SIMCbigbite : public EMFFFits {
+  // EMFFs exactly as implemented in the SIMC generator used for the GMn MC:
+  // https://github.com/MarkKJones/simc_gfortran/blob/bigbite/physics_proton.f
+  // (fofa_best_fit_p: Kelly GEp & GMp; fofa_best_fit_n: Seamus GEn & Kelly GMn).
+  // It differs from Kelly2004 only by SIMC's rounded magnetic moments, GMp(0) = 2.79 and
+  // GMn(0) = -1.913. Use it to compute the MC Born CS ratio (kine::sigmaBorn_ratio_MC),
+  // so that data/MC corrections use the same FFs as the generator.
+ public:
+  SIMCbigbite(){};
+  static constexpr double kGMp0 = 2.79;   // GMp(Q2=0) used in SIMC
+  static constexpr double kGMn0 = -1.913; // GMn(Q2=0) used in SIMC
+  double GetFF(G_t const kG, double const Q2) override;
+  std::vector<double> GetFFwErr(G_t kG, double const Q2) override {
+    std::cout << "WARNING: No errors available for the SIMC EMFFs\n";
+    std::vector<double> result{SIMCbigbite::GetFF(kG,Q2),-1000};
+    return result;
+  }
+  double GetFFNoTPE(G_t kG, double Q2) override {
+    std::cout << "WARNING! No implementation provided!\n";
+    return -1000;
+  }
+  std::vector<double> GetFFwErrNoTPE(G_t kG, double const Q2) override {
+    std::cout << "WARNING! No implementation provided!\n";
+    std::vector<double> result{-1000,-1000};
+    return result;
+  }
+ private:
+  Kelly2004 kellyfit;
+  Seamus20XX seamusfit;
+};
+
+//##############################
 class Ye2017 : public EMFFFits {
   // Z. Ye et al: Physics Letters B 777 (2018) 8–15
  public:
