@@ -408,8 +408,6 @@ int fit_dx(const char *configfilename,
   // SBSconfig sbsconf(conf, sbsmag);
   // double Rp_MC = kine::sigmaBorn_ratio_MC(sbsconf, "np");
   // std::cout << "\nRp_MC = " << Rp_MC << "\n\n";
-  Kelly2004 kellyfit;
-  Seamus20XX seamusfit;  
 
   // Now its time to define new columns
   // 1. to account for dx_p and dx_n shifts
@@ -2204,8 +2202,8 @@ int fit_dx(const char *configfilename,
       outdata << Form("%.4f,%.4f,%.4f,",vethstats[0],vethstats[1],vethstats[2]);
       outdata << Form("%.4f,%.4f,%.4f,",vQ2stats[0],vQ2stats[1],vQ2stats[2]);
       outdata << Form("%.4f,%.4f,%.4f,",vepsstats[0],vepsstats[1],vepsstats[2]);   
-      double const Rp_MC = kine::sigmaBorn_ratio(vethstats[0],vQ2stats[0],kellyfit.GetFF(G_t::kGEp,vQ2stats[0]),kellyfit.GetFF(G_t::kGMp,vQ2stats[0]),
-					    seamusfit.GetFF(G_t::kGEn,vQ2stats[0]),kellyfit.GetFF(G_t::kGMn,vQ2stats[0]));
+      // MC Born CS ratio (n/p) at the mean kinematics, w/ exactly the EMFFs of the MC generator (SIMC)
+      double const Rp_MC = kine::sigmaBorn_ratio_MC(vethstats[0],vQ2stats[0]);
       outdata << Form("%.4f,%.4f,%.4f,",R_MC_nofit,R_MC_nofit_err,Rp_MC);
       for (size_t i = 0; i < R_vals.size(); i++)
       {

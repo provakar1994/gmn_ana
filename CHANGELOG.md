@@ -27,3 +27,7 @@
 ## 2026-10-28 13:30
 - **Files:** `include/EMFFFits.h`, `src/EMFFFits.cpp`, `src/KinematicVar.cpp`, `scripts/extractGMn.cpp`
 - **Change:** Make the MC Born CS ratio R_MC match the SIMC generator (bigbite branch, `physics_proton.f`) exactly. New class `SIMCbigbite` gives the EMFFs as SIMC computes them (Kelly GEp/GMp/GMn and Seamus GEn with tau from the proton mass, and SIMC's rounded GMp(0) = 2.79, GMn(0) = -1.913). `kine::sigmaBorn_ratio_MC` now uses it, and `extractGMn.cpp` calls `kine::sigmaBorn_ratio_MC` instead of computing R_MC by hand. R_MC was 0.8-0.9% too high before (mostly from the neutron-mass tau in Kelly GMn); it now agrees with a line-by-line copy of the SIMC code to ~1e-16. Effect on the extractGMn test point (Q2 = 4.5): GMn/(mu_n GD) 0.9347 -> 0.9307; GEn model systematic 0.0167 -> 0.0141 (Galster fix).
+
+## 2026-10-28 13:50
+- **Files:** `scripts/fit_dx.cpp`
+- **Change:** Compute `Rp_MC` (written to the fit output and used by `scripts/lta/get_results.ipynb` to form R = R_fit × RpMC) with `kine::sigmaBorn_ratio_MC`, i.e. exactly the SIMC generator EMFFs, instead of by hand from `Kelly2004` and `Seamus20XX`. Before the library fixes this R_MC was 0.8-0.9% too high; R values produced with the old `fit_dx.cpp` must be regenerated (or divided by the old/new R_MC ratio).
