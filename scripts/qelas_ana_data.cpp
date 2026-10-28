@@ -653,7 +653,8 @@ int qelas_ana_data (const char *configfilename,
     T_sigMott = kine::sigmaMott(Pe.E(),Peprime.E(),etheta);
     T_sigRed_p = kine::sigmaReduced(kine::tau(Q2recon,"p"),epsilon_p,GEp_kelly,GMp_kelly);
     T_sigRed_n = kine::sigmaReduced(kine::tau(Q2recon,"n"),epsilon_n,GEn_seamus,GMn_kelly);
-    T_sigBorn_ratio = kine::sigmaBorn_ratio(etheta,Q2recon,GEp_kelly,GMp_kelly,GEn_seamus,GMn_kelly);
+    // MC Born CS ratio (n/p) w/ exactly the EMFFs of the MC generator (SIMC)
+    T_sigBorn_ratio = kine::sigmaBorn_ratio_MC(etheta,Q2recon);
 
     T_nclusPS = nclusPS;
     T_ePS = ePS;

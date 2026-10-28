@@ -31,3 +31,7 @@
 ## 2026-10-28 13:50
 - **Files:** `scripts/fit_dx.cpp`
 - **Change:** Compute `Rp_MC` (written to the fit output and used by `scripts/lta/get_results.ipynb` to form R = R_fit × RpMC) with `kine::sigmaBorn_ratio_MC`, i.e. exactly the SIMC generator EMFFs, instead of by hand from `Kelly2004` and `Seamus20XX`. Before the library fixes this R_MC was 0.8-0.9% too high; R values produced with the old `fit_dx.cpp` must be regenerated (or divided by the old/new R_MC ratio).
+
+## 2026-10-28 14:15
+- **Files:** `scripts/qelas_ana_data.cpp`, `scripts/simulation/qelas_ana_simu.cpp`
+- **Change:** Fill the per-event `sigBorn_ratio` branch with `kine::sigmaBorn_ratio_MC`, i.e. exactly the SIMC generator EMFFs, instead of Kelly2004 + Seamus20XX. After the Kelly/Seamus tau fix that combination is still ~0.2% low w.r.t. SIMC, because Kelly2004 uses the exact magnetic moments while SIMC uses 2.79 and -1.913 (it was ~0.8% high before the tau fix). The `sigRed_p`/`sigRed_n` branches are unchanged. Output trees made before this change keep the old values.
