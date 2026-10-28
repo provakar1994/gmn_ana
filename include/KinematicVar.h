@@ -76,7 +76,9 @@ namespace kine{
   double sigmaRutherford(double ebeam, double etheta);                   // GeV, rad
   double sigmaMott(double ebeam, double eeprime, double etheta);         // GeV, GeV, rad (Use for per event calc.)
   double sigmaMott(SBSconfig sbsconf, std::string Ntype);
-  double sigmaReduced(double tau, double epsilon, double GE, double GM); 
+  double sigmaReduced(double tau, double epsilon, double GE, double GM);
+  // error on sigmaReduced from the FF errors, assuming GE & GM are uncorrelated
+  double sigmaReducedError(double tau, double epsilon, double GE, double GEErr, double GM, double GMErr);
   double sigmaBorn(double ebeam, double eeprime, double etheta, double GE, double GM, std::string Ntype);
   double sigmaBorn(SBSconfig sbsconf, double GE, double GM, std::string Ntype);
   double sigmaBorn_wo_Mott(double etheta, double Q2, double GE, double GM, std::string Ntype); // w/o sigmaMott term
@@ -93,7 +95,10 @@ namespace kine{
   double ExtractGMn(double ebeam, double eeprime, double etheta, double GEp, double GMp, double GEn, double ratio);
   double ExtractGMn(SBSconfig sbsconf, double GEp, double GMp, double GEn, double ratio);
   double ExtractGMn(double etheta, double Q2, double GEp, double GMp, double GEn, double ratio);
-  double CalcGMnError(double etheta, double Q2, double GEp, double GMp, double GEn, double ratio, double ratioErr);
+  // GMn error contributions (each returns |dGMn|, uncorrelated sources are added in quadrature):
+  double CalcGMnError(double etheta, double Q2, double GEp, double GMp, double GEn, double ratio, double ratioErr);       // from dR
+  double CalcGMnError_sigmaRp(double etheta, double Q2, double GEp, double GMp, double GEn, double ratio, double sigmaRpErr); // from d(sigmaR_p)
+  double CalcGMnError_GEn(double etheta, double Q2, double GEp, double GMp, double GEn, double ratio, double GEnErr);    // from dGEn
   void ExtractGMnWithError(double etheta,double Q2,double GEp,double GMp,double GEn,double ratio,double ratioErr,std::vector<double> &output);
 }
 

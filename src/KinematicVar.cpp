@@ -204,6 +204,15 @@ namespace kine {
     return  epsilon*GE*GE + tau*GM*GM;
   }
   //--------------------------------------------
+  double sigmaReducedError(double tau, double epsilon, double GE, double GEErr, double GM, double GMErr) {
+    /* Error on the reduced cross-section sigmaR = eps*GE^2 + tau*GM^2 from the FF errors:
+         d(sigmaR)/dGE = 2*eps*GE,  d(sigmaR)/dGM = 2*tau*GM
+         => d(sigmaR) = 2*sqrt( (eps*GE*dGE)^2 + (tau*GM*dGM)^2 )
+       GE & GM are taken as uncorrelated. In an L/T separation they are anti-correlated, so
+       this is a (conservative) overestimate. See DB/FF_fits/Ye2018/README.md for its size. */
+    return 2.0*std::sqrt(pow(epsilon*GE*GEErr,2) + pow(tau*GM*GMErr,2));
+  }
+  //--------------------------------------------
   double sigmaBorn(double ebeam, double eeprime, double etheta, double GE, double GM, std::string Ntype) {
     /* Calculates Born cross-section using Rosenbluth formula */
     double sigmaMott = kine::sigmaMott(ebeam,eeprime,etheta);
@@ -327,19 +336,52 @@ namespace kine {
     return - pow((term1*sigmaReduced_p*ratio - epsilon_n*GEn*GEn)/tau_n , 0.5);
   }
   //--------------------------------------------
+  /* GMn error propagation (first order, one function per uncertain input)
+     ----
+     GMn^2 = F(R, sigmaR_p, GEn) = (term1*sigmaR_p*R - eps_n*GEn^2)/tau_n,
+     with term1 = eps_n*(1+tau_n) / (eps_p*(1+tau_p)). Since F = GMn^2, for any input x:
+       dGMn/dx = (dF/dx) / (2*GMn)
+     Each function below returns |dGMn/dx|*dx (the sign only gives the direction of the
+     shift and drops out when uncorrelated contributions are added in quadrature).
+     The derivation is documented in scripts/gmn_extraction/README.md. */
+  namespace {
+    // Kinematic factors and |GMn| shared by the GMn error functions at fixed (etheta, Q2)
+    struct GMnTerms {
+      double tau_n, epsilon_n, term1, sigmaReduced_p, absGMn;
+    };
+    GMnTerms CalcGMnTerms(double etheta, double Q2, double GEp, double GMp, double GEn, double ratio) {
+      GMnTerms t;
+      double const tau_p = kine::tau(Q2,"p");
+      double const epsilon_p = kine::epsilon(etheta,Q2,"p");
+      t.tau_n = kine::tau(Q2,"n");
+      t.epsilon_n = kine::epsilon(etheta,Q2,"n");
+      t.term1 = t.epsilon_n*(1.+t.tau_n) / (epsilon_p*(1.+tau_p));
+      t.sigmaReduced_p = kine::sigmaReduced(tau_p,epsilon_p,GEp,GMp);
+      t.absGMn = std::abs(kine::ExtractGMn(etheta,Q2,GEp,GMp,GEn,ratio));
+      return t;
+    }
+  }
+  //--------------------------------------------
   double CalcGMnError(double etheta, double Q2, double GEp, double GMp, double GEn, double ratio, double ratioErr) {
-    /* Performs GMn error propagation from a given ratio & error (exact, incl. GEn term)
-       GMn^2 = (term1*sigmaR_p*R - eps_n*GEn^2)/tau_n  =>  dGMn = term1*sigmaR_p*dR / (2*tau_n*|GMn|) */
-    double tau_p = kine::tau(Q2,"p");
-    double tau_n = kine::tau(Q2,"n");
-    double epsilon_p = kine::epsilon(etheta,Q2,"p");
-    double epsilon_n = kine::epsilon(etheta,Q2,"n");
-    double sigmaReduced_p = kine::sigmaReduced(tau_p,epsilon_p,GEp,GMp);
-    // defining some terms for convenience
-    double term1 = epsilon_n*(1.+tau_n) / (epsilon_p*(1.+tau_p));
-
-    double gmn = kine::ExtractGMn(etheta,Q2,GEp,GMp,GEn,ratio);
-    return term1*sigmaReduced_p*std::abs(ratioErr) / (2.0*tau_n*std::abs(gmn));
+    /* GMn error from the error on the n/p Born CS ratio R (exact, incl. GEn term):
+       dF/dR = term1*sigmaR_p/tau_n  =>  dGMn = term1*sigmaR_p*dR / (2*tau_n*|GMn|) */
+    GMnTerms const t = CalcGMnTerms(etheta,Q2,GEp,GMp,GEn,ratio);
+    return t.term1*t.sigmaReduced_p*std::abs(ratioErr) / (2.0*t.tau_n*t.absGMn);
+  }
+  //--------------------------------------------
+  double CalcGMnError_sigmaRp(double etheta, double Q2, double GEp, double GMp, double GEn, double ratio, double sigmaRpErr) {
+    /* GMn error from the error on the reduced proton CS sigmaR_p (e.g. from kine::sigmaReducedError):
+       dF/d(sigmaR_p) = term1*R/tau_n  =>  dGMn = term1*R*d(sigmaR_p) / (2*tau_n*|GMn|)
+       GMn depends on GEp & GMp only through sigmaR_p, so this covers both proton FF errors. */
+    GMnTerms const t = CalcGMnTerms(etheta,Q2,GEp,GMp,GEn,ratio);
+    return t.term1*std::abs(ratio)*std::abs(sigmaRpErr) / (2.0*t.tau_n*t.absGMn);
+  }
+  //--------------------------------------------
+  double CalcGMnError_GEn(double etheta, double Q2, double GEp, double GMp, double GEn, double ratio, double GEnErr) {
+    /* GMn error from the error on GEn:
+       dF/dGEn = -2*eps_n*GEn/tau_n  =>  dGMn = eps_n*|GEn|*dGEn / (tau_n*|GMn|) */
+    GMnTerms const t = CalcGMnTerms(etheta,Q2,GEp,GMp,GEn,ratio);
+    return t.epsilon_n*std::abs(GEn)*std::abs(GEnErr) / (t.tau_n*t.absGMn);
   }
   //--------------------------------------------
   void ExtractGMnWithError(double etheta,double Q2,double GEp,double GMp,double GEn,double ratio,double ratioErr,std::vector<double> &output) {
