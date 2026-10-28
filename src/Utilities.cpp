@@ -710,7 +710,7 @@ namespace util_pd {
 	      std::string lfname = Form("%s/e1209019_fullreplay_%d_stream%d_seg%d_%d.log",lfpath.c_str(),
 					aRun,aStream,segB_segE[iseg].first,segB_segE[iseg].second);
 	      int temp = ReadLog(lfname); //system(Form("python3 daq_livetime.py %s",lfname));
-	      if (temp<0) std::cerr << Form("[WARNING] %s doesn't exist!! \n",lfname);
+	      if (temp<0) std::cerr << Form("[WARNING] %s doesn't exist!! \n",lfname.c_str());
 	      if (verbose > 1) {
 		std::cout << lfname << std::endl;
 		std::cout << temp << std::endl;
