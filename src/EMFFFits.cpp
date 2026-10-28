@@ -50,9 +50,12 @@ G_t EMFFFits::StrToG_t(const std::string& str) {
 // ## Galster Fit (1971) ##
 // ########################
 int Galster1971::GalsterFit(const int kID, const double kQ2, double *GNGD_Fit, double* GNGD_Err) {
-  // This fit has been mentioned in the GMn proposal. 
-  // It returns GEn/GEp, but it seems to me that GEp for their case is essentially GDip
-  
+  // This fit has been mentioned in the GMn proposal.
+  // Galster et al. [Nucl. Phys. B32, 221 (1971)] proposed GEn = -mu_n*tau/(1 + 5.6*tau) * GEp.
+  // The "Galster fit" as usually quoted replaces GEp by the dipole GD, which is what is
+  // implemented here, i.e. GEn/GD = -mu_n*tau/(1 + 5.6*tau). See Eq. (16) and the text after
+  // it in C. F. Perdrisat, V. Punjabi, M. Vanderhaeghen, Prog. Part. Nucl. Phys. 59, 694 (2007).
+
   // GEp->kID=1, GMp->kID=2, GEn->kID=3, GMn->kID=4
   if (kID!=3) {
     std::cerr<<"*** ERROR***, Galster fit only supports kID=3 ie GEn"<<std::endl;
@@ -60,9 +63,9 @@ int Galster1971::GalsterFit(const int kID, const double kQ2, double *GNGD_Fit, d
     return -1;
   }
 
-  //// Applying parametrization formula
-  double tau = kID<3 ? kine::tau(kQ2,"p") : kine::tau(kQ2,"n");
-  double numerator = -constant::mun;
+  //// Applying parametrization formula (tau w/ the neutron mass, as GEn is a neutron FF)
+  double tau = kine::tau(kQ2,"n");
+  double numerator = -constant::mun*tau; // GEn(Q2=0) = 0, as the neutron has no net charge
   double denominator = 1. + 5.6*tau;
 
   GNGD_Fit[0] = numerator / denominator;
@@ -97,7 +100,9 @@ int Kelly2004::KellyFit(const int kID, const double kQ2, double *GNGD_Fit, doubl
   };/*}}}*/
 
   //// Applying parametrization formula
-  double tau = kID<3 ? kine::tau(kQ2,"p") : kine::tau(kQ2,"n");
+  // Kelly defines tau = Q2/(4*m_p^2) w/ the PROTON mass for all four FFs (Eq. 1 of the paper),
+  // and SIMC (bigbite branch) does the same. Do not use the neutron mass for GEn & GMn here.
+  double tau = kine::tau(kQ2,"p");
   double numerator = 0.;
   double denominator = 1.;
   if (kID-1!=2) { // for all but GEn
@@ -119,12 +124,14 @@ int Kelly2004::KellyFit(const int kID, const double kQ2, double *GNGD_Fit, doubl
 // ## Seamus Fit (20??) ##
 // #######################
 int Seamus20XX::SeamusFit(const int kID, const double kQ2, double *GNGD_Fit, double* GNGD_Err) {
-  // This is the fit that is implemented in g4sbs, presumably by Seamus Riordan,
-  // for GEn parametrization. In the code it has been indicated as "Our fit"! I
-  // couldn't find any corresponding paper related to this parametrization. Asking
-  // Andrew and Googling didn't help as well. For the sake of consistency, I 
-  // implemented the same parametrization in SIMC generator as well.
-  
+  // This is the GEn fit implemented in g4sbs ("Our fit", presumably by Seamus Riordan)
+  // and, for consistency, in the SIMC generator (bigbite branch, physics_proton.f,
+  // fofa_best_fit_n). SIMC cites S. Riordan et al., PRL 105, 262302 (2010) for it, but
+  // that paper only gives a Galster-like fit, GEn = a*tau/(1 + b*tau)*GD w/ a = 1.39 and
+  // b = 2.00, which differs from this one by -20% at Q2 = 4.5 GeV2. No publication of
+  // this cubic form was found, so it should only be used to reproduce the MC, not as a
+  // GEn model. As in g4sbs & SIMC, tau = Q2/(4*m_p^2) w/ the PROTON mass.
+
   // GEp->kID=1, GMp->kID=2, GEn->kID=3, GMn->kID=4
   if (kID!=3) {
     std::cerr<<"*** ERROR***, Seamus fit only supports kID=3 ie GEn"<<std::endl;
@@ -143,7 +150,7 @@ int Seamus20XX::SeamusFit(const int kID, const double kQ2, double *GNGD_Fit, dou
   };/*}}}*/
 
   //// Applying parametrization formula
-  double tau = kID<3 ? kine::tau(kQ2,"p") : kine::tau(kQ2,"n");
+  double tau = kine::tau(kQ2,"p");
   double numerator = 0.;
   double denominator = 1.;
   for (int i=0; i<3; i++) numerator += GN_Coef_Fit[kID-1][i]*pow(tau,i+1);
@@ -333,14 +340,14 @@ int Christy2022::ChristyFit(const int kID, const double kQ2, double *GNGD_Fit, d
   // Calculating GMp first
   numerator += GN_Coef_Fit[0][0]*tau;
   for (int i=1; i<4; i++) denominator += GN_Coef_Fit[0][i]*pow(tau,i);
-  double GMp_ov_mun = numerator / denominator; 
-  // Now calculating RS and then GEp
+  double GMp_ov_mup = numerator / denominator;
+  // Now calculating RS = (mu_p*GEp/GMp)^2 and then GEp (Eq. 3 of the paper)
   double RS = 1.;
   for (int i=0; i<2; i++) RS += GN_Coef_Fit[1][i]*pow(tau,i+1);
-  double GEp = sqrt(RS)*GMp_ov_mun;
+  double GEp = sqrt(RS)*GMp_ov_mup;
 
   // Returning EMFF values
-  if (kID-1==1) GNGD_Fit[0] = GMp_ov_mun / EMFFFits::GetGDip(kQ2);
+  if (kID-1==1) GNGD_Fit[0] = GMp_ov_mup / EMFFFits::GetGDip(kQ2);
   else GNGD_Fit[0] = GEp / EMFFFits::GetGDip(kQ2);
   GNGD_Err[0] = -1000.;
 
@@ -353,6 +360,8 @@ int Christy2022::ChristyFit(const int kID, const double kQ2, double *GNGD_Fit, d
 int Arrington2007::ArringtonFit(const int kID, const double kQ2, double *GNGD_Fit, double* GNGD_Err) {
   // ** Link to the original paper:
   // https://journals.aps.org/prc/pdf/10.1103/PhysRevC.76.035205 (TABLE I)
+  // NOTE: The paper states that this parametrization is valid up to at least
+  // Q2 = 6 GeV2 for GE and Q2 = 30 GeV2 for GM. Beyond 6 GeV2, GEp is an extrapolation.
 
   // GEp->kID=1, GMp->kID=2, GEn->kID=3, GMn->kID=4
   if (kID>2) {

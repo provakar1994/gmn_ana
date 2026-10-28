@@ -6,11 +6,9 @@
      GMn/(GD*mu_n). But GetFF() and GetFFwErr() fns return pure FF values.
      StripGDandMu() fn helps us achieve that.
   2. In g4sbs and SIMC we have used Seamus's fit for GEn parametrization
-     and Kelly's fit for all the remaining EMFF parametrizations. 
-  ----
-  To-do:
-  1. Implement StripGDandMu for error values
-  2. Validate the output of Ye2017::GetFFwErr()
+     and Kelly's fit for all the remaining EMFF parametrizations.
+  3. All fits were checked against their original papers (and Ye2017 against the
+     official code and lookup tables in DB/FF_fits/Ye2018/) on 2026-10-28.
 */
 #ifndef EMFF_FITS_H
 #define EMFF_FITS_H
@@ -107,7 +105,8 @@ class Kelly2004 : public EMFFFits {
 
 //##############################
 class Seamus20XX : public EMFFFits {
-  // Seamus Riordan: Couldn't find the corresponding paper
+  // GEn fit used in g4sbs & SIMC (presumably by Seamus Riordan). Unpublished, and not the
+  // fit of S. Riordan et al., PRL 105, 262302 (2010). Use it only to reproduce the MC.
  public:
   Seamus20XX(){};
   double GetFF(G_t const kG, double const Q2) override {
@@ -119,7 +118,7 @@ class Seamus20XX : public EMFFFits {
   }
   std::vector<double> GetFFwErr(G_t kG, double const Q2) override {
     /* Output: GetFFnErr[0] = Fit value, GetFFnErr[1] = Fit error */
-    std::cout << "WARNING: Error calculation is yet to be added for Seamus Fit (2004)\n";
+    std::cout << "WARNING: Error calculation is yet to be added for Seamus Fit\n";
     std::vector<double> result{Seamus20XX::GetFF(kG,Q2),-1000};
     return result;
   }
@@ -196,7 +195,7 @@ class Christy2022 : public EMFFFits {
   }
   std::vector<double> GetFFwErr(G_t kG, double const Q2) override {
     /* Output: GetFFnErr[0] = Fit value, GetFFnErr[1] = Fit error */
-    std::cout << "WARNING: Error calculation is yet to be added for Christy Fit (2017)\n";
+    std::cout << "WARNING: Error calculation is yet to be added for Christy Fit (2022)\n";
     std::vector<double> result{Christy2022::GetFF(kG,Q2),-1000};
     return result;
   }
@@ -215,7 +214,7 @@ class Christy2022 : public EMFFFits {
 
 //##############################
 class Arrington2007 : public EMFFFits {
-  // M. E. Christy et al: PHYSICAL REVIEW LETTERS 128, 102002 (2022)
+  // J. Arrington, W. Melnitchouk, J. A. Tjon: PHYSICAL REVIEW C 76, 035205 (2007)
  public:
   Arrington2007(){};
   double GetFF(G_t const kG, double const Q2) override {
