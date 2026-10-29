@@ -8,6 +8,7 @@ live in the library (`gmnx::` in `include/GMnExtraction.h`, `kine::` in
 | Script | What it does |
 |---|---|
 | `extractGMn.cpp` | One kinematic point: takes R_fit (data/MC ratio fit parameter) and its errors, prints R, GMn for all models, the error budget, and a CSV block. |
+| `extractGMn_csv.cpp` | All kinematic points of a results CSV (e.g. `scripts/lta/results.csv`, which holds R itself): writes a CSV table with GMn and all errors for every point and model. |
 
 ## Running
 
@@ -22,6 +23,39 @@ Arguments: `Q2` (GeV²) and `eps` (acceptance averaged), `R_fit`, `R_fit_stat`, 
 systematic errors on `R_fit` (one per source, all uncorrelated) and, optionally, their
 names. A source whose name ends in **`_sc`** is a **scale** error; all others are
 **point-to-point**.
+
+### All points from a results CSV
+
+```
+root -l -b -q ../../../install_gmn_ana/runenv/rootlogon.C \
+  'extractGMn_csv.cpp("../lta/results.csv", "gmn_results.csv")'
+```
+
+**Input** (one row per kinematic point; columns are found by name in the header):
+
+| Columns | Meaning |
+|---|---|
+| `q2`, `eps` | acceptance-averaged Q² (GeV²) and ε (required) |
+| `R`, `R_stat` | n/p Born cross-section ratio and its stat error (required) |
+| every column after `R_stat` | a systematic error on R (absolute; `*_sc` = scale, others p2p). Empty → 0, with a warning |
+| every other column before `R_stat` | label (e.g. `conf`, `field`, `etheta`), copied to the output |
+
+**Output**: one row per (kinematic point × model), all errors on GMn/(μ_n G_D):
+
+```
+<labels>,Q2,eps,etheta_eff,R,R_stat,Model,TPE,Val,StatErr,
+<p2p sources>,pCS,GEn,<scale sources>,TotSys_p2p,TotSys_sc,StatP2P,TotErr
+```
+
+| Column | Meaning |
+|---|---|
+| `etheta_eff` | effective e⁻ angle (rad) reproducing ε at Q² (information only, see below) |
+| `Model`, `TPE` | model name and TPE treatment of its proton FFs (see Models) |
+| `Val`, `StatErr` | GMn/(μ_n G_D) and its stat error |
+| p2p sources | one column per point-to-point systematic; `X` is written as `X_p2p` if a scale source `X_sc` also exists (e.g. `NDE2_p2p`, `RC_p2p`) |
+| `pCS`, `GEn` | FF systematics (same for all models of a point) |
+| scale sources | one column per `*_sc` systematic |
+| `TotSys_p2p`, `TotSys_sc`, `StatP2P`, `TotErr` | totals, see Error propagation |
 
 ## Kinematics: (Q², ε)
 
