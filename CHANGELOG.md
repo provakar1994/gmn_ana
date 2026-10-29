@@ -72,3 +72,7 @@
 ## 2026-10-29 16:00
 - **Files:** `scripts/gmn_extraction/extractGMn_csv.cpp`, `scripts/gmn_extraction/README.md`
 - **Change:** New `extractGMn_csv.cpp`: extracts GMn for every kinematic point of a results CSV (e.g. `scripts/lta/results.csv`, which holds R itself) for all 8 gmnx models and writes a CSV table (one row per point x model). Columns are found by header name: `q2`, `eps` (acceptance averaged, used as the true kinematics), `R`, `R_stat` are required; every column after `R_stat` is a systematic on R (`*_sc` = scale; empty -> 0 with a warning); other columns before `R_stat` are copied as labels. Output columns: labels, Q2, eps, etheta_eff, R, R_stat, Model, TPE, Val, StatErr, p2p sources (`X_p2p` if `X_sc` exists), pCS, GEn, scale sources, TotSys_p2p, TotSys_sc, StatP2P, TotErr. Cross-checked against `extractGMn.cpp` (R_fit = R/R_MC) for the first results.csv point: identical. README documents usage and the input/output columns.
+
+## 2026-10-29 17:00
+- **Files:** `scripts/gmn_extraction/README.md`
+- **Change:** Add an "Open items" section listing the to-dos of the GMn extraction: the truly TPE-uncorrected Ye fit (and its errors / data-tension term), regenerating R with the fixed `fit_dx.cpp` (the rescaled `scripts/lta/results_RMCfix.csv` is used until then), filling the `Cut V` systematic, and possibly splitting pCS/GEn into normalization + point-to-point parts.

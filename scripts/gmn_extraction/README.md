@@ -277,3 +277,18 @@ pCS and GEn move coherently with Q² between models. Following J. Arrington, the
 treated as point-to-point for now; if their impact matters, they could be split into a
 normalization part plus a point-to-point part (as done for other data sets in global
 fits). With only a few widely separated Q² points, it is not clear how correlated they are.
+
+## Open items (as of 2026-10-29)
+
+- [ ] **Truly TPE-uncorrected Ye fit** (requested from J. Arrington). When it arrives: convert it
+      to CSV in `DB/FF_fits/Ye2018/`, point `Ye2017::GetFFNoTPE` at it, remove the placeholder
+      warning, and check what its errors contain (fit covariance only, or also Ye's data-tension
+      term, which is missing from pCS now; see "Which FF errors are used").
+- [ ] **Regenerate R with the fixed `fit_dx.cpp`** (R_MC with the SIMC FFs at (⟨Q²⟩, ⟨ε⟩)), then
+      rebuild `scripts/lta/results.csv`. Until then `scripts/lta/results_RMCfix.csv` is used: the old
+      R rescaled by R_MC(new)/R_MC(old), with R_MC(old) reconstructed from the pre-fix code
+      (`4a3a823`; validated against the one tracked fit_dx output). This assumes every row was made
+      with that code at the row's (etheta, q2).
+- [ ] **Fill the `Cut V` systematic** (empty in `results.csv`, read as 0 with a warning).
+- [ ] **Possibly split pCS and GEn** into a normalization plus a point-to-point part (J. Arrington's
+      suggestion; see "Possible improvement"), if their impact matters for the global fit.
