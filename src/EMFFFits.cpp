@@ -20,6 +20,10 @@ void EMFFFits::StripGDandMu(G_t const kG, double const Q2, double & value) {
     break;
   case G_t::kGMn:
     value *= constant::mun;
+    break;
+  case G_t::kGEp:
+  case G_t::kGEn:
+    break; // electric FFs: G(0) = 1 (GEp) or the fit is already absolute (GEn); no mu factor
   }
 }
 
@@ -284,6 +288,48 @@ int Ye2017::YeFit(const int kID, const double kQ2, double *GNGD_Fit, double* GNG
   GNGD_Err[0] = pow(10.,(lnGNGD_Err));    //LOG10(dG/G(0)/GD);
   /*}}}*/
 
+  return 0;
+}
+
+int Ye2017::YeTableError(G_t const kG, double const kQ2, double &FF_err) {
+  /* Full fit error dG of the Ye fit (w/ TPE), log-interpolated in Q2 from the official
+     lookup tables (supplementary material of the paper), converted to CSV:
+       DB/FF_fits/Ye2018/ye2018_wTPE_{proton,neutron}_lookup.csv
+     The tables give dG/GD (GEp, GEn) and dG/(mu*GD) (GMp, GMn), which StripGDandMu()
+     converts to dG. dG includes the fit covariance, data-set tension and TPE uncertainty.
+     Returns -1 (and FF_err = -1000) if Q2 is outside the tables. */
+
+  // Read each table only once (on first call) and keep it for later calls
+  static LookUpTableReader protonTable = [] {
+    LookUpTableReader reader;
+    reader.readCSV(EMFFFits::GetDBPath("FF_fits/Ye2018/ye2018_wTPE_proton_lookup.csv"));
+    return reader;
+  }();
+  static LookUpTableReader neutronTable = [] {
+    LookUpTableReader reader;
+    reader.readCSV(EMFFFits::GetDBPath("FF_fits/Ye2018/ye2018_wTPE_neutron_lookup.csv"));
+    return reader;
+  }();
+
+  // Pick the table and the error column for the requested FF
+  LookUpTableReader* table = &protonTable;
+  std::string colName;
+  switch (kG) {
+  case G_t::kGEp: colName = "dGEp/GD";                         break;
+  case G_t::kGMp: colName = "dGMp/muGD";                       break;
+  case G_t::kGEn: colName = "dGEn/GD";   table = &neutronTable; break;
+  case G_t::kGMn: colName = "dGMn/muGD"; table = &neutronTable; break;
+  }
+
+  double const relErr = table->GetLogInterpValueByColumnName(kQ2, colName);
+  if (relErr == -99999) {
+    std::cerr<<"*** ERROR***, Ye fit error lookup failed at Q2 = "<<kQ2<<" GeV2"<<std::endl;
+    FF_err = -1000;
+    return -1;
+  }
+  FF_err = relErr;
+  StripGDandMu(kG,kQ2,FF_err);
+  FF_err = fabs(FF_err);
   return 0;
 }
 

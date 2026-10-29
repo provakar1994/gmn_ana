@@ -180,7 +180,18 @@ class Ye2017 : public EMFFFits {
     return GNGD_Fit[0];
   }
   std::vector<double> GetFFwErr(G_t kG, double const Q2) override {
-    /* Output: GetFFnErr[0] = Fit value, GetFFnErr[1] = Fit error */
+    /* Output: GetFFnErr[0] = Fit value, GetFFnErr[1] = Fit error
+       The value is from the z-expansion parametrization (agrees w/ Ye's lookup tables to
+       <~1e-3 of the error). The error is the full fit error dG from Ye's lookup tables
+       (log-interpolated in Q2), not the parametrized one (see GetFFwParErr). */
+    double FF_err;
+    int err = YeTableError(kG, Q2, FF_err);
+    std::vector<double> result = {Ye2017::GetFF(kG,Q2), FF_err};
+    return result;
+  }
+  std::vector<double> GetFFwParErr(G_t kG, double const Q2) {
+    /* Same as GetFFwErr, but w/ Ye's parametrization of the error (dG_Par in the lookup
+       tables), a smooth fit to dG. It differs from dG by up to ~15% for 0.01 < Q2 < 20 GeV2. */
     std::vector<double> result;
     double GNGD_Fit[1], GNGD_Err[1];
     const int kID = static_cast<int>(kG);
@@ -211,6 +222,7 @@ class Ye2017 : public EMFFFits {
   }
  private:
   int YeFit(const int kID, const double kQ2, double *GNGD_Fit, double *GNGD_Err);
+  int YeTableError(G_t const kG, double const kQ2, double &FF_err);
   int YeFitNoTPE(const int kID, const double kQ2, double &FF, double &FF_err);
 };
 

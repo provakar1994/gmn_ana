@@ -9,6 +9,7 @@ SET(tests
   test_lookup_table
   test_simc_rmc
   test_gmn_extraction
+  test_ff_fits
 )
 
 foreach(t ${tests})

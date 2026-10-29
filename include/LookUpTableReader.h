@@ -28,6 +28,12 @@ private:
   std::vector<double> rowKeys; // Stores keys in order of appearance
   std::vector<std::string> header;
 
+  // Removes the trailing '\r' of a line from a file with Windows (CRLF) line endings,
+  // otherwise it would stick to the last column name (e.g. "dGMn_Par/muGD\r")
+  static void stripCR(std::string& line) {
+    if (!line.empty() && line.back() == '\r') line.pop_back();
+  }
+
 public:
   // Function to read CSV file and populate a map
   void readCSV(const std::string& filename)
@@ -43,6 +49,7 @@ public:
     double key;
 
     std::getline(file, line);  // Read header line
+    stripCR(line);
     // Strip the UTF-8 byte order mark, if present, so the 1st column name is clean
     const std::string bom = "\xEF\xBB\xBF";
     if (line.compare(0, bom.size(), bom) == 0) line.erase(0, bom.size());
@@ -56,6 +63,7 @@ public:
 
     while (std::getline(file, line))
       {
+	stripCR(line);
 	std::istringstream iss(line);
 	std::string keyStr;
 	std::getline(iss, keyStr, ',');  // Extract key (first column)

@@ -7,6 +7,7 @@
     twoQ2   = 2*Q2       -> checks the interpolation weights between two rows
   Checks: BOM stripping, row count, exact values at the nodes, log-linear interpolation
   in between, the upper table edge, and the -99999 error value (out of range, bad column).
+  tests/data/log_grid_crlf.csv is the same table w/ Windows (CRLF) line endings.
 */
 #include "LookUpTableReader.h"
 #include "TestUtils.h"
@@ -45,6 +46,14 @@ int main() {
   CHECK_TRUE(table.GetLogInterpValueByColumnName(0.05, "twoQ2") == kErrValue, "below the table range");
   CHECK_TRUE(table.GetLogInterpValueByColumnName(200., "twoQ2") == kErrValue, "above the table range");
   CHECK_TRUE(table.GetLogInterpValueByColumnName(5., "missing") == kErrValue, "unknown column");
+
+  // -- same table w/ Windows (CRLF) line endings (like the Ye wTPE tables): the '\r'
+  // must not stick to the last column name or the values --
+  LookUpTableReader crlfTable;
+  crlfTable.readCSV(std::string(GMNANA_TEST_DATA_DIR) + "/log_grid_crlf.csv");
+  CHECK_TRUE(crlfTable.getColumnIndex("twoQ2") == 2, "CRLF: last column name found");
+  CHECK_TRUE(crlfTable.getRowCount() == 4, "CRLF: number of rows read");
+  CHECK_REL(crlfTable.GetLogInterpValueByColumnName(100., "twoQ2"), 200., kTol, "CRLF: value in the last column");
 
   return test::Summary("test_lookup_table");
 }
