@@ -92,7 +92,7 @@ int extractGMn(double const etheta, double const Q2, double const R_fit, double 
     calcGMn("ye-ga",etheta,Q2,GEp_ye,GMp_ye,galfit.GetFF(G_t::kGEn,Q2),R,dR_stat,dR_sys)
   };
   // No TPE check: effective proton FFs (Christy 2022), not included in the sys budget
-  GMnResult const noTPE = calcGMn("ch-ye",etheta,Q2,christyfit.GetFF(G_t::kGEp,Q2),christyfit.GetFF(G_t::kGMp,Q2),
+  GMnResult const noTPE = calcGMn("ch-ye",etheta,Q2,christyfit.GetFFNoTPE(G_t::kGEp,Q2),christyfit.GetFFNoTPE(G_t::kGMp,Q2),
 				  GEn_ye,R,dR_stat,dR_sys);
 
   // -- Systematics on the primary result beyond the exp. ones --

@@ -10,6 +10,7 @@ SET(tests
   test_simc_rmc
   test_gmn_extraction
   test_ff_fits
+  test_gmn_module
 )
 
 foreach(t ${tests})

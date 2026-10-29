@@ -21,6 +21,7 @@ SET(src
   ExpConstants.cpp
   EMFFFits.cpp
   PlotCustomizer.cpp
+  GMnExtraction.cpp
 )	
 
 # headers
