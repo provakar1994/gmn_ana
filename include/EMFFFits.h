@@ -75,6 +75,8 @@ class Galster1971 : public EMFFFits {
 //##############################
 class Kelly2004 : public EMFFFits {
   // J. J. Kelly: PHYSICAL REVIEW C 70, 068202 (2004)
+  // NOTE: TPE "mixed": GEp from polarization data (~Born), GMp from cross sections w/o TPE
+  // corrections (effective). See scripts/gmn_extraction/README.md (Caveats on the fits).
  public:
   Kelly2004(){};
   double GetFF(G_t const kG, double const Q2) override {

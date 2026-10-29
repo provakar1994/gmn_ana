@@ -60,3 +60,7 @@
 ## 2026-10-29 12:55
 - **Files:** `scripts/extractGMn.cpp` -> `scripts/gmn_extraction/extractGMn.cpp`
 - **Change:** Move the GMn extraction script into the new directory `scripts/gmn_extraction/` for the GMn result scripts (content unchanged; kept as a separate commit so git keeps the file history).
+
+## 2026-10-29 13:00
+- **Files:** `scripts/gmn_extraction/extractGMn.cpp`, `scripts/gmn_extraction/README.md`, `include/EMFFFits.h`
+- **Change:** `extractGMn.cpp` rewritten as a thin wrapper around `gmnx::InputFromRfit`/`gmnx::ExtractAll` (same arguments; `*_sc` sources are scale errors): prints R, GMn/(mu_n*GD) for the 8 models with p2p/scale/stat+p2p/total errors, the primary error budget (incl. pCS and GEn), and a CSV block. The shift-method and model-spread systematics are gone. New README documents running the script, R = R_MC*R_fit, the models and why TPE-uncorrected Ye is primary, caveats on each fit (Ye placeholder, Christy RC, Arrington GE validity, Kelly "mixed" TPE treatment), and the full error-propagation derivation (dGMn from R, sigma_R,p and GEn; uncorrelated GE/GM; relative forms; which FF errors are used, incl. the missing data-tension term in pCS). Kelly2004 class comment points to the caveat. Header comment only, no code change in the library.
