@@ -1318,7 +1318,8 @@ int fit_dx(const char *configfilename,
       // various outputs
       if (i == 0)
       {
-        outdata << "cut,min,max,"
+        outdata << "conf,field,"
+		<< "cut,min,max,"
 		<< "vethMean,vethMin,vethMax,"
 		<< "vQ2Mean,vQ2Min,vQ2Max,"
 		<< "vepsMean,vepsMin,vepsMax,"
@@ -2200,6 +2201,7 @@ int fit_dx(const char *configfilename,
       std::cout << "\n--- Reporting fit params ---\n";
       std::cout << "cut,min,max,R0,R0err,R1,R1err,R2,R2err,R3,R3err,R4,R4err\n";
       std::cout << cuts_2[i] << "," << minval[i] << "," << maxval[i] << ",";
+      outdata << conf << "," << sbsmag << ",";
       outdata << cuts_2[i] << "," << minval[i] << "," << maxval[i] << ",";
       outdata << Form("%.4f,%.4f,%.4f,",vethstats[0],vethstats[1],vethstats[2]);
       outdata << Form("%.4f,%.4f,%.4f,",vQ2stats[0],vQ2stats[1],vQ2stats[2]);
