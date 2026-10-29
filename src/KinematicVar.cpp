@@ -155,6 +155,21 @@ namespace kine {
     return pow(1. + 2.*(1.+tau)*pow(tan(0.5*etheta),2) , -1);
   }
   //--------------------------------------------
+  double etheta_from_epsilon(double epsilon, double Q2, std::string Ntype) {
+    /* e- scattering angle that gives the virtual photon polarization epsilon at Q2 for
+       elastic scattering off nucleon Ntype, i.e. the inverse of kine::epsilon(etheta,Q2,Ntype):
+         tan^2(etheta/2) = (1/eps - 1) / (2*(1 + tau))
+       Useful to get the effective angle of acceptance-averaged (Q2, eps).
+       Valid for 0 < eps <= 1; returns NaN (w/ an error message) otherwise. */
+    if (!(epsilon > 0. && epsilon <= 1.)) {
+      std::cerr << "*** ERROR***, [kine::etheta_from_epsilon] epsilon = " << epsilon
+		<< " is outside (0, 1]" << std::endl;
+      return std::nan("");
+    }
+    double tau = kine::tau(Q2,Ntype);
+    return 2.0*atan(sqrt((1./epsilon - 1.) / (2.*(1. + tau))));
+  }
+  //--------------------------------------------
   double epsilon_general(double etheta, double Q2, double nu) {
     /* Doesn't assume Q2=2*M_N*nu ie elastic kinematics */
     return pow(1. + 2.*(1.+nu*nu/Q2)*pow(tan(0.5*etheta),2) , -1);

@@ -4,6 +4,8 @@
   Inputs: the SIMC generator FFs (SIMCbigbite, no lookup tables needed) at the GMn
   kinematics, so the "true" GMn is known. FF and R errors are arbitrary but realistic.
   Checks:
+  0. etheta_from_epsilon inverts epsilon (etheta -> eps -> etheta), for p and n; eps = 1
+     gives etheta = 0, and eps outside (0, 1] gives NaN.
   1. Round trip: R = sigmaBorn_ratio(FFs), then ExtractGMn(R) gives back the input GMn.
   2. sigmaReducedError agrees with numerical derivatives of sigmaReduced (in quadrature).
   3. CalcGMnError (dR), CalcGMnError_GEn (dGEn) and CalcGMnError_sigmaRp (dGEp, dGMp via
@@ -35,6 +37,13 @@ namespace {
 }
 
 int main() {
+  // -- 0. etheta_from_epsilon: limits and invalid input --
+  double const kQ2Test = 4.5;
+  CHECK_ABS(kine::etheta_from_epsilon(1., kQ2Test, "p"), 0., kRoundOffTol, "eps = 1 gives etheta = 0");
+  CHECK_TRUE(std::isnan(kine::etheta_from_epsilon(0., kQ2Test, "p")), "eps = 0 is invalid (NaN)");
+  CHECK_TRUE(std::isnan(kine::etheta_from_epsilon(1.2, kQ2Test, "p")), "eps > 1 is invalid (NaN)");
+  CHECK_TRUE(std::isnan(kine::etheta_from_epsilon(-0.3, kQ2Test, "p")), "eps < 0 is invalid (NaN)");
+
   // GMn kinematics {etheta (rad), Q2 (GeV2)} (scripts/lta/results.csv)
   double const kKine[][2] = {{0.623, 2.989}, {0.854, 4.488}, {0.465, 4.531},
 			     {0.808, 7.464}, {0.694, 9.834}, {0.727, 13.465}};
@@ -47,6 +56,11 @@ int main() {
     double const GEp = fit.GetFF(G_t::kGEp, Q2), GMp = fit.GetFF(G_t::kGMp, Q2);
     double const GEn = fit.GetFF(G_t::kGEn, Q2), GMn = fit.GetFF(G_t::kGMn, Q2);
     double const dGEp = kRelErrGEp*GEp, dGMp = kRelErrGMp*GMp, dGEn = kRelErrGEn*GEn;
+
+    // -- 0. kinematics: etheta_from_epsilon is the inverse of epsilon (for p and n) --
+    for (std::string const N : {"p", "n"})
+      CHECK_REL(kine::etheta_from_epsilon(kine::epsilon(etheta, Q2, N), Q2, N), etheta, kRoundOffTol,
+		"etheta -> eps -> etheta (" + N + ")" + at);
 
     // -- 1. round trip --
     double const R = kine::sigmaBorn_ratio(etheta, Q2, GEp, GMp, GEn, GMn);

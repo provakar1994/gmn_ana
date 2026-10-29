@@ -4,7 +4,9 @@
   Checks, at the GMn kinematics:
   1. Model rows: names, order, TPE groups, and that the primary uses Ye no-TPE proton FFs
      and Ye GEn; Christy is only available w/o TPE.
-  2. InputFromRfit: R = R_MC*R_fit (errors scaled the same way); "_sc" names are scale errors.
+  2. Inputs are defined by (Q2, eps): the derived e- angle reproduces eps_p = eps.
+     InputFromRfit: R = R_MC*R_fit (errors scaled the same way), and it equals MakeInput
+     w/ those R values; "_sc" names are scale errors.
   3. Every row: GMn/(mu_n*GD) and the stat/experimental errors equal direct kine:: calls
      w/ that row's FFs.
   4. pCS and GEn systematics are the same on all rows and equal the relative forms
@@ -38,9 +40,9 @@ int main() {
   CHECK_TRUE(christy.GetFF(G_t::kGMp, 4.5) == -1000, "Christy GetFF is not provided (TPE uncorrected fit)");
   CHECK_TRUE(christy.GetFFNoTPE(G_t::kGMp, 4.5) > 0, "Christy GetFFNoTPE gives GMp");
 
-  // GMn kinematics {etheta (rad), Q2 (GeV2)} (scripts/lta/results.csv)
-  double const kKine[][2] = {{0.623, 2.989}, {0.854, 4.488}, {0.465, 4.531},
-			     {0.808, 7.464}, {0.694, 9.834}, {0.727, 13.465}};
+  // GMn kinematics {Q2 (GeV2), eps} (acceptance averaged, scripts/lta/results.csv)
+  double const kKine[][2] = {{2.989, 0.722}, {4.488, 0.515}, {4.531, 0.796},
+			     {7.464, 0.469}, {9.834, 0.502}, {13.465, 0.417}};
   std::vector<std::string> const kOrder = {"Ch noTPE-Ye", "Ye noTPE-Ye", "Ar noTPE-Ye", "Ye noTPE-Ke",
 					   "Ye noTPE-Ga", "Ye-Ye", "Ar-Ye", "Ke-Ye"};
   std::vector<gmnx::TPEGroup> const kTPE = {
@@ -53,7 +55,7 @@ int main() {
 
   Ye2017 ye;
   for (auto const& k : kKine) {
-    double const etheta = k[0], Q2 = k[1];
+    double const Q2 = k[0], eps = k[1];
     std::string const at = " at Q2 = " + std::to_string(Q2);
 
     // -- 1. model rows --
@@ -69,14 +71,28 @@ int main() {
     CHECK_REL(prim.GMp, ye.GetFFNoTPE(G_t::kGMp, Q2), kTol, "primary GMp = Ye no-TPE" + at);
     CHECK_REL(prim.GEn, ye.GetFF(G_t::kGEn, Q2), kTol, "primary GEn = Ye" + at);
 
-    // -- 2. input from R_fit --
-    gmnx::Input const in = gmnx::InputFromRfit(etheta, Q2, kRfit, kRfitStat, kSysNames, kSysRfit);
+    // -- 2. input from R_fit, defined by (Q2, eps) --
+    gmnx::Input const in = gmnx::InputFromRfit(Q2, eps, kRfit, kRfitStat, kSysNames, kSysRfit);
+    double const etheta = in.etheta; // derived e- angle, used for all kine:: calls below
+    CHECK_TRUE(in.Q2 == Q2 && in.eps == eps, "input keeps Q2 and eps" + at);
+    CHECK_REL(kine::epsilon(etheta, Q2, "p"), eps, kTol, "derived angle gives eps_p = eps" + at);
     double const R_MC = kine::sigmaBorn_ratio_MC(etheta, Q2);
     CHECK_REL(in.R, R_MC*kRfit, kTol, "R = R_MC*R_fit" + at);
     CHECK_REL(in.dR_stat, R_MC*kRfitStat, kTol, "dR_stat = R_MC*R_fit_stat" + at);
     CHECK_TRUE(in.sys.size() == kSysNames.size(), "number of sys sources" + at);
     for (size_t i = 0; i < in.sys.size(); ++i)
       CHECK_REL(in.sys[i].dR, R_MC*kSysRfit[i], kTol, "dR_sys = R_MC*R_fit_sys: " + kSysNames[i] + at);
+    // MakeInput w/ the same R values gives the same input
+    std::vector<double> R_sys;
+    for (double const s : kSysRfit) R_sys.push_back(R_MC*s);
+    gmnx::Input const in2 = gmnx::MakeInput(Q2, eps, R_MC*kRfit, R_MC*kRfitStat, kSysNames, R_sys);
+    CHECK_REL(in2.etheta, in.etheta, kTol, "MakeInput = InputFromRfit: etheta" + at);
+    CHECK_REL(in2.R, in.R, kTol, "MakeInput = InputFromRfit: R" + at);
+    CHECK_REL(in2.dR_stat, in.dR_stat, kTol, "MakeInput = InputFromRfit: dR_stat" + at);
+    for (size_t i = 0; i < in2.sys.size() && i < in.sys.size(); ++i) {
+      CHECK_REL(in2.sys[i].dR, in.sys[i].dR, kTol, "MakeInput = InputFromRfit: " + kSysNames[i] + at);
+      CHECK_TRUE(in2.sys[i].isScale == in.sys[i].isScale, "MakeInput = InputFromRfit: scale flag " + kSysNames[i] + at);
+    }
 
     // -- 3.-5. results --
     std::vector<gmnx::ModelResult> const res = gmnx::ExtractAll(in);

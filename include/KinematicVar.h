@@ -65,6 +65,7 @@ namespace kine{
   double tau(SBSconfig sbsconf, std::string Ntype);
   double epsilon(double etheta, double Q2, std::string Ntype);           // rad, GeV2 (Use for per event calc.)
   double epsilon(SBSconfig sbsconf, std::string Ntype);
+  double etheta_from_epsilon(double epsilon, double Q2, std::string Ntype); // inverse of epsilon(etheta,Q2,Ntype), rad
   double epsilon_general(double etheta, double Q2, double nu);
   double W2_general(double ebeam, double eeprime, double etheta, std::string Ntype); // GeV, GeV, rad
   double W2(double ebeam, double eeprime, double Q2, std::string Ntype); // GeV, GeV, GeV2

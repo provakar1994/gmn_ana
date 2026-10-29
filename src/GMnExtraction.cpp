@@ -93,22 +93,33 @@ namespace gmnx {
   }
 
   //--------------------------------------------
-  Input InputFromRfit(double etheta, double Q2, double R_fit, double R_fit_stat,
+  Input MakeInput(double Q2, double eps, double R, double R_stat,
+		  std::vector<std::string> const& sysNames, std::vector<double> const& R_sys) {
+    if (sysNames.size() != R_sys.size())
+      std::cerr << "*** ERROR***, [gmnx::MakeInput] # of sys names (" << sysNames.size()
+		<< ") != # of sys errors (" << R_sys.size() << ")" << std::endl;
+    Input in;
+    in.Q2 = Q2;
+    in.eps = eps;
+    // effective e- angle: the kine:: functions take (etheta, Q2) and compute eps_p & eps_n from it
+    in.etheta = kine::etheta_from_epsilon(eps,Q2,"p");
+    in.R = R;
+    in.dR_stat = std::abs(R_stat);
+    for (size_t i = 0; i < sysNames.size() && i < R_sys.size(); ++i)
+      in.sys.push_back(MakeErrorSource(sysNames[i], std::abs(R_sys[i])));
+    return in;
+  }
+
+  //--------------------------------------------
+  Input InputFromRfit(double Q2, double eps, double R_fit, double R_fit_stat,
 		      std::vector<std::string> const& sysNames, std::vector<double> const& R_fit_sys) {
     /* Assuming the data/MC discrepancy in the n/p ratio is entirely due to the Born CS
-       ratio, the measured ratio is R = R_MC*R_fit, and its errors scale the same way. */
-    if (sysNames.size() != R_fit_sys.size())
-      std::cerr << "*** ERROR***, [gmnx::InputFromRfit] # of sys names (" << sysNames.size()
-		<< ") != # of sys errors (" << R_fit_sys.size() << ")" << std::endl;
-    double const R_MC = kine::sigmaBorn_ratio_MC(etheta,Q2);
-    Input in;
-    in.etheta = etheta;
-    in.Q2 = Q2;
-    in.R = R_MC*R_fit;
-    in.dR_stat = std::abs(R_MC*R_fit_stat);
-    for (size_t i = 0; i < sysNames.size() && i < R_fit_sys.size(); ++i)
-      in.sys.push_back(MakeErrorSource(sysNames[i], std::abs(R_MC*R_fit_sys[i])));
-    return in;
+       ratio, the measured ratio is R = R_MC*R_fit, and its errors scale the same way.
+       R_MC also depends on the kinematics only through Q2 & eps (via the effective angle). */
+    double const R_MC = kine::sigmaBorn_ratio_MC(kine::etheta_from_epsilon(eps,Q2,"p"),Q2);
+    std::vector<double> R_sys;
+    for (double const s : R_fit_sys) R_sys.push_back(R_MC*s);
+    return MakeInput(Q2, eps, R_MC*R_fit, R_MC*R_fit_stat, sysNames, R_sys);
   }
 
   //--------------------------------------------

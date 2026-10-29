@@ -15,12 +15,32 @@ Build and install `gmn_ana` first, then from this directory:
 
 ```
 root -l -b -q ../../../install_gmn_ana/runenv/rootlogon.C \
-  'extractGMn.cpp(0.6175, 4.5, 1.02, 0.01, {0.004,0.003,0.002}, {"Inel","NDE1","RC_sc"})'
+  'extractGMn.cpp(4.5, 0.6833, 1.02, 0.01, {0.004,0.003,0.002}, {"Inel","NDE1","RC_sc"})'
 ```
 
-Arguments: `etheta` (rad), `Q2` (GeV²), `R_fit`, `R_fit_stat`, the systematic errors on
-`R_fit` (one per source, all uncorrelated) and, optionally, their names. A source whose
-name ends in **`_sc`** is a **scale** error; all others are **point-to-point**.
+Arguments: `Q2` (GeV²) and `eps` (acceptance averaged), `R_fit`, `R_fit_stat`, the
+systematic errors on `R_fit` (one per source, all uncorrelated) and, optionally, their
+names. A source whose name ends in **`_sc`** is a **scale** error; all others are
+**point-to-point**.
+
+## Kinematics: (Q², ε)
+
+Each point is defined by the **acceptance-averaged Q² and ε** (ε = ε_p, the virtual photon
+polarization for the proton), which are taken as the true kinematics. The Born cross
+sections, and so R and GMn, depend on the kinematics only through Q² and ε. The FFs depend
+on Q² only.
+
+The `kine::` functions are written for per-event use and take (θ_e, Q²), from which they
+compute both ε_p and ε_n (which differ slightly at the same θ_e because of the nucleon mass
+difference). `gmnx` therefore converts ε to the effective electron angle that gives
+ε_p = ε at Q² (`kine::etheta_from_epsilon`),
+
+```
+tan²(θ_eff/2) = (1/ε − 1) / (2(1 + τ_p))
+```
+
+and uses θ_eff for all calculations; ε_n follows consistently from it. This is exact, not an
+approximation. θ_eff is printed for information only.
 
 ## From R_fit to R
 
@@ -35,7 +55,7 @@ R = σ_n/σ_p (Born) = R_MC · R_fit,      δR = R_MC · δR_fit   (for every er
 R_MC is the Born ratio of the MC generator, computed with exactly the EMFFs SIMC
 (bigbite branch, `physics_proton.f`) uses: Kelly GEp, GMp, GMn and the Riordan/"Seamus"
 GEn, with τ = Q²/4M_p² and GMp(0) = 2.79, GMn(0) = −1.913 (`kine::sigmaBorn_ratio_MC`,
-checked by `tests/test_simc_rmc.cpp`).
+checked by `tests/test_simc_rmc.cpp`), evaluated at (Q², θ_eff).
 
 ## Models
 

@@ -2202,8 +2202,11 @@ int fit_dx(const char *configfilename,
       outdata << Form("%.4f,%.4f,%.4f,",vethstats[0],vethstats[1],vethstats[2]);
       outdata << Form("%.4f,%.4f,%.4f,",vQ2stats[0],vQ2stats[1],vQ2stats[2]);
       outdata << Form("%.4f,%.4f,%.4f,",vepsstats[0],vepsstats[1],vepsstats[2]);   
-      // MC Born CS ratio (n/p) at the mean kinematics, w/ exactly the EMFFs of the MC generator (SIMC)
-      double const Rp_MC = kine::sigmaBorn_ratio_MC(vethstats[0],vQ2stats[0]);
+      // MC Born CS ratio (n/p) at the acceptance-averaged kinematics (<Q2>, <eps>), w/ exactly the
+      // EMFFs of the MC generator (SIMC). The ratio depends on the kinematics only through Q2 & eps;
+      // the effective e- angle reproduces eps_p = <eps> at <Q2> (the mean angle alone does not).
+      double const etheta_eff = kine::etheta_from_epsilon(vepsstats[0],vQ2stats[0],"p");
+      double const Rp_MC = kine::sigmaBorn_ratio_MC(etheta_eff,vQ2stats[0]);
       outdata << Form("%.4f,%.4f,%.4f,",R_MC_nofit,R_MC_nofit_err,Rp_MC);
       for (size_t i = 0; i < R_vals.size(); i++)
       {

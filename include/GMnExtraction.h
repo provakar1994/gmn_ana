@@ -48,16 +48,23 @@ namespace gmnx {
   // Builds an ErrorSource; isScale is set from the "_sc" name suffix
   ErrorSource MakeErrorSource(std::string const& name, double dR);
 
-  // Measured n/p Born CS ratio and its errors at one kinematic point
+  // Measured n/p Born CS ratio and its errors at one kinematic point.
+  // The kinematics are defined by the (acceptance-averaged) Q2 and eps. The Born CS
+  // ratio depends on the kinematics only through them; eps_n follows from the same
+  // e- angle, which is derived from eps (= eps_p) and stored in etheta.
   struct Input {
-    double etheta;                  // e- scattering angle (rad)
     double Q2;                      // GeV2
+    double eps;                     // virtual photon polarization (proton, eps_p)
+    double etheta;                  // derived: e- angle (rad) that gives eps_p = eps at Q2
     double R, dR_stat;              // n/p Born CS ratio and its stat error
     std::vector<ErrorSource> sys;   // experimental systematics on R (uncorrelated)
   };
+  // Input from the measured n/p Born CS ratio R and its errors (absolute)
+  Input MakeInput(double Q2, double eps, double R, double R_stat,
+		  std::vector<std::string> const& sysNames, std::vector<double> const& R_sys);
   // Input from the data/MC ratio fit parameter R_fit: R = R_MC*R_fit (and the same for errors),
   // with R_MC the Born CS ratio of the MC generator (kine::sigmaBorn_ratio_MC)
-  Input InputFromRfit(double etheta, double Q2, double R_fit, double R_fit_stat,
+  Input InputFromRfit(double Q2, double eps, double R_fit, double R_fit_stat,
 		      std::vector<std::string> const& sysNames, std::vector<double> const& R_fit_sys);
 
   // GMn and its errors for one model. All errors are on GMn/(mu_n*GD).
