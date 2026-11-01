@@ -80,3 +80,7 @@ flycheck_*.el
 
 # network security
 /network-security.data
+
+# json cache
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
