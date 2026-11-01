@@ -1,0 +1,1517 @@
+13:35:19 --> 13:35:21
+Me: Hello, hi AJ.
+
+13:35:19 --> 13:35:21
+AJ (he/him): Hello.
+
+13:35:21 --> 13:35:22
+AJ (he/him): Oof.
+
+13:35:23 --> 13:35:26
+AJ (he/him): Sorry, I had the volume a bit too high.
+
+13:35:27 --> 13:35:32
+Me: Probably LS is busy with something else, and hear from her.
+
+13:35:30 --> 13:35:31
+AJ (he/him): Okay.
+
+13:35:34 --> 13:35:35
+Me: Hmm.
+
+13:35:36 --> 13:35:37
+AJ (he/him): All right, well.
+
+13:35:37 --> 13:35:41
+AJ (he/him): We'll see. I have to keep it short today anyway. Not too short, just —.
+
+13:35:41 --> 13:35:58
+Me: Yeah, no, that's fine. I don't have, like, a lot of things to discuss either. Um, so, but, like, few things I wanted to… so, yeah, so you were there for my presentation yesterday, so that, uh, work is ongoing. Right now, what I'm trying to do is, um, to do… perform the acceptance.
+
+13:35:58 --> 13:36:14
+Me: study, but the main problem with that is that, like, the main goal right now is for me to, um, find a fraction of events for which we saw a Monte Carlo hit, uh, to, like, you know, total hit, kind of, part disk.
+
+13:36:14 --> 13:36:29
+Me: Um, like, just to figure out whether we are seeing a hit where it… where we should have, kind of. But the problem is to… to do it properly, uh, you know, you need to be able… because when Monte Carlo… when a particle.
+
+13:36:29 --> 13:36:45
+Me: uh, like, a Monte Carlo generated particle misses a disk, uh, it doesn't really, like, it doesn't record the, you know, hit positions, um, as, as it should not, because it didn't really register a hit for a disk, so you don't really know it's X and Y.
+
+13:36:45 --> 13:37:03
+Me: Uh, but so, to… at least to get the denominator, you basically have to project the tracks from the vertex onto whichever disk you are interested in, but the problem is the magnetic field, which is non… like, non-linear, so it's like a helical field, it's complicated.
+
+13:37:03 --> 13:37:09
+Me: to be able to do that projection to get the denominator properly. Uh, so…
+
+13:37:09 --> 13:37:25
+Me: So the, like, one idea is to kind of add a sensitive disk in front of each disk, which is zero material, so that it doesn't add to any material or something, to get kind of a Monte Carlo truth information that it actually.
+
+13:37:20 --> 13:37:22
+AJ (he/him): Okay.
+
+13:37:25 --> 13:37:36
+Me: should have hit the… hit the disk, um, or something, just to get an unbiased denominator. So that's where they need to be implemented, so I haven't done it yet, um…
+
+13:37:36 --> 13:37:52
+Me: Uh, and then probably I'll be able to answer Arnst's question. Um, and then, yeah, so I'm sure Arnst is working on some more fine-tuning with the Z-Ops and some issues he had with optimizers, so once he has them, um, I should be able to…
+
+13:37:52 --> 13:38:07
+Me: um, incorporate them. Um, and then the other thing that, uh, I was working on is, like, the single spin asymmetry, uh, so I have all the systematics and stuff, but for the talk, I kind of, um.
+
+13:38:07 --> 13:38:25
+Me: uh, like, made some assumptions, which are not really, like, paper-ready, kind of, so I'm trying to make them, um, like, better, more defensible, so that we can, uh, have them ready for the paper. So, that's the other thing, and then…
+
+13:38:22 --> 13:38:23
+AJ (he/him): Sure.
+
+13:38:25 --> 13:38:40
+Me: Um, the… about GMN, so the first thing I wanted to ask about, uh, about, uh, your email is that when you say projected GMN, you mean the GMN values from my thesis, is that right?
+
+13:38:40 --> 13:38:55
+AJ (he/him): Well, the projected uncertainties. So we'll just put the data points on the current fits, just like we're doing with all of the other form factors. We just need to know what uncertainties. So probably the.
+
+13:38:48 --> 13:38:50
+Me: Mm-hmm.
+
+13:38:50 --> 13:38:53
+Me: Oh, okay. Okay. Okay.
+
+13:38:54 --> 13:38:56
+Me: So you just… uh-huh.
+
+13:38:56 --> 13:38:59
+AJ (he/him): Like I say, probably your statistics.
+
+13:38:59 --> 13:39:03
+AJ (he/him): The statistics that you have plus, um…
+
+13:39:01 --> 13:39:02
+Me: Mmhm.
+
+13:39:03 --> 13:39:12
+AJ (he/him): like I say, you know, you can look at the uncertainties as you have them now, and just be a little… take kind of the conservative version of everything.
+
+13:39:06 --> 13:39:08
+Me: Right.
+
+13:39:11 --> 13:39:17
+Me: So then it will be better if I provide them in percentage to Thailand.
+
+13:39:17 --> 13:39:24
+Me: So that he can calculate the central values from the feet, or… or what? Uh, yeah.
+
+13:39:17 --> 13:39:19
+AJ (he/him): Uh, okay.
+
+13:39:22 --> 13:39:25
+AJ (he/him): Yes, because they should be…
+
+13:39:25 --> 13:39:34
+AJ (he/him): I have to think for a minute, because some of, like, the polarization ones, it tends to be an absolute uncertainty independent of where the value is, whereas cross-section ratios.
+
+13:39:34 --> 13:39:35
+Me: Mm-hmm.
+
+13:39:34 --> 13:39:38
+AJ (he/him): It's never quite perfect, but yeah, that sounds right.
+
+13:39:38 --> 13:39:46
+Me: Okay, yeah, then I can do that. I should have it by today. There is just one thing I'm trying to, uh, understand, or, like, uh…
+
+13:39:46 --> 13:39:51
+Me: figure out. So I do have the derivative correction, I do have the, um…
+
+13:39:51 --> 13:40:08
+Me: like, detection efficiency all sorted out, but there is one, uh, decision I have to make, is in terms of, like, you know, the… when I convert from ratio to GMN, there are two uncertainties that gets added. Those are model uncertainties, like, to get the proj… um…
+
+13:40:08 --> 13:40:23
+Me: proton-reduced cross-section, and GEN. So those seem to, um, like, you know, move kind of consistently with Q squared, like, together. So it's like… but so far, I have been treating them as point-to-point uncertainty.
+
+13:40:10 --> 13:40:12
+AJ (he/him): Mm-hmm.
+
+13:40:23 --> 13:40:31
+Me: I just wanted to check with you if that's… that's, like, the reasonable thing to do, instead of trying to find any correlation between them, or something like that.
+
+13:40:32 --> 13:40:33
+AJ (he/him): Um…
+
+13:40:33 --> 13:40:35
+AJ (he/him): So for…
+
+13:40:35 --> 13:40:51
+AJ (he/him): For the version now for Tyler to update the fit, yes, that's good. If you plot the impact of it versus Q squared, we could do what we do with some of the others, which is allow for a normalization plus some point to point that way.
+
+13:40:40 --> 13:40:41
+Me: Mm-hmm.
+
+13:40:48 --> 13:40:49
+Me: Good.
+
+13:40:51 --> 13:40:53
+Me: Okay.
+
+13:40:51 --> 13:40:57
+AJ (he/him): You know, rather than fitting on a curve, you get something that gives you the flexibility to do that.
+
+13:40:57 --> 13:41:01
+Me: Oh, so same process should work for these two. Okay, I see.
+
+13:40:59 --> 13:41:01
+AJ (he/him): Yeah.
+
+13:41:01 --> 13:41:04
+Me: Yeah, that I can do.
+
+13:41:04 --> 13:41:17
+Me: But for now, I'll probably add, um, them as, like, point-to-point, and then share with Tyler. And then the other thing, um, is, um… so, like, uh, for our points, what we're trying to do…
+
+13:41:09 --> 13:41:11
+AJ (he/him): Sure.
+
+13:41:17 --> 13:41:20
+Me: Is, like, use the, um…
+
+13:41:20 --> 13:41:31
+Me: fit where there were no TP correction implemented, so basically effective form factors, uh, to get the reduced proton cross-section. And, uh, so…
+
+13:41:31 --> 13:41:53
+Me: you know, there are options like the Christie fit, which is… which includes the GMN12 data… sorry, GMP12 data, but the problem is it had different radiative correction prescription. So… but… so that's why it makes more sense to use EASE2018 fit, right, and then use the no TPE correction version that he.
+
+13:41:53 --> 13:42:09
+Me: provided, um, via email. Uh, so what I was trying to understand, suppose we do that, uh, but then are the referees gonna be like, okay, you haven't included the GMP12 data, so it's not, like, the best thing, so…
+
+13:42:09 --> 13:42:12
+Me: I'll do the reviewers.
+
+13:42:10 --> 13:42:19
+AJ (he/him): They… they could say that, and then you could… you would just, uh, you know, explain why. Uh, the other thing you could do is you could look at the…
+
+13:42:15 --> 13:42:17
+Me: Expert, okay.
+
+13:42:20 --> 13:42:26
+AJ (he/him): um… look at the… compare the form factors from the YIFIT to…
+
+13:42:26 --> 13:42:29
+AJ (he/him): to what GMN gets.
+
+13:42:29 --> 13:42:30
+Me: Mm-hmm.
+
+13:42:30 --> 13:42:34
+AJ (he/him): Um, and just see how far off. And, you know, that might…
+
+13:42:34 --> 13:42:45
+AJ (he/him): that might allow for either a better constraint at high Q squared, right? So just living with the couple percent uncertainty in the radiative correction prescription.
+
+13:42:45 --> 13:42:48
+AJ (he/him): Might be better than living with the.
+
+13:42:45 --> 13:42:47
+Me: And…
+
+13:42:48 --> 13:42:52
+AJ (he/him): uncertainty and extrapolated form factors.
+
+13:42:52 --> 13:42:53
+AJ (he/him): Umm.
+
+13:42:53 --> 13:43:06
+AJ (he/him): But actually, my guess is that for total cross-section, double data is fine. And so, you just want to show that it's… you just want to say… explain why you didn't use it, but be able to say it's consistent, and then you're fine.
+
+13:42:59 --> 13:43:01
+Me: Okay. Mm-hmm.
+
+13:43:07 --> 13:43:14
+Me: Uh, you mean the radiative correction is consistent, or, like, the same model across Q-squared is consistent?
+
+13:43:10 --> 13:43:12
+AJ (he/him): No.
+
+13:43:14 --> 13:43:25
+AJ (he/him): that the cross-section at, you know, you compared the… since this didn't include the Christie fit, you compared the cross-section to the Christie one, and it's consistent within whatever.
+
+13:43:20 --> 13:43:21
+Me: Okay.
+
+13:43:23 --> 13:43:25
+Me: Oh.
+
+13:43:25 --> 13:43:26
+Me: I see.
+
+13:43:25 --> 13:43:29
+AJ (he/him): That's probably the easiest, rather than trying to mix.
+
+13:43:29 --> 13:43:30
+AJ (he/him): Inputs.
+
+13:43:30 --> 13:43:32
+Me: Okay.
+
+13:43:32 --> 13:43:35
+Me: Yeah, because I don't… in… yeah, sorry, go ahead.
+
+13:43:32 --> 13:43:33
+AJ (he/him): the…
+
+13:43:35 --> 13:43:40
+AJ (he/him): So, I'm sorry, did you say that Zihong gave you the… the no…
+
+13:43:40 --> 13:43:42
+Me: Yeah, so…
+
+13:43:40 --> 13:43:43
+AJ (he/him): Two photon exchange for, okay, yeah.
+
+13:43:43 --> 13:43:46
+Me: Yeah, we… let me…
+
+13:43:46 --> 13:43:48
+Me: We'll verify it with you.
+
+13:43:48 --> 13:43:50
+AJ (he/him): Yeah.
+
+13:43:50 --> 13:43:55
+AJ (he/him): If not, there's an older paper that has it, and for high Q squared, it's about the same, but…
+
+13:43:50 --> 13:43:52
+Me: Because he…
+
+13:43:55 --> 13:43:57
+Me: Yeah, so…
+
+13:43:55 --> 13:43:57
+AJ (he/him): In fact, let me look at it.
+
+13:43:57 --> 13:44:05
+Me: there was, like, an email exchange, it was, like, I don't know, many years ago, but he provided this proton.
+
+13:44:02 --> 13:44:04
+AJ (he/him): Started, yeah.
+
+13:44:05 --> 13:44:13
+Me: lookup table, and that basically includes, like… okay, let me open it so that I can show you.
+
+13:44:15 --> 13:44:18
+Me: Oh man, this is not what I wanted.
+
+13:44:18 --> 13:44:20
+Me: English.
+
+13:44:20 --> 13:44:22
+Me: on Vector…
+
+13:44:22 --> 13:44:24
+Me: 8.
+
+13:44:25 --> 13:44:28
+Me: You need all, and then…
+
+13:44:29 --> 13:44:31
+Me: Ruth Luca.
+
+13:44:31 --> 13:44:46
+Me: no Tpe. So it basically had 5 dat files. and one of them were like no extra Tpe. And that's what Jihong mentioned. That is the one that we should use.
+
+13:44:44 --> 13:44:46
+AJ (he/him): Okay.
+
+13:44:46 --> 13:44:48
+AJ (he/him): Wait, no…
+
+13:44:46 --> 13:44:48
+Me: So, there's the one.
+
+13:44:48 --> 13:44:51
+AJ (he/him): No extra TPE or no TPE?
+
+13:44:51 --> 13:44:54
+Me: It just said no extra TPA.
+
+13:45:06 --> 13:45:11
+AJ (he/him): Alright, let me… let me look into that, because I also… so I got those…
+
+13:45:10 --> 13:45:12
+Me: Uh-huh.
+
+13:45:11 --> 13:45:14
+AJ (he/him): Files more recently, and I asked.
+
+13:45:14 --> 13:45:20
+AJ (he/him): I contacted the journal where it was published about making an update that it was missing from the supplemental.
+
+13:45:20 --> 13:45:26
+AJ (he/him): They kept asking me for more information, and then they just stopped saying anything, so let me, um, see if…
+
+13:45:20 --> 13:45:22
+Me: Oh, okay.
+
+13:45:26 --> 13:45:30
+AJ (he/him): If there's any indication it was updated.
+
+13:45:31 --> 13:45:43
+Me: Yeah, so here is where… it would be great if you checked. He said the file ended with no extra TPE should be the one you want. The fit with TPE correction removed.
+
+13:45:43 --> 13:45:52
+AJ (he/him): Okay, I just wasn't sure because for the fit we have a calculated TPE, and then we added an additional piece on top of that.
+
+13:45:43 --> 13:45:45
+Me: Hi all, so…
+
+13:45:52 --> 13:45:54
+Me: Oh, I see.
+
+13:45:52 --> 13:45:58
+AJ (he/him): That was just parameterized to explain the difference. So that's why it was a little unclear.
+
+13:45:57 --> 13:45:59
+Me: All right. Thanks.
+
+13:45:59 --> 13:46:08
+Me: Yeah, if you could still double-check, that would be great, because it, um… you know, if I get the file, it's not hard for me to incorporate that instead.
+
+13:46:08 --> 13:46:13
+AJ (he/him): Yeah. The other thing you could do is compare the full one to that one.
+
+13:46:08 --> 13:46:09
+Me: Um…
+
+13:46:13 --> 13:46:14
+Me: Hmm.
+
+13:46:13 --> 13:46:18
+AJ (he/him): And then, you know, the cross sections at…
+
+13:46:18 --> 13:46:22
+AJ (he/him): That large-ish angle should be, like, you know…
+
+13:46:23 --> 13:46:26
+AJ (he/him): 5 or 6% off instead of…
+
+13:46:26 --> 13:46:28
+AJ (he/him): 2% off.
+
+13:46:34 --> 13:46:41
+Me: So if it truly does not have any TPE correction, then it should be 5% off.
+
+13:46:41 --> 13:46:45
+AJ (he/him): For, yeah, highest squared and large angle, yeah.
+
+13:46:41 --> 13:46:43
+Me: At, like, high Q square.
+
+13:46:45 --> 13:46:46
+Me: Okay.
+
+13:46:47 --> 13:46:50
+AJ (he/him): Yeah, let me, uh…
+
+13:46:48 --> 13:46:49
+Me: And…
+
+13:46:52 --> 13:46:53
+AJ (he/him): Okay.
+
+13:46:53 --> 13:46:55
+AJ (he/him): Let me check later, I've got a…
+
+13:46:55 --> 13:46:57
+Me: Okay.
+
+13:46:55 --> 13:47:04
+AJ (he/him): working from home today, so I've got to turn on the VPN, uh, so I can go to the journal and look at the full thing, but it looks like there's no…
+
+13:46:59 --> 13:47:01
+Me: Yeah, and then…
+
+13:47:04 --> 13:47:08
+AJ (he/him): No update, so I'll email them again. That's separate from this, of course.
+
+13:47:08 --> 13:47:24
+Me: Uh, yeah, that sounds good. Uh, the other thing is, uh, about the uncertainty. For reduced proton cross-section, like the uncertainties I mentioned before, like whether I should have just point-to-point or, you know, do that thing.
+
+13:47:24 --> 13:47:40
+Me: But the main question is, so initially, or so far, what I have been doing, which I want to change, but I did not change so far, is let me show you. So, these are basically the way, uh, so I used to calculate.
+
+13:47:40 --> 13:47:59
+Me: uh, you know, GMN over mu GD from R, using various different models. Um, you know, like, this EE basically means reduced proton cross-section from E2018, and also GEN from E2018, something like that. So K is Kelly, and then Arrington is your feed from 2007.
+
+13:47:59 --> 13:48:15
+Me: and all these things. Uh, so… what I was doing, um, is, like, you know, to get the uncertainty for protons reduced cross-section. So, you know, I was solely using the ones with TP correction, but, you know, I had to change it to no TP, which is…
+
+13:48:15 --> 13:48:31
+Me: to be done. That's what I've been working on right now. But, uh, what I was doing is I was basically calculating the protons reduced cross-section using two different models. Like, basically calculating GMN with using two different models for protons reduced cross-section.
+
+13:48:31 --> 13:48:46
+Me: 2 or 3, I think, and then taking a standard deviation to find the uncertainty. But that doesn't seem to be the most, um, um, like, you know, the best way, because, uh, the EFITs give us the uncertainties, so we should just use that.
+
+13:48:46 --> 13:49:09
+Me: Uh, right, so… so then, what I was thinking, so I have the covariance metrics from the node TP, because it is included in the table that Jihong has shared. So, what is the… so, like, from that table, should I just do, like, a partial derivative, like, delta GMN over delta R multiplied by the Jacobian, like, you know, like…
+
+13:49:09 --> 13:49:19
+Me: Um… like, you know, like, square root of, you know, Jacobian times the matrix, and then transverse of the Jacobian, something like that. Alright.
+
+13:49:17 --> 13:49:19
+AJ (he/him): Sure.
+
+13:49:19 --> 13:49:26
+AJ (he/him): So, yeah, so just one note on the comparison thing is, yeah, it's fine if you want to compare.
+
+13:49:27 --> 13:49:30
+AJ (he/him): They… well, they should all be combinations that use…
+
+13:49:30 --> 13:49:33
+Me: MRC and…
+
+13:49:31 --> 13:49:38
+AJ (he/him): Use TPE or don't use TPE, right? So mixing the two is bad, right? And Kelly is already…
+
+13:49:33 --> 13:49:35
+Me: Right, right.
+
+13:49:37 --> 13:49:48
+Me: So that's why… that's why it's becoming harder when I want no TP, because I don't really have those many points, so… Anyway, sorry, go ahead.
+
+13:49:38 --> 13:49:40
+AJ (he/him): Income tax.
+
+13:49:45 --> 13:49:55
+AJ (he/him): That's why in the 2007, we made sure, and in the 2018, we did it. We said it was included in the supplemental material. It just wasn't.
+
+13:49:53 --> 13:49:55
+Me: Right.
+
+13:49:55 --> 13:50:01
+AJ (he/him): So, what I would say is, and especially since we don't have… since you don't have the covariance matrix for everything, um…
+
+13:50:00 --> 13:50:02
+Me: Okay.
+
+13:50:01 --> 13:50:10
+AJ (he/him): What I would suggest is to just assume GE and GM are independent. So you can just add the uncertainties and quadrature.
+
+13:50:07 --> 13:50:09
+Me: Okay.
+
+13:50:09 --> 13:50:11
+Me: Mm-hmm.
+
+13:50:10 --> 13:50:11
+AJ (he/him): um…
+
+13:50:11 --> 13:50:18
+AJ (he/him): That is certainly an overestimate, because we know that GE and GM tend to be highly anti-correlated in an LT separation.
+
+13:50:18 --> 13:50:20
+Me: Right.
+
+13:50:18 --> 13:50:21
+AJ (he/him): On the other hand, um…
+
+13:50:21 --> 13:50:27
+AJ (he/him): Since you're treating it as point-to-point and not worrying about correlations, that tends to…
+
+13:50:27 --> 13:50:35
+AJ (he/him): underestimate the it has the effect of of making the uncertainties.
+
+13:50:35 --> 13:50:40
+AJ (he/him): smaller, or at least having them constrain the overall fit less.
+
+13:50:39 --> 13:50:40
+Me: Good.
+
+13:50:40 --> 13:50:45
+AJ (he/him): Also, anytime you do a global fit, you know, just taking its error.
+
+13:50:45 --> 13:50:57
+AJ (he/him): can be a little questionable, because you don't know if all of the data is completely correct, if all of the uncertainties quoted are right. So, I tend to say it's good to be conservative with fits like that.
+
+13:50:57 --> 13:51:04
+AJ (he/him): So what I would say is if using the uncorrelated uncertainty gives you something that's largely negligible in the end.
+
+13:51:04 --> 13:51:13
+AJ (he/him): And I think that's fine. You're missing things that will make it smaller. You're missing things that could make it larger.
+
+13:51:13 --> 13:51:14
+Me: Good.
+
+13:51:13 --> 13:51:18
+AJ (he/him): But if it's not a big contribution, then it doesn't matter too much.
+
+13:51:14 --> 13:51:16
+Me: Okay.
+
+13:51:18 --> 13:51:19
+Me: Okay.
+
+13:51:20 --> 13:51:22
+Me: Thanks.
+
+13:51:21 --> 13:51:28
+AJ (he/him): But it does have a whole bunch of different systematic uncertainties factored in.
+
+13:51:27 --> 13:51:29
+Me: Hmm.
+
+13:51:28 --> 13:51:30
+AJ (he/him): It's a pretty good starting point.
+
+13:51:30 --> 13:51:43
+Me: Okay, that sounds good. But you still… but, uh, I should still, uh, do that normalization, like a scaled part and a point… like a fluctuation part, right?
+
+13:51:43 --> 13:51:45
+Me: Kind of, on this.
+
+13:51:44 --> 13:51:46
+AJ (he/him): I would… I mean…
+
+13:51:46 --> 13:51:59
+AJ (he/him): See how big it is, and see if it matters, because since you have just a handful of Q-squared points that are quite separate, it's not clear how correlated they would be. I mean, when you compare the different fits.
+
+13:51:54 --> 13:51:55
+Me: Okay.
+
+13:51:59 --> 13:52:01
+Me: Thank you.
+
+13:51:59 --> 13:52:05
+AJ (he/him): everything will look correlated, but that doesn't mean that when you go from Q squared of 3 to 10.
+
+13:52:05 --> 13:52:06
+Me: Thank you.
+
+13:52:05 --> 13:52:10
+AJ (he/him): That the uncertainties are really connected.
+
+13:52:10 --> 13:52:11
+Me: Right.
+
+13:52:13 --> 13:52:15
+AJ (he/him): Hi, Shuji.
+
+13:52:19 --> 13:52:22
+Me: Alright, that sounds good.
+
+13:52:22 --> 13:52:23
+Me: Okay.
+
+13:52:24 --> 13:52:28
+Me: Yeah, that's all I had to ask.
+
+13:52:28 --> 13:52:29
+AJ (he/him): Okay.
+
+13:52:29 --> 13:52:34
+AJ (he/him): Yeah, the only thing on my list was the GMN uncertainties for Tyler, so…
+
+13:52:34 --> 13:52:35
+Me: Mm-hmm.
+
+13:52:34 --> 13:52:36
+AJ (he/him): All good now.
+
+13:52:37 --> 13:52:41
+LS: AJ Provova, sorry for being late.
+
+13:52:41 --> 13:52:43
+Me: No worries. Nice meeting you.
+
+13:52:45 --> 13:52:46
+Me: Thank you.
+
+13:52:46 --> 13:52:49
+AJ (he/him): So we're done. Do you have anything?
+
+13:52:52 --> 13:52:53
+LS: Oh…
+
+13:52:53 --> 13:52:58
+LS: So I spoke with Tapuya. He's leaving tomorrow.
+
+13:52:58 --> 13:53:00
+LS: Kind of, uh, briefly…
+
+13:53:00 --> 13:53:06
+LS: Went through what he did with the stream readout and the alignment.
+
+13:53:06 --> 13:53:11
+LS: And he will be busy with the beam test, their own beam test, so…
+
+13:53:11 --> 13:53:20
+LS: We agree that later or, well, early next year, like January or February, is a good time to reconnect.
+
+13:53:20 --> 13:53:28
+LS: At that time, hopefully, Hanyi will be on board so we can start some very serious discussion on the alignment.
+
+13:53:28 --> 13:53:32
+LS: And other than that, let me see what else.
+
+13:53:33 --> 13:53:38
+LS: Uh, we had a TDs meeting today, so they have been working…
+
+13:53:38 --> 13:53:44
+LS: working on the beam test for a few different configurations of the Jamboree Dot Pad.
+
+13:53:44 --> 13:53:49
+LS: for Tethers. So now they do not have the entire TPC chamber.
+
+13:53:49 --> 13:53:52
+LS: All they have is owning a square.
+
+13:53:52 --> 13:53:57
+LS: Here, um, jam pad with different, uh, pad size.
+
+13:53:58 --> 13:54:04
+LS: And, um… that is, like, hardware test, because now they have a…
+
+13:54:04 --> 13:54:18
+LS: a… a finite time window to finalize everything for the readiness review, basically by February, right? So we need to have the… both the hardware and the software ready.
+
+13:54:18 --> 13:54:22
+LS: Um, software-wise, um, I…
+
+13:54:22 --> 13:54:27
+LS: Spend some time on the checking for Tedus.
+
+13:54:28 --> 13:54:32
+LS: Let me see. Why don't I just let me show you.
+
+13:54:33 --> 13:54:37
+LS: Just a really quick one of the things I worked on.
+
+13:54:37 --> 13:54:42
+LS: Uh, I will skip all those technical details.
+
+13:54:43 --> 13:54:47
+LS: Give me one moment. I'm trying to show you a plot.
+
+13:54:50 --> 13:54:55
+LS: Oops, I'm not trying to raise my hand. Sorry. Here you go.
+
+13:54:56 --> 13:55:10
+LS: So this is one of their radar pads. So one event, because they have multiple radar chambers, one event can go through at most two chambers before it's stopped by the high voltage plane.
+
+13:54:57 --> 13:54:58
+Me: Oh, next.
+
+13:55:10 --> 13:55:15
+LS: Or the readout plan. But anyway, so this is one of the check.
+
+13:55:15 --> 13:55:30
+LS: And the single is one event, one particle going through in simulation. So in real world, you will need to consider one time frame with hundreds of events. But now I'm just testing the algorithm.
+
+13:55:30 --> 13:55:41
+LS: So this is something developed originally by Dimitri. He adapted the AIC recon framework and build basically hard coded the TEDx geometry.
+
+13:55:41 --> 13:55:51
+LS: But, well, long story short, he is no longer available, and there are so many things need to be improved.
+
+13:55:51 --> 13:55:59
+LS: Uh, regardless, so I think, uh, with this little test, the tracking algorithm at least, uh.
+
+13:55:59 --> 13:56:02
+LS: Uh, work, like, end-to-end, it works.
+
+13:56:02 --> 13:56:09
+LS: And the performance is not great because you can see the red cross are the points that we didn't use.
+
+13:56:10 --> 13:56:21
+LS: That's one big issue for now is that we do not know how to cluster the heads yet. I'm looking, I'm waiting for.
+
+13:56:21 --> 13:56:34
+LS: uh, some more information from the beam test, um, so that I can decide if it makes sense for us, for example, to cluster the heads, um, at the transverse direction.
+
+13:56:34 --> 13:56:38
+LS: Before we provide it as a measurement to ACTS.
+
+13:56:38 --> 13:56:48
+LS: And also, you cannot see on the plot here, but there are — each of the head, actually, many times you have one.
+
+13:56:48 --> 13:56:49
+LS: um…
+
+13:56:50 --> 13:56:55
+LS: One particle going through, but it hits each of the pad multiple times.
+
+13:56:55 --> 13:57:12
+LS: So there is a distribution in time, which also needs to be considered, especially when we have a lot high occupancy from hundreds of tracks. We need to use both the ADC and time information to split the signals.
+
+13:57:13 --> 13:57:29
+LS: So those are main details needed to make the algorithm itself more realistic. But otherwise, we can see that it was able to use information from, this is one, the first plane gets this many pets.
+
+13:57:29 --> 13:57:35
+LS: And you can see the second plane gets the next portion of the heads.
+
+13:57:35 --> 13:57:40
+LS: And the drift distance is only 5 centimeters, so I think it's…
+
+13:57:40 --> 13:57:55
+LS: So doing a decent job is still, there are so many things to consider. For example, we do not have a beam pipe, so we do not, there's actually no material like energy loss or risk scattering considered in the current setup.
+
+13:57:55 --> 13:58:06
+LS: But otherwise, so the baseline works. And I also had a meeting with Tori Jordan from UTK and also…
+
+13:58:06 --> 13:58:09
+LS: Someone from the JLab data science group.
+
+13:58:09 --> 13:58:20
+LS: So the idea was that instead of using the traditional clustering and the common filter method, we could use the GNN for, uh…
+
+13:58:20 --> 13:58:23
+LS: Uh, pathway identification…
+
+13:58:23 --> 13:58:27
+LS: To identify all the possible candidates for…
+
+13:58:27 --> 13:58:28
+LS: um…
+
+13:58:28 --> 13:58:33
+LS: for a track and use that to form the initial guess for color filter.
+
+13:58:33 --> 13:58:43
+LS: So that was something that I worked with Amir as a SUNY student one year ago, but he's now also not active.
+
+13:58:43 --> 13:58:56
+LS: Um, at that time, what I tried to do work with Amir is basically have a… not just a clustering algorithm, but the entire tracking, uh, with, uh, GNN and the MLP.
+
+13:58:56 --> 13:59:07
+LS: So the ultimate output will be an identified track with the parameters like momentum and angle at the perigee.
+
+13:59:07 --> 13:59:13
+LS: But for now, because we have this pressure in time, so we kind of…
+
+13:59:13 --> 13:59:15
+LS: uh…
+
+13:59:15 --> 13:59:31
+LS: Now, I think the idea is that we will still have the traditional Kalman filter as I am working on right now as a baseline. And Jordan will use the existing package from the JLab. Basically, it's an algorithm developed for BlueX.
+
+14:07:46 --> 14:07:57
+LS: I will send you offline the code, original code we use to run it. I think it is… there is also a separate function in C++.
+
+14:07:57 --> 14:08:08
+LS: You can call. And that should be able to give you all the information you need. And then it's a matter of isolating the material corresponding to each of your…
+
+14:08:08 --> 14:08:14
+LS: or disk. And that should be pretty straightforward if you look at the Z position.
+
+14:08:16 --> 14:08:18
+Me: Okay.
+
+14:08:18 --> 14:08:19
+LS: Okay.
+
+14:08:18 --> 14:08:28
+Me: Because right now, the Python script takes the… takes some volume, right, like assemblies, and the outer module…
+
+14:08:24 --> 14:08:26
+LS: Yeah. Mm-hmm.
+
+14:08:26 --> 14:08:27
+LS: Uh-huh.
+
+14:08:28 --> 14:08:32
+Me: Uh, basically include all, like, 6.
+
+14:08:32 --> 14:08:34
+Me: outer disks.
+
+14:08:33 --> 14:08:34
+LS: Uh-huh. Okay.
+
+14:08:34 --> 14:08:41
+Me: So, you're saying that it is not hard to just separate out each disk?
+
+14:08:41 --> 14:08:43
+Me: It's just, like…
+
+14:08:42 --> 14:08:56
+LS: Correct. You probably need to take a slightly different approach instead of calling exactly the same function exactly the same way. You will need to have the code report more details.
+
+14:08:44 --> 14:08:45
+Me: Okay.
+
+14:08:56 --> 14:09:00
+LS: Like all the interactions along the path.
+
+14:09:00 --> 14:09:10
+LS: But again, it should be very straightforward. So when do you plan to work on that again? At that time, I can point you to the relevant code.
+
+14:09:10 --> 14:09:14
+Me: Yeah, so probably…
+
+14:09:14 --> 14:09:19
+Me: Not until next week. Early next week.
+
+14:09:19 --> 14:09:21
+Me: Here.
+
+14:09:19 --> 14:09:23
+LS: Okay. So, uh, yeah.
+
+14:09:23 --> 14:09:27
+LS: Just let me know when you plan to work on it.
+
+14:09:27 --> 14:09:36
+Me: Yeah, so if you can… if you find the code, just, you know, send it to me, and, you know, I can take a look whenever I have time.
+
+14:09:27 --> 14:09:30
+LS: And because, uh…
+
+14:09:36 --> 14:09:37
+LS: Sure.
+
+14:09:37 --> 14:09:38
+Me: Okay.
+
+14:09:37 --> 14:09:45
+LS: Ernst also said that we do need to explore the six ISU option as well.
+
+14:09:45 --> 14:09:49
+LS: Um, so you said there is, like, a list of overlaps?
+
+14:09:45 --> 14:09:46
+Me: Yes.
+
+14:09:49 --> 14:09:51
+Me: Mm-hmm.
+
+14:09:49 --> 14:09:57
+LS: Based on your experience, do you think they are easy to resolve?
+
+14:09:56 --> 14:10:01
+Me: I'm not… I don't… I'm not planning to resolve them. No, I think…
+
+14:09:57 --> 14:09:59
+LS: Which means you can do it.
+
+14:09:59 --> 14:10:02
+LS: You don't plan to do it?
+
+14:10:01 --> 14:10:07
+Me: No, I think Arnst needs to give me an updated position placements.
+
+14:10:02 --> 14:10:03
+LS: Uh-huh.
+
+14:10:08 --> 14:10:21
+Me: Because it's not just about overlap, it's also, like, the way things are. Because it should not be… the three modules should not be RAM jammed in that row, like the example I showed.
+
+14:10:09 --> 14:10:11
+LS: The… mhm.
+
+14:10:11 --> 14:10:12
+LS: Mm-hmm.
+
+14:10:19 --> 14:10:28
+LS: I think, yeah, for that particular one, I think you can simply suggest to remove one module, right?
+
+14:10:29 --> 14:10:42
+Me: But, like, you know, so… I don't know, like, shouldn't the placements come from Arnst, though, and then for me to just use them? Because he's doing the optimization and all sorts of things.
+
+14:10:31 --> 14:10:32
+LS: Mm-hmm.
+
+14:10:41 --> 14:10:47
+LS: Um, if you want to handle it that way, it's fine.
+
+14:10:42 --> 14:10:44
+Me: Why do I do…
+
+14:10:47 --> 14:10:49
+Me: Yeah.
+
+14:10:47 --> 14:10:54
+LS: I mean, because only because you already noticed, you can just ask here.
+
+14:10:54 --> 14:11:00
+LS: I think we need to remove one module here. That's straightforward. And it's —.
+
+14:11:00 --> 14:11:03
+LS: He can take it or not.
+
+14:11:01 --> 14:11:02
+Me: It's not…
+
+14:11:02 --> 14:11:07
+Me: Yeah, the problem is, you know, I don't wanna make, like, little…
+
+14:11:07 --> 14:11:22
+Me: additions, deletions, and stuff. I wanna keep the framework, like, I get those from Arnst, I take them, implement them, do some checks. If they're good, at least at that level, when the… all the modules, the placements are at least good.
+
+14:11:10 --> 14:11:11
+LS: Mmhm.
+
+14:11:22 --> 14:11:39
+Me: Then rest of it, I can handle. But I just don't want to change the module placements, like, tweak a little bit, and then communicate that with us, you know, like, this is what I have changed, and then you incorporate that in your optimizer, and whatever. So, since RSU opt design seems fine.
+
+14:11:39 --> 14:11:54
+Me: So, I think I will just do all the studies with it. I'll have the scripts when he gives me an updated version, because there are other changes he's making, he mentioned. He's changing the names from chirality left-right to plus-minus, and then definitely.
+
+14:11:49 --> 14:11:50
+LS: Mmhm.
+
+14:11:54 --> 14:12:10
+Me: Uh, he also mentioned that he wanna, uh, change, uh, like, you know, fix the over… like, not fix it, because he currently allows, like, a 50% X overlap, but he's planning to reduce that, and all those… so he's definitely working on his optimizer, um, more.
+
+14:12:10 --> 14:12:19
+Me: So, I'll just wait until he gives me the next version, and then I'll just use those, rerun these things, and, you know, just generate results.
+
+14:12:11 --> 14:12:13
+LS: Okay.
+
+14:12:20 --> 14:12:23
+Me: That's kind of my plan.
+
+14:12:23 --> 14:12:26
+LS: Okay, I will check with you.
+
+14:12:26 --> 14:12:27
+Me: Yep.
+
+14:12:29 --> 14:12:31
+Me: Sounds good.
+
+14:12:29 --> 14:12:31
+LS: Mmhm.
+
+14:12:31 --> 14:12:34
+LS: Yeah, let me see if there are others.
+
+14:12:35 --> 14:12:41
+LS: I'm trying to recall if there are other things people suggested yesterday.
+
+14:12:41 --> 14:12:56
+Me: Uh, yeah, they suggested more details, like main FPC, then the FPC's length. It's not just about increasing the length of the bridge FPCs, it's also there are more details to it.
+
+14:12:42 --> 14:12:44
+LS: Do you recall any?
+
+14:12:47 --> 14:12:49
+LS: Ah, yeah, those are…
+
+14:12:49 --> 14:12:51
+LS: Nope.
+
+14:12:56 --> 14:13:06
+Me: But I don't think we're at that stage yet. I don't think we should think about those. And uh… and also, like, I think they were…
+
+14:12:56 --> 14:12:58
+LS: Yeah.
+
+14:12:58 --> 14:13:00
+LS: Nope. Nope.
+
+14:13:06 --> 14:13:07
+Me: What was it?
+
+14:13:09 --> 14:13:11
+Me: Okay.
+
+14:13:12 --> 14:13:23
+Me: Yeah, I don't remember anything. Yeah, the other thing is definitely the acceptance study, which is, uh… which is, uh… I think I'll have to implement, like, a sensitive disk.
+
+14:13:17 --> 14:13:18
+LS: Mm-hmm.
+
+14:13:23 --> 14:13:25
+Me: Anyway…
+
+14:13:24 --> 14:13:28
+LS: Okay, you're deciding to go that way? Okay.
+
+14:13:25 --> 14:13:27
+Me: Yeah.
+
+14:13:28 --> 14:13:33
+Me: Because I don't think there is any better way, any other better way to do it.
+
+14:13:28 --> 14:13:29
+LS: Um…
+
+14:13:31 --> 14:13:38
+LS: Yeah, so based on the plot you sent me, I mean, the acceptance is…
+
+14:13:38 --> 14:13:40
+LS: Well…
+
+14:13:43 --> 14:13:45
+LS: It's not as good as I…
+
+14:13:45 --> 14:13:47
+LS: Expected.
+
+14:13:47 --> 14:13:54
+Me: Yeah, so just to be absolutely sure that whatever we are seeing is right.
+
+14:13:53 --> 14:13:55
+LS: Mm-hmm.
+
+14:13:54 --> 14:13:56
+Me: I think I need to do that.
+
+14:13:56 --> 14:13:59
+Me: Because I'm not entirely confident.
+
+14:13:59 --> 14:14:01
+Me: on these things.
+
+14:14:01 --> 14:14:03
+Me: But…
+
+14:14:03 --> 14:14:08
+Me: Because the fraction plots that I sent you, uh, does…
+
+14:14:03 --> 14:14:06
+LS: I mean, I was hoping that, uh…
+
+14:14:06 --> 14:14:08
+LS: Yeah.
+
+14:14:08 --> 14:14:15
+Me: projections, right? So… so it's not, like, something I'm 100% confident about.
+
+14:14:10 --> 14:14:11
+LS: Mm-hmm.
+
+14:14:15 --> 14:14:22
+LS: But the other, I assume for the reaction plot, you have the version, basically you just need the…
+
+14:14:22 --> 14:14:24
+LS: Either range, right.
+
+14:14:24 --> 14:14:34
+LS: You have the error range, and you have the error range of the particle, so it's kind of independent of the…
+
+14:14:25 --> 14:14:26
+Me: Mm-hmm.
+
+14:14:34 --> 14:14:37
+LS: Actual hit position as the surface.
+
+14:14:38 --> 14:14:43
+Me: Uh, yeah, but I'll have to think a little more about it.
+
+14:14:43 --> 14:14:47
+Me: Because the way these ones were generated, the ones I showed you…
+
+14:14:47 --> 14:14:48
+LS: Uh-huh.
+
+14:14:47 --> 14:14:51
+Me: does use, uh, projections.
+
+14:14:54 --> 14:14:58
+Me: Um, no, but yeah, I'll have to check.
+
+14:14:58 --> 14:15:00
+LS: Oh.
+
+14:15:00 --> 14:15:03
+LS: Okay, I would like to do the check, but uh…
+
+14:15:03 --> 14:15:04
+LS: Wow.
+
+14:15:05 --> 14:15:09
+Me: Try to think a little more, like, how else can we…
+
+14:15:06 --> 14:15:16
+LS: Ideally, I would imagine that it's all go back to the MC particle. It's MC particle with a head or without a head.
+
+14:15:16 --> 14:15:24
+LS: that is independent of any projected position at the surface.
+
+14:15:24 --> 14:15:30
+LS: Okay, but I will let you do the check. But my impression is that.
+
+14:15:30 --> 14:15:33
+LS: Again, so I feel it's just a…
+
+14:15:34 --> 14:15:46
+LS: Many local banks, I see the acceptance is only like 0.8 or something.
+
+14:15:47 --> 14:15:49
+LS: That is so.
+
+14:15:49 --> 14:15:51
+Me: Yeah, I spend…
+
+14:15:49 --> 14:15:58
+LS: a lot lower than I expected. I was hoping, like, for a decent design, right, where we have something 95…
+
+14:15:58 --> 14:16:03
+LS: 1999, and there were there could be some local gap.
+
+14:16:03 --> 14:16:07
+LS: But now I didn't really see a pattern. It seems it's everywhere.
+
+14:16:07 --> 14:16:12
+Me: Yeah, I need to probably coarse the binning as well.
+
+14:16:12 --> 14:16:13
+LS: Okay.
+
+14:16:12 --> 14:16:17
+Me: Probably a little too fine. And, you know, those plots are…
+
+14:16:17 --> 14:16:29
+Me: like, you know, very rough, because they're, like, I generated them very quickly right before sending them. But it requires more thoughts, you know, and probably I'll end up.
+
+14:16:29 --> 14:16:37
+Me: Adding a sensitive disk in front of all the disks to make it absolutely list, yeah.
+
+14:16:34 --> 14:16:35
+LS: Okay.
+
+14:16:36 --> 14:16:38
+LS: Sure.
+
+14:16:37 --> 14:16:39
+Me: Because that information…
+
+14:16:39 --> 14:16:41
+Me: It's to be different.
+
+14:16:39 --> 14:16:50
+LS: But otherwise, it sounds like at least one version of the geometry works, right? Do you have that submitted as a PR?
+
+14:16:45 --> 14:16:47
+Me: Yes.
+
+14:16:50 --> 14:16:56
+Me: Oh, I didn't know that I should do that. Should I submit PRs?
+
+14:16:56 --> 14:16:58
+Me: to the main…
+
+14:16:56 --> 14:17:00
+LS: Wait, so which branch you're working on? Is that the same one?
+
+14:17:00 --> 14:17:03
+Me: Silicon Disk Home, yeah.
+
+14:17:01 --> 14:17:04
+LS: Uh, I started…
+
+14:17:03 --> 14:17:05
+Me: Yeah.
+
+14:17:04 --> 14:17:09
+LS: So probably there is already a PR. You just need to, you just need to push.
+
+14:17:10 --> 14:17:13
+LS: You just need to push your update and it will show up.
+
+14:17:13 --> 14:17:26
+Me: Oh, okay, so this is an important thing, though, because, um, my impression was because when I talked to you, like, a couple of months ago, you mentioned that this is something we don't plan to merge with the main EPIC.
+
+14:17:26 --> 14:17:39
+Me: Uh, we, like, right now, we plan to use it to update our designs and stuff. So, has that thing changed? Like, we are now okay to merge this to the main APIC repository?
+
+14:17:39 --> 14:17:43
+LS: Not now, until we've verified the design.
+
+14:17:43 --> 14:17:54
+Me: Oh, but you have a… you are saying that, like, at least keep an… keep a PR up and running? Is that, like, but don't merge it right now kind of situation? Or…
+
+14:17:53 --> 14:17:57
+LS: Correct, because the PR attach, um…
+
+14:17:57 --> 14:18:05
+LS: Once you have the PR up to date, we can see a range of benchmark tests.
+
+14:18:00 --> 14:18:01
+Me: Mmhm.
+
+14:18:05 --> 14:18:08
+LS: That will at least, uh, make sure.
+
+14:18:05 --> 14:18:07
+Me: Oh, so…
+
+14:18:08 --> 14:18:13
+LS: Like, help us confirm that the software-wise, it's okay.
+
+14:18:09 --> 14:18:10
+Me: I see.
+
+14:18:13 --> 14:18:20
+Me: So, when I, uh, yeah, that actually brings me to another question.
+
+14:18:20 --> 14:18:22
+Me: Let me do this.
+
+14:18:23 --> 14:18:31
+Me: Yeah, so here, you know, like, I don't think there is a PR yet, but…
+
+14:18:31 --> 14:18:38
+Me: Uh, whenever I push my code to, like, you know, uh, to remote.
+
+14:18:38 --> 14:18:42
+Me: Right, so, like, basically do this, so it also runs a lot of checks.
+
+14:18:42 --> 14:18:51
+Me: So, but, uh, you're saying some of these are different when I create a PR, because it runs, like, more, uh, CI or something like that.
+
+14:18:50 --> 14:18:58
+LS: I'm not sure what are the checks you're talking about, but I just dropped a link on the chat, which is a draft of the PR.
+
+14:18:59 --> 14:19:01
+Me: Yeah, okay.
+
+14:19:01 --> 14:19:03
+LS: If you click on the link.
+
+14:19:03 --> 14:19:05
+Me: Let me find it.
+
+14:19:04 --> 14:19:07
+LS: I think it does have, um…
+
+14:19:07 --> 14:19:13
+LS: a lot of records from your work. I just do not know how up-to-date that is.
+
+14:19:17 --> 14:19:24
+Me: I don't… I did not, myself, create a PR, so that for… that for this year.
+
+14:19:24 --> 14:19:27
+Me: But let me check when it was created.
+
+14:19:26 --> 14:19:28
+LS: Mmhm.
+
+14:19:28 --> 14:19:29
+Me: Mm-hmm.
+
+14:19:28 --> 14:19:31
+LS: So if you scroll down, you can see the history.
+
+14:19:32 --> 14:19:33
+LS: Scroll down.
+
+14:19:32 --> 14:19:33
+Me: And…
+
+14:19:33 --> 14:19:38
+LS: Those are very old discussions. Go down all the way. Yeah.
+
+14:19:38 --> 14:19:42
+LS: Yeah, so I think the most recent ones are from your…
+
+14:19:42 --> 14:19:45
+LS: PR. So if you scroll up a little bit.
+
+14:19:43 --> 14:19:47
+Me: Oh, I see. I see, I see.
+
+14:19:45 --> 14:19:50
+LS: Yeah, here you go. Those must be your work.
+
+14:19:50 --> 14:19:59
+Me: So here, you see that this, um, uh, these tests that they run, it uses, uh, an older.
+
+14:19:53 --> 14:19:55
+LS: Mm-hmm.
+
+14:19:59 --> 14:20:02
+Me: stable version of Epic.
+
+14:20:02 --> 14:20:05
+LS: Yeah, that's why it failed, don't worry.
+
+14:20:02 --> 14:20:04
+Me: That is a problem.
+
+14:20:05 --> 14:20:10
+Me: Okay, good. I think they should update that, I don't know why they keep using an old one.
+
+14:20:09 --> 14:20:19
+LS: I have no idea. That's the first time I saw that. But if you push, it will show up here, and we will get all the test results.
+
+14:20:10 --> 14:20:12
+Me: And…
+
+14:20:18 --> 14:20:31
+Me: Okay, it's good to know. I didn't know that you already created a PR. So, yeah, so then whenever I am pushing it to remote, and that part is pretty up-to-date, you know, so basically we are running the checks you were mentioning, I think.
+
+14:20:28 --> 14:20:29
+LS: Mm-hmm.
+
+14:20:31 --> 14:20:32
+LS: Mm-hmm.
+
+14:20:32 --> 14:20:47
+Me: Uh, and then, what are the… okay, let me check. Yeah, so this one is their issue. They should use… because I use 26.09, which is the latest in my understanding. And this one, I don't really know what this means.
+
+14:20:48 --> 14:20:50
+Me: So, is this something we'll…
+
+14:20:48 --> 14:20:50
+LS: I will…
+
+14:20:50 --> 14:20:56
+LS: I would suggest still to not look at anything right now because they are probably too old.
+
+14:20:50 --> 14:20:52
+Me: Yes.
+
+14:20:56 --> 14:21:01
+LS: Uh, just to push your latest change, and we start from there.
+
+14:20:56 --> 14:20:58
+Me: Okay.
+
+14:21:01 --> 14:21:10
+Me: This should not be too old, though, because I probably marched things, like, I don't know, 3… 4 days ago, or something like that? I keep…
+
+14:21:03 --> 14:21:05
+LS: It's not?
+
+14:21:05 --> 14:21:07
+LS: Okay.
+
+14:21:08 --> 14:21:11
+LS: I can't tell.
+
+14:21:11 --> 14:21:17
+Me: Yeah, I keep things pretty up-to-date, but I'll do that, because I don't think the latest things are there yet.
+
+14:21:17 --> 14:21:24
+LS: Yeah, I mean, I also, I mean, also you need to push it, right? Instead of a commit, you will need to push.
+
+14:21:24 --> 14:21:26
+LS: Um…
+
+14:21:25 --> 14:21:30
+Me: Yeah, so I think I did on October 16th.
+
+14:21:26 --> 14:21:29
+LS: So I don't know how up to date that is.
+
+14:21:30 --> 14:21:37
+Me: So, and as you know, like, most of the work was done before that, because I was supposed to present, like, a week ago.
+
+14:21:30 --> 14:21:31
+LS: Okay.
+
+14:21:37 --> 14:21:42
+Me: So, it actually has, like, a lot of the changes that's in there.
+
+14:21:37 --> 14:21:39
+LS: Excuse me.
+
+14:21:42 --> 14:21:45
+Me: So, but definitely does not have everything.
+
+14:21:42 --> 14:21:44
+LS: Interesting.
+
+14:21:45 --> 14:21:46
+Me: But, yeah.
+
+14:21:46 --> 14:21:56
+LS: Okay, let me see. It's probably because it's more than one week, I cannot restart the check.
+
+14:21:57 --> 14:22:02
+LS: Yeah, just do another push which will trigger all the benchmarks.
+
+14:21:59 --> 14:22:00
+Me: Yeah.
+
+14:22:01 --> 14:22:04
+Me: Yes, I can do that.
+
+14:22:03 --> 14:22:09
+LS: The annoying thing is that they only keep most of the result for…
+
+14:22:09 --> 14:22:18
+LS: I forgot, 3 days or so, and deleted. So if you push it to today, let me know, so I will have to… we will have to take a look, like, tomorrow before you disappear.
+
+14:22:18 --> 14:22:25
+Me: Uh, oh, you mean the test results? Like, results, like, outcomes from the test? Okay.
+
+14:22:22 --> 14:22:24
+LS: Correct. Yeah.
+
+14:22:25 --> 14:22:26
+LS: Yeah.
+
+14:22:26 --> 14:22:31
+Me: Yeah, sure. Uh, I'll let you know as soon as I create a… make a push.
+
+14:22:31 --> 14:22:33
+LS: Mm-hmm.
+
+14:22:32 --> 14:22:34
+Me: Sounds good.
+
+14:22:35 --> 14:22:38
+Me: Alright, yeah, thank you for letting me know that.
+
+14:22:39 --> 14:22:40
+Me: Mm-hmm.
+
+14:22:45 --> 14:22:51
+Me: Yeah, so everything about RSCU, opt, design.
+
+14:22:45 --> 14:22:47
+LS: Okay, that's it. Uh-huh.
+
+14:22:51 --> 14:22:52
+LS: Uh-huh.
+
+14:22:51 --> 14:23:03
+Me: Oh, so, yeah, so that EIC data thing, is it okay if, um, we take care of… take care of that, like, later? Uh, just keep it in the EIC epic right now?
+
+14:23:03 --> 14:23:05
+LS: And.
+
+14:23:06 --> 14:23:09
+LS: Did you? Is that part of your commit?
+
+14:23:09 --> 14:23:11
+Me: Yes.
+
+14:23:11 --> 14:23:12
+LS: Oh.
+
+14:23:12 --> 14:23:17
+Me: Because you need those, otherwise you can't build a geometry.
+
+14:23:14 --> 14:23:17
+LS: Yeah, yeah, let me think.
+
+14:23:18 --> 14:23:24
+LS: Yeah, let's just do whatever you already have.
+
+14:23:24 --> 14:23:26
+LS: Uh, there were a couple…
+
+14:23:26 --> 14:23:28
+LS: Yeah, but it doesn't matter.
+
+14:23:28 --> 14:23:32
+Me: They… oh, but I don't think you're gonna…
+
+14:23:31 --> 14:23:34
+LS: Don't worry, don't worry. We were fine. We will be fine.
+
+14:23:32 --> 14:23:38
+Me: merge the PR soon, right? I don't think you're gonna merge… yeah, then who will complain?
+
+14:23:34 --> 14:23:37
+LS: No, now, um…
+
+14:23:37 --> 14:23:39
+LS: No. Mm-hmm.
+
+14:23:38 --> 14:23:41
+Me: Yeah. Okay, sounds good.
+
+14:23:41 --> 14:23:45
+Me: Alright, thank you so much. I'll keep you posted.
