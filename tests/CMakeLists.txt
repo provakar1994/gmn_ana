@@ -11,6 +11,7 @@ SET(tests
   test_gmn_extraction
   test_ff_fits
   test_gmn_module
+  test_eloss_tgt
 )
 
 foreach(t ${tests})

@@ -1103,13 +1103,16 @@ namespace util_pd {
   }
   //______________________________________________________________________________
   void GetElossInTgt(std::string const target, // Target type
-		     int const rnum,            // Run number
 		     int const sbsconf,         // SBS configuration
 		     double const vz,           // m, vertex z co-ordinate
 		     double const etheta,       // rad, scattering angle
+		     expconst::ShieldType const shield, // Shield beside the scattering chamber
 		     int const verbose,         // verbosity
 		     std::vector<double> &data) // Output: data[0]=>before scattering, data[1]=>after scattering,
-  /* Calculates energy loss in the target before and after scattering */
+  /* Calculates energy loss in the target before and after scattering.
+     The shield is an explicit input so that MC (where it is set by the g4sbs geometry,
+     not by a run number) is corrected exactly like data. Data use the run-number
+     overload below, which picks the shield and calls this function. */
   {
     // for efficiency and brevity
     bool is_lh2 = 1 ? target.compare("LH2")==0 : 0;
@@ -1149,21 +1152,9 @@ namespace util_pd {
     if (vz_scaled<0) vz_scaled = 0.; // upstream of the tg 
     else if (vz_scaled>expconst::tgtlen) vz_scaled = expconst::tgtlen; //dwnstream of the tg
       
-    // Scattering chamber shielding 
-    /* NOTE: 
-       1. Additional shielding beside the scattering chamber was installed during SBS11 to reduce 
-       background rates in the front tracker (I think).
-       2. Initially, Bogdan just put a 10mm plastic shielding leaning on the scattering chamber!
-       Bogdan did that on 12/04/2021 at 18:20. https://logbooks.jlab.org/entry/3956556
-       First run after the installation: 12556
-       - Andrew suggested to assume the material to be acrylic or polyethylene. I am going with
-       polyethylene (PE). 
-       3. Then on 12/08/2021, Andrew (tech) replaced the plastic shielding with a permanent 1/8th
-       inch thick Al shield. https://logbooks.jlab.org/entry/3958901 
-       First run after the installation: 12675
-    */
-    bool PE_shield_in = (rnum<12556 || rnum>=12675) ? false : true;
-    bool Al_shield_in = rnum<12675 ? false : true;
+    // Scattering chamber shielding (see the run-number overload below for its history)
+    bool PE_shield_in = (shield == expconst::ShieldType::kPE);
+    bool Al_shield_in = (shield == expconst::ShieldType::kAl);
 
     double Eloss_bs = vz_scaled*tgt_rho*tgt_dEdx_bs + tgt_uwinthick*expconst::Al_Rho*Al_dEdx_bs;
     double Eloss_as = tgt_celldiam/2.0/sin(etheta)*tgt_rho*tgt_dEdx_as + tgt_cellthick/sin(etheta)*expconst::Al_Rho*Al_dEdx_as;
@@ -1186,6 +1177,36 @@ namespace util_pd {
       std::cout << Form("Plastic shield in place = %d, Al shield in place = %d \n",PE_shield_in,Al_shield_in);
       std::cout << Form("Mean energy loss (MeV) %.1f (before), %.1f (after) \n",Eloss_bs*1E3,Eloss_as*1E3);
     }
+  }
+  //______________________________________________________________________________
+  void GetElossInTgt(std::string const target, // Target type
+		     int const rnum,            // Run number
+		     int const sbsconf,         // SBS configuration
+		     double const vz,           // m, vertex z co-ordinate
+		     double const etheta,       // rad, scattering angle
+		     int const verbose,         // verbosity
+		     std::vector<double> &data) // Output: data[0]=>before scattering, data[1]=>after scattering,
+  /* Calculates energy loss in the target before and after scattering for a data run.
+     The shield in place is deduced from the run number. */
+  {
+    // Scattering chamber shielding
+    /* NOTE:
+       1. Additional shielding beside the scattering chamber was installed during SBS11 to reduce
+       background rates in the front tracker (I think).
+       2. Initially, Bogdan just put a 10mm plastic shielding leaning on the scattering chamber!
+       Bogdan did that on 12/04/2021 at 18:20. https://logbooks.jlab.org/entry/3956556
+       First run after the installation: 12556
+       - Andrew suggested to assume the material to be acrylic or polyethylene. I am going with
+       polyethylene (PE).
+       3. Then on 12/08/2021, Andrew (tech) replaced the plastic shielding with a permanent 1/8th
+       inch thick Al shield. https://logbooks.jlab.org/entry/3958901
+       First run after the installation: 12675
+    */
+    expconst::ShieldType shield = expconst::ShieldType::kNone;
+    if (rnum >= expconst::firstrun_Al_shield) shield = expconst::ShieldType::kAl;
+    else if (rnum >= expconst::firstrun_PE_shield) shield = expconst::ShieldType::kPE;
+
+    GetElossInTgt(target, sbsconf, vz, etheta, shield, verbose, data);
   }
   //______________________________________________________________________________
   double Luminosity(double ibeam,           // beam current in A
