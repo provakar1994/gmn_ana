@@ -1,0 +1,14 @@
+{
+    "SBS_config"         : 4,
+    "SBS_magnet_percent" : 0,
+    "HCALheight_offset"  : 0,
+    "Ntype"              : "p",
+    "rootfile_dir"       : "/lustre19/expphy/volatile/halla/sbs/sbs-gmn/GMN_REPLAYS/pass0/SBS4/LH2/rootfiles",
+    "runnums"            : [11573,11587,11588],
+    "model"              : 1,
+    "h_eHCAL_lims"       : [220, 0, 2.2],
+    "h_pN_lims"          : [80, 1, 9],
+    "global_cut"         : ""
+}
+
+# This is a config file for hcal_det_effi_data.cpp script.

@@ -1,0 +1,24 @@
+{
+    "qelas":
+    {
+	"parent_config"     : "sbs11-sbs100p/conf_fit_dx.json",
+	"parent_config_key" : "qelas",
+	"has_beamcurr_cut"  : 0,
+	"runs_to_exclude"   : [0,12359],
+	"h_yield_range_hi"  : 6E3,
+	"h_stats_range_hi"  : 6E2,
+	"outfile_prefix"    : "",
+	"README"            : "06/27/24"
+    },
+    "elas":
+    {
+	"parent_config"     : "sbs11-sbs100p/conf_fit_dx.json",
+	"parent_config_key" : "elas",
+	"has_beamcurr_cut"  : 0,
+	"runs_to_exclude"   : [0,12358],
+	"h_yield_range_hi"  : 6E3,
+	"h_stats_range_hi"  : 6E2,
+	"outfile_prefix"    : "",
+	"README"            : "06/27/24"
+    }    
+}
