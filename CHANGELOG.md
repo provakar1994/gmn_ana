@@ -76,3 +76,7 @@
 ## 2026-10-29 17:00
 - **Files:** `scripts/gmn_extraction/README.md`
 - **Change:** Add an "Open items" section listing the to-dos of the GMn extraction: the truly TPE-uncorrected Ye fit (and its errors / data-tension term), regenerating R with the fixed `fit_dx.cpp` (the rescaled `scripts/lta/results_RMCfix.csv` is used until then), filling the `Cut V` systematic, and possibly splitting pCS/GEn into normalization + point-to-point parts.
+
+## 2026-11-01 07:50
+- **Files:** `CLAUDE.md`
+- **Change:** Add `CLAUDE.md` to the repository, with a new "Coordination with the MC consistency audit (../MC)" section: data/MC consistency tasks come as specs in `../MC/handoff/`, open items live in `../MC/CONSISTENCY_TODO.md`, and decisions are recorded in `../MC/AUDIT_REPORT.md`. The section also sets the rules for reporting back (status line + dated Findings entry only).
