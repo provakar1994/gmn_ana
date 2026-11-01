@@ -5,7 +5,7 @@
 	"SBS_config"         : 4,
 	"SBS_magnet_percent" : 50,
 	"prefix_to_filebase" : ["OTm3_0p65sf"],
-	"Njobs_to_ana"       : -1,
+	"Njobs_to_ana"       : 1,
 	"rootfile_dir"       : "/lustre24/expphy/volatile/halla/sbs/sbs-gmn/MC/pass4/sbs4/sbs50p/neen",
 	"global_cut"         : "abs(bb.tr.vz[0])<0.15&&bb.tr.p[0]>1.6&&bb.ps.e>0.2",
 	"dy_offset"          : 0,
@@ -27,7 +27,7 @@
 	"NOTE"               : "verbose=0 & verbosefn=0 => Production; verbose<-1=>Debug, =-1=>Test; verbosefn>0=>Debug",
 	"verbose"            : -1,
 	"verbose_function"   : 0,
-	"outfile_prefix"     : "neen_mcp4_OTm3_0p65sf",
+	"outfile_prefix"     : "test_neen_mcp4_OTm3_0p65sf",
 	"README"             : "07/28/26"
     },    
     "simc_heep_model1":

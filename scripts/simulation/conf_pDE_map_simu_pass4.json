@@ -73,7 +73,57 @@
 	"h_yexp_fitR"          : [-0.4,0.55],
 	"h_w2_lim"             : [200,-0.5,2.5],
 	"NOTE"                 : ""
-    },    
+    },
+    "prod_sbs9_sbs_OFF":
+    {
+	"SBS_config"           : 9,
+	"SBS_magnet_percent"   : 70,
+	"model"                : 1,
+	"generator"            : "simc",
+	"simu_file_prefix"     : "sbs_OFF_bsf_mcp4_OT0_0p67sf",
+	"outfile_prefix"       : "",
+	"global_cut"           : "abs(vz)<0.065&&trchi2ndf<15&&nhitsGEM>3&&abs(fpX-0.9*fpTh)<0.25",
+	"w2_cut"               : "W2>0.65&&W2<0.95",
+	"SM_cut_x"             : "xHCAL_exp-p_def>-1.5&&xHCAL_exp-p_def<0",
+	"SM_cut_y"             : "yHCAL_exp>-0.35&&yHCAL_exp<0.25",
+	"harm_cut"             : "thpq_p<0.04&&eHCAL>0",
+	"-\/ FIDU CUT SECTION" : "--\/-- Forming Custom Fiducial Cut ------",
+	"apply_fidu_cut"       : 0,
+	"AR_width_x_y"         : [1,1],
+	"SM_width_xp_xn_y"     : [0.19,0.19,0.24],
+	"--"                   : "",
+	"h_xexp_lim"           : [104,-3.5,2],
+	"h_xexp_fitR"          : [-0.7,0.8],
+	"h_yexp_lim"           : [59,-1.5,1.5],
+	"h_yexp_fitR"          : [-0.35,0.25],
+	"h_w2_lim"             : [200,-0.5,2.5],
+	"NOTE"                 : ""
+    },            
+    "prod_sbs9_force_n":
+    {
+	"SBS_config"           : 9,
+	"SBS_magnet_percent"   : 70,
+	"model"                : 1,
+	"generator"            : "simc",
+	"simu_file_prefix"     : "force_n_bsf_mcp4_OT0_0p67sf",
+	"outfile_prefix"       : "",
+	"global_cut"           : "abs(vz)<0.065&&trchi2ndf<15&&nhitsGEM>3&&abs(fpX-0.9*fpTh)<0.25",
+	"w2_cut"               : "W2>0.65&&W2<0.95",
+	"SM_cut_x"             : "xHCAL_exp-p_def>-1.5&&xHCAL_exp-p_def<0",
+	"SM_cut_y"             : "yHCAL_exp>-0.35&&yHCAL_exp<0.25",
+	"harm_cut"             : "thpq_p<0.04&&eHCAL>0",
+	"-\/ FIDU CUT SECTION" : "--\/-- Forming Custom Fiducial Cut ------",
+	"apply_fidu_cut"       : 0,
+	"AR_width_x_y"         : [1,1],
+	"SM_width_xp_xn_y"     : [0.19,0.19,0.24],
+	"--"                   : "",
+	"h_xexp_lim"           : [104,-3.5,2],
+	"h_xexp_fitR"          : [-0.7,0.8],
+	"h_yexp_lim"           : [59,-1.5,1.5],
+	"h_yexp_fitR"          : [-0.35,0.25],
+	"h_w2_lim"             : [200,-0.5,2.5],
+	"NOTE"                 : ""
+    },        
     "prod_sbs9_neen":
     {
 	"SBS_config"           : 9,
@@ -178,6 +228,56 @@
 	"sbs100p"              : "rcOT0_0p77zoff_0p91396sf",
 	"sbs70p"               : "rcOT0_0p77zoff_0p63797sf"
     },
+    "prod":
+    {
+	"SBS_config"           : 14,
+	"SBS_magnet_percent"   : 70,
+	"model"                : 1,
+	"generator"            : "simc",
+	"simu_file_prefix"     : "sbs_OFF_bsf_mcp4_OT0_0p674sf",
+	"outfile_prefix"       : "",
+	"global_cut"           : "abs(vz)<0.065&&trchi2ndf<15&&nhitsGEM>3&&abs(fpX-0.9*fpTh)<0.25",
+	"w2_cut"               : "W2>0.7&&W2<0.95",
+	"SM_cut_x"             : "xHCAL_exp-p_def>-1.4&&xHCAL_exp-p_def<0",
+	"SM_cut_y"             : "yHCAL_exp>-0.3&&yHCAL_exp<0.4",
+	"harm_cut"             : "thpq_p<0.03&&eHCAL>0",
+	"-\/ FIDU CUT SECTION" : "--\/-- Forming Custom Fiducial Cut ------",
+	"apply_fidu_cut"       : 0,
+	"AR_width_x_y"         : [1,1],
+	"SM_width_xp_xn_y"     : [0.19,0.19,0.24],
+	"--"                   : "",
+	"h_xexp_lim"           : [104,-3.5,2],
+	"h_xexp_fitR"          : [-0.5,0.7],
+	"h_yexp_lim"           : [59,-1.5,1.5],
+	"h_yexp_fitR"          : [-0.3,0.4],
+	"h_w2_lim"             : [200,-0.5,2.5],
+	"NOTE"                 : ""
+    },        
+    "prod_sbs14_force_n":
+    {
+	"SBS_config"           : 14,
+	"SBS_magnet_percent"   : 70,
+	"model"                : 1,
+	"generator"            : "simc",
+	"simu_file_prefix"     : "force_n_bsf_mcp4_OT0_0p674sf",
+	"outfile_prefix"       : "",
+	"global_cut"           : "abs(vz)<0.065&&trchi2ndf<15&&nhitsGEM>3&&abs(fpX-0.9*fpTh)<0.25",
+	"w2_cut"               : "W2>0.7&&W2<0.95",
+	"SM_cut_x"             : "xHCAL_exp-p_def>-1.4&&xHCAL_exp-p_def<0",
+	"SM_cut_y"             : "yHCAL_exp>-0.3&&yHCAL_exp<0.4",
+	"harm_cut"             : "thpq_p<0.03&&eHCAL>0",
+	"-\/ FIDU CUT SECTION" : "--\/-- Forming Custom Fiducial Cut ------",
+	"apply_fidu_cut"       : 0,
+	"AR_width_x_y"         : [1,1],
+	"SM_width_xp_xn_y"     : [0.19,0.19,0.24],
+	"--"                   : "",
+	"h_xexp_lim"           : [104,-3.5,2],
+	"h_xexp_fitR"          : [-0.5,0.7],
+	"h_yexp_lim"           : [59,-1.5,1.5],
+	"h_yexp_fitR"          : [-0.3,0.4],
+	"h_w2_lim"             : [200,-0.5,2.5],
+	"NOTE"                 : ""
+    },    
     "prod_sbs14_neen":
     {
 	"SBS_config"           : 14,
@@ -278,7 +378,7 @@
 	"h_w2_lim"             : [200,-0.5,2.5],
 	"NOTE"                 : ""
     },
-    "prod":
+    "prod_sbs11_neen":
     {
 	"SBS_config"           : 11,
 	"SBS_magnet_percent"   : 100,
