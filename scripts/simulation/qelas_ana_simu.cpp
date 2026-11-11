@@ -420,8 +420,13 @@ int qelas_ana_simu (const char *configfilename,
       GlobalCut->UpdateFormulaLeaves();
       
       // getting normalization factors per job
+      // The file name must match a job from the summary exactly. A silent miss
+      // would give zero lumi/ebeam and hence zero weights, so stop instead.
       const char* rftemp = C->GetFile()->GetName();
-      SimuJob sjtemp = mnorm[rftemp];
+      auto itjob = mnorm.find(rftemp);
+      if (itjob == mnorm.end())
+	throw std::runtime_error(Form("No job summary entry for ROOT file: %s", rftemp));
+      SimuJob sjtemp = itjob->second;
       ebeam = sjtemp.ebeam; charge = sjtemp.charge;
       lumi = sjtemp.lumi; mc_omega = sjtemp.genvol; 
       if (is_simcdeeN) {

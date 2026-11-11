@@ -88,3 +88,7 @@
 ## 2026-11-11 13:25
 - **Files:** `scripts/simulation/eloss_check_simu.cpp`
 - **Change:** New MC check for the MC consistency audit (M2): measures p_recon − p_true for the BB e- track (`bb.tr.p[0]` − `MC.mc_ep`, the momentum g4sbs launches at the vertex) and compares its peak, overall and vs reconstructed vz and e- angle, with the outgoing energy loss of the data model (`GetElossInTgt`: target+chamber dT, Al shield dS). Purpose: confirm that the MC BB optics (fit to the true vertex momentum on e-gun events with target and chamber but no shield, `scripts/pcalib/Optics_GEN.C`) already absorbs dT, so the MC analysis must add back only the shield loss, while data (calibrated to the momentum arriving at BigBite) adds back dT + dS. Uses the existing `*_ana_simu` config blocks; no weights (detector response only).
+
+## 2026-11-11 15:53
+- **Files:** `scripts/simulation/elas_ana_simu.cpp`, `scripts/simulation/qelas_ana_simu.cpp`
+- **Change:** When a new ROOT file is opened in the event loop, its per-job normalization (ebeam, charge, lumi, genvol, RS max weight) is now looked up with `find` and the macro stops with an error naming the file if there is no matching job-summary entry. Before, `mnorm[name]` silently created an all-zero `SimuJob` for an unmatched name, which would give zero weights for that whole file with no warning. No change in results when names match (checked that `TChain::GetFile()->GetName()` returns exactly the path given to `TChain::Add`).
