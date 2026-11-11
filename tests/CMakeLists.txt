@@ -12,6 +12,7 @@ SET(tests
   test_ff_fits
   test_gmn_module
   test_eloss_tgt
+  test_load_simu_tree
 )
 
 foreach(t ${tests})

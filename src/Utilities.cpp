@@ -1,5 +1,6 @@
 #include "../include/Utilities.h"
 
+#include <memory>
 #include <filesystem>
 
 namespace util_pd {
@@ -1004,6 +1005,19 @@ namespace util_pd {
     njobs = sjobs.size();
   }
   //______________________________________________________________________________
+  Long64_t GetTreeEntries(std::string const &rfname,  // ROOT file name with path
+			  std::string const &treename) // name of the tree
+  /* Returns the number of entries of tree <treename> in file <rfname>, or -1 if the
+     file is missing, cannot be opened (e.g. corrupted) or has no such tree. */
+  {
+    std::unique_ptr<TFile> f(TFile::Open(rfname.c_str(), "READ"));
+    if (!f || f->IsZombie()) return -1;
+    TTree *T = nullptr;
+    f->GetObject(treename.c_str(), T);
+    if (!T) return -1;
+    return T->GetEntries();
+  }
+  //______________________________________________________________________________
   void LoadSimuROOTTree(std::vector<SimuJob>& sjobs,  // SimuJob objects with run info
 			int verbose,                  // verbosity
 			TChain* &C)
@@ -1018,19 +1032,40 @@ namespace util_pd {
 
     std::vector<SimuJob> goodjobs;
     goodjobs.reserve(sjobs.size());
+    int nskipped = 0, nlow = 0;
 
     for (auto &job : sjobs) {
 
       if (verbose > 1)
 	std::cout << job.rfname << std::endl;
 
-      if (C->Add(job.rfname.c_str(), 0)) {
-	goodjobs.push_back(job);
-      } else {
-	std::cerr << "Skipping invalid ROOT file: "
-		  << job.rfname << std::endl;
+      // Open the file once to read the number of entries in its tree. A job is
+      // kept only if this works and the tree is not empty. Bad files must be
+      // caught here: a file cannot be taken out of a TChain once added.
+      Long64_t const nentries = GetTreeEntries(job.rfname, C->GetName());
+      if (nentries <= 0) {
+	std::cerr << "Skipping job, "
+		  << (nentries == 0 ? "empty tree" : "missing/unreadable file or no tree")
+		  << ": " << job.rfname << std::endl;
+	nskipped++;
+	continue;
       }
+
+      // Much fewer events than requested may mean the job died partway. The job
+      // is kept (some shortfall is normal), but flagged for a look.
+      if (nentries < kMinEntriesFracOfNgenreq*job.ngenreq) {
+	std::cerr << "Warning: only " << nentries << " of " << job.ngenreq
+		  << " requested events in: " << job.rfname << std::endl;
+	nlow++;
+      }
+
+      // Passing the known entry count stops TChain from opening the file again
+      C->Add(job.rfname.c_str(), nentries);
+      goodjobs.push_back(job);
     }
+
+    std::cout << "Kept " << goodjobs.size() << " of " << sjobs.size() << " jobs ("
+	      << nskipped << " skipped, " << nlow << " kept with few events)." << std::endl;
 
     sjobs = std::move(goodjobs);
 

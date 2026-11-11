@@ -178,7 +178,22 @@ namespace util_pd {
 			  int verbose,               // verbosity
 			  std::vector<SimuJob> &sjobs);   // Output: Vector of SimuJob objects
 
-  void LoadSimuROOTTree(std::vector<SimuJob>& sjobs,  // SimuJob objects with run info
+  /* Returns # entries of tree <treename> in file <rfname>; -1 if the file is
+     missing/unreadable or has no such tree */
+  Long64_t GetTreeEntries(std::string const &rfname,    // ROOT file name with path
+			  std::string const &treename); // name of the tree
+
+  /* A replayed MC file whose tree T has fewer than this fraction of the requested
+     events (SimuJob::ngenreq) gets a warning in LoadSimuROOTTree. Some shortfall is
+     normal: g4sbs only writes events with at least one detector hit. A much larger
+     shortfall may mean the job died partway, so the file is worth a look. */
+  double const kMinEntriesFracOfNgenreq = 0.5;
+
+  /* Adds the replayed ROOT file of every job to the TChain and removes from sjobs
+     every job whose file is missing, unreadable, has no tree T, or has an empty T.
+     Totals for normalization (e.g. GetTotNtriesnCh) must be computed from sjobs
+     AFTER this call, so that dropped jobs do not count. */
+  void LoadSimuROOTTree(std::vector<SimuJob>& sjobs,  // In/Out: SimuJob objects with run info; bad jobs removed
 			int verbose,                 // verbosity
 			TChain* &C);                 // Output: TChain with data
 
