@@ -204,7 +204,17 @@ namespace util_pd {
 		       std::string process,        // Input: Reaction process
 		       std::vector<long double> &data); // Output: data[0]=>Tot. Ntries, data[1]=>Tot. Charge
 
-  /* Calculates mean energy loss in the target before and after scattering  */
+  /* Calculates mean energy loss in the target before and after scattering,
+     for a given shield beside the scattering chamber (used for MC) */
+  void GetElossInTgt(std::string const target,  // Target type
+		     int const sbsconf,         // SBS configuration
+		     double const vz,           // m, vertex z co-ordinate
+		     double const etheta,       // rad, scattering angle
+		     expconst::ShieldType const shield, // Shield beside the scattering chamber
+		     int const verbose,         // verbosity
+		     std::vector<double> &data);// Output: data[0]=>before scattering, data[1]=>after scattering,
+
+  /* Same as above, but the shield is deduced from the run number (used for data) */
   void GetElossInTgt(std::string const target,  // Target type
 		     int const rnum,            // Run number
 		     int const sbsconf,         // SBS configuration

@@ -115,6 +115,11 @@ namespace expconst {
   // Al shield near scattering chamber (Installed during SBS-11). See Utilities::GetElossInTgt for more info.
   static const double Al_Rho = dummy_TgtRho;     //g/cc (assuming Al 7075 is used by default for JLab stuff)
   static const double Al_ShieldThick = 2.54/8.0; //cm, 1/8th inch
+  // First run numbers with each shield in place (SBS-11). See Utilities::GetElossInTgt for more info.
+  static const int firstrun_PE_shield = 12556;   // PE shield installed (12/04/2021)
+  static const int firstrun_Al_shield = 12675;   // PE replaced by the permanent Al shield (12/08/2021)
+  // Shield beside the scattering chamber (on the BigBite side) seen by the scattered e-
+  enum class ShieldType { kNone, kPE, kAl };
   //static const double Al_dEdx = 0.0021;          //GeV*cm2/g, collisional stopping power (1-4GeV energy), NIST ESTAR 
 
   // Following quantities vary with configuration
