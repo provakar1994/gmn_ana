@@ -119,9 +119,9 @@ constant `max_wt_RS`. Weight histograms with `weight` (shapes, absolute MC yield
 at the true expected HCAL position, relative to its average 0.9485. The efficiency comes from the map
 `h2_effi_map` of `pDE_map.cpp` (SBS-8 LH2, all fields, pass 3). Its file is set by the named constant
 `kHCALEffiMapFile` at the top of both scripts:
-`../pdout/pDE/0p77zoff_pDE_data_sbs8_sbs-1p_model1_pass3.root`, relative to `scripts/simulation/`,
-i.e. `scripts/pdout/pDE/`. That file must exist there (make it with `pDE_map.cpp`, see
-[./05_checks.md](./05_checks.md)) or the macro stops.
+`../pDEmap/0p77zoff_pDE_data_sbs8_sbs-1p_model1_pass3.root`, relative to `scripts/simulation/`,
+i.e. `scripts/pDEmap/`, where the map is tracked in git (how it was made: see
+[./05_checks.md](./05_checks.md)). The macro stops if the file is missing.
 
 ### MC-specific `Tout` branches (in addition to the data branches of stage 3)
 

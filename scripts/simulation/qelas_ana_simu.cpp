@@ -39,8 +39,9 @@ static const std::string target = "LD2";
 /* HCAL proton detection efficiency map (h2_effi_map) measured with SBS-8 LH2 data by
    pDE_map.cpp. It gives the per-event efficiency correction stored in weight_effic and
    weight_norm_effic. The path is relative to the working directory of this macro
-   (scripts/simulation/), i.e. it points to scripts/pdout/pDE/. */
-static const std::string kHCALEffiMapFile = "../pdout/pDE/0p77zoff_pDE_data_sbs8_sbs-1p_model1_pass3.root";
+   (scripts/simulation/), i.e. it points to scripts/pDEmap/, where the map used for the
+   analysis is kept under version control (see the CHANGELOG for how it was made). */
+static const std::string kHCALEffiMapFile = "../pDEmap/0p77zoff_pDE_data_sbs8_sbs-1p_model1_pass3.root";
 
 int qelas_ana_simu (const char *configfilename, 
 		    int model=2, //Analysis model

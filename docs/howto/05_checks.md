@@ -137,8 +137,11 @@ region), `harm_cut`, histogram ranges/fit ranges `h_xexp_*`, `h_yexp_*`, `h_w2_l
 (with `h2_effi_map`), `.pdf` and `_1.._4.png`. Note that there is no `_` between `outfile_prefix` and `data_file_prefix`.
 **Feeds:** `weight_effic` in `elas_ana_simu.cpp` / `qelas_ana_simu.cpp`. They read the SBS-8 LH2
 all-field map from the file named by the constant `kHCALEffiMapFile`,
-`../pdout/pDE/0p77zoff_pDE_data_sbs8_sbs-1p_model1_pass3.root` relative to `scripts/simulation/`, i.e.
-`scripts/pdout/pDE/` (a run with an empty `outfile_prefix`). It must exist there, or the MC macros stop. Data/MC efficiency comparison with `pDE_map_simu.cpp`.
+`../pDEmap/0p77zoff_pDE_data_sbs8_sbs-1p_model1_pass3.root` relative to `scripts/simulation/`, i.e.
+`scripts/pDEmap/`. That copy is tracked in git so the MC weights are reproducible. It was made with the
+`prod_sbs8` block of `configs/conf_pDE_map_pass3.json` with `data_file_prefix` = `bsf_0p77zoff` and an
+empty `outfile_prefix`, from `pdout/bsf_0p77zoff_elas_ana_data_sbs8_sbs-1p_model1_pass3.root`. To
+update it, rerun `pDE_map.cpp` and copy the output (renamed to the name above) into `scripts/pDEmap/`. Data/MC efficiency comparison with `pDE_map_simu.cpp`.
 **Notes:** Produce the combined SBS-8 (and SBS-4) `sbs-1p` input file first. It is made with `hadd` of the
 per-field `elas_ana_data` outputs. The fiducial safety-margin
 widths drawn on the map are hard-coded (`SM_w{0.22,0.22,0.27}`).
