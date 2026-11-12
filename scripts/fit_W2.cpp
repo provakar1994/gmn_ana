@@ -73,6 +73,44 @@ void customize_W2(TH1F* h)
   h->GetXaxis()->SetTitle("W^{2} (GeV^{2})");
 }
 
+// Path of a simulation analysis output (Tout) for a given file prefix.
+std::string SimuFileName(std::string const &prefix, char const *process, std::string const &gen,
+			 int conf, int sbsmag, int model)
+{
+  std::string pre = prefix.empty() ? "" : prefix + "_";
+  return Form("simulation/siout/%s%s_ana_%s_sbs%d_sbs%dp_model%d.root",
+	      pre.c_str(), process, gen.c_str(), conf, sbsmag, model);
+}
+
+// MC W2 histograms from a weighted mix of simulation files (a single file is a mix with weight 1).
+// Each file is filled with its per-event "weight", which is already normalized by that sample's own
+// number of generated events, so the mix weights are simply the fractions of the mix (e.g. the
+// charge fractions of the shield-on and shield-off periods at SBS-11).
+// One histogram is returned per entry of extra_cuts (applied on top of base_cut), all filled in one
+// pass over each file. W2 is shifted by W2_off before filling.
+std::vector<TH1F*> MixedSimuW2Hists(std::vector<std::string> const &files, std::vector<double> const &mix_weights,
+				    std::string const &base_cut, std::vector<std::string> const &extra_cuts,
+				    std::vector<std::string> const &names, double W2_off, std::vector<double> const &hbin)
+{
+  std::vector<TH1F*> hsum;
+  for (size_t ih=0; ih<names.size(); ih++) {
+    hsum.push_back(new TH1F(names[ih].c_str(), "", int(hbin[0]), hbin[1], hbin[2]));
+    hsum.back()->Sumw2();
+  }
+  std::string W2_shifted = "W2+" + std::to_string(W2_off);
+  for (size_t ifile=0; ifile<files.size(); ifile++) {
+    ROOT::RDataFrame rdf("Tout", files[ifile]);
+    auto rdf_cut = rdf.Filter(base_cut).Define("W2_shifted", W2_shifted.c_str());
+    // book all histograms first so the file is read only once
+    std::vector<ROOT::RDF::RResultPtr<TH1D>> booked;
+    for (size_t ih=0; ih<names.size(); ih++)
+      booked.push_back(rdf_cut.Filter(extra_cuts[ih])
+		       .Histo1D({Form("%s_f%zu",names[ih].c_str(),ifile), "", int(hbin[0]), hbin[1], hbin[2]}, "W2_shifted", "weight"));
+    for (size_t ih=0; ih<names.size(); ih++) hsum[ih]->Add(booked[ih].GetPtr(), mix_weights[ifile]);
+  }
+  return hsum;
+}
+
 void customize_ht(TH1F* h) 
 {
   h->SetLineColor(kBlue);
@@ -114,9 +152,23 @@ int fit_W2 (const char *configfilename,
   std::string dfprefix = jmgr->GetValueFromSubKey_str(key,"data_file_prefix");
   std::string sfprefix = jmgr->GetValueFromSubKey_str(key,"simu_file_prefix");
   dfprefix = dfprefix.empty() ? "" : dfprefix + "_";
-  sfprefix = sfprefix.empty() ? "" : sfprefix + "_";
-  // char const * dfp = dfprefix.empty() ? "" : (dfprefix + "_").c_str();
-  // char const * sfp = sfprefix.empty() ? "" : (sfprefix + "_").c_str();
+
+  // MC signal sample: by default the single file given by simu_file_prefix. Optionally a weighted
+  // mix of several files (e.g. SBS-11: Al-shield + no-shield MC, weighted by the charge fractions):
+  //   "simu_mix_prefixes": ["<prefix 1>", "<prefix 2>"], "simu_mix_weights": [w1, w2]
+  // If present, these override simu_file_prefix.
+  std::vector<std::string> simu_prefixes; jmgr->GetVectorFromSubKey<std::string>(key,"simu_mix_prefixes",simu_prefixes);
+  std::vector<double> simu_mix_weights; jmgr->GetVectorFromSubKey<double>(key,"simu_mix_weights",simu_mix_weights);
+  if (simu_prefixes.empty()) { simu_prefixes = {sfprefix}; simu_mix_weights = {1.}; }
+  if (simu_prefixes.size() != simu_mix_weights.size()) {
+    std::cerr << "[fit_W2] simu_mix_prefixes and simu_mix_weights must have the same length!\n";
+    return 1;
+  }
+  std::vector<std::string> simu_files;
+  for (auto const &p : simu_prefixes) simu_files.push_back(SimuFileName(p,process,gen,conf,sbsmag,model));
+
+  // MC background (inelastic) file for canvas 3, relative to simulation/siout/
+  std::string inel_file = "simulation/siout/" + jmgr->GetValueFromSubKey_str(key,"inel_file");
 
   // defining output files
   TString outFile = Form("%s_sbs%d_sbs%dp_model%d.root",filebase.c_str(),conf,sbsmag,model);
@@ -124,15 +176,10 @@ int fit_W2 (const char *configfilename,
   // reading ROOT files as df
   ROOT::EnableImplicitMT();
   ROOT::RDataFrame data_rdf("Tout",Form("pdout/%s%s_ana_data_sbs%d_sbs%dp_model%d_pass%d.root",dfprefix.c_str(),process,conf,sbsmag,model,pass));
-  ROOT::RDataFrame simu_rdf("Tout",Form("simulation/siout/%s%s_ana_%s_sbs%d_sbs%dp_model%d.root",sfprefix.c_str(),process,gen.c_str(),conf,sbsmag,model));
-  //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/inel_gen_elas_ana_g4sbs_sbs4_sbs0p_model2.root"));
-  //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/inel_ld2_g4sbs_sbs4_sbs50p_model2.root"));
-  //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/1p27zoff_1p0sf_inel_qelas_ana_g4sbs_sbs11_sbs100p_model2.root"));
-  //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/1p27zoff_0p97sf_inel_qelas_ana_g4sbs_sbs11_sbs100p_model2.root")); // for aps25
-  ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/mcp3_0p97sf_inel_qelas_ana_g4sbs_sbs11_sbs100p_model2.root")); // for aps25  
-  //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/0p815sf_inel_qelas_ana_g4sbs_sbs7_sbs85p_model2.root"));
-  //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/1p13zoff_0p674sf_inel_qelas_ana_g4sbs_sbs14_sbs70p_model2.root"));
-  //ROOT::RDataFrame inel_rdf("Tout",Form("simulation/siout/PD_0p7zoff_0p657sf_inel_qelas_ana_g4sbs_sbs9_sbs70p_model2.root"));
+  ROOT::RDataFrame inel_rdf("Tout",inel_file);
+  std::cout << "\nMC signal sample:\n";
+  for (size_t i=0; i<simu_files.size(); i++) std::cout << Form("  weight %.3f : %s\n", simu_mix_weights[i], simu_files[i].c_str());
+  std::cout << "MC background: " << inel_file << "\n";
 
   // Applying cuts
   std::string cuts_for_inclusive_W2 = jmgr->GetValueFromSubKey_str(key,"cuts_for_inclusive_W2");
@@ -143,7 +190,6 @@ int fit_W2 (const char *configfilename,
   std::string coinT_cut = jmgr->GetValueFromSubKey_str(key,"coinT_cut");
   int Opoly = jmgr->GetValueFromSubKey<int>(key,"Order_of_poly_bg");
   auto data_rdf_filtered = data_rdf.Filter(cuts_for_signal_data);
-  auto simu_rdf_filtered_1 = simu_rdf.Filter(cuts_for_signal_simu);
   auto inel_rdf_filtered_1 = inel_rdf.Filter(cuts_for_bg_simu);
   auto bg_rdf_filtered = data_rdf.Filter(cuts_for_bg_data);
   // Applying offsets
@@ -152,9 +198,7 @@ int fit_W2 (const char *configfilename,
   // define the offset values
   double W2_off_MC_sig = is_vary_W2Off ? 0 : jmgr->GetValueFromSubKey<double>(key,"W2_peakOff_for_MC_sig");
   double W2_off_MC_bg = is_vary_W2Off ? 0 : jmgr->GetValueFromSubKey<double>(key,"W2_peakOff_for_MC_bg");
-  std::string W2_shifted_MC_sig = "W2+" + std::to_string(W2_off_MC_sig);
   std::string W2_shifted_MC_bg = "W2+" + std::to_string(W2_off_MC_bg);
-  auto simu_rdf_filtered = simu_rdf_filtered_1.Define("W2_shifted",W2_shifted_MC_sig.c_str());
   auto inel_rdf_filtered = inel_rdf_filtered_1.Define("W2_shifted",W2_shifted_MC_bg.c_str());
 
 
@@ -163,9 +207,13 @@ int fit_W2 (const char *configfilename,
   TH1F *h_W2_data_raw = (TH1F*)data_rdf.Filter(cuts_for_inclusive_W2).Histo1D({"h_W2_data_raw","",int(h_W2[0]),h_W2[1],h_W2[2]},"W2")->Clone();
   TH1F *h_W2_data = (TH1F*)data_rdf_filtered.Histo1D({"h_W2_data","",int(h_W2[0]),h_W2[1],h_W2[2]},"W2")->Clone();
   TH1F *h_W2_data_CT = (TH1F*)data_rdf_filtered.Filter(coinT_cut.c_str()).Histo1D({"h_W2_data_CT","",int(h_W2[0]),h_W2[1],h_W2[2]},"W2")->Clone();
-  TH1F *h_W2_simu = (TH1F*)simu_rdf_filtered.Histo1D({"h_W2_simu","",int(h_W2[0]),h_W2[1],h_W2[2]},"W2_shifted","weight")->Clone();
-  TH1F *h_W2_simu_p = (TH1F*)simu_rdf_filtered.Filter("mc_fnucl==1").Histo1D({"h_W2_simu_p","",int(h_W2[0]),h_W2[1],h_W2[2]},"W2_shifted","weight")->Clone();
-  TH1F *h_W2_simu_n = (TH1F*)simu_rdf_filtered.Filter("mc_fnucl==0").Histo1D({"h_W2_simu_n","",int(h_W2[0]),h_W2[1],h_W2[2]},"W2_shifted","weight")->Clone();
+  // MC signal: all, proton only, neutron only (weighted mix if several files are given)
+  std::vector<TH1F*> h_simu = MixedSimuW2Hists(simu_files, simu_mix_weights, cuts_for_signal_simu,
+					       {"true","mc_fnucl==1","mc_fnucl==0"},
+					       {"h_W2_simu","h_W2_simu_p","h_W2_simu_n"}, W2_off_MC_sig, h_W2);
+  TH1F *h_W2_simu = h_simu[0];
+  TH1F *h_W2_simu_p = h_simu[1];
+  TH1F *h_W2_simu_n = h_simu[2];
   TH1F *h_W2_inel = (TH1F*)inel_rdf_filtered.Histo1D({"h_W2_inel","",int(h_W2[0]),h_W2[1],h_W2[2]},"W2_shifted","weight")->Clone();
   TH1F *h_W2_bg = (TH1F*)bg_rdf_filtered.Histo1D({"h_W2_bg","",int(h_W2[0]),h_W2[1],h_W2[2]},"W2")->Clone();
 
@@ -294,6 +342,13 @@ int fit_W2 (const char *configfilename,
   h_W2_data_raw->SetStats(0); //[IMPORTANT!]
   h_W2_data_raw->GetXaxis()->SetTitle("W^{2} (GeV^{2})");
   h_W2_data_raw->GetXaxis()->CenterTitle();
+
+  // save all canvases to one PDF: <filebase>_sbs<conf>_sbs<mag>p_model<model>.pdf
+  TString pdfFile = outFile; pdfFile.ReplaceAll(".root",".pdf");
+  c0->Print(pdfFile + "[");
+  for (TCanvas *c : {c0, c1, c2, c3}) c->Print(pdfFile);
+  c3->Print(pdfFile + "]");
+  std::cout << "Canvases saved to " << pdfFile << "\n";
 
   return 0;
 }
