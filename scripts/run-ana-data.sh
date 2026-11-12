@@ -1,7 +1,14 @@
 #!/bin/bash
 
-export GMN_ANA=/u/home/pdbforce/gmn_ana
-ROOTLOGON_ENV='/home/pdbforce/install_el9/runenv/rootlogon.C'
+# Location of this repository and of the installed rootlogon.C (loads the gmnana library).
+# Set GMN_ANA / ROOTLOGON_ENV in your environment before submitting (sbatch passes the
+# environment to the job); the defaults below are the original author's ifarm setup.
+export GMN_ANA=${GMN_ANA:-/u/home/pdbforce/gmn_ana}
+ROOTLOGON_ENV=${ROOTLOGON_ENV:-/home/pdbforce/install_el9/runenv/rootlogon.C}
+if [[ ! -d $GMN_ANA/scripts || ! -r $ROOTLOGON_ENV ]]; then
+    echo "ERROR: GMN_ANA ($GMN_ANA) or ROOTLOGON_ENV ($ROOTLOGON_ENV) not found" >&2
+    exit 1
+fi
 
 process=$1
 conf=$2
@@ -28,9 +35,9 @@ module load analyzer/1.7.12
 cd $GMN_ANA/scripts
 
 if [[ "$process" == "qelas" ]]; then
-    analyzer -b -q $ROOTLOGON_ENV ''$process'_ana_data.cpp("sbs'$conf'-sbs'$field'p/conf_'$process'_ana_data.json","'$target'",'$pass','$model')'
+    analyzer -b -q $ROOTLOGON_ENV ''$process'_ana_data.cpp("configs/sbs'$conf'-sbs'$field'p/conf_'$process'_ana_data.json","'$target'",'$pass','$model')'
 else
-    analyzer -b -q $ROOTLOGON_ENV ''$process'_ana_data.cpp("sbs'$conf'-sbs'$field'p/conf_'$process'_ana_data.json",'$pass','$model')'
+    analyzer -b -q $ROOTLOGON_ENV ''$process'_ana_data.cpp("configs/sbs'$conf'-sbs'$field'p/conf_'$process'_ana_data.json",'$pass','$model')'
 fi
 
 #sbatch --mem-per-cpu=2000 run-ana-data.sh elas 11 100 pass model

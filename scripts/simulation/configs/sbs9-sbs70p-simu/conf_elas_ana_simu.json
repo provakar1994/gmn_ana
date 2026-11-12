@@ -1,5 +1,5 @@
 {
-    "simc_heep_model1":
+    "simc_heep_model1_sbs_OFF":
     {
 	"Ntype"              : "p",
 	"SBS_config"         : 9,
@@ -92,7 +92,7 @@
 	"outfile_prefix"     : "neen_mcp4_OTm3_0p67sf",
 	"README"             : ""
     },            	
-    "simc_heep_model1_original":
+    "simc_heep_model1":
     {
 	"Ntype"              : "p",
 	"SBS_config"         : 9,

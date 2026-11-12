@@ -1,5 +1,5 @@
 {
-    "simc_deeN_model2":
+    "simc_deeN_model2_noshield":
     {
 	"Ntype"              : "np",
 	"SBS_config"         : 11,
@@ -34,7 +34,7 @@
 	"outfile_prefix"     : "noshield_bsf_mcp4_OT0nm3_0p97sf",
 	"COMMENTS"           : ""
     },    
-    "simc_deeN_model2_w_shield":
+    "simc_deeN_model2":
     {
 	"Ntype"              : "np",
 	"SBS_config"         : 11,

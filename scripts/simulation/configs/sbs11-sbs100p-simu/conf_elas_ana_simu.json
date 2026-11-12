@@ -30,7 +30,7 @@
 	"outfile_prefix"     : "neen_mcp4_OTm3_0p97sf",
 	"README"             : ""
     },
-    "simc_heep_model1":
+    "simc_heep_model1_noshield":
     {
 	"Ntype"              : "p",
 	"SBS_config"         : 11,
@@ -61,7 +61,7 @@
 	"outfile_prefix"     : "noshield_bsf_mcp4_OT0_0p97sf",
 	"README"             : ""
     },                
-    "simc_heep_model1_w_shield":
+    "simc_heep_model1":
     {
 	"Ntype"              : "p",
 	"SBS_config"         : 11,

@@ -36,10 +36,17 @@
 /* this script will only analyze LD2 data */
 static const std::string target = "LD2";
 
+/* HCAL proton detection efficiency map (h2_effi_map) measured with SBS-8 LH2 data by
+   pDE_map.cpp. It gives the per-event efficiency correction stored in weight_effic and
+   weight_norm_effic. The path is relative to the working directory of this macro
+   (scripts/simulation/), i.e. it points to scripts/pdout/pDE/. */
+static const std::string kHCALEffiMapFile = "../pdout/pDE/0p77zoff_pDE_data_sbs8_sbs-1p_model1_pass3.root";
+
 int qelas_ana_simu (const char *configfilename, 
 		    int model=2, //Analysis model
 		    std::string generator="simc",
-		    std::string process="deeN")
+		    std::string process="deeN",
+		    std::string variant="") // optional: selects config block <generator>_<process>_model<model>_<variant>
 {
   gErrorIgnoreLevel = kError; // Ignores all ROOT warnings
 
@@ -48,7 +55,10 @@ int qelas_ana_simu (const char *configfilename,
 
   // reading input config file ---------------------------------------
   JSONManager *jmgr = new JSONManager(configfilename);
+  // Config block to read: <generator>_<process>_model<model>, plus "_<variant>" for a
+  // non-default sample of the same process (e.g. variant "noshield" for SBS-11).
   std::string key = generator + "_" + process + "_model" + std::to_string(model);
+  if (!variant.empty()) key += "_" + variant;
   bool const is_simc = generator.compare("simc")==0;
     
   // setting verbosity
@@ -157,7 +167,7 @@ int qelas_ana_simu (const char *configfilename,
   // Reading in HCAL efficiency map
   double avg_effi = 0.9485; //error weighted average of x and y efficiency
   //TFile *fEffi = util_pd::ReadRootFile("~/gmn_ana/scripts/pdout/pDE/finebin_0p77zoff_pDE_data_sbs8_sbs-1p_model1_pass3.root");
-  TFile *fEffi = util_pd::ReadRootFile("~/gmn_ana/scripts/pdout/pDE/0p77zoff_pDE_data_sbs8_sbs-1p_model1_pass3.root");  
+  TFile *fEffi = util_pd::ReadRootFile(kHCALEffiMapFile.c_str());  
   TH1F *h2_effi_map = (TH1F*)fEffi->Get("h2_effi_map");  
 
   // defining the outputfile
@@ -645,6 +655,7 @@ int qelas_ana_simu (const char *configfilename,
     double proton_thetabend = 0.3 * BdL / PNprime.Vect().Mag();  // p*theta = 0.3*BdL
     double proton_deflection = tan(proton_thetabend)*(sbsconf.GetHCALdist()+hcal_zoffset-(sbsconf.GetSBSdist()+expconst::sbsdipolegap/2.0));
     T_p_def = proton_deflection;
+    T_xHCAL_exp_p = xyHCAL_exp[0]-T_p_def; // expected x of a proton (after SBS deflection); needs T_p_def of this event
     TVector3 p_dir = (HCAL_pos + proton_deflection*HCAL_axes[0] - vertex);
     T_thpq_p = acos(p_dir.Unit().Dot(pNhat));
 

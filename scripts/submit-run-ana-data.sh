@@ -13,9 +13,9 @@ if [[ "$process" == "elas" ]]; then
 fi
 jobname=data_${process}_sbs${conf}_f${field}p_${target}_pass${pass}_model${model}
 
-# optional: log directory
+# log directory (sbatch fails if it does not exist)
 logdir=slurm_out
-#mkdir -p "$logdir"
+mkdir -p "$logdir"
 
 sbatch \
   --job-name="$jobname" \
