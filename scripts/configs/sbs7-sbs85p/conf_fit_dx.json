@@ -12,7 +12,7 @@
 	"inel_file_prefix"     : "bsf_mcp4_0p815sf",
 	"-\/ SYS STD SECTION"  : "--\/-- Selecting Options for Sys Study: Prod=>1,0nm3,1 ------",	
 	"apply_nblkHCAL>1_cut" : 1,
-	"RC_prescription"      : "m3",
+	"RC_prescription"      : "0nm3",
 	"use_effi_corr"        : 1,		
 	"-\/ FIDU CUT SECTION" : "--\/-- Forming Custom Fiducial Cut ------",
 	"use_custom_fiduCut"   : 0,

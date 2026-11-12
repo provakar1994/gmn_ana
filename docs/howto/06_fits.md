@@ -71,7 +71,7 @@ root -l -b -q 'fit_dx.cpp("configs/sbs4-sbs30p/conf_fit_dx.json", 0)'
 | `data_file_prefix` | data file `pdout/<prefix>_qelas_ana_data_sbs<conf>_sbs<mag>p_model<model>_pass<pass>.root` |
 | `simu_file_prefix` | MC signal file `simulation/siout/<prefix>_qelas_ana_<generator>_sbs<conf>_sbs<mag>p_model<model>.root`; a `%s` in it is replaced by `RC_prescription` |
 | `inel_file_prefix` | inelastic MC `simulation/siout/<prefix>_inel_qelas_ana_g4sbs_sbs<conf>_sbs<mag>p_model<model>.root` |
-| `RC_prescription` | radiative-correction variant of the SIMC sample, filled into the file names. The config comment says production is `0nm3` ("Prod=>1,0nm3,1" means nblk cut 1, RC 0nm3, effi corr 1), and `m3` is the "OTm3" variant. **Most configs are currently left at `m3`**, so check this before a production run |
+| `RC_prescription` | radiative-correction variant of the SIMC sample, filled into the file names. The config comment says production is `0nm3` ("Prod=>1,0nm3,1" means nblk cut 1, RC 0nm3, effi corr 1), and `m3` is the "OTm3" variant. `0nm3` = SIMC d(e,e'p) generated with `OT0` and d(e,e'n) with `OTm3` (the deen sample exists only as `OTm3`). Production configs are set to `0nm3`; set `m3` only for the RC systematic run |
 | `use_effi_corr` | 1: weight MC with `weight_effic` (includes the HCAL efficiency correction); 0: plain `weight` |
 | `use_norm_weight` | 1: use the charge-normalized `*_norm` weights (normally 0) |
 | `apply_nblkHCAL>1_cut` | appends `nblkHCAL>1` to all signal/bg cuts (production: 1) |
