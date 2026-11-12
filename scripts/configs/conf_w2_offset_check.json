@@ -1,0 +1,106 @@
+{
+"common":
+{
+    "data_dir"           : "pdout",
+    "simu_dir"           : "simulation/siout",
+    "out_dir"            : "simulation/siout/w2_offset_check",
+    "out_file_base"      : "w2_offset_check_pass4",
+    "thpq_p_cut"         : 0.01,
+    "vz_cut"             : 0.07,
+    "coinT_window"       : 3.0,
+    "NOTEs"              : ["Checks the MC W2_offset with LH2 strict elastics: data W2 peak vs the zero-offset MC (MC W2 minus the offset baked into the file).",
+			    "Cuts: thpq_p < thpq_p_cut, eHCAL > eHCAL_min (per setting), bbfiduCut, |vz| < vz_cut; data also |coinT - peak| < coinT_window (ns).",
+			    "Data and MC files are the elas_ana_data / elas_ana_simu outputs (Tout). Run from the scripts/ directory."]
+},
+"settings": ["sbs4_0p", "sbs4_30p", "sbs4_50p", "sbs9_70p", "sbs8_0p", "sbs8_50p", "sbs8_70p", "sbs8_100p", "sbs14_70p", "sbs7_85p", "sbs11_100p"],
+"sbs4_0p":
+{
+    "data_file"    : "bsf_0p65zoff_elas_ana_data_sbs4_sbs0p_model1_pass3.root",
+    "data_run_cut" : "true",
+    "simu_files"   : ["bsf_mcp4_OT0_elas_ana_simc_sbs4_sbs0p_model1.root"],
+    "simu_weights" : [1.0],
+    "eHCAL_min"    : 0.05
+},
+"sbs4_30p":
+{
+    "data_file"    : "bsf_0p65zoff_elas_ana_data_sbs4_sbs30p_model1_pass3.root",
+    "data_run_cut" : "true",
+    "simu_files"   : ["bsf_mcp4_OT0_0p39sf_elas_ana_simc_sbs4_sbs30p_model1.root"],
+    "simu_weights" : [1.0],
+    "eHCAL_min"    : 0.05
+},
+"sbs4_50p":
+{
+    "data_file"    : "bsf_0p65zoff_elas_ana_data_sbs4_sbs50p_model1_pass3.root",
+    "data_run_cut" : "true",
+    "simu_files"   : ["bsf_mcp4_OT0_0p65sf_elas_ana_simc_sbs4_sbs50p_model1.root"],
+    "simu_weights" : [1.0],
+    "eHCAL_min"    : 0.05
+},
+"sbs9_70p":
+{
+    "data_file"    : "bsf_0p7zoff_elas_ana_data_sbs9_sbs70p_model1_pass3.root",
+    "data_run_cut" : "true",
+    "simu_files"   : ["bsf_mcp4_OT0_0p67sf_elas_ana_simc_sbs9_sbs70p_model1.root"],
+    "simu_weights" : [1.0],
+    "eHCAL_min"    : 0.07
+},
+"sbs8_0p":
+{
+    "data_file"    : "bsf_0p77zoff_elas_ana_data_sbs8_sbs-1p_model1_pass3.root",
+    "data_run_cut" : "rnum>=13459&&rnum<=13466",
+    "simu_files"   : ["bsf_mcp4_OT0_elas_ana_simc_sbs8_sbs0p_model1.root"],
+    "simu_weights" : [1.0],
+    "eHCAL_min"    : 0.07,
+    "NOTE"         : "SBS-8 0p/50p/100p LH2 data exist only in the combined sbs-1p file; runs from DB/good_runList_GMn_nTPE_LH2_pass_3.csv."
+},
+"sbs8_50p":
+{
+    "data_file"    : "bsf_0p77zoff_elas_ana_data_sbs8_sbs-1p_model1_pass3.root",
+    "data_run_cut" : "rnum==13580",
+    "simu_files"   : ["bsf_mcp4_OT0_0p44981sf_elas_ana_simc_sbs8_sbs50p_model1.root"],
+    "simu_weights" : [1.0],
+    "eHCAL_min"    : 0.07
+},
+"sbs8_70p":
+{
+    "data_file"    : "bsf_0p77zoff_elas_ana_data_sbs8_sbs70p_model1_pass3.root",
+    "data_run_cut" : "true",
+    "simu_files"   : ["bsf_mcp4_OT0_0p63797sf_elas_ana_simc_sbs8_sbs70p_model1.root"],
+    "simu_weights" : [1.0],
+    "eHCAL_min"    : 0.07
+},
+"sbs8_100p":
+{
+    "data_file"    : "bsf_0p77zoff_elas_ana_data_sbs8_sbs-1p_model1_pass3.root",
+    "data_run_cut" : "rnum>=13537&&rnum<=13543",
+    "simu_files"   : ["bsf_mcp4_OT0_0p91396sf_elas_ana_simc_sbs8_sbs100p_model1.root"],
+    "simu_weights" : [1.0],
+    "eHCAL_min"    : 0.07
+},
+"sbs14_70p":
+{
+    "data_file"    : "bsf_1p13zoff_elas_ana_data_sbs14_sbs70p_model1_pass3.root",
+    "data_run_cut" : "true",
+    "simu_files"   : ["bsf_mcp4_OT0_0p674sf_elas_ana_simc_sbs14_sbs70p_model1.root"],
+    "simu_weights" : [1.0],
+    "eHCAL_min"    : 0.12
+},
+"sbs7_85p":
+{
+    "data_file"    : "bsf_0p925zoff_elas_ana_data_sbs7_sbs85p_model1_pass3.root",
+    "data_run_cut" : "true",
+    "simu_files"   : ["bsf_mcp4_OT0_0p815sf_elas_ana_simc_sbs7_sbs85p_model1.root"],
+    "simu_weights" : [1.0],
+    "eHCAL_min"    : 0.15
+},
+"sbs11_100p":
+{
+    "data_file"    : "bsf_1p27zoff_elas_ana_data_sbs11_sbs100p_model1_pass3.root",
+    "data_run_cut" : "true",
+    "simu_files"   : ["bsf_mcp4_OT0_0p97sf_elas_ana_simc_sbs11_sbs100p_model1.root", "noshield_bsf_mcp4_OT0_0p97sf_elas_ana_simc_sbs11_sbs100p_model1.root"],
+    "simu_weights" : [0.607, 0.393],
+    "eHCAL_min"    : 0.2,
+    "NOTE"         : "MC = charge-weighted mix of the Al-shield (0.607) and no-shield (0.393) samples (MC audit M4/M5); one offset for the mix."
+}
+}
