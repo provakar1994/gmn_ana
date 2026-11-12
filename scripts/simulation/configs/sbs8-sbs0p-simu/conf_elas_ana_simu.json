@@ -9,7 +9,7 @@
 	"rootfile_dir"       : "/lustre24/expphy/volatile/halla/sbs/sbs-gmn/MC/pass4/sbs8/sbs0p/lh2/heep",
 	"global_cut"         : "bb.tr.n>0&&abs(bb.tr.vz[0])<.08&&bb.gem.track.nhits>2&&bb.ps.e>0.2&&bb.tr.p[0]>2.9",
 	"dy_offset"          : 0,
-	"W2_offset"          : -0.0837,
+	"W2_offset"          : -0.0742,
 	"W2_cutR"            : [0.25,1.2],
 	"bbfidu_cutR"        : [-0.035,0.345],
 	"max_N_tracks"       : 250,

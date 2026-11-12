@@ -292,3 +292,11 @@ fits). With only a few widely separated Q² points, it is not clear how correlat
 - [ ] **Fill the `Cut V` systematic** (empty in `results.csv`, read as 0 with a warning).
 - [ ] **Possibly split pCS and GEn** into a normalization plus a point-to-point part (J. Arrington's
       suggestion; see "Possible improvement"), if their impact matters for the global fit.
+- [ ] **(Deferred) W² data−MC shift depends on the BigBite acceptance** (found 2026-11-12, LH2 strict
+      elastics). The shift needed to match the data W² peak changes across vertex z, e-θ and e-φ: at
+      SBS-8 70p from −0.015 (vz = −0.06 m) to −0.093 (vz = +0.06 m) and from +0.01 to −0.11 across θ_e;
+      the MC peak barely moves with vz, the data peak does. SBS-4 shows the same pattern about 3× smaller.
+      A single W2_offset per setting is therefore an acceptance average, which is why it changes with the
+      SBS field at fixed beam energy. Not studied further because p and n are selected from the same
+      electron-arm acceptance, so the effect should largely cancel in R_n/p; revisit if the W2-offset
+      systematic turns out non-negligible. Slice numbers: the 2026-11-12 W2-offset study notes.
