@@ -30,6 +30,15 @@ Guidance for Claude Code when working in this repository.
 - Add **ample comments**: explain the purpose of each function/block, the physics meaning of cuts and variables, and any non-obvious logic.
 - Follow coding best practices: descriptive names, small focused functions, no magic numbers (use named constants or config entries), no duplicated code, and consistency with the style of surrounding code.
 
+## Kinematic settings
+- **Ordering:** always list settings by Q² — SBS-4, 9, 8, 14, 7, 11 — and, within a setting, the SBS
+  field settings in ascending order (e.g. sbs8: 0p, 50p, 70p, 100p). Apply this to config lists and
+  blocks, tables, CSV rows, plots and reports.
+- **Production (GMn) settings:** SBS-4 30p/50p, SBS-9 70p, SBS-8 70p, SBS-14 70p, SBS-7 85p, SBS-11 100p.
+  Only the LD2 data of these settings enter the GMn results.
+- **SBS-8** is formally an nTPE point, not GMn; its LD2 data are analyzed mainly as a check. Its LH2 data
+  are very important, especially for the HCAL neutron detection efficiency (NDE) analysis.
+
 ## Repository layout
 - `gmn_ana/` is the repository base; all paths below are relative to it.
 - `include/`, `src/` — shared library code (headers and implementations).
