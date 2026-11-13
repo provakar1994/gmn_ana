@@ -116,7 +116,7 @@ If the SIMC sample was generated with rejection sampling (`using_RS` = 1), σ_ev
 constant `max_wt_RS`. Weight histograms with `weight` (shapes, absolute MC yield) or `weight_norm`.
 
 `weight_effic` / `weight_norm_effic` = the same weights multiplied by the data proton detection efficiency
-at the true expected HCAL position, relative to its average 0.9485. The efficiency comes from the map
+at the true expected HCAL position, relative to its average (named constant `kHCALAvgEffi` = 0.9517, the mean of the map's constant fits vs x and vs y; update it together with the map). The efficiency comes from the map
 `h2_effi_map` of `pDE_map.cpp` (SBS-8 LH2, all fields, pass 3). Its file is set by the named constant
 `kHCALEffiMapFile` at the top of both scripts:
 `../pDEmap/0p77zoff_pDE_data_sbs8_sbs-1p_model1_pass3.root`, relative to `scripts/simulation/`,

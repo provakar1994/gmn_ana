@@ -42,6 +42,12 @@ static const std::string target = "LH2";
    (scripts/simulation/), i.e. it points to scripts/pDEmap/, where the map used for the
    analysis is kept under version control (see the CHANGELOG for how it was made). */
 static const std::string kHCALEffiMapFile = "../pDEmap/0p77zoff_pDE_data_sbs8_sbs-1p_model1_pass3.root";
+/* Average HCAL proton detection efficiency of the map above: mean of the pol0 fits of the
+   efficiency vs x (h_xexp_pDE, -2.2 < x < 1 m) and vs y (h_yexp_pDE, -0.5 < y < 0.5 m) stored in
+   the same file (0.9518 and 0.9516). weight_effic = weight * map(x,y) / kHCALAvgEffi, so the
+   efficiency correction only reshapes the MC and does not change its overall normalization.
+   It must be updated together with kHCALEffiMapFile (the pass-2 map gave 0.9485). */
+static const double kHCALAvgEffi = 0.9517;
 
 int elas_ana_simu (const char *configfilename, 
 		    int model=1, //Analysis model
@@ -159,7 +165,6 @@ int elas_ana_simu (const char *configfilename,
   C->SetBranchStatus("bb.etot_over_p", 1);
 
   // Reading in HCAL efficiency map
-  double avg_effi = 0.9485; //error weighted average of x and y efficiency
   TFile *fEffi = util_pd::ReadRootFile(kHCALEffiMapFile.c_str());
   TH1F *h2_effi_map = (TH1F*)fEffi->Get("h2_effi_map");
   
@@ -600,8 +605,7 @@ int elas_ana_simu (const char *configfilename,
     T_yHCAL_exp_t = xyHCAL_exp_t[1];
     // Get the efficiency correction value
     int effibin = h2_effi_map->FindBin(T_yHCAL_exp_t, T_xHCAL_exp_t-T_p_def);
-    //T_effi_corr = h2_effi_map->GetBinContent(effibin)/avg_effi;
-    double effi_corr = h2_effi_map->GetBinContent(effibin)/avg_effi;
+    double effi_corr = h2_effi_map->GetBinContent(effibin)/kHCALAvgEffi;
     // updating weight factors accordingly
     weight_effic = weight*effi_corr;
     weight_norm_effic = weight_norm*effi_corr;

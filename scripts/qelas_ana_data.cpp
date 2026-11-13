@@ -957,7 +957,10 @@ int qelas_ana_data (const char *configfilename,
     // T_ToF_n = ToF_n*1e9; //ns
 
     // HCAL active area and safety margin cuts [Fiducial region]
-    ARCut = cut::inHCAL_activeA(xHCAL,yHCAL,hcal_active_area);
+    // ARCut uses the selected (in-time) cluster position T_xHCAL/T_yHCAL, the same cluster that
+    // gives dx, dy and eHCAL (as in elas_ana_data.cpp). It used the default highest-energy cluster
+    // (xHCAL,yHCAL) before 2026-11-12, which disagreed for 0.3-7% of signal-like events.
+    ARCut = cut::inHCAL_activeA(T_xHCAL,T_yHCAL,hcal_active_area);
     SMCut = cut::inHCAL_safety_margin(target,xyHCAL_exp[0],xyHCAL_exp[1],T_p_def,hcal_safety_margin);
     fiduCut = ARCut && SMCut; 
     // defining HCAL cuts

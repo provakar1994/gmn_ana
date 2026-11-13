@@ -28,6 +28,11 @@
 #include "../include/gmn_ana.h"
 #include "../dflay/src/JSONManager.cxx"
 
+/* Polynomial order of the background in fit 3 (data = N*(MC p + R*MC n) + polynomial). Fit 3 with
+   a 2nd-order polynomial is the PRODUCTION fit (central R). The config key "Order_of_poly_bg" only
+   sets the polynomial order of fit 5 (a systematic variation) and of the elastic-mode fit, not this one. */
+static const int kProdBgPolyOrder = 2;
+
 //______________________________________________________________________________
 bool isSubstringPresent(const std::string &mainString, const std::string &subString)
 {
@@ -383,7 +388,7 @@ int fit_dx(const char *configfilename,
   std::string cuts_for_bg_simu = cuts_for_signal_simu;
   std::string coinT_cut = jmgr->GetValueFromSubKey_str(key, "coinT_cut");
   bool is_vary_cut = jmgr->GetValueFromSubKey<int>(key, "is_vary_cut");
-  int Opoly = jmgr->GetValueFromSubKey<int>(key, "Order_of_poly_bg");
+  int Opoly = jmgr->GetValueFromSubKey<int>(key, "Order_of_poly_bg"); // order of QE fit 5 and of the elastic-mode poly fit; QE fit 3 uses kProdBgPolyOrder
   auto data_rdf_filtered = data_rdf.Filter(cuts_for_signal_data);
   auto simu_rdf_filtered = simu_rdf.Filter(cuts_for_signal_simu);
   auto inel_rdf_filtered = inel_rdf.Filter(cuts_for_bg_simu);
@@ -1034,6 +1039,7 @@ int fit_dx(const char *configfilename,
       ## Fitting elastic dx distributions ##
       ###################################### */
     std::vector<double> R_vals, Rerr_vals, chi2, NDF, B_vals, Berr_vals;
+    double B7b = 0., B7berr = 0.; // fit 7: scale of its 2nd background (randoms), written as B7b
     std::vector<double> pCnt, pCnt_err, nCnt, nCnt_err, bgCnt, bgCnt_err;
     if (is_elastic)
     {
@@ -1330,6 +1336,7 @@ int fit_dx(const char *configfilename,
                 << "chi25,NDF5,R5,R5err,B5,B5err,Yp5,Yp5err,Yn5,Yn5err,Ybg5,Ybg5err,"
                 << "chi26,NDF6,R6,R6err,B6,B6err,Yp6,Yp6err,Yn6,Yn6err,Ybg6,Ybg6err,"
                 << "chi27,NDF7,R7,R7err,B7,B7err,Yp7,Yp7err,Yn7,Yn7err,Ybg7,Ybg7err,"
+                << "B7b,B7berr,"  // appended last so that all earlier column positions are unchanged
                 << "\n";
       }
 
@@ -1605,13 +1612,13 @@ int fit_dx(const char *configfilename,
       if (is_vary_pnXOff)
       {
         f3 = fit::fit_2hs_1pbg_THI_xOffVary(dx_fit_range,
-                                            h_dxHCAL_data, h_dxHCAL_simu_p, h_dxHCAL_simu_n, 2, pnXOff_range, setpars3,
+                                            h_dxHCAL_data, h_dxHCAL_simu_p, h_dxHCAL_simu_n, kProdBgPolyOrder, pnXOff_range, setpars3,
                                             ho3);
       }
       else
       {
         f3 = fit::fit_2hs_1pbg_THI(dx_fit_range,
-                                   h_dxHCAL_data, h_dxHCAL_simu_p, h_dxHCAL_simu_n, 2, setpars3,
+                                   h_dxHCAL_data, h_dxHCAL_simu_p, h_dxHCAL_simu_n, kProdBgPolyOrder, setpars3,
                                    ho3);
       }
       if (i > 0 && abs(f3->GetParameter(1)) < 10)
@@ -1765,7 +1772,7 @@ int fit_dx(const char *configfilename,
       pCnt.push_back(yo4[0]);
       pCnt_err.push_back(yo4[1]);
       nCnt.push_back(yo4[2]);
-      nCnt_err.push_back(yo4[4]);
+      nCnt_err.push_back(yo4[3]);
       bgCnt.push_back(yo4[4]);
       bgCnt_err.push_back(yo4[5]);
       // redrawing the stat box
@@ -2123,8 +2130,12 @@ int fit_dx(const char *configfilename,
       NDF.push_back(f7->GetNDF());
       R_vals.push_back(f7->GetParameter(1));
       Rerr_vals.push_back(f7->GetParError(1));
-      B_vals.push_back(f7->GetParameter(2));
+      B_vals.push_back(f7->GetParameter(2));  // B7 = scale of the inelastic-MC background (B1)
       Berr_vals.push_back(f7->GetParError(2));
+      // B7b = scale of the random (anti-dt) background, the 4th parameter of fit_2hs_3hbg_THI.
+      // The xOffVary variant has no randoms template, so B7b = 0 there.
+      B7b = is_vary_pnXOff ? 0. : f7->GetParameter(3);
+      B7berr = is_vary_pnXOff ? 0. : f7->GetParError(3);
       // converting fit fn to a hostogram
       TH1F *hf7 = (TH1F *)h_dxHCAL_data->Clone();
       util_pd::TF1toTH1F(f7, hf7);
@@ -2223,6 +2234,7 @@ int fit_dx(const char *configfilename,
         }
       }
       // outdata << Form("%.0f,%.0f,%.0f,%.0f,%.0f,%.0f",yo2[0],yo2[1],yo2[2],yo2[3],yo2[4],yo2[5]);
+      outdata << Form("%.4f,%.4f,", B7b, B7berr);
       outdata << "\n";
       std::cout << "\n------\n";
 
@@ -2265,7 +2277,7 @@ int fit_dx(const char *configfilename,
       c7->Update();
       c7->Write();
       c7->SaveAs(Form("%s", outPlot.Data()));
-      c7->SaveAs(Form("%s_6.png", outFileBase.Data()));
+      c7->SaveAs(Form("%s_7.png", outFileBase.Data()));
       if (i == iter - 1)
         c7->SaveAs(Form("%s]", outPlot.Data()));
     } // QE

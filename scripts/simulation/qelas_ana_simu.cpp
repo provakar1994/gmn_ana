@@ -42,6 +42,12 @@ static const std::string target = "LD2";
    (scripts/simulation/), i.e. it points to scripts/pDEmap/, where the map used for the
    analysis is kept under version control (see the CHANGELOG for how it was made). */
 static const std::string kHCALEffiMapFile = "../pDEmap/0p77zoff_pDE_data_sbs8_sbs-1p_model1_pass3.root";
+/* Average HCAL proton detection efficiency of the map above: mean of the pol0 fits of the
+   efficiency vs x (h_xexp_pDE, -2.2 < x < 1 m) and vs y (h_yexp_pDE, -0.5 < y < 0.5 m) stored in
+   the same file (0.9518 and 0.9516). weight_effic = weight * map(x,y) / kHCALAvgEffi, so the
+   efficiency correction only reshapes the MC and does not change its overall normalization.
+   It must be updated together with kHCALEffiMapFile (the pass-2 map gave 0.9485). */
+static const double kHCALAvgEffi = 0.9517;
 
 int qelas_ana_simu (const char *configfilename, 
 		    int model=2, //Analysis model
@@ -166,7 +172,6 @@ int qelas_ana_simu (const char *configfilename,
   C->SetBranchStatus("bb.etot_over_p", 1);
 
   // Reading in HCAL efficiency map
-  double avg_effi = 0.9485; //error weighted average of x and y efficiency
   //TFile *fEffi = util_pd::ReadRootFile("~/gmn_ana/scripts/pdout/pDE/finebin_0p77zoff_pDE_data_sbs8_sbs-1p_model1_pass3.root");
   TFile *fEffi = util_pd::ReadRootFile(kHCALEffiMapFile.c_str());  
   TH1F *h2_effi_map = (TH1F*)fEffi->Get("h2_effi_map");  
@@ -680,7 +685,7 @@ int qelas_ana_simu (const char *configfilename,
     // Get the efficiency correction value
     int effibin_n = h2_effi_map->FindBin(T_yHCAL_exp_t, T_xHCAL_exp_t);
     int effibin_p = h2_effi_map->FindBin(T_yHCAL_exp_t, T_xHCAL_exp_t-T_p_def);
-    double effi_corr = mc_fnucl==0 ? h2_effi_map->GetBinContent(effibin_n)/avg_effi : h2_effi_map->GetBinContent(effibin_p)/avg_effi;
+    double effi_corr = mc_fnucl==0 ? h2_effi_map->GetBinContent(effibin_n)/kHCALAvgEffi : h2_effi_map->GetBinContent(effibin_p)/kHCALAvgEffi;
     // updating weight factors accordingly
     weight_effic = weight*effi_corr;
     weight_norm_effic = weight_norm*effi_corr;

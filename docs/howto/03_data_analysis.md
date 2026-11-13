@@ -111,7 +111,7 @@ BigBite track, so every data event has a track and the `[0]` (best) track is alw
 | Cut flags | `W2Cut` | `W2` inside `W2_cutR`. |
 | | `bbfiduCut` | BigBite fiducial cut. |
 | | `pCut` (`nCut`) | Inside the proton (neutron) dx–dy ellipse. `pdx_nS`, `ndx_nS`, `dy_nS` = distance from the peak in sigmas. |
-| | `ARCut`, `SMCut`, `fiduCut` | HCAL active area (one block in from each edge), safety margin on the expected position (`fiduCut = ARCut && SMCut`). `SMx_nS_p`, `SMy_nS` = distance of the expected position from the active-area edge in sigmas, for a flexible margin. |
+| | `ARCut`, `SMCut`, `fiduCut` | HCAL active area (one block in from each edge), evaluated at the selected in-time cluster (in `qelas_ana_data` only since 2026-11-12; it used the highest-energy cluster before), safety margin on the expected position (`fiduCut = ARCut && SMCut`). `SMx_nS_p`, `SMy_nS` = distance of the expected position from the active-area edge in sigmas, for a flexible margin. |
 | All HCAL clusters (if `hcal_acl_ON`) | `*_acl[]`, `idclHCAL_htote`, `idclHCAL_intime`, `idclHCAL_sthpq_p` (`idclHCAL_sthpq` in qelas) | Per-cluster arrays and the index chosen by each algorithm. |
 | GRINCH (SBS-8 and higher configs) | `clsizeGRINCH`, `cltmeanGRINCH`, ... | Cherenkov cluster info. |
 | Cross sections (qelas only) | `sigMott`, `sigRed_p`, `sigRed_n`, `sigBorn_ratio` | Model cross sections at the event kinematics (Kelly / Seamus / Ye fits). |

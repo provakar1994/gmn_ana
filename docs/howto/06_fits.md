@@ -81,7 +81,7 @@ root -l -b -q 'fit_dx.cpp("configs/sbs4-sbs30p/conf_fit_dx.json", 0)'
 | `cuts_for_bg_data2` | "anti-coincidence-time" (accidentals) data background sample |
 | `dx_offset_MC_for_p`, `dx_offset_MC_for_n` (m) | shifts added to MC Δx for p and n before filling |
 | `vary_pn_xOff_ranges` | `[flag, pmin, pmax, nmin, nmax]`; flag=1 lets the p/n offsets float within these limits |
-| `Order_of_poly_bg` | order of the polynomial background in fit 5 |
+| `Order_of_poly_bg` | order of the polynomial background in fit 5 (and the elastic-mode fit); fit 3 is always pol2 |
 | `Par_guess_of_gaus_bg` | start values `[amp, mean, sigma]` of the Gaussian background (fit 4) |
 | `h_dx` `[nbins,min,max]`, `dx_fit_range` | histogram binning and fit range |
 | `SB_reject_points` | side-band exclusion window (elastic mode only) |
@@ -100,11 +100,11 @@ config says "hardcoded"). It also reads the run list from `../DB` for the Δx-vs
 | 0 | none | – |
 | 1 | data histogram, anti-Δy (`cuts_for_bg_data1`) ("anti-dy") | scale of bg histo |
 | 2 | inelastic MC, p+n summed ("inel-MC") | scale of bg histo |
-| 3 | polynomial, **order 2 (hard-coded)** ("pol2") | constant term |
+| 3 | polynomial, order 2 = **production** (named constant `kProdBgPolyOrder` in `fit_dx.cpp`, not a config key) ("pol2") | constant term |
 | 4 | Gaussian ("gaus") | amplitude |
 | 5 | polynomial, order `Order_of_poly_bg` (3 in all production configs) ("pol3") | constant term |
 | 6 | data histogram, anti-coincidence time (`cuts_for_bg_data2`) ("anti-dt") | scale of bg histo |
-| 7 | B1·(inel MC p + n) + B2·(anti-dt data, pre-scaled by 1/3) ("inel-MC+rndm") | B1 only |
+| 7 | B1·(inel MC p + n) + B2·(anti-dt data, pre-scaled by 1/3) ("inel-MC+rndm") | `B7` = B1; B2 in the extra columns `B7b,B7berr` at the end of the row |
 
 With `vary_pn_xOff_ranges[0]=1`, the floating-offset variants of these fits are used
 (fit 7 then drops the anti-dt term). Fits with histogram backgrounds use a weighted
@@ -126,14 +126,15 @@ followed by:
 - `.csv`: one row per cut iteration (one row in production). Columns:
   `conf,field,cut,min,max`, then the MC kinematics `vethMean/Min/Max, vQ2Mean/Min/Max, vepsMean/Min/Max`,
   then `RMCnf,RMCnferr,RpMC`, then `chi20,NDF0,R0,R0err` and for k=1..7
-  `chi2k,NDFk,Rk,Rkerr,Bk,Bkerr,Ypk,Ypkerr,Ynk,Ynkerr,Ybgk,Ybgkerr`. The Y columns are the
+  `chi2k,NDFk,Rk,Rkerr,Bk,Bkerr,Ypk,Ypkerr,Ynk,Ynkerr,Ybgk,Ybgkerr`, and last `B7b,B7berr`
+  (fit 7's second background scale; added 2026-11-12, older CSVs end at `Ybg7err`). The Y columns are the
   fitted p, n and background yields with errors. A tracked example is
   `scripts/lta/mcp4_OT0nm3_fit_dx_qelas_pass3_simc_sbs4_sbs50p_model2.csv`.
 - `.pdf`: all canvases. **c0–c7** are the 8 fits. Each has the data (points), the total fit,
   the scaled p and n MC shapes and the background, with a residual pad (c1–c7). In
   cut-variation mode each iteration adds a `cCut` page showing the cut region on the data
   and MC distributions of the varied variable.
-- `_0.png` … `_6.png`: PNGs of c0–c6 (see Notes on c7).
+- `_0.png` … `_7.png`: PNGs of c0–c7.
 - `.root`: the canvases plus the input histograms (`h_dxHCAL_data`, `h_dxHCAL_simu_p/_n`,
   the bg histograms, `h_vQ2`, `h_vepsilon`, `h_vetheta`, `h2_dxHCAL_vs_rnum`). In
   cut-variation mode it also holds `hgist_cv_1..7` (R vs iteration for each bg model) and
@@ -158,8 +159,8 @@ R1–R7 × RpMC.
   `cltrindexGRINCH==0&&clsizeGRINCH>2&&abs(coinT_ADC_TOF_c)<=3.5`). `cuts_for_signal_data`
   is not read; it only holds a note saying so.
 - The MC kinematics (⟨Q²⟩, ⟨ε⟩) use the plain `weight`, not the efficiency weight.
-- `Yn4err` is filled with the wrong element (`yo4[4]`, the bg yield, instead of `yo4[3]`).
-- c7 is saved as `_6.png` and overwrites the c6 PNG. The PDF is correct.
+- Fixed 2026-11-12 (CSVs made before that are affected): `Yn4err` held the background yield
+  instead of the n-yield error, and c7 was saved as `_6.png`, overwriting the c6 PNG.
 - With `use_custom_fiduCut=1`, the ε histogram is booked with range 0–16 instead of 0–1.5,
   which coarsens ⟨ε⟩.
 - Cut-variation styles (`cut_vary_style`): 0 = slices of fixed width; 1 = window of growing
