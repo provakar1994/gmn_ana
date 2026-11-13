@@ -157,5 +157,6 @@ the `gmnana` library, included by source where needed.
   into **one multi-page PDF** (ROOT `canvas->SaveAs("file.pdf[")`, pages, `"file.pdf]"`), with the
   ROOT file / CSV of the same base name next to it.
 - Small run-info outputs go to `scripts/epics/epout/` (see [02](02_run_info.md)).
-- Slurm logs of the batch wrappers go to `slurm_out/` in the working directory (the `submit-*.sh`
-  scripts create it).
+- Slurm logs of the batch wrappers go to `/farm_out/$USER/gmn_ana/slurm_out/` (the JLab farm only
+  accepts log paths under `/farm_out/`; override with `GMN_SLURM_LOGDIR`). The `submit-*.sh` scripts
+  create the directory.

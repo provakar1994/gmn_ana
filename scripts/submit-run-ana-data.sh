@@ -13,8 +13,10 @@ if [[ "$process" == "elas" ]]; then
 fi
 jobname=data_${process}_sbs${conf}_f${field}p_${target}_pass${pass}_model${model}
 
-# log directory (sbatch fails if it does not exist)
-logdir=slurm_out
+# log directory. The JLab farm requires Slurm --output/--error paths under /farm_out/
+# (sbatch is rejected otherwise), and sbatch fails if the directory does not exist.
+# Override with GMN_SLURM_LOGDIR if needed.
+logdir=${GMN_SLURM_LOGDIR:-/farm_out/$USER/gmn_ana/slurm_out}
 mkdir -p "$logdir"
 
 sbatch \

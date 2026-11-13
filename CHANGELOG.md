@@ -164,3 +164,7 @@
 ## 2026-11-12 23:46
 - **Files:** `scripts/configs/{sbs4-sbs30p,sbs4-sbs50p,sbs9-sbs70p,sbs8-sbs70p,sbs14-sbs70p,sbs7-sbs85p,sbs11-sbs100p}/conf_qelas_ana_data.json`, the same settings' `conf_fit_dx.json`, `docs/ANALYSIS_GUIDE.md`
 - **Change:** Start analysis version `a1_` (replacing the `bsf_` "best so far" tag): the production LD2 data analysis writes `a1_<zoff>_qelas_ana_data_...` and the production `fit_dx` blocks read them (`data_file_prefix`). The LD2 data are to be rerun with the ARCut fix (148083c) under this tag; until then the production fit_dx runs have no input. Version table added to the guide.
+
+## 2026-11-12 23:50
+- **Files:** `scripts/submit-run-ana-data.sh`, `scripts/simulation/submit-run-ana-simu.sh`, `docs/howto/{01_setup,03_data_analysis,04_mc_analysis}.md`
+- **Change:** sbatch was rejected on the JLab farm ("--output and --error, if specified, must begin with /farm_out/"): the submit scripts wrote Slurm logs to `slurm_out/` in the working directory. Logs now go to `/farm_out/$USER/gmn_ana/slurm_out/` (override with `GMN_SLURM_LOGDIR`).

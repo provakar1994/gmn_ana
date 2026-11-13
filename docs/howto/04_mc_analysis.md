@@ -205,7 +205,7 @@ The model is fixed (1 for elas, 2 for qelas). An empty `variant` selects the def
 `./submit-run-ana-simu.sh qelas 4 30 g4sbs inel`, `./submit-run-ana-simu.sh qelas 11 100 simc deeN noshield`
 (optional 6th argument = variant).
 **Inputs:** as `run-ana-simu.sh` (set `GMN_ANA` and `ROOTLOGON_ENV` first).
-**Outputs:** Slurm logs in `slurm_out/` (the script creates it).
+**Outputs:** Slurm logs in `/farm_out/$USER/gmn_ana/slurm_out/` (override with `GMN_SLURM_LOGDIR`; the script creates it).
 **Feeds:** —
 
 ### `scripts/simulation/g4mac/` (`get_SBSconf_info.cpp`, `sbsfield_scan_genmac.py`, example macros)

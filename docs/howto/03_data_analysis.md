@@ -193,7 +193,7 @@ If unset, the original author's ifarm paths are used.
 **Run:** from `scripts/`: `./submit-run-ana-data.sh elas 4 30 3 1` or `./submit-run-ana-data.sh qelas 4 30 3 2 LD2`.
 For `elas` the target is set to LH2 automatically.
 **Inputs:** same arguments as `run-ana-data.sh`.
-**Outputs:** Slurm logs `slurm_out/<jobname>_<jobid>.out/.err` (the script creates `slurm_out/`).
+**Outputs:** Slurm logs `/farm_out/$USER/gmn_ana/slurm_out/<jobname>_<jobid>.out/.err` (the farm requires log paths under `/farm_out/`; override with `GMN_SLURM_LOGDIR`; the script creates the directory).
 Set `GMN_ANA` and `ROOTLOGON_ENV` first (see `run-ana-data.sh`).
 **Feeds:** —
 
