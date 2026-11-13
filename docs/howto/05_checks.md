@@ -146,6 +146,28 @@ update it, rerun `pDE_map.cpp` and copy the output (renamed to the name above) i
 per-field `elas_ana_data` outputs. The fiducial safety-margin
 widths drawn on the map are hard-coded (`SM_w{0.22,0.22,0.27}`).
 
+### `scripts/compare_pDE_maps.cpp`
+
+**What it does:** Compares two or more HCAL efficiency maps made by `pDE_map.cpp` (e.g. built from
+different field settings or with different cuts): per-bin pull maps and their distribution, χ²/ndf
+of the difference, ratio maps, 1D efficiency vs x and vs y with constant fits, overall pass/all, and
+an estimate of the impact on the MC `weight_effic` at the proton and neutron hit positions.
+
+**Run** (from `scripts/`):
+```
+root -l -b -q <install>/runenv/rootlogon.C 'compare_pDE_maps.cpp("a.root,b.root","A,B","pdout/pDE/<subdir>/<outBase>","0:1",0)'
+```
+4th argument: nested pairs `i:j` (sample i is a subset of j; errors are treated accordingly);
+5th: index of the map whose acceptance weights the impact estimate.
+
+**Inputs:** `pDE_map.cpp` output files. **Outputs:** `<outBase>.pdf` (one multi-page PDF) and
+`<outBase>.csv` (`quantity,label,value,error`).
+
+**Example / result (2026-11-12):** `pdout/pDE/study_sbs8_fieldsplit/`: SBS-8 map from 70p runs vs
+0p/50p/100p runs (made with older cuts, wider in-time window) vs combined. The 70p map is 0.23%
+higher in the fit region (≈5σ); impact on `weight_effic` ≤ 0.2%, on the n/p ratio ≤ 0.13%. The sign is
+opposite to what the wider window would cause, so the old cuts do not matter at the < 0.5% level.
+
 ### `scripts/simulation/pDE_simu.cpp`
 **What it does:** MC version of `pDE_data.cpp`: 1D proton efficiency vs expected x/y from an
 `elas_ana_simu` output.
