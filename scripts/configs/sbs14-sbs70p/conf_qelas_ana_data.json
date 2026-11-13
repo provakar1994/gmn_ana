@@ -34,7 +34,7 @@
 	"NOTE"               : "verbose=0 & verbosefn=0 => Production; verbose<-1=>Debug, =-1=>Test; verbosefn>0=>Debug",
 	"verbose"            : -1,
 	"verbose_function"   : 0,
-	"outfile_prefix"     : "bsf_1p13zoff",
+	"outfile_prefix"     : "a1_1p13zoff",
 	"README"             : "First look at official pass3 data: 02/15/2026"
     },    
     "pass2_model2":

@@ -131,6 +131,18 @@ no-shield MC. The empty-prefix case drops the leading `_`. `sbs-1p` in a data fi
 `SBS_magnet_percent = -1`, i.e. all field settings of that config together; the file is made with `hadd` of the
 per-field outputs.
 
+#### Analysis versions (the leading tag of the prefix)
+The first part of the prefix tags the analysis version. `bsf_` ("best so far") was used up to
+2026-11; from then on outputs are tagged `a1_`, `a2_`, ... Start a new version only when inputs
+change in a way that matters for the results, and keep few of them: the outputs are large. When a
+version is complete, older outputs can be deleted. Record each version here:
+
+| Tag | Started | Contents |
+|---|---|---|
+| `bsf_` | – | pass-3 data and pass-4 MC before the 2026-11-12 fixes |
+| `a1_` | 2026-11-12 | LD2 data of the production settings rerun with the `ARCut` fix (in-time HCAL cluster) and the cut-audit config fixes of 2026-11-12; the production `fit_dx` configs read these. MC (LH2-matched W² offsets, efficiency map in `scripts/pDEmap/`) to follow under the same tag |
+
+
 ### Passes and models
 - **Replay pass**: data pass 3 is current (run lists for passes 1-3 in `DB/`); MC pass 4 is
   current (`mcp4` in prefixes; `*_mcp3` blocks are the older MC pass).

@@ -160,3 +160,7 @@
 ## 2026-11-12 19:02
 - **Files:** `scripts/dy_offset_check.cpp` (new), `scripts/configs/conf_dy_offset_check.json` (new), `docs/howto/05_checks.md`
 - **Change:** New check script for the MC HCAL horizontal offset (`hcal_hoffset`, ad hoc): compares the data and MC dy peak positions after the analysis cuts for LH2 (strict elastics, as `w2_offset_check`) and LD2 (production `fit_dx` cuts without the |dy| term; p, n and both spots), with W²-slice dependence, and recommends the hoffset that aligns them. First result: LH2 needs ≈0 (|Δ| ≤ 6 mm) everywhere, LD2 needs 0.020–0.062 m. No config changed yet (pending the analyst's decision). Outputs: `siout/dy_offset_check/`.
+
+## 2026-11-12 23:46
+- **Files:** `scripts/configs/{sbs4-sbs30p,sbs4-sbs50p,sbs9-sbs70p,sbs8-sbs70p,sbs14-sbs70p,sbs7-sbs85p,sbs11-sbs100p}/conf_qelas_ana_data.json`, the same settings' `conf_fit_dx.json`, `docs/ANALYSIS_GUIDE.md`
+- **Change:** Start analysis version `a1_` (replacing the `bsf_` "best so far" tag): the production LD2 data analysis writes `a1_<zoff>_qelas_ana_data_...` and the production `fit_dx` blocks read them (`data_file_prefix`). The LD2 data are to be rerun with the ARCut fix (148083c) under this tag; until then the production fit_dx runs have no input. Version table added to the guide.

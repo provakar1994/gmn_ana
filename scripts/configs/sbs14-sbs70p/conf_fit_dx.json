@@ -7,7 +7,7 @@
 	"pass"                 : 3,
 	"generator"            : "simc",
 	"use_norm_weight"      : 0,			
-	"data_file_prefix"     : "bsf_1p13zoff",
+	"data_file_prefix"     : "a1_1p13zoff",
 	"simu_file_prefix"     : "bsf_mcp4_OT%s_0p674sf",
 	"inel_file_prefix"     : "bsf_mcp4_0p674sf",
 	"-\/ SYS STD SECTION"  : "--\/-- Selecting Options for Sys Study: Prod=>1,0nm3,1 ------",	
