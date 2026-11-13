@@ -19,6 +19,7 @@
 	"coinT_ADC_TOF_offset" : -0.07139,	
 	"hcal_samp_frac_cutR": 0.01,
 	"hcal_voffset"       : 0.037,
+	"NOTE_voffset"       : "TRIAL block: hcal_voffset = 0.037 (prefix trial_0p037voff_). Production LD2 uses hcal_voffset = 0 (decision 2026-11-12); the 0-offset version of this block is pass3_model1_prod, which the macro cannot select (key = pass<P>_model<M>).",
 	"hcal_hoffset"       : 0.04,
 	"hcal_zoffset"       : 0.65,
 	"dx_p_cut"           : [-0.73544,0.06822,2],

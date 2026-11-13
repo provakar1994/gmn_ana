@@ -168,6 +168,12 @@ For Dummy, `dummy_` is added to the prefix.
 **Notes:** For Dummy runs the beam energy is the nominal setting value, not the run-list value. Only the
 LD2 data of the production settings enter the GMn results. SBS-8 LD2 is mainly a cross-check.
 
+**SBS-4 HCAL vertical offset:** LD2 (`qelas_ana_data`, `pass3_model2`) uses `hcal_voffset` = 0
+(decision 2026-11-12). The SBS-4 LH2 block the macro reads (`pass3_model1`) is a trial with
+`hcal_voffset` = 0.037 and prefix `trial_0p037voff_`; the 0-offset block `pass3_model1_prod` cannot be
+selected because the block key is built from pass and model only. Both are noted in the configs
+(`NOTE_voffset`).
+
 ### `scripts/run-ana-data.sh`
 **What it does:** Batch wrapper for one data job on the JLab ifarm. It loads the Hall A modules
 (`analyzer`), goes to `$GMN_ANA/scripts` and runs `elas_ana_data.cpp` or `qelas_ana_data.cpp`.

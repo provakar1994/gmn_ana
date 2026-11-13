@@ -15,7 +15,7 @@
 	"RC_prescription"      : "0nm3",
 	"use_effi_corr"        : 1,		
 	"-\/ FIDU CUT SECTION" : "--\/-- Forming Custom Fiducial Cut ------",
-	"use_custom_fiduCut"   : 1,
+	"use_custom_fiduCut"   : 0,
 	"apply_to_bg_data"     : 1,
 	"apply_to_bg_simu"     : 1,
 	"AR_width_x_y"         : [1,1],

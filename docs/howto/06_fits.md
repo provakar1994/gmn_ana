@@ -85,7 +85,7 @@ root -l -b -q 'fit_dx.cpp("configs/sbs4-sbs30p/conf_fit_dx.json", 0)'
 | `Par_guess_of_gaus_bg` | start values `[amp, mean, sigma]` of the Gaussian background (fit 4) |
 | `h_dx` `[nbins,min,max]`, `dx_fit_range` | histogram binning and fit range |
 | `SB_reject_points` | side-band exclusion window (elastic mode only) |
-| `use_custom_fiduCut`, `AR_width_x_y`, `SM_width_xp_xn_y`, `sbs_kick` | optional custom HCAL active-area / safety-margin fiducial cut (production: off, the tree's own cuts are used) |
+| `use_custom_fiduCut`, `AR_width_x_y`, `SM_width_xp_xn_y`, `sbs_kick` | optional custom HCAL active-area / safety-margin fiducial cut. **Retired**: off (0) in all production configs; the explicit `yHCAL_exp` and `xHCAL_exp(-p_def)` window terms in the cut strings replace it |
 | `is_vary_cut`, `cut_vary_style` (0–5), `param_to_vary`, `param_to_vary_for_cs5`, `cut_iter_min_width`, `h_cut_param`, `fidu_vary_*`, `apply_to_data_only` | cut-variation study (see Notes) |
 | `output_filebase` | output name stem (`%s` replaced by `RC_prescription`) |
 
