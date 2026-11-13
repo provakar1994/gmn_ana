@@ -1,0 +1,142 @@
+{
+"common":
+{
+    "data_dir"           : "pdout",
+    "simu_dir"           : "simulation/siout",
+    "out_dir"            : "simulation/siout/dy_offset_check",
+    "out_file_base"      : "dy_offset_check_pass4",
+    "w2_offset_config"   : "configs/conf_w2_offset_check.json",
+    "lh2_mc_weight"      : "weight_effic",
+    "NOTEs"              : ["Checks the MC HCAL horizontal offset (hcal_hoffset) by comparing the data and MC dy peak positions after the analysis cuts, separately for LH2 and LD2.",
+			    "MC dy = yHCAL - yHCAL_exp grows by exactly hcal_hoffset (HCAL origin moved along the HCAL y axis), so the recommended new MC value is hoffset_file + (<dy>_data - <dy>_MC).",
+			    "LH2 blocks: files, run cut, eHCAL_min, vz/coinT cuts from the w2_offset_check config entry 'w2_key'; the thpq_p cut is replaced by a dx window on the proton spot (thpq_p contains dy) plus the W2_window given here.",
+			    "LD2 blocks: production cuts, file names and MC weight exactly as fit_dx builds them from 'fit_dx_config' (block 'qelas'), with the dy cut term removed.",
+			    "mc_config / mc_config_block(s): the MC analysis config the current hoffset is read from (cross-checked with the value printed in the MC file).",
+			    "Settings are listed in Q2 order (SBS-4, 9, 8, 14, 7, 11), field ascending, LH2 before LD2. Run from the scripts/ directory."]
+},
+"settings": ["sbs4_0p_LH2", "sbs4_30p_LH2", "sbs4_30p_LD2", "sbs4_50p_LH2", "sbs4_50p_LD2",
+	     "sbs9_70p_LH2", "sbs9_70p_LD2",
+	     "sbs8_0p_LH2", "sbs8_50p_LH2", "sbs8_70p_LH2", "sbs8_70p_LD2", "sbs8_100p_LH2",
+	     "sbs14_70p_LH2", "sbs14_70p_LD2",
+	     "sbs7_85p_LH2", "sbs7_85p_LD2",
+	     "sbs11_100p_LH2", "sbs11_100p_LD2"],
+
+"sbs4_0p_LH2":
+{
+    "target" : "LH2", "setting" : "sbs4_0p", "w2_key" : "sbs4_0p",
+    "W2_window" : [0.71, 1.05],
+    "mc_config" : "simulation/configs/sbs4-sbs0p-simu/conf_elas_ana_simu.json", "mc_config_blocks" : ["simc_heep_model1"]
+},
+"sbs4_30p_LH2":
+{
+    "target" : "LH2", "setting" : "sbs4_30p", "w2_key" : "sbs4_30p",
+    "W2_window" : [0.71, 1.05],
+    "mc_config" : "simulation/configs/sbs4-sbs30p-simu/conf_elas_ana_simu.json", "mc_config_blocks" : ["simc_heep_model1"]
+},
+"sbs4_30p_LD2":
+{
+    "target" : "LD2", "setting" : "sbs4_30p",
+    "fit_dx_config" : "configs/sbs4-sbs30p/conf_fit_dx.json",
+    "eHCAL_hard" : 0.05,
+    "mc_config" : "simulation/configs/sbs4-sbs30p-simu/conf_qelas_ana_simu.json", "mc_config_block" : "simc_deeN_model2"
+},
+"sbs4_50p_LH2":
+{
+    "target" : "LH2", "setting" : "sbs4_50p", "w2_key" : "sbs4_50p",
+    "W2_window" : [0.71, 1.05],
+    "mc_config" : "simulation/configs/sbs4-sbs50p-simu/conf_elas_ana_simu.json", "mc_config_blocks" : ["simc_heep_model1"]
+},
+"sbs4_50p_LD2":
+{
+    "target" : "LD2", "setting" : "sbs4_50p",
+    "fit_dx_config" : "configs/sbs4-sbs50p/conf_fit_dx.json",
+    "eHCAL_hard" : 0.05,
+    "mc_config" : "simulation/configs/sbs4-sbs50p-simu/conf_qelas_ana_simu.json", "mc_config_block" : "simc_deeN_model2"
+},
+"sbs9_70p_LH2":
+{
+    "target" : "LH2", "setting" : "sbs9_70p", "w2_key" : "sbs9_70p",
+    "W2_window" : [0.68, 1.08],
+    "mc_config" : "simulation/configs/sbs9-sbs70p-simu/conf_elas_ana_simu.json", "mc_config_blocks" : ["simc_heep_model1"]
+},
+"sbs9_70p_LD2":
+{
+    "target" : "LD2", "setting" : "sbs9_70p",
+    "fit_dx_config" : "configs/sbs9-sbs70p/conf_fit_dx.json",
+    "eHCAL_hard" : 0.14,
+    "mc_config" : "simulation/configs/sbs9-sbs70p-simu/conf_qelas_ana_simu.json", "mc_config_block" : "simc_deeN_model2"
+},
+"sbs8_0p_LH2":
+{
+    "target" : "LH2", "setting" : "sbs8_0p", "w2_key" : "sbs8_0p",
+    "W2_window" : [0.60, 1.16],
+    "mc_config" : "simulation/configs/sbs8-sbs0p-simu/conf_elas_ana_simu.json", "mc_config_blocks" : ["simc_heep_model1"]
+},
+"sbs8_50p_LH2":
+{
+    "target" : "LH2", "setting" : "sbs8_50p", "w2_key" : "sbs8_50p",
+    "W2_window" : [0.60, 1.16],
+    "mc_config" : "simulation/configs/sbs8-sbs50p-simu/conf_elas_ana_simu.json", "mc_config_blocks" : ["simc_heep_model1"]
+},
+"sbs8_70p_LH2":
+{
+    "target" : "LH2", "setting" : "sbs8_70p", "w2_key" : "sbs8_70p",
+    "W2_window" : [0.60, 1.16],
+    "mc_config" : "simulation/configs/sbs8-sbs70p-simu/conf_elas_ana_simu.json", "mc_config_blocks" : ["simc_heep_model1"]
+},
+"sbs8_70p_LD2":
+{
+    "target" : "LD2", "setting" : "sbs8_70p",
+    "fit_dx_config" : "configs/sbs8-sbs70p/conf_fit_dx.json",
+    "eHCAL_hard" : 0.14,
+    "mc_config" : "simulation/configs/sbs8-sbs70p-simu/conf_qelas_ana_simu.json", "mc_config_block" : "simc_deeN_model2",
+    "NOTE" : "SBS-8 is an nTPE point; its LD2 data are a check. fit_dx uses the custom fiducial cut here (use_custom_fiduCut=1), reproduced."
+},
+"sbs8_100p_LH2":
+{
+    "target" : "LH2", "setting" : "sbs8_100p", "w2_key" : "sbs8_100p",
+    "W2_window" : [0.60, 1.16],
+    "mc_config" : "simulation/configs/sbs8-sbs100p-simu/conf_elas_ana_simu.json", "mc_config_blocks" : ["simc_heep_model1"]
+},
+"sbs14_70p_LH2":
+{
+    "target" : "LH2", "setting" : "sbs14_70p", "w2_key" : "sbs14_70p",
+    "W2_window" : [0.58, 1.18],
+    "mc_config" : "simulation/configs/sbs14-sbs70p-simu/conf_elas_ana_simu.json", "mc_config_blocks" : ["simc_heep_model1"]
+},
+"sbs14_70p_LD2":
+{
+    "target" : "LD2", "setting" : "sbs14_70p",
+    "fit_dx_config" : "configs/sbs14-sbs70p/conf_fit_dx.json",
+    "eHCAL_hard" : 0.12,
+    "mc_config" : "simulation/configs/sbs14-sbs70p-simu/conf_qelas_ana_simu.json", "mc_config_block" : "simc_deeN_model2"
+},
+"sbs7_85p_LH2":
+{
+    "target" : "LH2", "setting" : "sbs7_85p", "w2_key" : "sbs7_85p",
+    "W2_window" : [0.54, 1.22],
+    "mc_config" : "simulation/configs/sbs7-sbs85p-simu/conf_elas_ana_simu.json", "mc_config_blocks" : ["simc_heep_model1"]
+},
+"sbs7_85p_LD2":
+{
+    "target" : "LD2", "setting" : "sbs7_85p",
+    "fit_dx_config" : "configs/sbs7-sbs85p/conf_fit_dx.json",
+    "eHCAL_hard" : 0.15,
+    "mc_config" : "simulation/configs/sbs7-sbs85p-simu/conf_qelas_ana_simu.json", "mc_config_block" : "simc_deeN_model2"
+},
+"sbs11_100p_LH2":
+{
+    "target" : "LH2", "setting" : "sbs11_100p", "w2_key" : "sbs11_100p",
+    "W2_window" : [0.35, 1.41],
+    "mc_config" : "simulation/configs/sbs11-sbs100p-simu/conf_elas_ana_simu.json", "mc_config_blocks" : ["simc_heep_model1", "simc_heep_model1_noshield"],
+    "NOTE" : "MC = shield/no-shield mix from the w2_offset_check entry (one hoffset for both files)."
+},
+"sbs11_100p_LD2":
+{
+    "target" : "LD2", "setting" : "sbs11_100p",
+    "fit_dx_config" : "configs/sbs11-sbs100p/conf_fit_dx.json",
+    "eHCAL_hard" : 0.3,
+    "mc_config" : "simulation/configs/sbs11-sbs100p-simu/conf_qelas_ana_simu.json", "mc_config_block" : "simc_deeN_model2",
+    "NOTE" : "fit_dx uses the Al-shield deeN file only (no shield mix), reproduced here."
+}
+}

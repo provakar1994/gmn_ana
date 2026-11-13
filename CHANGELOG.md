@@ -156,3 +156,7 @@
 ## 2026-11-12 18:50
 - **Files:** `scripts/compare_pDE_maps.cpp` (new), `docs/howto/05_checks.md`
 - **Change:** New check script comparing HCAL efficiency maps (pull maps, χ²/ndf, 1D overlays, impact on MC weight_effic; one PDF + CSV). Used to test whether the SBS-8 0p/50p/100p LH2 data, which were analyzed with older cuts (trigger-bit cut, wider [-10,8] ns in-time window), bias the efficiency map: the 70p-only map is 0.23% higher in the fit region than the 0p/50p/100p map; impact on weight_effic ≤ 0.2% and on the n/p ratio ≤ 0.13%, with the opposite sign to the expected window effect. Outputs in `pdout/pDE/study_sbs8_fieldsplit/`.
+
+## 2026-11-12 19:02
+- **Files:** `scripts/dy_offset_check.cpp` (new), `scripts/configs/conf_dy_offset_check.json` (new), `docs/howto/05_checks.md`
+- **Change:** New check script for the MC HCAL horizontal offset (`hcal_hoffset`, ad hoc): compares the data and MC dy peak positions after the analysis cuts for LH2 (strict elastics, as `w2_offset_check`) and LD2 (production `fit_dx` cuts without the |dy| term; p, n and both spots), with W²-slice dependence, and recommends the hoffset that aligns them. First result: LH2 needs ≈0 (|Δ| ≤ 6 mm) everywhere, LD2 needs 0.020–0.062 m. No config changed yet (pending the analyst's decision). Outputs: `siout/dy_offset_check/`.

@@ -76,6 +76,30 @@ LH2 W² peaks. LD2 uses the LH2 value of the same setting.
 
 ## 5.2 Energy loss
 
+### `scripts/dy_offset_check.cpp`
+
+**What it does:** Data/MC check of the HCAL Δy (dy) peak position, the dy analogue of
+`w2_offset_check`. The MC `hcal_hoffset` shifts MC dy by exactly +hoffset (it moves the expected
+position `yHCAL_exp`, see `elas_ana_simu.cpp` / `qelas_ana_simu.cpp`). For each setting and target it
+measures Δ = ⟨dy⟩_data − ⟨dy⟩_MC after the analysis cuts and recommends hoffset_new = hoffset_file + Δ
+(the hoffset each MC file was made with is read from the file). LH2 blocks reuse the files and strict
+elastic cuts of `conf_w2_offset_check.json` (with a dx window on the proton spot instead of `thpq_p`,
+which contains dy); LD2 blocks rebuild the production `fit_dx` cuts without the `|dy|` term, for the
+p spot, n spot and both. Also shows Δ in W² slices (dy is correlated with W²). Verdict: ok if
+|Δ| < 3 mm, else check/FLAG as in `w2_offset_check`.
+
+**Run** (from `scripts/`, about 6 min for all blocks):
+```
+root -l -b -q <install>/runenv/rootlogon.C 'dy_offset_check.cpp("configs/conf_dy_offset_check.json"[,"sbs9_70p_LD2"])'
+```
+**Inputs:** `configs/conf_dy_offset_check.json` (+ `conf_w2_offset_check.json` for LH2, the
+production `conf_fit_dx.json` for LD2). **Outputs:** `simulation/siout/dy_offset_check/dy_offset_check_pass4.{pdf,csv,root}`.
+
+**Result (2026-11-12):** LH2 MC agrees with data at hoffset 0 within 6 mm in every setting; LD2 MC
+needs 0.020–0.062 m (close to its current ad hoc values). The data LD2 and LH2 dy peaks differ by only
+≈1 cm, so the LD2 value compensates something in the LD2 MC chain rather than an HCAL position; to be
+understood before the LD2 values are changed.
+
 ### `scripts/simulation/eloss_check_simu.cpp`
 **What it does:** Checks how the MC BigBite momentum reconstruction handles the scattered electron's
 energy loss on the way out. It histograms `dp = p_recon − p_true` (MeV) at the vertex, overall and versus
